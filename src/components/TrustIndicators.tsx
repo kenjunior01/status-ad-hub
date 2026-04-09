@@ -67,7 +67,7 @@ interface SocialProofProps {
 
 export const SocialProof = ({ className }: SocialProofProps) => {
   const { t } = useTranslation();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
   const { stats, loading } = usePlatformStats();
 
   const formatNumber = (num: number) => {
@@ -90,7 +90,7 @@ export const SocialProof = ({ className }: SocialProofProps) => {
         <div className="text-center">
           {loading ? <Skeleton className="h-8 w-20 mx-auto" /> : (
             <div className="text-2xl font-bold text-success">
-              {format(stats?.overview.total_campaign_value || 0)}
+              {formatFromUSD(stats?.overview.total_campaign_value || 0)}
             </div>
           )}
           <div className="text-xs text-muted-foreground">{t('socialProof.paid')}</div>
