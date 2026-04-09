@@ -1,16 +1,1 @@
-project_id = "xqflzanemrzdbkfzzdvs"
-
-[functions.statusai]
-verify_jwt = false
-
-[functions.platform-stats]
-verify_jwt = false
-
-[functions.paysuite-payment]
-verify_jwt = false
-
-[functions.paypal-payment]
-verify_jwt = false
-
-[functions.currency-rates]
-verify_jwt = false
+project_id = "teaepolerfylnwwhhbse"
