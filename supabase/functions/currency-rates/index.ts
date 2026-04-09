@@ -62,6 +62,7 @@ serve(async (req) => {
     const fallbackRates: Record<string, number> = {
       USD: 1, BRL: 5.15, EUR: 0.92, GBP: 0.79, MZN: 63.5,
       AOA: 835, ARS: 875, MXN: 17.2, COP: 3950, PEN: 3.72, CLP: 925,
+      ZAR: 18.5, NGN: 1550, KES: 155, INR: 83.5, CAD: 1.36, AUD: 1.55,
     };
 
     return new Response(JSON.stringify({ base: "USD", rates: fallbackRates, fallback: true }), {
