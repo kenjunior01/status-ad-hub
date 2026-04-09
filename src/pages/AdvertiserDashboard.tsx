@@ -18,6 +18,7 @@ import { StatusAIMatchmaker } from "@/components/StatusAIMatchmaker";
 import { StatusAIROIPredictor } from "@/components/StatusAIROIPredictor";
 import { PaymentCheckout } from "@/components/PaymentCheckout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
+import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
@@ -155,6 +156,14 @@ export const AdvertiserDashboard = () => {
               </Card>
               <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />Top Performers</CardTitle></CardHeader><CardContent><TrustIndicators /></CardContent></Card>
             </div>
+
+            {/* AI Campaign Advisor */}
+            <AIPricingAssistant mode="advertiser" advertiserData={{
+              budget: totalSpent || 100,
+              creatorsCount: profiles.length,
+              avgPriceMin: 10,
+              avgPriceMax: 100,
+            }} />
           </TabsContent>
 
           <TabsContent value="campaigns" className="space-y-6">
