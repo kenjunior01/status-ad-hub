@@ -48,7 +48,7 @@ const defaultFilters: FilterState = {
 const Index = ({ onNavigate }: IndexProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
   const { profiles, loading, getFeaturedProfiles, getNewProfiles, getDiscoverProfiles } = useProfiles();
   const { favorites, getFavoriteCount } = useFavorites();
   const [showFloatingCTA, setShowFloatingCTA] = useState(false);

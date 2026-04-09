@@ -29,7 +29,7 @@ interface ValuePropositionSectionProps {
 export const ValuePropositionSection = ({ onNavigate }: ValuePropositionSectionProps) => {
   const { t } = useTranslation();
   const { stats, loading } = usePlatformStats();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -215,7 +215,7 @@ export const ValuePropositionSection = ({ onNavigate }: ValuePropositionSectionP
                 <div className="text-center">
                   {loading ? <Skeleton className="h-8 w-16 mx-auto" /> : (
                     <p className="text-2xl font-bold text-success">
-                      {format(stats?.overview.total_paid_to_creators || 0)}
+                      {formatFromUSD(stats?.overview.total_paid_to_creators || 0)}
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.paid')}</p>

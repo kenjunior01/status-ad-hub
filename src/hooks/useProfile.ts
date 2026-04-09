@@ -19,6 +19,9 @@ interface Profile {
   follower_count: number | null;
   engagement_rate: number | null;
   cpv_rate: number | null;
+  country: string | null;
+  whatsapp_views_min: number | null;
+  whatsapp_views_max: number | null;
   created_at: string | null;
   updated_at: string | null;
 }

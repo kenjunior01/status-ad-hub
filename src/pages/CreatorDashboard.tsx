@@ -19,6 +19,7 @@ import { GamificationProgress } from "@/components/GamificationProgress";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { SwipeCampaignCards } from "@/components/SwipeCampaignCards";
+import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
@@ -128,6 +129,10 @@ export const CreatorDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* AI Pricing Assistant */}
+            <AIPricingAssistant mode="creator" />
+
             <TrustIndicators />
           </TabsContent>
 

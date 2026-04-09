@@ -68,14 +68,14 @@ export const CampaignCard = ({
   onViewAnalytics,
   className 
 }: CampaignCardProps) => {
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
   const status = statusConfig[campaign.status];
   const isActive = campaign.status === "active";
   const partner = viewType === "creator" ? campaign.advertiser : campaign.creator;
 
   const formatCurrency = (value?: number) => {
-    if (!value) return format(0);
-    return format(value);
+    if (!value) return formatFromUSD(0);
+    return formatFromUSD(value);
   };
 
   const formatDate = (dateString: string) => {
