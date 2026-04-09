@@ -5,7 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Shield, TrendingUp, DollarSign, Eye, UserCheck, UserX, Settings } from "lucide-react";
+import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { AdminPaymentSettings } from "@/components/AdminPaymentSettings";
+import { Users, Shield, TrendingUp, DollarSign, Eye, UserCheck, Settings, CreditCard } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const AdminDashboard = () => {
@@ -19,6 +21,7 @@ export const AdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { formatFromUSD } = useLocalizationContext();
 
   useEffect(() => {
     fetchDashboardData();
@@ -28,7 +31,6 @@ export const AdminDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch user roles and profiles
       const { data: rolesData } = await supabase
         .from('user_roles')
         .select(`
@@ -38,7 +40,6 @@ export const AdminDashboard = () => {
           profiles:user_id (display_name, is_verified, rating)
         `);
 
-      // Fetch campaigns for stats
       const { data: campaignsData } = await supabase
         .from('campaigns')
         .select('*');
@@ -59,11 +60,7 @@ export const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar dados do dashboard",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Falha ao carregar dados do dashboard", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -80,7 +77,6 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="h-8 w-8 text-primary" />
@@ -110,10 +106,10 @@ export const AdminDashboard = () => {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Criadores</CardTitle>
-              <UserCheck className="h-4 w-4 text-success" />
+              <UserCheck className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">{stats.totalCreators}</div>
+              <div className="text-2xl font-bold text-primary">{stats.totalCreators}</div>
               <p className="text-xs text-muted-foreground">criadores ativos</p>
             </CardContent>
           </Card>
@@ -132,10 +128,10 @@ export const AdminDashboard = () => {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Campanhas</CardTitle>
-              <Eye className="h-4 w-4 text-orange-500" />
+              <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-500">{stats.totalCampaigns}</div>
+              <div className="text-2xl font-bold">{stats.totalCampaigns}</div>
               <p className="text-xs text-muted-foreground">campanhas criadas</p>
             </CardContent>
           </Card>
@@ -143,11 +139,11 @@ export const AdminDashboard = () => {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Receita</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-500">
-                R$ {stats.totalRevenue.toLocaleString('pt-BR')}
+              <div className="text-2xl font-bold text-primary">
+                {formatFromUSD(stats.totalRevenue)}
               </div>
               <p className="text-xs text-muted-foreground">receita total</p>
             </CardContent>
@@ -156,34 +152,32 @@ export const AdminDashboard = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="creators">Criadores</TabsTrigger>
             <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-1">
+              <CreditCard className="h-3 w-3" /> Pagamentos
+            </TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
-          {/* Users Management */}
           <TabsContent value="users" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Gerenciar Usuários</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie todos os usuários da plataforma
-                </CardDescription>
+                <CardDescription>Visualize e gerencie todos os usuários da plataforma</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {users.map((user, index) => (
                     <div key={user.user_id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
                           {(user.profiles?.display_name || `User ${index + 1}`).charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium">
-                            {user.profiles?.display_name || `User ${index + 1}`}
-                          </p>
+                          <p className="font-medium">{user.profiles?.display_name || `User ${index + 1}`}</p>
                           <div className="flex items-center gap-2">
                             <Badge variant={
                               user.role === 'admin' ? 'destructive' :
@@ -193,22 +187,16 @@ export const AdminDashboard = () => {
                               {user.role}
                             </Badge>
                             {user.profiles?.is_verified && (
-                              <Badge variant="outline" className="text-success">
-                                Verificado
-                              </Badge>
+                              <Badge variant="outline" className="text-primary">Verificado</Badge>
                             )}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {user.profiles?.rating && (
-                          <div className="text-sm text-muted-foreground">
-                            ⭐ {user.profiles.rating}
-                          </div>
+                          <div className="text-sm text-muted-foreground">⭐ {user.profiles.rating}</div>
                         )}
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-4 w-4" />
-                        </Button>
+                        <Button variant="outline" size="sm"><Settings className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   ))}
@@ -217,43 +205,28 @@ export const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Other tabs placeholders */}
           <TabsContent value="creators">
             <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Criadores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Funcionalidade de gerenciamento de criadores será implementada aqui.
-                </p>
-              </CardContent>
+              <CardHeader><CardTitle>Gerenciar Criadores</CardTitle></CardHeader>
+              <CardContent><p className="text-muted-foreground">Funcionalidade de gerenciamento de criadores será implementada aqui.</p></CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="campaigns">
             <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Campanhas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Funcionalidade de gerenciamento de campanhas será implementada aqui.
-                </p>
-              </CardContent>
+              <CardHeader><CardTitle>Gerenciar Campanhas</CardTitle></CardHeader>
+              <CardContent><p className="text-muted-foreground">Funcionalidade de gerenciamento de campanhas será implementada aqui.</p></CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <AdminPaymentSettings />
           </TabsContent>
 
           <TabsContent value="settings">
             <Card>
-              <CardHeader>
-                <CardTitle>Configurações do Sistema</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Configurações globais da plataforma serão implementadas aqui.
-                </p>
-              </CardContent>
+              <CardHeader><CardTitle>Configurações do Sistema</CardTitle></CardHeader>
+              <CardContent><p className="text-muted-foreground">Configurações globais da plataforma serão implementadas aqui.</p></CardContent>
             </Card>
           </TabsContent>
         </Tabs>
