@@ -128,6 +128,10 @@ export const CreatorDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* AI Pricing Assistant */}
+            <AIPricingAssistant mode="creator" />
+
             <TrustIndicators />
           </TabsContent>
 
