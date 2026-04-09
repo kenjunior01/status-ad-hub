@@ -167,8 +167,10 @@ const roleCards = [
 
 export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginFormProps) => {
   const { toast } = useToast();
-  const [step, setStep] = useState(0); // 0: role, 1: details
+  const [step, setStep] = useState(0); // 0: role, 1: details, 2: profile (for creators)
   const [signupData, setSignupData] = useState<SignupFormData>({ name: '', role: 'creator', email: '', password: '' });
+  const [country, setCountry] = useState('');
+  const [viewRange, setViewRange] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
