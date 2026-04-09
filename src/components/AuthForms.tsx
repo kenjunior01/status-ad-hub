@@ -198,12 +198,17 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const selectedViewRange = VIEW_RANGES.find(v => `${v.min}-${v.max}` === viewRange);
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: signupData.name, role: signupData.role }
+          data: { 
+            display_name: signupData.name, 
+            role: signupData.role,
+            country: country || null,
+          }
         }
       });
 
@@ -216,6 +221,17 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
           variant: "destructive",
         });
       } else {
+        // Update profile with country and views
+        if (signUpData?.user) {
+          await supabase
+            .from('profiles')
+            .update({
+              country: country || null,
+              whatsapp_views_min: selectedViewRange?.min || 0,
+              whatsapp_views_max: selectedViewRange?.max || 0,
+            })
+            .eq('user_id', signUpData.user.id);
+        }
         toast({ 
           title: "🎉 Conta criada com sucesso!", 
           description: signupData.role === 'creator' 
