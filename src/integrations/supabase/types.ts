@@ -145,6 +145,151 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_invoices: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          invoice_number: string
+          items: Json
+          message_id: string | null
+          paid_at: string | null
+          pdf_url: string | null
+          quotation_id: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          invoice_number: string
+          items?: Json
+          message_id?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          quotation_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          invoice_number?: string
+          items?: Json
+          message_id?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          quotation_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_invoices_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_invoices_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_invoices_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_quotations: {
+        Row: {
+          accepted_at: string | null
+          amount: number
+          conversation_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          message_id: string | null
+          rejected_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          amount: number
+          conversation_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          rejected_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          amount?: number
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          rejected_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_quotations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_quotations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           campaign_id: string | null
@@ -356,6 +501,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
