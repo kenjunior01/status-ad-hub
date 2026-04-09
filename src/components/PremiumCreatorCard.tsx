@@ -48,7 +48,7 @@ export const PremiumCreatorCard = ({
   showFavoriteButton = false
 }: PremiumCreatorCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
   const isNew = Date.now() - new Date(profile.created_at).getTime() < 7 * 24 * 60 * 60 * 1000;
   const isTopRated = profile.rating >= 4.5 && profile.total_reviews >= 3;
 
@@ -139,7 +139,7 @@ export const PremiumCreatorCard = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[9px] text-muted-foreground">A partir de</p>
-            <p className="font-bold text-xs text-foreground">{format(getBasePrice())}</p>
+            <p className="font-bold text-xs text-foreground">{formatFromUSD(getBasePrice())}</p>
           </div>
           <GamificationBadge badgeLevel={profile.badge_level || 'bronze'} size="xs" />
         </div>

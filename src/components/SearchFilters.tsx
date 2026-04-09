@@ -58,7 +58,7 @@ export const SearchFilters = ({
   className 
 }: SearchFiltersProps) => {
   const { t } = useTranslation();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
 
   const niches = [
     { value: "beauty", label: t('niches.beauty') },

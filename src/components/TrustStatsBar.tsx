@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const TrustStatsBar = () => {
   const { t } = useTranslation();
-  const { format } = useLocalizationContext();
+  const { formatFromUSD } = useLocalizationContext();
   const { stats, loading } = usePlatformStats();
 
   const formatNumber = (num: number) => {
@@ -39,7 +39,7 @@ export const TrustStatsBar = () => {
             <div>
               {loading ? <Skeleton className="h-7 w-20" /> : (
                 <p className="font-bold text-xl text-foreground">
-                  {format(stats?.overview.total_campaign_value || 0)}
+                  {formatFromUSD(stats?.overview.total_campaign_value || 0)}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">{t('hero.stats.paid')}</p>
