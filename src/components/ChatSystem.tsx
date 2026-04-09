@@ -347,6 +347,7 @@ export const ChatSystem = () => {
                     const isQuotation = isQuotationMessage(message.content);
                     const isInvoice = isInvoiceMessage(message.content);
                     const isPayment = isPaymentMessage(message.content);
+                    const isRejection = message.content.startsWith('❌ Cotação recusada:');
                     const isSpecial = isQuotation || isInvoice || isPayment;
 
                     return (
@@ -368,30 +369,36 @@ export const ChatSystem = () => {
                               currency={message.content.split(' — ')[1]?.split(' ')[0] || 'USD'}
                               status="pending"
                               isMine={isMine}
+                              conversationId={selectedConversationId || undefined}
+                              onStatusChange={() => {}}
                             />
                           )}
 
                           {/* Invoice special card */}
-                          {isInvoice && (
-                            <ChatSpecialCard
-                              type="invoice"
-                              invoiceNumber={message.content.replace('🧾 Factura: #', '')}
-                              total={0}
-                              currency="USD"
-                              status="pending"
-                              isMine={isMine}
-                            />
-                          )}
+                          {isInvoice && (() => {
+                            const parts = message.content.replace('🧾 Factura: #', '').split(' — ');
+                            const invoiceNum = parts[0] || '';
+                            const totalStr = parts[1]?.replace(/[^\d.]/g, '') || '0';
+                            const curr = parts[1]?.split(' ')[0] || 'USD';
+                            return (
+                              <ChatSpecialCard
+                                type="invoice"
+                                invoiceNumber={invoiceNum}
+                                total={parseFloat(totalStr)}
+                                currency={curr}
+                                status="pending"
+                                isMine={isMine}
+                              />
+                            );
+                          })()}
 
                           {/* Payment receipt */}
                           {isPayment && (
-                            <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 min-w-[200px]">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Check className="h-4 w-4 text-primary" />
-                                <span className="text-xs font-semibold text-primary">COMPROVATIVO</span>
-                              </div>
-                              <p className="text-sm">{message.content.replace('✅ Pagamento: ', '')}</p>
-                            </div>
+                            <ChatSpecialCard
+                              type="payment"
+                              content={message.content.replace('✅ Pagamento: ', '')}
+                              isMine={isMine}
+                            />
                           )}
 
                           {/* Normal message */}
