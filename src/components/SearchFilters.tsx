@@ -124,7 +124,7 @@ export const SearchFilters = ({
       if (badge) active.push(badge.label);
     }
     if (currentFilters.priceRange[0] > 0 || currentFilters.priceRange[1] < 1000) {
-      active.push(`${format(currentFilters.priceRange[0])} - ${format(currentFilters.priceRange[1])}`);
+      active.push(`${formatFromUSD(currentFilters.priceRange[0])} - ${formatFromUSD(currentFilters.priceRange[1])}`);
     }
 
     setActiveFilters(active);
@@ -275,7 +275,7 @@ export const SearchFilters = ({
                 <div>
                   <label className="text-sm font-medium mb-2 block flex items-center gap-2">
                     <DollarSign className="h-4 w-4" />
-                    {t('filters.priceRange')}: {format(filters.priceRange[0])} - {format(filters.priceRange[1])}
+                    {t('filters.priceRange')}: {formatFromUSD(filters.priceRange[0])} - {formatFromUSD(filters.priceRange[1])}
                   </label>
                   <Slider
                     value={filters.priceRange}
