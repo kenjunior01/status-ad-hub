@@ -2,16 +2,30 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Eye, EyeOff, ArrowLeft, ArrowRight, Check,
   MessageCircle, Megaphone, TrendingUp, DollarSign,
-  Users, BarChart3, Shield, Sparkles, CircleDot
+  Users, BarChart3, Shield, Sparkles, CircleDot, Globe, BarChart
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loginSchema, signupSchema, resetPasswordSchema, type LoginFormData, type SignupFormData } from "@/lib/auth-schemas";
 import { cn } from "@/lib/utils";
+import { countries, regions, getCountriesByRegion } from "@/lib/currencies";
+
+const VIEW_RANGES = [
+  { label: '0 - 50', min: 0, max: 50 },
+  { label: '50 - 100', min: 50, max: 100 },
+  { label: '100 - 300', min: 100, max: 300 },
+  { label: '300 - 500', min: 300, max: 500 },
+  { label: '500 - 1.000', min: 500, max: 1000 },
+  { label: '1.000 - 3.000', min: 1000, max: 3000 },
+  { label: '3.000 - 5.000', min: 3000, max: 5000 },
+  { label: '5.000 - 10.000', min: 5000, max: 10000 },
+  { label: '10.000+', min: 10000, max: 50000 },
+];
 
 interface LoginFormProps {
   onShowPassword: boolean;
