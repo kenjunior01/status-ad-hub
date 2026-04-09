@@ -333,6 +333,83 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
               Continuar <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </motion.div>
+        ) : step === 1 ? (
+          <motion.div
+            key="profile-info"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <button type="button" onClick={() => setStep(0)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+              </button>
+              <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium", selectedRole.bgColor, "text-foreground")}>
+                <selectedRole.icon className="h-3 w-3" />
+                {selectedRole.title}
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center mb-1">
+              <Globe className="inline h-4 w-4 mr-1" />
+              Informações de localização
+            </p>
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground/80 text-xs font-medium uppercase tracking-wider">País</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger className="h-11 bg-muted/30 border-border/40">
+                  <SelectValue placeholder="Selecione seu país" />
+                </SelectTrigger>
+                <SelectContent>
+                  {regions.map(region => (
+                    <div key={region.code}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{region.name}</div>
+                      {getCountriesByRegion(region.code).map(c => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.flag} {c.name}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {signupData.role === 'creator' && (
+              <div className="space-y-1.5">
+                <Label className="text-foreground/80 text-xs font-medium uppercase tracking-wider">
+                  <BarChart className="inline h-3.5 w-3.5 mr-1" />
+                  Visualizações nos Status do WhatsApp
+                </Label>
+                <Select value={viewRange} onValueChange={setViewRange}>
+                  <SelectTrigger className="h-11 bg-muted/30 border-border/40">
+                    <SelectValue placeholder="Intervalo de visualizações" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VIEW_RANGES.map(v => (
+                      <SelectItem key={`${v.min}-${v.max}`} value={`${v.min}-${v.max}`}>
+                        {v.label} visualizações
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Quantas pessoas costumam ver seus Status do WhatsApp?
+                </p>
+              </div>
+            )}
+
+            <Button 
+              onClick={() => setStep(2)} 
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 mt-2"
+              disabled={!country}
+            >
+              Continuar <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </motion.div>
         ) : (
           <motion.div
             key="details"
@@ -345,10 +422,10 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
-                onClick={() => setStep(0)}
+                onClick={() => setStep(1)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="h-3.5 w-3.5" /> Alterar tipo
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar
               </button>
               <div className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium",
@@ -458,7 +535,7 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
 
       {/* Step indicator */}
       <div className="flex justify-center gap-2 pt-1">
-        {[0, 1].map(s => (
+        {[0, 1, 2].map(s => (
           <div
             key={s}
             className={cn(
