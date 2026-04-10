@@ -4,10 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProgressCTA } from "@/components/EnhancedCTA";
-import { TrustIndicators } from "@/components/TrustIndicators";
 import { MetricsCard } from "@/components/MetricsCard";
-import { CampaignCard } from "@/components/CampaignCard";
 import { ProfileEditForm } from "@/components/ProfileEditForm";
 import { EarningsChart } from "@/components/EarningsChart";
 import { DashboardSkeleton } from "@/components/LoadingSkeleton";
@@ -24,20 +21,21 @@ import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Star, 
-  Eye,
+import { motion } from "framer-motion";
+import {
+  DollarSign,
+  TrendingUp,
+  Star,
+  Target,
   Settings,
   Award,
-  Target,
-  Loader2,
   Upload,
-  Wallet
+  Wallet,
+  ChevronRight,
+  Eye,
 } from "lucide-react";
 
-type VerificationStatus = 'not_started' | 'proof_submitted' | 'under_review' | 'verified' | 'rejected';
+type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
 
 export const CreatorDashboard = () => {
   const { t } = useTranslation();
@@ -48,41 +46,42 @@ export const CreatorDashboard = () => {
   const isMobile = useIsMobile();
   const { formatFromUSD } = useLocalizationContext();
 
-  const activeCampaigns = campaigns.filter(c => c.status === 'active' || c.status === 'pending');
-  const completedCampaigns = campaigns.filter(c => c.status === 'completed');
-  
+  const activeCampaigns = campaigns.filter((c) => c.status === "active" || c.status === "pending");
+  const completedCampaigns = campaigns.filter((c) => c.status === "completed");
+
   const totalEarnings = completedCampaigns.reduce((sum, c) => sum + Number(c.price), 0);
   const monthlyEarnings = completedCampaigns
-    .filter(c => {
-      const completedDate = c.completed_at ? new Date(c.completed_at) : null;
-      if (!completedDate) return false;
+    .filter((c) => {
+      const d = c.completed_at ? new Date(c.completed_at) : null;
+      if (!d) return false;
       const now = new Date();
-      return completedDate.getMonth() === now.getMonth() && completedDate.getFullYear() === now.getFullYear();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     })
     .reduce((sum, c) => sum + Number(c.price), 0);
 
-  if (profileLoading || campaignsLoading) {
-    return <DashboardSkeleton />;
-  }
+  if (profileLoading || campaignsLoading) return <DashboardSkeleton />;
+
+  const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.35 } };
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-start">
+      <div className="max-w-6xl mx-auto space-y-5">
+        {/* Compact Header */}
+        <motion.div {...fadeUp} className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Painel do Criador</h1>
-                <GamificationBadge badgeLevel={profile?.badge_level || 'bronze'} size="md" />
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {t("common.hello")}, {profile?.display_name || "Criador"} 👋
+                </h1>
+                <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="md" />
               </div>
-              <p className="text-muted-foreground mt-1">Olá, {profile?.display_name || 'Criador'}! Gerencie suas campanhas e monitore seus ganhos</p>
             </div>
           </div>
           <div className="flex gap-2">
             <NotificationButton />
-            <Button variant="outline" size="sm"><Settings className="h-4 w-4 mr-2" />Configurações</Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Onboarding */}
         <OnboardingFlow
@@ -90,85 +89,122 @@ export const CreatorDashboard = () => {
           role="creator"
           campaignCount={campaigns.length}
           onAction={(action) => {
-            if (action === 'name' || action === 'niche' || action === 'avatar') setActiveTab('profile');
-            if (action === 'first_campaign') setActiveTab('campaigns');
+            if (action === "name" || action === "niche" || action === "avatar") setActiveTab("profile");
+            if (action === "first_campaign") setActiveTab("campaigns");
           }}
           onDismiss={() => {}}
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricsCard title="Total Ganho" value={formatFromUSD(totalEarnings)} icon={DollarSign} variant="success" />
-          <MetricsCard title="Este Mês" value={formatFromUSD(monthlyEarnings)} icon={TrendingUp} variant="primary" />
-          <MetricsCard title="Campanhas Ativas" value={activeCampaigns.length} icon={Target} variant="warning" subtitle="Em andamento" />
-          <MetricsCard title="Avaliação Média" value={profile?.rating || 0} icon={Star} variant="default" subtitle={`${profile?.total_reviews || 0} avaliações`} />
-        </div>
+        {/* Quick Stats — Horizontal scroll on mobile */}
+        <motion.div {...fadeUp} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 scrollbar-hide">
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.totalEarnings")} value={formatFromUSD(totalEarnings)} icon={DollarSign} variant="success" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.thisMonth")} value={formatFromUSD(monthlyEarnings)} icon={TrendingUp} variant="primary" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.activeCampaigns")} value={activeCampaigns.length} icon={Target} variant="warning" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.rating")} value={profile?.rating || 0} icon={Star} variant="default" subtitle={`${profile?.total_reviews || 0} reviews`} />
+          </div>
+        </motion.div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-            <TabsTrigger value="wallet" className="flex items-center gap-1">
-              <Wallet className="h-4 w-4" />
-              Carteira
-            </TabsTrigger>
-            <TabsTrigger value="earnings">Ganhos</TabsTrigger>
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
-          </TabsList>
+        {/* Tabs — Scrollable on mobile */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-5">
+              <TabsTrigger value="overview">📊 {t("dashboard.overview")}</TabsTrigger>
+              <TabsTrigger value="campaigns">📋 {t("dashboard.campaigns")}</TabsTrigger>
+              <TabsTrigger value="wallet" className="flex items-center gap-1">
+                <Wallet className="h-4 w-4" />
+                {t("dashboard.wallet")}
+              </TabsTrigger>
+              <TabsTrigger value="earnings">💰 {t("dashboard.earnings")}</TabsTrigger>
+              <TabsTrigger value="profile">👤 {t("dashboard.profile")}</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Gamification Progress */}
+          <TabsContent value="overview" className="space-y-5">
+            {/* Quick Actions Row */}
+            <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: t("dashboard.campaigns"), icon: "📋", tab: "campaigns", color: "bg-primary/10 text-primary" },
+                { label: t("dashboard.wallet"), icon: "💳", tab: "wallet", color: "bg-success/10 text-success" },
+                { label: t("dashboard.earnings"), icon: "📈", tab: "earnings", color: "bg-warning/10 text-warning" },
+                { label: t("dashboard.profile"), icon: "⚙️", tab: "profile", color: "bg-accent/10 text-accent" },
+              ].map((action) => (
+                <button
+                  key={action.tab}
+                  onClick={() => setActiveTab(action.tab)}
+                  className={`${action.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}
+                >
+                  <span className="text-2xl">{action.icon}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{action.label}</p>
+                    <ChevronRight className="h-3 w-3 opacity-50 mt-0.5" />
+                  </div>
+                </button>
+              ))}
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-5">
               <GamificationProgress />
-              
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" />Performance</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center"><span className="text-sm">Taxa de Conclusão</span><span className="font-semibold text-success">{completedCampaigns.length > 0 ? Math.round((completedCampaigns.length / campaigns.length) * 100) : 0}%</span></div>
-                  <div className="flex justify-between items-center"><span className="text-sm">Campanhas Concluídas</span><span className="font-semibold">{completedCampaigns.length}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-sm">Visualizações do Perfil</span><span className="font-semibold">{profile?.total_campaigns || 0}</span></div>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Award className="h-5 w-5" />
+                    Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{t("dashboard.completionRate")}</span>
+                    <span className="font-semibold text-success">
+                      {completedCampaigns.length > 0 ? Math.round((completedCampaigns.length / campaigns.length) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{t("dashboard.completedCampaigns")}</span>
+                    <span className="font-semibold">{completedCampaigns.length}</span>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* AI Pricing Assistant */}
             <AIPricingAssistant mode="creator" />
-
-            <TrustIndicators />
           </TabsContent>
 
-          <TabsContent value="campaigns" className="space-y-6">
+          <TabsContent value="campaigns" className="space-y-5">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">{t('dashboard.campaigns')}</h2>
-              <Button><Eye className="h-4 w-4 mr-2" />Ver Disponíveis</Button>
+              <h2 className="text-lg font-semibold">{t("dashboard.campaigns")}</h2>
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                {t("dashboard.viewAvailable")}
+              </Button>
             </div>
-            
+
             {selectedCampaignForProof && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <Upload className="h-5 w-5" />
-                    Enviar Comprovante
+                    {t("dashboard.uploadProof")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ProofUploadForm 
-                    campaignId={selectedCampaignForProof} 
-                    onSuccess={() => setSelectedCampaignForProof(null)}
-                  />
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setSelectedCampaignForProof(null)}
-                  >
-                    Cancelar
+                  <ProofUploadForm campaignId={selectedCampaignForProof} onSuccess={() => setSelectedCampaignForProof(null)} />
+                  <Button variant="outline" className="mt-4" onClick={() => setSelectedCampaignForProof(null)}>
+                    {t("common.cancel")}
                   </Button>
                 </CardContent>
               </Card>
             )}
-            
+
             {campaigns.length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground">Você ainda não tem campanhas. Aguarde propostas de anunciantes!</p>
+                <p className="text-muted-foreground">{t("dashboard.noCampaigns")}</p>
               </Card>
             ) : isMobile ? (
               <SwipeCampaignCards>
@@ -176,20 +212,20 @@ export const CreatorDashboard = () => {
                   <Card key={campaign.id} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{campaign.title}</h3>
-                        <VerificationBadge status={(campaign.verification_status as VerificationStatus) || 'not_started'} />
+                        <h3 className="font-semibold text-sm">{campaign.title}</h3>
+                        <VerificationBadge status={(campaign.verification_status as VerificationStatus) || "not_started"} />
                       </div>
-                      <p className="text-sm text-muted-foreground">{campaign.description}</p>
-                      <div className="flex items-center gap-4 text-sm">
-                         <span className="font-medium text-success">{formatFromUSD(Number(campaign.price))}</span>
-                        <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'completed' ? 'secondary' : 'outline'}>
-                          {campaign.status === 'active' ? 'Ativa' : campaign.status === 'completed' ? 'Concluída' : 'Pendente'}
+                      <p className="text-xs text-muted-foreground line-clamp-2">{campaign.description}</p>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="font-medium text-success">{formatFromUSD(Number(campaign.price))}</span>
+                        <Badge variant={campaign.status === "active" ? "default" : campaign.status === "completed" ? "secondary" : "outline"}>
+                          {campaign.status}
                         </Badge>
                       </div>
-                      {campaign.status === 'active' && campaign.verification_status !== 'verified' && (
+                      {campaign.status === "active" && campaign.verification_status !== "verified" && (
                         <Button size="sm" className="w-full" onClick={() => setSelectedCampaignForProof(campaign.id)}>
                           <Upload className="h-4 w-4 mr-2" />
-                          Enviar Prova
+                          {t("dashboard.uploadProof")}
                         </Button>
                       )}
                     </div>
@@ -197,31 +233,29 @@ export const CreatorDashboard = () => {
                 ))}
               </SwipeCampaignCards>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {campaigns.map((campaign) => (
                   <Card key={campaign.id} className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold">{campaign.title}</h3>
-                          <VerificationBadge status={(campaign.verification_status as VerificationStatus) || 'not_started'} />
+                          <VerificationBadge status={(campaign.verification_status as VerificationStatus) || "not_started"} />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{campaign.description}</p>
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{campaign.description}</p>
                         <div className="flex items-center gap-4 text-sm">
                           <span className="font-medium text-success">{formatFromUSD(Number(campaign.price))}</span>
-                          <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'completed' ? 'secondary' : 'outline'}>
-                            {campaign.status === 'active' ? 'Ativa' : campaign.status === 'completed' ? 'Concluída' : 'Pendente'}
+                          <Badge variant={campaign.status === "active" ? "default" : campaign.status === "completed" ? "secondary" : "outline"}>
+                            {campaign.status}
                           </Badge>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {campaign.status === 'active' && campaign.verification_status !== 'verified' && (
-                          <Button size="sm" onClick={() => setSelectedCampaignForProof(campaign.id)}>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Enviar Prova
-                          </Button>
-                        )}
-                      </div>
+                      {campaign.status === "active" && campaign.verification_status !== "verified" && (
+                        <Button size="sm" onClick={() => setSelectedCampaignForProof(campaign.id)}>
+                          <Upload className="h-4 w-4 mr-2" />
+                          {t("dashboard.uploadProof")}
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -229,11 +263,17 @@ export const CreatorDashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="wallet"><CreatorWallet /></TabsContent>
+          <TabsContent value="wallet">
+            <CreatorWallet />
+          </TabsContent>
 
-          <TabsContent value="earnings"><EarningsChart /></TabsContent>
+          <TabsContent value="earnings">
+            <EarningsChart />
+          </TabsContent>
 
-          <TabsContent value="profile"><ProfileEditForm /></TabsContent>
+          <TabsContent value="profile">
+            <ProfileEditForm />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
