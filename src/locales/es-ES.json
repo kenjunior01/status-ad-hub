@@ -690,5 +690,10 @@
     "q4": "Grandes resultados comienzan con el primer paso.",
     "q5": "Tu creatividad es tu mayor activo."
   },
-  "chat": { "sendPaymentProof": "Enviar Comprobante de Pago", "proofSent": "Comprobante enviado", "proofSentDesc": "El comprobante fue enviado para verificación.", "awaitingVerification": "Esperando verificación del admin" }
+  "chat": { "sendPaymentProof": "Enviar Comprobante de Pago", "proofSent": "Comprobante enviado", "proofSentDesc": "El comprobante fue enviado para verificación.", "awaitingVerification": "Esperando verificación del admin" },
+  "profile": {
+    "autoPricing": "Precio Automático Activo",
+    "autoPricingDesc": "Tu precio se calcula automáticamente según tus visualizaciones. CPV base: 0.70 MZN/vista.",
+    "unlockPricing": "Desbloquea precio personalizado por"
+  }
 }
