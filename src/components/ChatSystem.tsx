@@ -10,6 +10,7 @@ import { useConversations, useMessages } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { ImagePreview } from "@/components/ImagePreview";
 import { ChatQuotationForm } from "@/components/ChatQuotationForm";
+import { ChatInvoiceForm } from "@/components/ChatInvoiceForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
