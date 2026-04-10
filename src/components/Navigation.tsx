@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface NavigationProps {
   onNavigate: (page: string) => void;
@@ -43,6 +44,7 @@ export const Navigation = ({ onNavigate, currentPage, auth }: NavigationProps) =
           </div>
 
           <div className="hidden md:flex items-center gap-1">
+            <LanguageSelector />
             <ThemeToggle />
             <Button
               variant="ghost"
