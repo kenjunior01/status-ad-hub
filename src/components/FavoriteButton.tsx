@@ -1,5 +1,4 @@
 import { Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
@@ -30,13 +29,14 @@ export const FavoriteButton = ({
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(e as any); }}
       className={cn(
         sizeClasses[size],
-        "rounded-full transition-all duration-300",
+        "rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer",
         variant === "overlay" 
           ? "bg-background/80 backdrop-blur-sm hover:bg-background shadow-medium"
           : "hover:bg-destructive/10",
@@ -53,6 +53,6 @@ export const FavoriteButton = ({
             : "text-muted-foreground hover:text-destructive"
         )} 
       />
-    </Button>
+    </div>
   );
 };
