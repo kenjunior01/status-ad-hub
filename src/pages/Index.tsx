@@ -8,7 +8,7 @@ import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/compo
 import { SocialProof } from "@/components/TrustIndicators";
 import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
-import { TrustStatsBar } from "@/components/TrustStatsBar";
+import { SponsorAdsCarousel } from "@/components/SponsorAdsCarousel";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -249,8 +249,8 @@ const Index = ({ onNavigate }: IndexProps) => {
         </div>
       </section>
 
-      {/* Trust Stats Bar - Global Stats (Real Data) */}
-      <TrustStatsBar />
+      {/* Sponsor Ads Carousel */}
+      <SponsorAdsCarousel onAdvertise={() => onNavigate?.('auth')} />
 
       {/* Main Listings Section with Sidebar */}
       <section className="py-12 px-4">
