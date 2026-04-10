@@ -18,7 +18,6 @@ export const ProfileEditForm = () => {
   const { profile, loading, saving, uploading, updateProfile, uploadAvatar } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     display_name: "",
