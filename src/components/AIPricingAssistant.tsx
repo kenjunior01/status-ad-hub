@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useProfile } from '@/hooks/useProfile';
@@ -20,6 +21,7 @@ interface AIPricingAssistantProps {
 }
 
 export const AIPricingAssistant = ({ mode, advertiserData }: AIPricingAssistantProps) => {
+  const { t } = useTranslation();
   const { profile } = useProfile();
   const { currency } = useLocalizationContext();
   const [response, setResponse] = useState('');
@@ -103,44 +105,32 @@ export const AIPricingAssistant = ({ mode, advertiserData }: AIPricingAssistantP
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
-          <span>StatusAI — {mode === 'creator' ? 'Assistente de Preço' : 'Consultor de Campanha'}</span>
+          <span>StatusAI — {mode === 'creator' ? t("ai.pricingAssistant") : t("ai.campaignConsultant")}</span>
           <Sparkles className="h-3 w-3 text-warning" />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {!response && !loading && !error && (
           <p className="text-sm text-muted-foreground">
-            {mode === 'creator'
-              ? 'A IA analisa os teus dados (seguidores, engagement, nicho, views) e sugere o preço ideal para os teus posts.'
-              : 'A IA ajuda-te a encontrar os melhores criadores para o teu orçamento e objectivos.'}
+            {mode === 'creator' ? t("ai.creatorDesc") : t("ai.advertiserDesc")}
           </p>
         )}
 
         {error && (
-          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-            {error}
-          </div>
+          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">{error}</div>
         )}
 
         {response && (
-          <div className="text-sm text-foreground bg-muted/50 p-4 rounded-lg whitespace-pre-wrap leading-relaxed">
-            {response}
-          </div>
+          <div className="text-sm text-foreground bg-muted/50 p-4 rounded-lg whitespace-pre-wrap leading-relaxed">{response}</div>
         )}
 
-        <Button
-          onClick={askAI}
-          disabled={loading}
-          size="sm"
-          className="w-full"
-          variant={response ? 'outline' : 'default'}
-        >
+        <Button onClick={askAI} disabled={loading} size="sm" className="w-full" variant={response ? 'outline' : 'default'}>
           {loading ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />A analisar...</>
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("ai.analyzing")}</>
           ) : response ? (
-            <><RefreshCw className="h-4 w-4 mr-2" />Gerar nova análise</>
+            <><RefreshCw className="h-4 w-4 mr-2" />{t("ai.newAnalysis")}</>
           ) : (
-            <><Sparkles className="h-4 w-4 mr-2" />Obter sugestão da IA</>
+            <><Sparkles className="h-4 w-4 mr-2" />{t("ai.getAISuggestion")}</>
           )}
         </Button>
       </CardContent>

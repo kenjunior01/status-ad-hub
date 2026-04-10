@@ -75,7 +75,7 @@ export const AdminDashboard = () => {
       });
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro", description: "Falha ao carregar dados", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.loadError"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -103,12 +103,12 @@ export const AdminDashboard = () => {
 
   const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      active: { variant: "default", label: "Ativa" },
-      pending: { variant: "secondary", label: "Pendente" },
-      completed: { variant: "outline", label: "Concluída" },
-      open: { variant: "destructive", label: "Aberta" },
-      resolved: { variant: "default", label: "Resolvida" },
-      paid: { variant: "default", label: "Pago" },
+      active: { variant: "default", label: t("admin.statusActive") },
+      pending: { variant: "secondary", label: t("admin.statusPending") },
+      completed: { variant: "outline", label: t("admin.statusCompleted") },
+      open: { variant: "destructive", label: t("admin.statusOpen") },
+      resolved: { variant: "default", label: t("admin.statusResolved") },
+      paid: { variant: "default", label: t("admin.statusPaid") },
     };
     const cfg = map[status] || { variant: "outline" as const, label: status };
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
@@ -117,38 +117,35 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background/80 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
-        {/* Header */}
         <motion.div {...fadeUp} className="flex flex-col md:flex-row justify-between items-start gap-3">
           <div className="flex items-center gap-3">
             <Shield className="h-7 w-7 text-primary" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Painel de Administração</h1>
-              <p className="text-sm text-muted-foreground">Controlo total da plataforma StatusAds</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("admin.panel")}</h1>
+              <p className="text-sm text-muted-foreground">{t("admin.platformControl")}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAll} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> Atualizar
+            <RefreshCw className="h-4 w-4" /> {t("admin.refresh")}
           </Button>
         </motion.div>
 
-        {/* Alert for pending items */}
         {(stats.pendingDisputes > 0) && (
           <Alert className="border-warning/30 bg-warning/5">
             <AlertTriangle className="h-4 w-4 text-warning" />
             <AlertDescription>
-              <strong>{stats.pendingDisputes}</strong> disputa(s) aberta(s) aguardando resolução.
-              <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("disputes")}>Ver disputas →</Button>
+              <strong>{stats.pendingDisputes}</strong> {t("admin.disputesPending")}
+              <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("disputes")}>{t("admin.viewDisputes")} →</Button>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Quick Stats */}
         <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Usuários", value: stats.totalUsers, icon: Users, color: "text-primary" },
-            { label: "Criadores", value: stats.totalCreators, icon: UserCheck, color: "text-success" },
-            { label: "Anunciantes", value: stats.totalAdvertisers, icon: TrendingUp, color: "text-warning" },
-            { label: "Receita Total", value: formatFromUSD(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
+            { label: t("admin.users"), value: stats.totalUsers, icon: Users, color: "text-primary" },
+            { label: t("admin.creators"), value: stats.totalCreators, icon: UserCheck, color: "text-success" },
+            { label: t("admin.advertisers"), value: stats.totalAdvertisers, icon: TrendingUp, color: "text-warning" },
+            { label: t("admin.totalRevenue"), value: formatFromUSD(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
           ].map((s) => (
             <Card key={s.label}>
               <CardContent className="p-4">
@@ -164,13 +161,12 @@ export const AdminDashboard = () => {
           ))}
         </motion.div>
 
-        {/* Secondary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Campanhas", value: stats.totalCampaigns, icon: Eye },
-            { label: "Transações", value: stats.totalTransactions, icon: CreditCard },
-            { label: "Faturas", value: stats.totalInvoices, icon: FileText },
-            { label: "Disputas Abertas", value: stats.pendingDisputes, icon: AlertTriangle, alert: stats.pendingDisputes > 0 },
+            { label: t("admin.campaigns"), value: stats.totalCampaigns, icon: Eye },
+            { label: t("admin.transactions"), value: stats.totalTransactions, icon: CreditCard },
+            { label: t("admin.invoices"), value: stats.totalInvoices, icon: FileText },
+            { label: t("admin.openDisputes"), value: stats.pendingDisputes, icon: AlertTriangle, alert: stats.pendingDisputes > 0 },
           ].map((s) => (
             <Card key={s.label} className={s.alert ? "border-destructive/30" : ""}>
               <CardContent className="p-3 flex items-center gap-3">
@@ -184,28 +180,26 @@ export const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
             <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-7">
-              <TabsTrigger value="overview">📊 Resumo</TabsTrigger>
-              <TabsTrigger value="users">👥 Usuários</TabsTrigger>
-              <TabsTrigger value="campaigns">📋 Campanhas</TabsTrigger>
-              <TabsTrigger value="transactions">💳 Transações</TabsTrigger>
-              <TabsTrigger value="disputes">⚠️ Disputas</TabsTrigger>
-              <TabsTrigger value="payments">⚙️ Pagamentos</TabsTrigger>
-              <TabsTrigger value="settings">🔧 Sistema</TabsTrigger>
+              <TabsTrigger value="overview">📊 {t("admin.summary")}</TabsTrigger>
+              <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
+              <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
+              <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
+              <TabsTrigger value="disputes">⚠️ {t("admin.disputes")}</TabsTrigger>
+              <TabsTrigger value="payments">⚙️ {t("admin.payments")}</TabsTrigger>
+              <TabsTrigger value="settings">🔧 {t("admin.system")}</TabsTrigger>
             </TabsList>
           </div>
 
-          {/* === OVERVIEW === */}
           <TabsContent value="overview" className="space-y-5">
             <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: "Usuários", icon: "👥", tab: "users", color: "bg-primary/10 text-primary" },
-                { label: "Campanhas", icon: "📋", tab: "campaigns", color: "bg-success/10 text-success" },
-                { label: "Transações", icon: "💳", tab: "transactions", color: "bg-warning/10 text-warning" },
-                { label: "Disputas", icon: "⚠️", tab: "disputes", color: "bg-destructive/10 text-destructive" },
+                { label: t("admin.users"), icon: "👥", tab: "users", color: "bg-primary/10 text-primary" },
+                { label: t("admin.campaigns"), icon: "📋", tab: "campaigns", color: "bg-success/10 text-success" },
+                { label: t("admin.transactions"), icon: "💳", tab: "transactions", color: "bg-warning/10 text-warning" },
+                { label: t("admin.disputes"), icon: "⚠️", tab: "disputes", color: "bg-destructive/10 text-destructive" },
               ].map((a) => (
                 <button key={a.tab} onClick={() => setActiveTab(a.tab)} className={`${a.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}>
                   <span className="text-2xl">{a.icon}</span>
@@ -218,9 +212,8 @@ export const AdminDashboard = () => {
             </motion.div>
 
             <div className="grid md:grid-cols-2 gap-5">
-              {/* Recent campaigns */}
               <Card>
-                <CardHeader><CardTitle className="text-base">Campanhas Recentes</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t("admin.recentCampaigns")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {campaigns.slice(0, 5).map((c: any) => (
                     <div key={c.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
@@ -231,13 +224,12 @@ export const AdminDashboard = () => {
                       <StatusBadge status={c.status || "pending"} />
                     </div>
                   ))}
-                  {campaigns.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Sem campanhas</p>}
+                  {campaigns.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noCampaigns")}</p>}
                 </CardContent>
               </Card>
 
-              {/* Recent transactions */}
               <Card>
-                <CardHeader><CardTitle className="text-base">Últimas Transações</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t("admin.lastTransactions")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {transactions.slice(0, 5).map((tx: any) => (
                     <div key={tx.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
@@ -251,17 +243,16 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                   ))}
-                  {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Sem transações</p>}
+                  {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noTransactions")}</p>}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Withdrawals */}
             <Card>
-              <CardHeader><CardTitle className="text-base">Saques Pendentes</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{t("admin.pendingWithdrawals")}</CardTitle></CardHeader>
               <CardContent>
                 {withdrawals.filter((w: any) => w.status === "pending").length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum saque pendente</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noPendingWithdrawals")}</p>
                 ) : (
                   <div className="space-y-2">
                     {withdrawals.filter((w: any) => w.status === "pending").map((w: any) => (
@@ -270,7 +261,7 @@ export const AdminDashboard = () => {
                           <p className="font-medium text-sm">{formatFromUSD(Number(w.amount))}</p>
                           <p className="text-xs text-muted-foreground">PIX: {w.pix_key || "—"}</p>
                         </div>
-                        <Badge variant="secondary">Pendente</Badge>
+                        <Badge variant="secondary">{t("admin.statusPending")}</Badge>
                       </div>
                     ))}
                   </div>
@@ -279,26 +270,25 @@ export const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* === USERS === */}
           <TabsContent value="users" className="space-y-5">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar usuários..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+                <Input placeholder={t("admin.searchUsers")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
               </div>
               <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Filtrar role" /></SelectTrigger>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("admin.filterRole")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="creator">Criador</SelectItem>
-                  <SelectItem value="advertiser">Anunciante</SelectItem>
-                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="all">{t("admin.allRoles")}</SelectItem>
+                  <SelectItem value="admin">{t("admin.admin")}</SelectItem>
+                  <SelectItem value="creator">{t("admin.creator")}</SelectItem>
+                  <SelectItem value="advertiser">{t("admin.advertiser")}</SelectItem>
+                  <SelectItem value="user">{t("admin.user")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <p className="text-sm text-muted-foreground">{filteredUsers.length} usuários encontrados</p>
+            <p className="text-sm text-muted-foreground">{filteredUsers.length} {t("admin.usersFound")}</p>
 
             <div className="space-y-2">
               {filteredUsers.map((user: any, i: number) => (
@@ -309,12 +299,12 @@ export const AdminDashboard = () => {
                         {(user.profiles?.display_name || "?").charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{user.profiles?.display_name || "Sem nome"}</p>
+                        <p className="font-medium text-sm">{user.profiles?.display_name || t("admin.noName")}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Badge variant={user.role === "admin" ? "destructive" : user.role === "creator" ? "default" : "secondary"} className="text-[10px]">
                             {user.role}
                           </Badge>
-                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[10px] text-primary">✓ Verificado</Badge>}
+                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[10px] text-primary">✓ {t("admin.verified")}</Badge>}
                           {user.profiles?.country && <span className="text-[10px] text-muted-foreground">{user.profiles.country}</span>}
                           {user.profiles?.niche && <span className="text-[10px] text-muted-foreground">{user.profiles.niche}</span>}
                         </div>
@@ -331,19 +321,18 @@ export const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* === CAMPAIGNS === */}
           <TabsContent value="campaigns" className="space-y-5">
             <div className="flex gap-3">
               <Select value={filterCampaignStatus} onValueChange={setFilterCampaignStatus}>
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="active">Ativa</SelectItem>
-                  <SelectItem value="completed">Concluída</SelectItem>
+                  <SelectItem value="all">{t("admin.allRoles")}</SelectItem>
+                  <SelectItem value="pending">{t("admin.statusPending")}</SelectItem>
+                  <SelectItem value="active">{t("admin.statusActive")}</SelectItem>
+                  <SelectItem value="completed">{t("admin.statusCompleted")}</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground self-center">{filteredCampaigns.length} campanhas</p>
+              <p className="text-sm text-muted-foreground self-center">{filteredCampaigns.length} {t("admin.campaigns").toLowerCase()}</p>
             </div>
 
             <div className="space-y-2">
@@ -359,22 +348,19 @@ export const AdminDashboard = () => {
                         {c.escrow_status && <span>🔒 Escrow: {c.escrow_status}</span>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={c.status || "pending"} />
-                    </div>
+                    <StatusBadge status={c.status || "pending"} />
                   </div>
                 </Card>
               ))}
               {filteredCampaigns.length === 0 && (
-                <Card className="p-8 text-center"><p className="text-muted-foreground">Sem campanhas</p></Card>
+                <Card className="p-8 text-center"><p className="text-muted-foreground">{t("admin.noCampaigns")}</p></Card>
               )}
             </div>
           </TabsContent>
 
-          {/* === TRANSACTIONS === */}
           <TabsContent value="transactions" className="space-y-5">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" /> Todas as Transações
+              <CreditCard className="h-5 w-5 text-primary" /> {t("admin.allTransactions")}
             </h2>
             <div className="space-y-2">
               {transactions.map((tx: any) => (
@@ -384,8 +370,8 @@ export const AdminDashboard = () => {
                       <p className="font-medium text-sm">{tx.type}</p>
                       <p className="text-xs text-muted-foreground">{tx.description || "—"}</p>
                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>Taxa: {formatFromUSD(Number(tx.platform_fee || 0))}</span>
-                        <span>Líquido: {formatFromUSD(Number(tx.net_amount || 0))}</span>
+                        <span>{t("admin.fee")}: {formatFromUSD(Number(tx.platform_fee || 0))}</span>
+                        <span>{t("admin.net")}: {formatFromUSD(Number(tx.net_amount || 0))}</span>
                         <span>{new Date(tx.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -397,13 +383,12 @@ export const AdminDashboard = () => {
                 </Card>
               ))}
               {transactions.length === 0 && (
-                <Card className="p-8 text-center"><p className="text-muted-foreground">Sem transações</p></Card>
+                <Card className="p-8 text-center"><p className="text-muted-foreground">{t("admin.noTransactions")}</p></Card>
               )}
             </div>
 
-            {/* Invoices section */}
             <h3 className="text-base font-semibold flex items-center gap-2 pt-4">
-              <FileText className="h-4 w-4 text-primary" /> Faturas ({invoices.length})
+              <FileText className="h-4 w-4 text-primary" /> {t("admin.invoices")} ({invoices.length})
             </h3>
             <div className="space-y-2">
               {invoices.slice(0, 20).map((inv: any) => (
@@ -420,12 +405,11 @@ export const AdminDashboard = () => {
                   </div>
                 </Card>
               ))}
-              {invoices.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Sem faturas</p>}
+              {invoices.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noInvoices")}</p>}
             </div>
 
-            {/* Withdrawals */}
             <h3 className="text-base font-semibold flex items-center gap-2 pt-4">
-              💸 Saques ({withdrawals.length})
+              💸 {t("admin.withdrawals")} ({withdrawals.length})
             </h3>
             <div className="space-y-2">
               {withdrawals.map((w: any) => (
@@ -439,19 +423,18 @@ export const AdminDashboard = () => {
                   </div>
                 </Card>
               ))}
-              {withdrawals.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Sem saques</p>}
+              {withdrawals.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noWithdrawals")}</p>}
             </div>
           </TabsContent>
 
-          {/* === DISPUTES === */}
           <TabsContent value="disputes" className="space-y-5">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" /> Gestão de Disputas
+              <AlertTriangle className="h-5 w-5 text-warning" /> {t("admin.disputeManagement")}
             </h2>
             {disputes.length === 0 ? (
               <Card className="p-8 text-center">
                 <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-                <p className="text-muted-foreground">Nenhuma disputa registada 🎉</p>
+                <p className="text-muted-foreground">{t("admin.noDisputes")}</p>
               </Card>
             ) : (
               <div className="space-y-3">
@@ -464,14 +447,14 @@ export const AdminDashboard = () => {
                           <p className="font-semibold text-sm">{d.reason}</p>
                           <StatusBadge status={d.status || "open"} />
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1">{d.description || "Sem descrição"}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{d.description || t("admin.noDescription")}</p>
                         <div className="flex gap-3 text-xs text-muted-foreground">
-                          <span>Campanha: {(d.campaigns as any)?.title || "—"}</span>
+                          <span>{t("admin.campaign")}: {(d.campaigns as any)?.title || "—"}</span>
                           <span>{new Date(d.created_at).toLocaleDateString()}</span>
                         </div>
                         {d.resolution && (
                           <div className="mt-2 p-2 bg-success/10 rounded-lg text-xs">
-                            <strong>Resolução:</strong> {d.resolution}
+                            <strong>{t("admin.resolution")}:</strong> {d.resolution}
                           </div>
                         )}
                       </div>
@@ -482,61 +465,59 @@ export const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          {/* === PAYMENTS === */}
           <TabsContent value="payments">
             <AdminPaymentSettings />
           </TabsContent>
 
-          {/* === SETTINGS === */}
           <TabsContent value="settings" className="space-y-5">
             <Card>
-              <CardHeader><CardTitle className="text-base">Configurações da Plataforma</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{t("admin.platformSettings")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">Comissão da Plataforma</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.platformCommission")}</p>
                     <p className="text-2xl font-bold text-primary">18%</p>
-                    <p className="text-xs text-muted-foreground">por transação concluída</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.perTransaction")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">CPV Base</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.baseCPV")}</p>
                     <p className="text-2xl font-bold text-primary">$0.65</p>
-                    <p className="text-xs text-muted-foreground">custo por visualização</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.costPerView")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">Saque Mínimo</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.minWithdrawal")}</p>
                     <p className="text-2xl font-bold text-primary">$50</p>
-                    <p className="text-xs text-muted-foreground">valor mínimo para saque</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.minWithdrawalValue")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">Ads por Dia (Criador)</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.adsPerDay")}</p>
                     <p className="text-2xl font-bold text-primary">3</p>
-                    <p className="text-xs text-muted-foreground">limite máximo de anúncios/dia</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.maxAdsPerDay")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">Sponsor Ad Mensal</p>
-                    <p className="text-2xl font-bold text-primary">$50/mês</p>
-                    <p className="text-xs text-muted-foreground">custo de anúncio na homepage</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.sponsorAd")}</p>
+                    <p className="text-2xl font-bold text-primary">$50/{t("admin.weekly").toLowerCase().charAt(0) === 's' ? 'mo' : 'mo'}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.homepageAd")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">Processamento de Saques</p>
-                    <p className="text-2xl font-bold text-primary">Semanal</p>
-                    <p className="text-xs text-muted-foreground">às segundas-feiras</p>
+                    <p className="font-medium text-sm mb-1">{t("admin.withdrawalProcessing")}</p>
+                    <p className="text-2xl font-bold text-primary">{t("admin.weekly")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.onMondays")}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">Resumo do Sistema</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{t("admin.systemSummary")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Idiomas:</span> PT, EN, FR</div>
-                  <div><span className="text-muted-foreground">Moeda base:</span> USD</div>
-                  <div><span className="text-muted-foreground">Gateways:</span> Stripe, PayPal, PaySuite</div>
-                  <div><span className="text-muted-foreground">Storage:</span> 3 buckets</div>
-                  <div><span className="text-muted-foreground">Auth:</span> Email, Google, Apple</div>
-                  <div><span className="text-muted-foreground">AI:</span> StatusAI (Gemini)</div>
+                  <div><span className="text-muted-foreground">{t("admin.languages")}:</span> PT, EN, ES, FR</div>
+                  <div><span className="text-muted-foreground">{t("admin.baseCurrency")}:</span> USD</div>
+                  <div><span className="text-muted-foreground">{t("admin.gateways")}:</span> Stripe, PayPal, PaySuite, Offline</div>
+                  <div><span className="text-muted-foreground">{t("admin.storage")}:</span> 3 buckets</div>
+                  <div><span className="text-muted-foreground">{t("admin.auth")}:</span> Email, Google, Apple</div>
+                  <div><span className="text-muted-foreground">{t("admin.aiLabel")}:</span> StatusAI (Gemini)</div>
                 </div>
               </CardContent>
             </Card>

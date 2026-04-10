@@ -49,71 +49,63 @@ export const OnboardingFlow = ({ profile, role, campaignCount = 0, onAction, onD
 
   const creatorSteps: OnboardingStep[] = [
     {
-      id: "name",
-      icon: User,
-      title: "Complete seu perfil",
-      description: "Adicione nome, bio e foto para atrair mais anunciantes",
+      id: "name", icon: User,
+      title: t("onboarding.completeProfile"),
+      description: t("onboarding.completeProfileDesc"),
       isComplete: !!(profile?.display_name && profile?.bio),
-      actionLabel: "Editar Perfil",
+      actionLabel: t("onboarding.editProfile"),
     },
     {
-      id: "niche",
-      icon: Globe,
-      title: "Defina seu nicho",
-      description: "Escolha sua categoria para aparecer nas buscas certas",
+      id: "niche", icon: Globe,
+      title: t("onboarding.defineNiche"),
+      description: t("onboarding.defineNicheDesc"),
       isComplete: !!profile?.niche,
-      actionLabel: "Definir Nicho",
+      actionLabel: t("onboarding.defineNicheAction"),
     },
     {
-      id: "avatar",
-      icon: Camera,
-      title: "Adicione uma foto",
-      description: "Perfis com foto recebem 3x mais propostas",
+      id: "avatar", icon: Camera,
+      title: t("onboarding.addPhoto"),
+      description: t("onboarding.addPhotoDesc"),
       isComplete: !!profile?.avatar_url,
-      actionLabel: "Adicionar Foto",
+      actionLabel: t("onboarding.addPhotoAction"),
     },
     {
-      id: "first_campaign",
-      icon: Upload,
-      title: "Envie sua primeira prova",
-      description: "Complete uma campanha e envie o comprovante para ganhar",
+      id: "first_campaign", icon: Upload,
+      title: t("onboarding.firstProof"),
+      description: t("onboarding.firstProofDesc"),
       isComplete: (profile?.total_campaigns || 0) > 0,
-      actionLabel: "Ver Campanhas",
+      actionLabel: t("onboarding.viewCampaigns"),
     },
   ];
 
   const advertiserSteps: OnboardingStep[] = [
     {
-      id: "create_campaign",
-      icon: Target,
-      title: "Crie sua primeira campanha",
-      description: "Defina título, orçamento e escolha um criador",
+      id: "create_campaign", icon: Target,
+      title: t("onboarding.createCampaign"),
+      description: t("onboarding.createCampaignDesc"),
       isComplete: campaignCount > 0,
-      actionLabel: "Nova Campanha",
+      actionLabel: t("dashboard.newCampaign"),
     },
     {
-      id: "find_creator",
-      icon: Bot,
-      title: "Use o StatusAI Matchmaker",
-      description: "Encontre o criador ideal com inteligência artificial",
-      isComplete: false, // dynamic
-      actionLabel: "Ir para StatusAI",
-    },
-    {
-      id: "make_payment",
-      icon: CreditCard,
-      title: "Faça o pagamento seguro",
-      description: "Pague via Stripe, PayPal ou M-Pesa com proteção escrow",
+      id: "find_creator", icon: Bot,
+      title: t("onboarding.useMatchmaker"),
+      description: t("onboarding.useMatchmakerDesc"),
       isComplete: false,
-      actionLabel: "Ver Pagamentos",
+      actionLabel: t("onboarding.goToStatusAI"),
     },
     {
-      id: "review_proof",
-      icon: CheckCircle,
-      title: "Acompanhe a verificação",
-      description: "Revise as provas enviadas pelos criadores",
+      id: "make_payment", icon: CreditCard,
+      title: t("onboarding.securePayment"),
+      description: t("onboarding.securePaymentDesc"),
       isComplete: false,
-      actionLabel: "Ver Verificações",
+      actionLabel: t("onboarding.viewPayments"),
+    },
+    {
+      id: "review_proof", icon: CheckCircle,
+      title: t("onboarding.trackVerification"),
+      description: t("onboarding.trackVerificationDesc"),
+      isComplete: false,
+      actionLabel: t("onboarding.viewVerifications"),
     },
   ];
 
@@ -142,10 +134,7 @@ export const OnboardingFlow = ({ profile, role, campaignCount = 0, onAction, onD
       exit={{ opacity: 0, y: -10 }}
       className="glass border-border/40 rounded-xl p-4 md:p-5 relative overflow-hidden"
     >
-      <button
-        onClick={handleDismiss}
-        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors z-10"
-      >
+      <button onClick={handleDismiss} className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors z-10">
         <X className="h-4 w-4" />
       </button>
 
@@ -155,10 +144,10 @@ export const OnboardingFlow = ({ profile, role, campaignCount = 0, onAction, onD
         </div>
         <div className="flex-1">
           <h3 className="font-semibold text-sm text-foreground">
-            {isAdvertiser ? "Lance sua primeira campanha! 🚀" : "Comece com tudo! 🚀"}
+            {isAdvertiser ? t("onboarding.launchCampaign") : t("onboarding.getStarted")}
           </h3>
           <p className="text-xs text-muted-foreground">
-            {completedSteps}/{steps.length} passos concluídos
+            {t("onboarding.stepsCompleted", { done: completedSteps, total: steps.length })}
           </p>
         </div>
         <div className="text-right">
@@ -181,36 +170,23 @@ export const OnboardingFlow = ({ profile, role, campaignCount = 0, onAction, onD
               transition={{ delay: i * 0.08 }}
               className={cn(
                 "flex items-start gap-2.5 p-3 rounded-lg border transition-all cursor-pointer",
-                step.isComplete
-                  ? "bg-primary/5 border-primary/20"
-                  : isHighlighted
-                    ? "bg-muted/50 border-primary/30 ring-1 ring-primary/20"
-                    : "bg-muted/20 border-border/30 hover:border-border/50"
+                step.isComplete ? "bg-primary/5 border-primary/20"
+                  : isHighlighted ? "bg-muted/50 border-primary/30 ring-1 ring-primary/20"
+                  : "bg-muted/20 border-border/30 hover:border-border/50"
               )}
               onClick={() => !step.isComplete && onAction(step.id)}
             >
               <div className={cn(
                 "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center",
-                step.isComplete
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                step.isComplete ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               )}>
-                {step.isComplete ? (
-                  <CheckCircle className="h-4 w-4" />
-                ) : (
-                  <Icon className="h-3.5 w-3.5" />
-                )}
+                {step.isComplete ? <CheckCircle className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "text-xs font-medium",
-                  step.isComplete ? "text-primary line-through" : "text-foreground"
-                )}>
+                <p className={cn("text-xs font-medium", step.isComplete ? "text-primary line-through" : "text-foreground")}>
                   {step.title}
                 </p>
-                <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
-                  {step.description}
-                </p>
+                <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{step.description}</p>
                 {!step.isComplete && isHighlighted && (
                   <Button size="sm" variant="link" className="h-auto p-0 text-[10px] text-primary mt-1">
                     {step.actionLabel} <ArrowRight className="h-2.5 w-2.5 ml-0.5" />
