@@ -25,22 +25,6 @@ const Auth = ({ onNavigate }: AuthProps) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(async () => {
-            try {
-              const { data: roleData } = await supabase
-                .rpc('get_user_role', { _user_id: session.user.id });
-              
-              if (roleData === 'admin') onNavigate('admin-dashboard');
-              else if (roleData === 'creator') onNavigate('creator-dashboard');
-              else if (roleData === 'advertiser') onNavigate('advertiser-dashboard');
-              else onNavigate('index');
-            } catch {
-              onNavigate('index');
-            }
-          }, 100);
-        }
       }
     );
 

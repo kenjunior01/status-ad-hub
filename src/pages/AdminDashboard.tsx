@@ -115,6 +115,14 @@ export const AdminDashboard = () => {
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
   };
 
+  const greetings = [
+    t("admin.greeting1", "Cada decisão sua impacta milhares de vidas. Continue fazendo a diferença! 🚀"),
+    t("admin.greeting2", "Liderar é servir. A plataforma cresce porque você cuida dela. 💪"),
+    t("admin.greeting3", "O sucesso da comunidade é o seu sucesso. Obrigado por estar aqui! 🌟"),
+    t("admin.greeting4", "Grandes plataformas começam com grandes administradores. Você é um deles! ⭐"),
+  ];
+  const dailyGreeting = greetings[new Date().getDay() % greetings.length];
+
   return (
     <div className="min-h-screen bg-background/80 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
@@ -122,8 +130,8 @@ export const AdminDashboard = () => {
           <div className="flex items-center gap-3">
             <Shield className="h-7 w-7 text-primary" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("admin.panel")}</h1>
-              <p className="text-sm text-muted-foreground">{t("admin.platformControl")}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("common.hello")}, Admin 👋</h1>
+              <p className="text-sm text-muted-foreground italic">{dailyGreeting}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAll} className="gap-2">
@@ -188,7 +196,7 @@ export const AdminDashboard = () => {
               <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
               <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
-              <TabsTrigger value="offline">📄 Offline</TabsTrigger>
+              <TabsTrigger value="offline">📄 {t("admin.offlinePayments")}</TabsTrigger>
               <TabsTrigger value="disputes">⚠️ {t("admin.disputes")}</TabsTrigger>
               <TabsTrigger value="payments">⚙️ {t("admin.payments")}</TabsTrigger>
               <TabsTrigger value="settings">🔧 {t("admin.system")}</TabsTrigger>

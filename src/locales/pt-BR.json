@@ -680,7 +680,12 @@
     "gateways": "Gateways",
     "storage": "Storage",
     "auth": "Auth",
-    "aiLabel": "AI"
+    "aiLabel": "AI",
+    "offlinePayments": "Pagamentos Offline",
+    "greeting1": "Cada decisão sua impacta milhares de vidas. Continue fazendo a diferença! 🚀",
+    "greeting2": "Liderar é servir. A plataforma cresce porque você cuida dela. 💪",
+    "greeting3": "O sucesso da comunidade é o seu sucesso. Obrigado por estar aqui! 🌟",
+    "greeting4": "Grandes plataformas começam com grandes administradores. Você é um deles! ⭐"
   },
   "greeting": {
     "morning": "Bom dia",

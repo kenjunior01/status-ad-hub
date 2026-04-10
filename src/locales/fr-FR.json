@@ -680,7 +680,12 @@
     "gateways": "Passerelles",
     "storage": "Stockage",
     "auth": "Auth",
-    "aiLabel": "IA"
+    "aiLabel": "IA",
+    "offlinePayments": "Paiements Hors Ligne",
+    "greeting1": "Chaque décision que vous prenez impacte des milliers de vies. Continuez à faire la différence ! 🚀",
+    "greeting2": "Diriger, c'est servir. La plateforme grandit parce que vous en prenez soin. 💪",
+    "greeting3": "Le succès de la communauté est votre succès. Merci d'être là ! 🌟",
+    "greeting4": "Les grandes plateformes commencent avec de grands administrateurs. Vous en êtes un ! ⭐"
   },
   "greeting": { "morning": "Bonjour", "afternoon": "Bon après-midi", "evening": "Bonsoir" },
   "inspiration": {

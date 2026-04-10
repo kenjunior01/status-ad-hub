@@ -32,6 +32,7 @@ function AppContent() {
   const auth = useAuthReady();
   const [currentPage, setCurrentPage] = useState("index");
   const [appReady, setAppReady] = useState(false);
+  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
   // Splash screen
   useEffect(() => {
@@ -46,6 +47,21 @@ function AppContent() {
       setCurrentPage('reset-password');
     }
   }, []);
+
+  // Auto-redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (auth.isReady && auth.user && !hasAutoRedirected) {
+      const dashboardPages = ['creator-dashboard', 'advertiser-dashboard', 'admin-dashboard'];
+      if (!dashboardPages.includes(currentPage) && currentPage !== 'reset-password' && currentPage !== 'terms' && currentPage !== 'privacy' && currentPage !== 'academia') {
+        setCurrentPage(auth.getDashboardPage());
+        setHasAutoRedirected(true);
+      }
+    }
+    // Reset redirect flag on logout
+    if (auth.isReady && !auth.user) {
+      setHasAutoRedirected(false);
+    }
+  }, [auth.isReady, auth.user, auth.userRole]);
 
   if (!appReady) {
     return <AnimatedLoading />;
