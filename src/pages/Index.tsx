@@ -9,8 +9,6 @@ import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/compo
 import { SocialProof } from "@/components/TrustIndicators";
 import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
-import { SponsorAdsCarousel } from "@/components/SponsorAdsCarousel";
-import { SponsorAdPurchaseModal } from "@/components/SponsorAdPurchaseModal";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
