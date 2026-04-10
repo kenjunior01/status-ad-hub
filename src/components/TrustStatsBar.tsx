@@ -12,7 +12,7 @@ export const TrustStatsBar = () => {
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toLocaleString('pt-BR');
+    return num.toLocaleString();
   };
 
   return (
@@ -55,7 +55,7 @@ export const TrustStatsBar = () => {
                   {formatNumber(stats?.overview.total_campaigns || 0)}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">Campanhas</p>
+              <p className="text-xs text-muted-foreground">{t('hero.stats.campaigns')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -68,7 +68,7 @@ export const TrustStatsBar = () => {
                   {stats?.overview.completion_rate || 0}%
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">Taxa de Conclusão</p>
+              <p className="text-xs text-muted-foreground">{t('campaign.progress')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

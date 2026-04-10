@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,29 +38,6 @@ interface CampaignCardProps {
   className?: string;
 }
 
-const statusConfig = {
-  active: { 
-    color: "bg-success text-success-foreground", 
-    label: "Ativa",
-    indicator: "bg-success"
-  },
-  pending: { 
-    color: "bg-warning text-warning-foreground", 
-    label: "Pendente",
-    indicator: "bg-warning"
-  },
-  completed: { 
-    color: "bg-primary text-primary-foreground", 
-    label: "Concluída",
-    indicator: "bg-primary"
-  },
-  paused: { 
-    color: "bg-muted text-muted-foreground", 
-    label: "Pausada",
-    indicator: "bg-muted"
-  }
-};
-
 export const CampaignCard = ({ 
   campaign, 
   viewType = "creator",
@@ -68,7 +46,32 @@ export const CampaignCard = ({
   onViewAnalytics,
   className 
 }: CampaignCardProps) => {
+  const { t } = useTranslation();
   const { formatFromUSD } = useLocalizationContext();
+
+  const statusConfig = {
+    active: { 
+      color: "bg-success text-success-foreground", 
+      label: t('campaignCard.active'),
+      indicator: "bg-success"
+    },
+    pending: { 
+      color: "bg-warning text-warning-foreground", 
+      label: t('campaignCard.pending'),
+      indicator: "bg-warning"
+    },
+    completed: { 
+      color: "bg-primary text-primary-foreground", 
+      label: t('campaignCard.completed'),
+      indicator: "bg-primary"
+    },
+    paused: { 
+      color: "bg-muted text-muted-foreground", 
+      label: t('campaignCard.paused'),
+      indicator: "bg-muted"
+    }
+  };
+
   const status = statusConfig[campaign.status];
   const isActive = campaign.status === "active";
   const partner = viewType === "creator" ? campaign.advertiser : campaign.creator;
@@ -76,10 +79,6 @@ export const CampaignCard = ({
   const formatCurrency = (value?: number) => {
     if (!value) return formatFromUSD(0);
     return formatFromUSD(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   const getDaysLeft = (deadline: string) => {
@@ -96,7 +95,6 @@ export const CampaignCard = ({
       className
     )}>
       <CardContent className="p-6">
-        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors truncate">
@@ -104,128 +102,88 @@ export const CampaignCard = ({
             </h3>
             {partner && (
               <p className="text-muted-foreground text-sm">
-                {viewType === "creator" ? "por" : "com"} {partner}
+                {viewType === "creator" ? t('campaignCard.by') : t('campaignCard.with')} {partner}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className={cn("w-2 h-2 rounded-full", status.indicator)} />
-            <Badge className={status.color}>
-              {status.label}
-            </Badge>
+            <Badge className={status.color}>{status.label}</Badge>
           </div>
         </div>
 
-        {/* Metrics */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="space-y-1">
             <div className="text-2xl font-bold text-foreground">
-              {viewType === "creator" 
-                ? formatCurrency(campaign.price)
-                : formatCurrency(campaign.spent)} 
+              {viewType === "creator" ? formatCurrency(campaign.price) : formatCurrency(campaign.spent)} 
             </div>
             <div className="text-xs text-muted-foreground">
               {viewType === "creator" 
-                ? "Valor do projeto"
-                : `de ${formatCurrency(campaign.budget)}`}
+                ? t('campaignCard.projectValue')
+                : `${t('campaignCard.of')} ${formatCurrency(campaign.budget)}`}
             </div>
           </div>
-          
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-primary">
-              {campaign.progress}%
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Progresso
-            </div>
+            <div className="text-2xl font-bold text-primary">{campaign.progress}%</div>
+            <div className="text-xs text-muted-foreground">{t('campaignCard.progress')}</div>
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="mb-4">
-          <Progress 
-            value={campaign.progress} 
-            className="h-2"
-          />
+          <Progress value={campaign.progress} className="h-2" />
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-3 gap-4 mb-4 text-center">
           <div>
             <div className="flex items-center justify-center gap-1 text-muted-foreground">
               <CalendarDays className="h-3 w-3" />
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {daysLeft > 0 ? `${daysLeft} dias` : "Vencido"}
+              {daysLeft > 0 ? `${daysLeft} ${t('campaignCard.days')}` : t('campaignCard.expired')}
             </div>
           </div>
-          
           {campaign.reach && (
             <div>
               <div className="flex items-center justify-center gap-1 text-muted-foreground">
                 <Eye className="h-3 w-3" />
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {campaign.reach > 999 
-                  ? `${(campaign.reach / 1000).toFixed(1)}k`
-                  : campaign.reach} views
+                {campaign.reach > 999 ? `${(campaign.reach / 1000).toFixed(1)}k` : campaign.reach} views
               </div>
             </div>
           )}
-          
           {campaign.engagement && (
             <div>
               <div className="flex items-center justify-center gap-1 text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {campaign.engagement}% eng.
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">{campaign.engagement}% eng.</div>
             </div>
           )}
         </div>
 
-        {/* Deadline Warning */}
         {daysLeft <= 3 && daysLeft > 0 && (
           <div className="mb-4 p-2 bg-warning/10 border border-warning/20 rounded-md">
             <div className="flex items-center gap-2 text-warning">
               <Timer className="h-4 w-4" />
-              <span className="text-xs font-medium">
-                Prazo próximo: {formatDate(campaign.deadline)}
-              </span>
+              <span className="text-xs font-medium">{t('campaignCard.deadlineClose')}</span>
             </div>
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => onOpenChat?.(campaign)}
-            className="flex-1"
-          >
+          <Button size="sm" variant="outline" onClick={() => onOpenChat?.(campaign)} className="flex-1">
             <MessageCircle className="h-4 w-4 mr-1" />
             Chat
           </Button>
-          
           {viewType === "advertiser" && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => onViewAnalytics?.(campaign)}
-            >
+            <Button size="sm" variant="outline" onClick={() => onViewAnalytics?.(campaign)}>
               <BarChart3 className="h-4 w-4 mr-1" />
               Analytics
             </Button>
           )}
-          
-          <Button 
-            size="sm"
-            onClick={() => onViewDetails?.(campaign)}
-            className="bg-gradient-primary hover:bg-gradient-primary/90"
-          >
-            Ver Detalhes
+          <Button size="sm" onClick={() => onViewDetails?.(campaign)} className="bg-gradient-primary hover:bg-gradient-primary/90">
+            {t('campaignCard.viewDetails')}
           </Button>
         </div>
       </CardContent>

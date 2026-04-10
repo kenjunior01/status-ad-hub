@@ -9,6 +9,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { LocalizationProvider } from "@/contexts/LocalizationContext";
 import { useAdaptiveTheme } from "@/hooks/useAdaptiveTheme";
 import { useAuthReady } from "@/hooks/useAuthReady";
+import { AnimatedLoading } from "@/components/AnimatedLoading";
+import { StatusBotMascot } from "@/components/StatusBotMascot";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -26,6 +28,13 @@ function AppContent() {
   useAdaptiveTheme();
   const auth = useAuthReady();
   const [currentPage, setCurrentPage] = useState("index");
+  const [appReady, setAppReady] = useState(false);
+
+  // Splash screen
+  useEffect(() => {
+    const timer = setTimeout(() => setAppReady(true), 2200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Detect password recovery link on load
   useEffect(() => {
@@ -34,6 +43,10 @@ function AppContent() {
       setCurrentPage('reset-password');
     }
   }, []);
+
+  if (!appReady) {
+    return <AnimatedLoading />;
+  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -69,6 +82,7 @@ function AppContent() {
         </PageTransition>
       </main>
       <BottomNavigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
+      <StatusBotMascot />
     </div>
   );
 }
