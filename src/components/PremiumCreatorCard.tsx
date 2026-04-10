@@ -19,6 +19,7 @@ interface Profile {
   is_verified: boolean;
   badge_level: string;
   created_at: string;
+  avatar_url?: string | null;
 }
 
 interface PremiumCreatorCardProps {
@@ -95,12 +96,21 @@ export const PremiumCreatorCard = ({
 
       <div className="p-2 pb-0">
         <div className="relative">
-          <div className={cn("w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br", getAvatarGradient(profile.display_name))}>
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white/90">
-                {profile.display_name.charAt(0).toUpperCase()}
-              </span>
-            </div>
+          <div className={cn("w-full aspect-square rounded-lg overflow-hidden", !profile.avatar_url && `bg-gradient-to-br ${getAvatarGradient(profile.display_name)}`)}>
+            {profile.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt={profile.display_name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-2xl font-bold text-white/90">
+                  {profile.display_name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
           {profile.is_verified && (
             <div className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
