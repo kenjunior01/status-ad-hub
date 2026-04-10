@@ -485,7 +485,7 @@ export const AdminDashboard = () => {
 
           <TabsContent value="settings" className="space-y-5">
             <Card>
-              <CardHeader><CardTitle className="text-base">{t("admin.platformSettings")}</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">⚙️ {t("admin.platformSettings")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 border rounded-lg">
@@ -499,28 +499,30 @@ export const AdminDashboard = () => {
                     <p className="text-xs text-muted-foreground">≈ $0.011 USD {t("admin.costPerView")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.minWithdrawal")}</p>
-                    <p className="text-2xl font-bold text-primary">$50</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.minWithdrawalValue")}</p>
-                  </div>
-                  <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.adsPerDay")}</p>
                     <p className="text-2xl font-bold text-primary">3</p>
                     <p className="text-xs text-muted-foreground">{t("admin.maxAdsPerDay")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.sponsorAd")}</p>
-                    <p className="text-2xl font-bold text-primary">$50/{t("admin.weekly").toLowerCase().charAt(0) === 's' ? 'mo' : 'mo'}</p>
+                    <p className="text-2xl font-bold text-primary">$50/mês</p>
                     <p className="text-xs text-muted-foreground">{t("admin.homepageAd")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.withdrawalProcessing")}</p>
-                    <p className="text-2xl font-bold text-primary">{t("admin.weekly")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.onMondays")}</p>
+                    <p className="font-medium text-sm mb-1">Preço para definir preço próprio</p>
+                    <p className="text-2xl font-bold text-primary">$5</p>
+                    <p className="text-xs text-muted-foreground">Equivalente em moeda local</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <p className="font-medium text-sm mb-1">Publicação em destaque</p>
+                    <p className="text-2xl font-bold text-primary">$2/dia</p>
+                    <p className="text-xs text-muted-foreground">Destacar perfil ou campanha</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            <AdminPaymentSettings />
 
             <Card>
               <CardHeader><CardTitle className="text-base">{t("admin.systemSummary")}</CardTitle></CardHeader>
@@ -528,9 +530,9 @@ export const AdminDashboard = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                   <div><span className="text-muted-foreground">{t("admin.languages")}:</span> PT, EN, ES, FR</div>
                   <div><span className="text-muted-foreground">{t("admin.baseCurrency")}:</span> USD</div>
-                  <div><span className="text-muted-foreground">{t("admin.gateways")}:</span> Stripe, PayPal, PaySuite, Offline</div>
+                  <div><span className="text-muted-foreground">{t("admin.gateways")}:</span> Stripe, PayPal, PaySuite, Multicaixa, M.Pago</div>
                   <div><span className="text-muted-foreground">{t("admin.storage")}:</span> 3 buckets</div>
-                  <div><span className="text-muted-foreground">{t("admin.auth")}:</span> Email, Google, Apple</div>
+                  <div><span className="text-muted-foreground">{t("admin.auth")}:</span> Email, Google</div>
                   <div><span className="text-muted-foreground">{t("admin.aiLabel")}:</span> StatusAI (Gemini)</div>
                 </div>
               </CardContent>
