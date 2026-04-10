@@ -706,5 +706,10 @@
     "proofSent": "Proof sent",
     "proofSentDesc": "The proof has been sent for verification.",
     "awaitingVerification": "Awaiting admin verification"
+  },
+  "profile": {
+    "autoPricing": "Auto-Pricing Active",
+    "autoPricingDesc": "Your price is automatically calculated based on your views. Base CPV: 0.70 MZN/view.",
+    "unlockPricing": "Unlock custom pricing for"
   }
 }

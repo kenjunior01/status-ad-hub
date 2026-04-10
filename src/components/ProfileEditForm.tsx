@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProfile } from "@/hooks/useProfile";
-import { Camera, Save, User, Loader2, Upload, Shield, Star } from "lucide-react";
+import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { Camera, Save, User, Loader2, Upload, Shield, Star, Lock, Sparkles } from "lucide-react";
 
 export const ProfileEditForm = () => {
+  const { t } = useTranslation();
   const { profile, loading, saving, uploading, updateProfile, uploadAvatar } = useProfile();
+  const { formatFromUSD } = useLocalizationContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -217,8 +222,7 @@ export const ProfileEditForm = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="grid gap-2">
+          <div className="grid gap-2">
               <Label htmlFor="niche">Nicho Principal</Label>
               <Select
                 value={formData.niche}
@@ -235,39 +239,56 @@ export const ProfileEditForm = () => {
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="price_range">Faixa de Preço</Label>
-              <Select
-                value={formData.price_range}
-                onValueChange={(value) => setFormData({ ...formData, price_range: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a faixa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceRanges.map((range) => (
-                    <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="price_per_post">Preço por Post (R$)</Label>
-            <Input
-              id="price_per_post"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.price_per_post}
-              onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
-              placeholder="Ex: 50.00"
-            />
-            <p className="text-xs text-muted-foreground">
-              Valor base que será exibido no seu perfil público
-            </p>
-          </div>
+          {/* Price Section - Locked unless can_set_own_price */}
+          {!(profile as any)?.can_set_own_price ? (
+            <Alert className="border-primary/20 bg-primary/5">
+              <Lock className="h-4 w-4" />
+              <AlertDescription className="space-y-2">
+                <p className="text-sm font-medium">{t("profile.autoPricing")}</p>
+                <p className="text-xs text-muted-foreground">{t("profile.autoPricingDesc")}</p>
+                {profile?.cpv_rate && (
+                  <div className="p-2 bg-background rounded-lg border mt-2">
+                    <p className="text-sm">CPV: <span className="font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>/view</p>
+                    <p className="text-xs text-muted-foreground">≈ 0.70 MZN/view</p>
+                  </div>
+                )}
+                <p className="text-xs text-primary flex items-center gap-1 mt-1">
+                  <Sparkles className="h-3 w-3" /> {t("profile.unlockPricing")} — {formatFromUSD(5)}
+                </p>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="price_range">Faixa de Preço</Label>
+                <Select
+                  value={formData.price_range}
+                  onValueChange={(value) => setFormData({ ...formData, price_range: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a faixa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priceRanges.map((range) => (
+                      <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="price_per_post">Preço por Post (USD)</Label>
+                <Input
+                  id="price_per_post"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price_per_post}
+                  onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
+                  placeholder="Ex: 50.00"
+                />
+              </div>
+            </>
+          )}
 
           {/* CPV Fields */}
           <Card className="border-primary/20 bg-primary/5">

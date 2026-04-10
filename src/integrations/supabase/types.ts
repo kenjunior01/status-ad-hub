@@ -540,6 +540,7 @@ export type Database = {
           avatar_url: string | null
           badge_level: string | null
           bio: string | null
+          can_set_own_price: boolean
           country: string | null
           cpv_rate: number | null
           created_at: string | null
@@ -563,6 +564,7 @@ export type Database = {
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
+          can_set_own_price?: boolean
           country?: string | null
           cpv_rate?: number | null
           created_at?: string | null
@@ -586,6 +588,7 @@ export type Database = {
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
+          can_set_own_price?: boolean
           country?: string | null
           cpv_rate?: number | null
           created_at?: string | null
