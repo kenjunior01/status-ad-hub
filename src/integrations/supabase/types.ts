@@ -537,6 +537,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age_range: string | null
+          ai_selected_niches: Json | null
           avatar_url: string | null
           badge_level: string | null
           bio: string | null
@@ -547,9 +549,12 @@ export type Database = {
           display_name: string | null
           engagement_rate: number | null
           follower_count: number | null
+          gender: string | null
+          habits: string | null
           id: string
           is_verified: boolean | null
           niche: string | null
+          preferred_payment_methods: Json | null
           price_per_post: number | null
           price_range: string | null
           rating: number | null
@@ -561,6 +566,8 @@ export type Database = {
           whatsapp_views_min: number | null
         }
         Insert: {
+          age_range?: string | null
+          ai_selected_niches?: Json | null
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
@@ -571,9 +578,12 @@ export type Database = {
           display_name?: string | null
           engagement_rate?: number | null
           follower_count?: number | null
+          gender?: string | null
+          habits?: string | null
           id?: string
           is_verified?: boolean | null
           niche?: string | null
+          preferred_payment_methods?: Json | null
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
@@ -585,6 +595,8 @@ export type Database = {
           whatsapp_views_min?: number | null
         }
         Update: {
+          age_range?: string | null
+          ai_selected_niches?: Json | null
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
@@ -595,9 +607,12 @@ export type Database = {
           display_name?: string | null
           engagement_rate?: number | null
           follower_count?: number | null
+          gender?: string | null
+          habits?: string | null
           id?: string
           is_verified?: boolean | null
           niche?: string | null
+          preferred_payment_methods?: Json | null
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
