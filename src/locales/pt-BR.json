@@ -681,5 +681,23 @@
     "storage": "Storage",
     "auth": "Auth",
     "aiLabel": "AI"
+  },
+  "greeting": {
+    "morning": "Bom dia",
+    "afternoon": "Boa tarde",
+    "evening": "Boa noite"
+  },
+  "inspiration": {
+    "q1": "O sucesso é a soma de pequenos esforços repetidos dia após dia.",
+    "q2": "Cada visualização é uma oportunidade de transformar vidas.",
+    "q3": "Conecte, crie e monetize — o seu potencial é ilimitado.",
+    "q4": "Grandes resultados começam com o primeiro passo.",
+    "q5": "A sua criatividade é o seu maior ativo."
+  },
+  "chat": {
+    "sendPaymentProof": "Enviar Comprovativo de Pagamento",
+    "proofSent": "Comprovativo enviado",
+    "proofSentDesc": "O comprovativo foi enviado para verificação.",
+    "awaitingVerification": "Aguardando verificação do admin"
   }
 }
