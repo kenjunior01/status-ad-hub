@@ -1,26 +1,18 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useWallet } from "@/hooks/useWallet";
 import { WithdrawalCelebration } from "@/components/WithdrawalCelebration";
-import { 
-  Wallet, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Clock, 
-  DollarSign,
-  TrendingUp,
-  Loader2,
-  CreditCard
-} from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Clock, DollarSign, TrendingUp, Loader2, CreditCard } from "lucide-react";
 
 export const CreatorWallet = () => {
+  const { t } = useTranslation();
   const { wallet, transactions, loading, requestWithdrawal } = useWallet();
   const { formatFromUSD } = useLocalizationContext();
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -44,9 +36,7 @@ export const CreatorWallet = () => {
     }
   };
 
-  const handleCelebrationComplete = useCallback(() => {
-    setShowCelebration(false);
-  }, []);
+  const handleCelebrationComplete = useCallback(() => { setShowCelebration(false); }, []);
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
@@ -59,30 +49,26 @@ export const CreatorWallet = () => {
 
   const getTransactionLabel = (type: string) => {
     switch (type) {
-      case 'escrow_release': return 'Pagamento Recebido';
-      case 'escrow_hold': return 'Em Garantia';
-      case 'withdrawal': return 'Saque';
-      case 'refund': return 'Reembolso';
-      case 'penalty': return 'Penalidade';
+      case 'escrow_release': return t("wallet.paymentReceived");
+      case 'escrow_hold': return t("wallet.inEscrow");
+      case 'withdrawal': return t("wallet.withdrawal");
+      case 'refund': return t("wallet.refund");
+      case 'penalty': return t("wallet.penalty");
       default: return type;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed': return <Badge variant="secondary" className="bg-green-500/10 text-green-600">Concluído</Badge>;
-      case 'pending': return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600">Pendente</Badge>;
-      case 'failed': return <Badge variant="destructive">Falhou</Badge>;
+      case 'completed': return <Badge variant="secondary" className="bg-green-500/10 text-green-600">{t("wallet.completed")}</Badge>;
+      case 'pending': return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600">{t("wallet.pending")}</Badge>;
+      case 'failed': return <Badge variant="destructive">{t("wallet.failed")}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   const available = Number(wallet?.available_balance || 0);
@@ -91,21 +77,15 @@ export const CreatorWallet = () => {
 
   return (
     <div className="space-y-6">
-      <WithdrawalCelebration 
-        show={showCelebration} 
-        amount={celebrationAmount} 
-        onComplete={handleCelebrationComplete} 
-      />
-      {/* Balance Cards */}
+      <WithdrawalCelebration show={showCelebration} amount={celebrationAmount} onComplete={handleCelebrationComplete} />
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-green-500/20 bg-green-500/5">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-green-500/10">
-                <Wallet className="h-5 w-5 text-green-600" />
-              </div>
+              <div className="p-2 rounded-full bg-green-500/10"><Wallet className="h-5 w-5 text-green-600" /></div>
               <div>
-                <p className="text-sm text-muted-foreground">Saldo Disponível</p>
+                <p className="text-sm text-muted-foreground">{t("wallet.availableBalance")}</p>
                 <p className="text-2xl font-bold text-green-600">{formatFromUSD(available)}</p>
               </div>
             </div>
@@ -115,11 +95,9 @@ export const CreatorWallet = () => {
         <Card className="border-yellow-500/20 bg-yellow-500/5">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-yellow-500/10">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
+              <div className="p-2 rounded-full bg-yellow-500/10"><Clock className="h-5 w-5 text-yellow-600" /></div>
               <div>
-                <p className="text-sm text-muted-foreground">Saldo Pendente</p>
+                <p className="text-sm text-muted-foreground">{t("wallet.pendingBalance")}</p>
                 <p className="text-2xl font-bold text-yellow-600">{formatFromUSD(pending)}</p>
               </div>
             </div>
@@ -129,11 +107,9 @@ export const CreatorWallet = () => {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </div>
+              <div className="p-2 rounded-full bg-primary/10"><TrendingUp className="h-5 w-5 text-primary" /></div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Ganho</p>
+                <p className="text-sm text-muted-foreground">{t("wallet.totalEarned")}</p>
                 <p className="text-2xl font-bold text-primary">{formatFromUSD(totalEarned)}</p>
               </div>
             </div>
@@ -141,69 +117,46 @@ export const CreatorWallet = () => {
         </Card>
       </div>
 
-      {/* Withdraw Button */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <Button size="lg" disabled={available < 50} className="w-full md:w-auto">
             <CreditCard className="h-4 w-4 mr-2" />
-            Solicitar Saque
+            {t("wallet.requestWithdrawal")}
           </Button>
         </DialogTrigger>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Solicitar Saque</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{t("wallet.requestWithdrawal")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Saldo disponível: <span className="font-semibold text-green-600">{formatFromUSD(available)}</span>
+              {t("wallet.availableBalanceLabel")}: <span className="font-semibold text-green-600">{formatFromUSD(available)}</span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Mínimo: $10.00 • Processamento: segunda-feira • Prazo: 1-2 dias úteis
-            </p>
+            <p className="text-xs text-muted-foreground">{t("wallet.minWithdrawal")}</p>
             <div>
-              <Label>Valor do Saque ($)</Label>
-              <Input
-                type="number"
-                min={50}
-                max={available}
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="50.00"
-                className="mt-1"
-              />
+              <Label>{t("wallet.withdrawalAmount")}</Label>
+              <Input type="number" min={50} max={available} value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} placeholder="50.00" className="mt-1" />
             </div>
             <div>
-              <Label>Chave Pix</Label>
-              <Input
-                value={pixKey}
-                onChange={(e) => setPixKey(e.target.value)}
-                placeholder="CPF, e-mail, telefone ou chave aleatória"
-                className="mt-1"
-              />
+              <Label>{t("wallet.pixKey")}</Label>
+              <Input value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder={t("wallet.pixKeyPlaceholder")} className="mt-1" />
             </div>
-            <Button
-              onClick={handleWithdraw}
-              disabled={withdrawing || !withdrawAmount || Number(withdrawAmount) < 50 || !pixKey}
-              className="w-full"
-            >
+            <Button onClick={handleWithdraw} disabled={withdrawing || !withdrawAmount || Number(withdrawAmount) < 50 || !pixKey} className="w-full">
               {withdrawing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirmar Saque
+              {t("wallet.confirmWithdrawal")}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Transactions History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Histórico de Transações
+            {t("wallet.transactionHistory")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {transactions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma transação ainda.</p>
+            <p className="text-center text-muted-foreground py-8">{t("wallet.noTransactions")}</p>
           ) : (
             <div className="space-y-3">
               {transactions.map((tx) => (
@@ -213,7 +166,7 @@ export const CreatorWallet = () => {
                     <div>
                       <p className="font-medium text-sm">{getTransactionLabel(tx.type)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {tx.description || ''} • {new Date(tx.created_at).toLocaleDateString('pt-BR')}
+                        {tx.description || ''} • {new Date(tx.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
