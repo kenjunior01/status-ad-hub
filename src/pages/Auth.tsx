@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +13,7 @@ interface AuthProps {
 }
 
 const Auth = ({ onNavigate }: AuthProps) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,8 +57,7 @@ const Auth = ({ onNavigate }: AuthProps) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-primary/10">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-3 border-muted border-t-primary mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold text-foreground mb-1">Redirecionando...</h2>
-          <p className="text-sm text-muted-foreground">Preparando seu dashboard</p>
+          <h2 className="text-xl font-bold text-foreground mb-1">{t('common.loading')}</h2>
         </div>
       </div>
     );
@@ -81,7 +82,8 @@ const Auth = ({ onNavigate }: AuthProps) => {
               StatusAds Connect
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Monetize seus status do WhatsApp
+              {t('hero.title')}
+            </CardDescription>
             </CardDescription>
           </CardHeader>
 
@@ -95,13 +97,13 @@ const Auth = ({ onNavigate }: AuthProps) => {
                     value="login" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg text-sm font-medium transition-all"
                   >
-                    Entrar
+                    {t('auth.login')}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="signup" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg text-sm font-medium transition-all"
                   >
-                    Cadastrar
+                    {t('auth.register')}
                   </TabsTrigger>
                 </TabsList>
 
@@ -117,7 +119,7 @@ const Auth = ({ onNavigate }: AuthProps) => {
                       className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
                       onClick={() => setShowResetPassword(true)}
                     >
-                      Esqueceu sua senha?
+                      {t('auth.forgotPassword')}
                     </Button>
                   </div>
                 </TabsContent>
@@ -139,7 +141,7 @@ const Auth = ({ onNavigate }: AuthProps) => {
                 onClick={() => onNavigate('index')}
                 className="text-xs text-muted-foreground hover:text-primary"
               >
-                ← Voltar ao início
+                ← {t('common.back')}
               </Button>
             </div>
           </CardContent>
@@ -150,11 +152,11 @@ const Auth = ({ onNavigate }: AuthProps) => {
           <div className="flex justify-center items-center gap-5 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5 text-primary" />
-              <span>Seguro</span>
+              <span>{t('trust.securePayment')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5 text-primary" />
-              <span>Verificado</span>
+              <span>{t('trust.verifiedCreators')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
