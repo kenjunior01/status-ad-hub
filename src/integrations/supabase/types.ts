@@ -537,6 +537,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           age_range: string | null
           ai_selected_niches: Json | null
           avatar_url: string | null
@@ -566,6 +567,7 @@ export type Database = {
           whatsapp_views_min: number | null
         }
         Insert: {
+          account_status?: string
           age_range?: string | null
           ai_selected_niches?: Json | null
           avatar_url?: string | null
@@ -595,6 +597,7 @@ export type Database = {
           whatsapp_views_min?: number | null
         }
         Update: {
+          account_status?: string
           age_range?: string | null
           ai_selected_niches?: Json | null
           avatar_url?: string | null

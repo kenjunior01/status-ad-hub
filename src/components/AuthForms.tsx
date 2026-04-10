@@ -339,6 +339,7 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
           country: country || null,
           whatsapp_views_min: selectedViewRange?.min || 0,
           whatsapp_views_max: selectedViewRange?.max || 0,
+          account_status: isCreator ? 'active' : 'pending_review',
         };
         if (isCreator) {
           profileUpdate.age_range = ageRange || null;

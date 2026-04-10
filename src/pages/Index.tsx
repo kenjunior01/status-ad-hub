@@ -9,8 +9,6 @@ import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/compo
 import { SocialProof } from "@/components/TrustIndicators";
 import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
-import { SponsorAdsCarousel } from "@/components/SponsorAdsCarousel";
-import { SponsorAdPurchaseModal } from "@/components/SponsorAdPurchaseModal";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
@@ -60,7 +58,6 @@ const Index = ({ onNavigate }: IndexProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
-  const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
 
   // Greeting based on time of day
   const greeting = useMemo(() => {
@@ -223,10 +220,7 @@ const Index = ({ onNavigate }: IndexProps) => {
         profile={selectedProfile}
         onBack={() => setSelectedProfile(null)}
         onContact={() => {
-          toast({
-            title: t('common.loading'),
-            description: selectedProfile.display_name,
-          });
+          onNavigate?.('messages');
         }}
       />
     );
@@ -306,8 +300,6 @@ const Index = ({ onNavigate }: IndexProps) => {
       </section>
 
       {/* Sponsor Ads Carousel */}
-      <SponsorAdsCarousel onAdvertise={() => setSponsorModalOpen(true)} />
-      <SponsorAdPurchaseModal open={sponsorModalOpen} onOpenChange={setSponsorModalOpen} />
 
       {/* Main Listings Section with Sidebar */}
       <section className="py-12 px-4">
