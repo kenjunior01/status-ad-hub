@@ -438,6 +438,9 @@ const Index = ({ onNavigate }: IndexProps) => {
         </div>
       </section>
 
+      {/* Engagement Features */}
+      <EngagementFeatures onNavigate={onNavigate} />
+
       {/* Social Proof Section */}
       <section className="py-12 px-4 bg-muted/30">
         <div className="max-w-5xl mx-auto">
