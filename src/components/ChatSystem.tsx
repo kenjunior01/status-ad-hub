@@ -10,6 +10,7 @@ import { useConversations, useMessages } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { ImagePreview } from "@/components/ImagePreview";
 import { ChatQuotationForm } from "@/components/ChatQuotationForm";
+import { ChatInvoiceForm } from "@/components/ChatInvoiceForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
@@ -32,6 +33,7 @@ export const ChatSystem = () => {
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showQuotationForm, setShowQuotationForm] = useState(false);
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -305,6 +307,10 @@ export const ChatSystem = () => {
                       <Receipt className="h-4 w-4 mr-2" />
                       Criar Cotação
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Criar Factura
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       const input = document.createElement('input');
                       input.type = 'file';
@@ -355,7 +361,17 @@ export const ChatSystem = () => {
               </div>
             )}
 
-            {/* Messages */}
+            {/* Invoice Form */}
+            {showInvoiceForm && selectedConversationId && (
+              <div className="p-3 border-b">
+                <ChatInvoiceForm
+                  conversationId={selectedConversationId}
+                  onClose={() => setShowInvoiceForm(false)}
+                  onCreated={() => {}}
+                />
+              </div>
+            )}
+
             <ScrollArea className="flex-1 p-4 bg-muted/10">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
