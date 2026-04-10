@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ExternalLink, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface SponsorAd {
   id: string;
@@ -13,7 +13,6 @@ interface SponsorAd {
   category: string;
 }
 
-// Placeholder sponsors — in production these come from the database
 const placeholderSponsors: SponsorAd[] = [
   { id: '1', name: 'TechFlow', logo: '🚀', tagline: 'Grow your audience', category: 'Tech', url: '#' },
   { id: '2', name: 'BrandUp', logo: '📈', tagline: 'Scale your brand', category: 'Marketing', url: '#' },
@@ -21,6 +20,8 @@ const placeholderSponsors: SponsorAd[] = [
   { id: '4', name: 'DesignLab', logo: '🎨', tagline: 'Creative solutions', category: 'Design', url: '#' },
   { id: '5', name: 'CloudNest', logo: '☁️', tagline: 'Hosting made simple', category: 'Tech', url: '#' },
   { id: '6', name: 'AdReach', logo: '📣', tagline: 'Maximize your reach', category: 'Marketing', url: '#' },
+  { id: '7', name: 'AppLaunch', logo: '📱', tagline: 'Launch faster', category: 'Tech', url: '#' },
+  { id: '8', name: 'DataPulse', logo: '📊', tagline: 'Insights that matter', category: 'Analytics', url: '#' },
 ];
 
 interface SponsorAdsCarouselProps {
@@ -30,106 +31,121 @@ interface SponsorAdsCarouselProps {
 export const SponsorAdsCarousel = ({ onAdvertise }: SponsorAdsCarouselProps) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const scroll = (dir: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const amount = 200;
-    scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
-  };
+  // Infinite auto-scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let animId: number;
+    let lastTime = 0;
+    const speed = 0.5; // px per frame (~30px/s)
+
+    const step = (time: number) => {
+      if (!isPaused && lastTime) {
+        const dt = time - lastTime;
+        el.scrollLeft += speed * (dt / 16);
+
+        // Reset to start for infinite loop
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft = 0;
+        }
+      }
+      lastTime = time;
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [isPaused]);
+
+  // Duplicate items for seamless loop
+  const items = [...placeholderSponsors, ...placeholderSponsors];
 
   return (
-    <section className="py-4 px-4 bg-card/50 border-b border-border">
+    <section className="py-3 px-4 bg-card/50 border-b border-border overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Megaphone className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+            <Megaphone className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
               {t('sponsors.title', 'Sponsors')}
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 hidden md:flex"
-              onClick={() => scroll('left')}
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 hidden md:flex"
-              onClick={() => scroll('right')}
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-[10px] text-muted-foreground hover:text-primary px-2"
-              onClick={onAdvertise}
-            >
-              {t('sponsors.advertiseHere', 'Advertise here')}
-            </Button>
-          </div>
+          <button
+            onClick={onAdvertise}
+            className="text-[10px] text-muted-foreground hover:text-primary transition-colors font-medium px-2 py-0.5 rounded-full hover:bg-primary/5"
+          >
+            {t('sponsors.advertiseHere', 'Advertise here')} →
+          </button>
         </div>
 
-        {/* Scrollable cards */}
+        {/* Auto-scrolling row */}
         <div
           ref={scrollRef}
-          className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setTimeout(() => setIsPaused(false), 3000)}
+          className="flex gap-2 overflow-x-auto scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {placeholderSponsors.map((sponsor) => (
-            <a
-              key={sponsor.id}
+          {items.map((sponsor, i) => (
+            <motion.a
+              key={`${sponsor.id}-${i}`}
               href={sponsor.url}
               target="_blank"
               rel="noopener noreferrer"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: (i % placeholderSponsors.length) * 0.05, duration: 0.3 }}
               className={cn(
-                "flex-shrink-0 snap-start",
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl",
-                "bg-background border border-border/60 hover:border-primary/40",
-                "transition-all duration-200 hover:shadow-sm hover:scale-[1.02]",
-                "w-[160px] md:w-[180px] group cursor-pointer"
+                "flex-shrink-0",
+                "flex items-center gap-2 px-2.5 py-2 rounded-lg",
+                "bg-background border border-border/50 hover:border-primary/40",
+                "transition-all duration-200 hover:shadow-sm hover:scale-[1.03]",
+                "w-[140px] md:w-[160px] group cursor-pointer"
               )}
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-base">
+              <div className="flex-shrink-0 w-7 h-7 rounded-md bg-muted flex items-center justify-center text-sm">
                 {sponsor.logo}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-foreground truncate flex items-center gap-1">
+                <p className="text-[11px] font-semibold text-foreground truncate flex items-center gap-1">
                   {sponsor.name}
-                  <ExternalLink className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+                  <ExternalLink className="h-2 w-2 opacity-0 group-hover:opacity-50 transition-opacity" />
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate">{sponsor.tagline}</p>
+                <p className="text-[9px] text-muted-foreground truncate">{sponsor.tagline}</p>
               </div>
-            </a>
+            </motion.a>
           ))}
 
           {/* CTA card */}
-          <button
+          <motion.button
             onClick={onAdvertise}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
             className={cn(
-              "flex-shrink-0 snap-start",
-              "flex items-center gap-2.5 px-3 py-2.5 rounded-xl",
-              "border-2 border-dashed border-primary/30 hover:border-primary/60",
+              "flex-shrink-0",
+              "flex items-center gap-2 px-2.5 py-2 rounded-lg",
+              "border border-dashed border-primary/30 hover:border-primary/60",
               "transition-all duration-200 hover:bg-primary/5",
-              "w-[160px] md:w-[180px] cursor-pointer"
+              "w-[140px] md:w-[160px] cursor-pointer"
             )}
           >
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Megaphone className="h-4 w-4 text-primary" />
+            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+              <Megaphone className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="text-xs font-semibold text-primary truncate">
+              <p className="text-[11px] font-semibold text-primary truncate">
                 {t('sponsors.yourBrand', 'Your brand')}
               </p>
-              <p className="text-[10px] text-muted-foreground">$50/month</p>
+              <p className="text-[9px] text-muted-foreground">$50/mo</p>
             </div>
-          </button>
+          </motion.button>
         </div>
       </div>
     </section>
