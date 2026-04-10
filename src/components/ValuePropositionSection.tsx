@@ -136,33 +136,29 @@ export const ValuePropositionSection = ({ onNavigate }: ValuePropositionSectionP
                 ))}
               </div>
 
-              {/* Stats - Real Data */}
-              <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
-                <div className="text-center">
-                  {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : (
+              {/* Stats - Only show when data exists */}
+              {!loading && (stats?.overview.total_campaigns || 0) > 0 && (
+                <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-primary">
                       {formatNumber(stats?.overview.total_campaigns || 0)}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Campanhas</p>
-                </div>
-                <div className="text-center">
-                  {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : (
+                    <p className="text-xs text-muted-foreground">{t('hero.stats.campaigns')}</p>
+                  </div>
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-primary">
                       {formatNumber(stats?.overview.total_creators || 0)}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Criadores</p>
-                </div>
-                <div className="text-center">
-                  {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : (
+                    <p className="text-xs text-muted-foreground">{t('hero.stats.creators')}</p>
+                  </div>
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-primary">
                       {stats?.overview.completion_rate || 0}%
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">{t('valueProposition.business.stats.openRate')}</p>
+                    <p className="text-xs text-muted-foreground">{t('valueProposition.business.stats.openRate')}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button 
                 className="w-full gap-2" 
@@ -210,29 +206,27 @@ export const ValuePropositionSection = ({ onNavigate }: ValuePropositionSectionP
                 ))}
               </div>
 
-              {/* Stats - Real Data */}
-              <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
-                <div className="text-center">
-                  {loading ? <Skeleton className="h-8 w-16 mx-auto" /> : (
+              {/* Stats - Only show when data exists */}
+              {!loading && (stats?.overview.total_creators || 0) > 0 && (
+                <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-success">
                       {formatFromUSD(stats?.overview.total_paid_to_creators || 0)}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.paid')}</p>
-                </div>
-                <div className="text-center">
-                  {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : (
+                    <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.paid')}</p>
+                  </div>
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-success">
                       {formatNumber(stats?.overview.total_creators || 0)}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.creators')}</p>
+                    <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.creators')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-success">24h</p>
+                    <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.payout')}</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-success">24h</p>
-                  <p className="text-xs text-muted-foreground">{t('valueProposition.creator.stats.payout')}</p>
-                </div>
-              </div>
+              )}
 
               <Button 
                 className="w-full gap-2 bg-success hover:bg-success/90" 
