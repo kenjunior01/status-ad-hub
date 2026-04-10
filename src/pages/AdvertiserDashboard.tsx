@@ -19,14 +19,16 @@ import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { GuidedTour } from "@/components/GuidedTour";
 import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { AcademiaStatusAds } from "@/components/AcademiaStatusAds";
+import { CreateListingForm, AdListingCard, ListingApplicationsList } from "@/components/AdListings";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { useProfiles } from "@/hooks/useProfiles";
+import { useAdListings } from "@/hooks/useAdListings";
 import { motion } from "framer-motion";
 import {
   Plus, Target, TrendingUp, Eye, DollarSign, Loader2,
-  CheckCircle, Bot, CreditCard, ChevronRight, GraduationCap,
+  CheckCircle, Bot, CreditCard, ChevronRight, GraduationCap, Megaphone, ArrowLeft,
 } from "lucide-react";
 
 export const AdvertiserDashboard = () => {
@@ -34,10 +36,12 @@ export const AdvertiserDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCampaignForReview, setSelectedCampaignForReview] = useState<string | null>(null);
   const [selectedCampaignForPayment, setSelectedCampaignForPayment] = useState<any>(null);
+  const [selectedListingForApps, setSelectedListingForApps] = useState<string | null>(null);
   const { campaigns, loading: campaignsLoading, refetch } = useCampaigns();
   const { profiles, loading: profilesLoading } = useProfiles();
   const { profile } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
+  const { myListings, loading: listingsLoading, refetch: refetchListings, closeListing } = useAdListings();
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active" || c.status === "pending");
   const totalSpent = campaigns.filter((c) => c.status === "completed").reduce((sum, c) => sum + Number(c.price), 0);
@@ -45,10 +49,7 @@ export const AdvertiserDashboard = () => {
   if (campaignsLoading || profilesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">{t("common.loading")}</p>
-        </div>
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
       </div>
     );
   }
@@ -65,8 +66,9 @@ export const AdvertiserDashboard = () => {
             </h1>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <CreateListingForm onCreated={refetchListings} />
             <CreateCampaignDialog>
-              <Button className="bg-gradient-primary hover:opacity-90 shadow-lg gap-2">
+              <Button variant="outline" className="gap-2">
                 <Plus className="h-4 w-4" />{t("dashboard.newCampaign")}
               </Button>
             </CreateCampaignDialog>
@@ -75,40 +77,22 @@ export const AdvertiserDashboard = () => {
         </motion.div>
 
         <GuidedTour role="advertiser" onNavigate={setActiveTab} onComplete={() => {}} />
-
         <OnboardingFlow
           profile={profile} role="advertiser" campaignCount={campaigns.length}
           onAction={(action) => {
-            if (action === "create_campaign") setActiveTab("campaigns");
+            if (action === "create_campaign") setActiveTab("listings");
             if (action === "find_creator") setActiveTab("statusai");
             if (action === "make_payment") setActiveTab("payments");
-            if (action === "review_proof") setActiveTab("payments");
           }}
           onDismiss={() => {}}
         />
 
-        {campaigns.length === 0 && (
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">{t("dashboard.startFirstCampaign")}</h3>
-                <p className="text-sm text-muted-foreground">{t("dashboard.connectWithCreators")}</p>
-              </div>
-              <CreateCampaignDialog>
-                <Button className="bg-gradient-primary hover:opacity-90 shadow-lg gap-2 whitespace-nowrap">
-                  <Plus className="h-4 w-4" />{t("dashboard.createFirstCampaign")}
-                </Button>
-              </CreateCampaignDialog>
-            </CardContent>
-          </Card>
-        )}
-
         <motion.div {...fadeUp} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 scrollbar-hide">
           {[
             { title: t("dashboard.activeCampaigns"), value: activeCampaigns.length, icon: Target, variant: "primary" as const },
-            { title: t("dashboard.totalInvested"), value: formatFromUSD(totalSpent), icon: DollarSign, variant: "success" as const },
+            { title: "Anúncios Activos", value: myListings.filter(l => l.status === 'open').length, icon: Megaphone, variant: "success" as const },
             { title: t("dashboard.availableCreators"), value: profiles.length, icon: Eye, variant: "warning" as const },
-            { title: t("dashboard.totalCampaigns"), value: campaigns.length, icon: TrendingUp, variant: "default" as const },
+            { title: t("dashboard.totalInvested"), value: formatFromUSD(totalSpent), icon: DollarSign, variant: "default" as const },
           ].map((m, i) => (
             <div key={i} className="min-w-[160px] md:min-w-0"><MetricsCard {...m} /></div>
           ))}
@@ -116,8 +100,9 @@ export const AdvertiserDashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-6">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-7">
               <TabsTrigger value="overview">📊 {t("dashboard.overview")}</TabsTrigger>
+              <TabsTrigger value="listings">📢 Anúncios</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("dashboard.campaigns")}</TabsTrigger>
               <TabsTrigger value="payments"><CreditCard className="h-4 w-4 mr-1" />{t("dashboard.payments")}</TabsTrigger>
               <TabsTrigger value="creators">👥 {t("navigation.creators")}</TabsTrigger>
@@ -129,8 +114,8 @@ export const AdvertiserDashboard = () => {
           <TabsContent value="overview" className="space-y-5">
             <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: t("dashboard.newCampaign"), icon: "🚀", tab: "campaigns", color: "bg-primary/10 text-primary" },
-                { label: t("dashboard.payments"), icon: "💳", tab: "payments", color: "bg-success/10 text-success" },
+                { label: "Publicar Anúncio", icon: "📢", tab: "listings", color: "bg-primary/10 text-primary" },
+                { label: t("dashboard.newCampaign"), icon: "🚀", tab: "campaigns", color: "bg-success/10 text-success" },
                 { label: t("navigation.creators"), icon: "👥", tab: "creators", color: "bg-warning/10 text-warning" },
                 { label: "StatusAI", icon: "🤖", tab: "statusai", color: "bg-accent/10 text-accent" },
               ].map((action) => (
@@ -142,20 +127,67 @@ export const AdvertiserDashboard = () => {
             </motion.div>
             <div className="grid md:grid-cols-2 gap-5">
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-5 w-5" />{t("dashboard.recentCampaigns")}</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Megaphone className="h-5 w-5" />Meus Anúncios Recentes</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {campaigns.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">{t("dashboard.noCampaigns")}</p>
-                  ) : campaigns.slice(0, 3).map((campaign) => (
-                    <div key={campaign.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <div><div className="font-medium text-sm">{campaign.title}</div><div className="text-xs text-muted-foreground">{formatFromUSD(Number(campaign.price))}</div></div>
-                      <Badge variant={campaign.status === "active" ? "default" : "secondary"}>{campaign.status}</Badge>
+                  {myListings.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">Publique seu primeiro anúncio</p>
+                  ) : myListings.slice(0, 3).map((listing) => (
+                    <div key={listing.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <div><div className="font-medium text-sm">{listing.title}</div><div className="text-xs text-muted-foreground">{formatFromUSD(Number(listing.budget))}</div></div>
+                      <Badge variant={listing.status === "open" ? "default" : "secondary"}>{listing.status}</Badge>
                     </div>
                   ))}
                 </CardContent>
               </Card>
               <AIPricingAssistant mode="advertiser" advertiserData={{ budget: totalSpent || 100, creatorsCount: profiles.length, avgPriceMin: 10, avgPriceMax: 100 }} />
             </div>
+          </TabsContent>
+
+          {/* ═══ LISTINGS TAB ═══ */}
+          <TabsContent value="listings" className="space-y-5">
+            {selectedListingForApps ? (
+              <div className="space-y-4">
+                <Button variant="outline" size="sm" onClick={() => setSelectedListingForApps(null)} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" /> Voltar aos Anúncios
+                </Button>
+                <ListingApplicationsList listingId={selectedListingForApps} />
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Megaphone className="h-5 w-5 text-primary" /> Meus Anúncios
+                  </h2>
+                  <CreateListingForm onCreated={refetchListings} />
+                </div>
+                {myListings.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="font-medium">Nenhum anúncio publicado</p>
+                    <p className="text-sm text-muted-foreground mt-1">Publique um anúncio para que criadores se candidatem.</p>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {myListings.map((listing) => (
+                      <div key={listing.id} className="space-y-2">
+                        <AdListingCard
+                          listing={listing}
+                          isCreator={false}
+                          onManage={(id) => setSelectedListingForApps(id)}
+                        />
+                        {listing.status === 'open' && (
+                          <div className="flex justify-end">
+                            <Button variant="outline" size="sm" className="text-xs" onClick={() => closeListing(listing.id)}>
+                              Encerrar Anúncio
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="campaigns" className="space-y-5">
@@ -180,13 +212,11 @@ export const AdvertiserDashboard = () => {
                           <Badge variant={campaign.status === "active" ? "default" : "secondary"}>{campaign.status}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {campaign.verification_status === "proof_submitted" && (
-                          <Button size="sm" variant="outline" onClick={() => { setSelectedCampaignForReview(campaign.id); setActiveTab("payments"); }}>
-                            <CheckCircle className="h-4 w-4 mr-1" />{t("dashboard.review")}
-                          </Button>
-                        )}
-                      </div>
+                      {campaign.verification_status === "proof_submitted" && (
+                        <Button size="sm" variant="outline" onClick={() => { setSelectedCampaignForReview(campaign.id); setActiveTab("payments"); }}>
+                          <CheckCircle className="h-4 w-4 mr-1" />{t("dashboard.review")}
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ))}

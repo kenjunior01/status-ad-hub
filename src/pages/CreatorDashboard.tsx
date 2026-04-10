@@ -18,13 +18,15 @@ import { GuidedTour } from "@/components/GuidedTour";
 import { SwipeCampaignCards } from "@/components/SwipeCampaignCards";
 import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { AcademiaStatusAds } from "@/components/AcademiaStatusAds";
+import { AdListingCard, ApplyToListingDialog } from "@/components/AdListings";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
+import { useAdListings } from "@/hooks/useAdListings";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import {
-  DollarSign, TrendingUp, Star, Target, Award, Upload, ChevronRight, Eye, GraduationCap,
+  DollarSign, TrendingUp, Star, Target, Award, Upload, ChevronRight, Eye, GraduationCap, Megaphone,
 } from "lucide-react";
 
 type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
@@ -33,8 +35,10 @@ export const CreatorDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCampaignForProof, setSelectedCampaignForProof] = useState<string | null>(null);
+  const [applyingTo, setApplyingTo] = useState<{ id: string; title: string } | null>(null);
   const { profile, loading: profileLoading } = useProfile();
   const { campaigns, loading: campaignsLoading } = useCampaigns();
+  const { listings, loading: listingsLoading, refetch: refetchListings } = useAdListings();
   const isMobile = useIsMobile();
   const { formatFromUSD } = useLocalizationContext();
 
@@ -67,12 +71,11 @@ export const CreatorDashboard = () => {
         </motion.div>
 
         <GuidedTour role="creator" onNavigate={setActiveTab} onComplete={() => {}} />
-
         <OnboardingFlow
           profile={profile} role="creator" campaignCount={campaigns.length}
           onAction={(action) => {
             if (action === "name" || action === "niche" || action === "avatar") setActiveTab("profile");
-            if (action === "first_campaign") setActiveTab("campaigns");
+            if (action === "first_campaign") setActiveTab("opportunities");
           }}
           onDismiss={() => {}}
         />
@@ -82,18 +85,17 @@ export const CreatorDashboard = () => {
             { title: t("dashboard.totalEarnings"), value: formatFromUSD(totalEarnings), icon: DollarSign, variant: "success" as const },
             { title: t("dashboard.thisMonth"), value: formatFromUSD(monthlyEarnings), icon: TrendingUp, variant: "primary" as const },
             { title: t("dashboard.activeCampaigns"), value: activeCampaigns.length, icon: Target, variant: "warning" as const },
-            { title: t("dashboard.rating"), value: profile?.rating || 0, icon: Star, variant: "default" as const, subtitle: `${profile?.total_reviews || 0} reviews` },
+            { title: "Oportunidades", value: listings.length, icon: Megaphone, variant: "default" as const },
           ].map((m, i) => (
-            <div key={i} className="min-w-[160px] md:min-w-0">
-              <MetricsCard {...m} />
-            </div>
+            <div key={i} className="min-w-[160px] md:min-w-0"><MetricsCard {...m} /></div>
           ))}
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-5">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-6">
               <TabsTrigger value="overview">📊 {t("dashboard.overview")}</TabsTrigger>
+              <TabsTrigger value="opportunities">📢 Oportunidades</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("dashboard.campaigns")}</TabsTrigger>
               <TabsTrigger value="earnings">💰 {t("dashboard.earnings")}</TabsTrigger>
               <TabsTrigger value="academia"><GraduationCap className="h-4 w-4 mr-1" />Academia</TabsTrigger>
@@ -104,9 +106,9 @@ export const CreatorDashboard = () => {
           <TabsContent value="overview" className="space-y-5">
             <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: t("dashboard.campaigns"), icon: "📋", tab: "campaigns", color: "bg-primary/10 text-primary" },
-                { label: t("dashboard.earnings"), icon: "📈", tab: "earnings", color: "bg-success/10 text-success" },
-                { label: "Academia", icon: "🎓", tab: "academia", color: "bg-warning/10 text-warning" },
+                { label: "Oportunidades", icon: "📢", tab: "opportunities", color: "bg-primary/10 text-primary" },
+                { label: t("dashboard.campaigns"), icon: "📋", tab: "campaigns", color: "bg-success/10 text-success" },
+                { label: t("dashboard.earnings"), icon: "📈", tab: "earnings", color: "bg-warning/10 text-warning" },
                 { label: t("dashboard.profile"), icon: "⚙️", tab: "profile", color: "bg-accent/10 text-accent" },
               ].map((action) => (
                 <button key={action.tab} onClick={() => setActiveTab(action.tab)} className={`${action.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}>
@@ -115,7 +117,6 @@ export const CreatorDashboard = () => {
                 </button>
               ))}
             </motion.div>
-
             <div className="grid md:grid-cols-2 gap-5">
               <GamificationProgress />
               <Card>
@@ -135,10 +136,51 @@ export const CreatorDashboard = () => {
             <AIPricingAssistant mode="creator" />
           </TabsContent>
 
+          {/* ═══ OPPORTUNITIES TAB ═══ */}
+          <TabsContent value="opportunities" className="space-y-5">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Megaphone className="h-5 w-5 text-primary" /> Anúncios Disponíveis
+              </h2>
+              <Badge variant="secondary">{listings.length} disponíveis</Badge>
+            </div>
+            
+            {listings.length === 0 ? (
+              <Card className="p-8 text-center">
+                <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="font-medium">Nenhum anúncio disponível</p>
+                <p className="text-sm text-muted-foreground mt-1">Novos anúncios de anunciantes aparecerão aqui.</p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {listings.map((listing) => (
+                  <AdListingCard
+                    key={listing.id}
+                    listing={listing}
+                    isCreator
+                    onApply={(id) => setApplyingTo({ id, title: listing.title })}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Apply Dialog */}
+          {applyingTo && (
+            <ApplyToListingDialog
+              listingId={applyingTo.id}
+              listingTitle={applyingTo.title}
+              onClose={() => setApplyingTo(null)}
+              onApplied={refetchListings}
+            />
+          )}
+
           <TabsContent value="campaigns" className="space-y-5">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">{t("dashboard.campaigns")}</h2>
-              <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-2" />{t("dashboard.viewAvailable")}</Button>
+              <Button variant="outline" size="sm" onClick={() => setActiveTab("opportunities")}>
+                <Eye className="h-4 w-4 mr-2" />{t("dashboard.viewAvailable")}
+              </Button>
             </div>
 
             {selectedCampaignForProof && (
