@@ -37,7 +37,9 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error("User not authenticated");
 
-    const { action, ...params } = await req.json();
+    const body = await req.json();
+    const action = body.action || body.type;
+    const params = body;
     logStep("Action requested", { action, userId: user.id });
 
     let result;
@@ -51,6 +53,9 @@ serve(async (req) => {
         break;
       case "matchmaking":
         result = await matchmaking(LOVABLE_API_KEY, supabaseClient, params);
+        break;
+      case "mascot-chat":
+        result = await mascotChat(LOVABLE_API_KEY, params);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
