@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { AdminPaymentSettings } from "@/components/AdminPaymentSettings";
+import { AdminOfflinePayments } from "@/components/AdminOfflinePayments";
 import { motion } from "framer-motion";
 import {
   Users, Shield, TrendingUp, DollarSign, Eye, UserCheck, Settings,
@@ -182,11 +183,12 @@ export const AdminDashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-7">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-8">
               <TabsTrigger value="overview">📊 {t("admin.summary")}</TabsTrigger>
               <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
               <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
+              <TabsTrigger value="offline">📄 Offline</TabsTrigger>
               <TabsTrigger value="disputes">⚠️ {t("admin.disputes")}</TabsTrigger>
               <TabsTrigger value="payments">⚙️ {t("admin.payments")}</TabsTrigger>
               <TabsTrigger value="settings">🔧 {t("admin.system")}</TabsTrigger>
@@ -465,6 +467,10 @@ export const AdminDashboard = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="offline">
+            <AdminOfflinePayments />
+          </TabsContent>
+
           <TabsContent value="payments">
             <AdminPaymentSettings />
           </TabsContent>
@@ -481,8 +487,8 @@ export const AdminDashboard = () => {
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.baseCPV")}</p>
-                    <p className="text-2xl font-bold text-primary">$0.65</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.costPerView")}</p>
+                    <p className="text-2xl font-bold text-primary">0.70 MZN</p>
+                    <p className="text-xs text-muted-foreground">≈ $0.011 USD {t("admin.costPerView")}</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.minWithdrawal")}</p>
