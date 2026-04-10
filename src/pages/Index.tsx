@@ -270,7 +270,6 @@ const Index = ({ onNavigate }: IndexProps) => {
                     {activeProfiles.length} {t('index.creatorsAvailable')}
                   </p>
                 )}
-                </p>
               </div>
               
               {/* Mobile Filters */}
