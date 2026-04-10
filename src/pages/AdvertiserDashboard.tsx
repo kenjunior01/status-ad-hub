@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedProfileCard } from "@/components/EnhancedProfileCard";
-import { TrustIndicators } from "@/components/TrustIndicators";
 import { MetricsCard } from "@/components/MetricsCard";
-import { CampaignCard } from "@/components/CampaignCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { CreateCampaignDialog } from "@/components/CreateCampaignForm";
@@ -23,7 +21,11 @@ import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { useProfiles } from "@/hooks/useProfiles";
-import { Plus, Target, TrendingUp, Eye, Settings, DollarSign, Loader2, CheckCircle, Bot, CreditCard } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Plus, Target, TrendingUp, Eye, DollarSign, Loader2,
+  CheckCircle, Bot, CreditCard, ChevronRight,
+} from "lucide-react";
 
 export const AdvertiserDashboard = () => {
   const { t } = useTranslation();
@@ -35,176 +37,206 @@ export const AdvertiserDashboard = () => {
   const { profile } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
 
-  const activeCampaigns = campaigns.filter(c => c.status === 'active' || c.status === 'pending');
-  const totalSpent = campaigns.filter(c => c.status === 'completed').reduce((sum, c) => sum + Number(c.price), 0);
-
-  const getStatusColor = (status: string) => {
-    switch (status) { 
-      case 'active': return 'bg-success'; 
-      case 'pending': return 'bg-warning'; 
-      case 'completed': return 'bg-primary'; 
-      default: return 'bg-muted'; 
-    }
-  };
+  const activeCampaigns = campaigns.filter((c) => c.status === "active" || c.status === "pending");
+  const totalSpent = campaigns.filter((c) => c.status === "completed").reduce((sum, c) => sum + Number(c.price), 0);
 
   if (campaignsLoading || profilesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Carregando seu painel...</p>
+          <p className="text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
+  const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.35 } };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+      <div className="max-w-6xl mx-auto space-y-5">
+        {/* Compact Header */}
+        <motion.div {...fadeUp} className="flex flex-col md:flex-row justify-between items-start gap-3">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Painel do Anunciante</h1>
-            <p className="text-muted-foreground mt-1">Gerencie campanhas e encontre os melhores criadores</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {t("common.hello")}, {profile?.display_name || t("navigation.advertiser")} 📢
+            </h1>
           </div>
           <div className="flex gap-2 flex-wrap">
             <CreateCampaignDialog>
-              <Button size="lg" className="bg-gradient-primary hover:opacity-90 shadow-lg">
-                <Plus className="h-5 w-5 mr-2" />
-                Nova Campanha
+              <Button className="bg-gradient-primary hover:opacity-90 shadow-lg gap-2">
+                <Plus className="h-4 w-4" />
+                {t("dashboard.newCampaign")}
               </Button>
             </CreateCampaignDialog>
             <NotificationButton />
-            <Button variant="outline" size="sm"><Settings className="h-4 w-4 mr-2" />Configurações</Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Onboarding for advertiser */}
+        {/* Onboarding */}
         <OnboardingFlow
           profile={profile}
           role="advertiser"
           campaignCount={campaigns.length}
           onAction={(action) => {
-            if (action === 'create_campaign') setActiveTab('campaigns');
-            if (action === 'find_creator') setActiveTab('statusai');
-            if (action === 'make_payment') setActiveTab('payments');
-            if (action === 'review_proof') setActiveTab('verification');
+            if (action === "create_campaign") setActiveTab("campaigns");
+            if (action === "find_creator") setActiveTab("statusai");
+            if (action === "make_payment") setActiveTab("payments");
+            if (action === "review_proof") setActiveTab("verification");
           }}
           onDismiss={() => {}}
         />
 
-        {/* Prominent CTA for empty state */}
+        {/* Empty state CTA */}
         {campaigns.length === 0 && (
           <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-semibold text-foreground">Comece sua primeira campanha!</h3>
-                <p className="text-muted-foreground">Conecte-se com criadores e alcance milhares de visualizações no WhatsApp Status</p>
+                <h3 className="text-lg font-semibold text-foreground">{t("dashboard.startFirstCampaign")}</h3>
+                <p className="text-sm text-muted-foreground">{t("dashboard.connectWithCreators")}</p>
               </div>
               <CreateCampaignDialog>
-                <Button size="lg" className="bg-gradient-primary hover:opacity-90 shadow-lg whitespace-nowrap">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Criar Minha Primeira Campanha
+                <Button className="bg-gradient-primary hover:opacity-90 shadow-lg gap-2 whitespace-nowrap">
+                  <Plus className="h-4 w-4" />
+                  {t("dashboard.createFirstCampaign")}
                 </Button>
               </CreateCampaignDialog>
             </CardContent>
           </Card>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricsCard title="Campanhas Ativas" value={activeCampaigns.length} icon={Target} variant="primary" />
-          <MetricsCard title="Total Investido" value={formatFromUSD(totalSpent)} icon={DollarSign} variant="success" />
-          <MetricsCard title="Criadores Disponíveis" value={profiles.length} icon={Eye} variant="warning" subtitle="na plataforma" />
-          <MetricsCard title="Campanhas Totais" value={campaigns.length} icon={TrendingUp} variant="default" />
-        </div>
+        {/* Quick Stats — Scrollable */}
+        <motion.div {...fadeUp} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 scrollbar-hide">
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.activeCampaigns")} value={activeCampaigns.length} icon={Target} variant="primary" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.totalInvested")} value={formatFromUSD(totalSpent)} icon={DollarSign} variant="success" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.availableCreators")} value={profiles.length} icon={Eye} variant="warning" />
+          </div>
+          <div className="min-w-[160px] md:min-w-0">
+            <MetricsCard title={t("dashboard.totalCampaigns")} value={campaigns.length} icon={TrendingUp} variant="default" />
+          </div>
+        </motion.div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-            <TabsTrigger value="verification" className="flex items-center gap-1">
-              <CheckCircle className="h-4 w-4" />
-              Verificação
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-1">
-              <CreditCard className="h-4 w-4" />
-              Pagamentos
-            </TabsTrigger>
-            <TabsTrigger value="creators">Criadores</TabsTrigger>
-            <TabsTrigger value="statusai" className="flex items-center gap-1">
-              <Bot className="h-4 w-4" />
-              StatusAI
-            </TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+        {/* Tabs — Scrollable on mobile */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-5">
+              <TabsTrigger value="overview">📊 {t("dashboard.overview")}</TabsTrigger>
+              <TabsTrigger value="campaigns">📋 {t("dashboard.campaigns")}</TabsTrigger>
+              <TabsTrigger value="payments" className="flex items-center gap-1">
+                <CreditCard className="h-4 w-4" />
+                {t("dashboard.payments")}
+              </TabsTrigger>
+              <TabsTrigger value="creators">👥 {t("navigation.creators")}</TabsTrigger>
+              <TabsTrigger value="statusai" className="flex items-center gap-1">
+                <Bot className="h-4 w-4" />
+                StatusAI
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-5">
+            {/* Quick Actions */}
+            <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: t("dashboard.newCampaign"), icon: "🚀", tab: "campaigns", color: "bg-primary/10 text-primary" },
+                { label: t("dashboard.payments"), icon: "💳", tab: "payments", color: "bg-success/10 text-success" },
+                { label: t("navigation.creators"), icon: "👥", tab: "creators", color: "bg-warning/10 text-warning" },
+                { label: "StatusAI", icon: "🤖", tab: "statusai", color: "bg-accent/10 text-accent" },
+              ].map((action) => (
+                <button
+                  key={action.tab}
+                  onClick={() => setActiveTab(action.tab)}
+                  className={`${action.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}
+                >
+                  <span className="text-2xl">{action.icon}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{action.label}</p>
+                    <ChevronRight className="h-3 w-3 opacity-50 mt-0.5" />
+                  </div>
+                </button>
+              ))}
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-5">
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" />Campanhas Recentes</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Target className="h-5 w-5" />
+                    {t("dashboard.recentCampaigns")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   {campaigns.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">Nenhuma campanha ainda</p>
+                    <p className="text-muted-foreground text-center py-4">{t("dashboard.noCampaigns")}</p>
                   ) : (
                     campaigns.slice(0, 3).map((campaign) => (
                       <div key={campaign.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                        <div><div className="font-medium">{campaign.title}</div><div className="text-sm text-muted-foreground">{formatFromUSD(Number(campaign.price))}</div></div>
-                        <Badge className={getStatusColor(campaign.status || 'pending')}>{campaign.status === 'active' ? 'Ativa' : campaign.status === 'completed' ? 'Concluída' : 'Pendente'}</Badge>
+                        <div>
+                          <div className="font-medium text-sm">{campaign.title}</div>
+                          <div className="text-xs text-muted-foreground">{formatFromUSD(Number(campaign.price))}</div>
+                        </div>
+                        <Badge variant={campaign.status === "active" ? "default" : "secondary"}>{campaign.status}</Badge>
                       </div>
                     ))
                   )}
                 </CardContent>
               </Card>
-              <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />Top Performers</CardTitle></CardHeader><CardContent><TrustIndicators /></CardContent></Card>
-            </div>
 
-            {/* AI Campaign Advisor */}
-            <AIPricingAssistant mode="advertiser" advertiserData={{
-              budget: totalSpent || 100,
-              creatorsCount: profiles.length,
-              avgPriceMin: 10,
-              avgPriceMax: 100,
-            }} />
+              <AIPricingAssistant
+                mode="advertiser"
+                advertiserData={{ budget: totalSpent || 100, creatorsCount: profiles.length, avgPriceMin: 10, avgPriceMax: 100 }}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="campaigns" className="space-y-6">
+          <TabsContent value="campaigns" className="space-y-5">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Suas Campanhas</h2>
-              <CreateCampaignDialog><Button><Plus className="h-4 w-4 mr-2" />Nova Campanha</Button></CreateCampaignDialog>
+              <h2 className="text-lg font-semibold">{t("dashboard.campaigns")}</h2>
+              <CreateCampaignDialog>
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  {t("dashboard.newCampaign")}
+                </Button>
+              </CreateCampaignDialog>
             </div>
+
             {campaigns.length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground">Você ainda não tem campanhas. Crie sua primeira campanha!</p>
+                <p className="text-muted-foreground">{t("dashboard.noCampaigns")}</p>
               </Card>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {campaigns.map((campaign) => (
                   <Card key={campaign.id} className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{campaign.title}</h3>
-                          <VerificationBadge status={(campaign.verification_status as 'not_started' | 'proof_submitted' | 'under_review' | 'verified' | 'rejected') || 'not_started'} />
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-sm">{campaign.title}</h3>
+                          <VerificationBadge status={(campaign.verification_status as any) || "not_started"} />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{campaign.description}</p>
                         <div className="flex items-center gap-4 text-sm">
                           <span className="font-medium text-success">{formatFromUSD(Number(campaign.price))}</span>
-                          <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'completed' ? 'secondary' : 'outline'}>
-                            {campaign.status === 'active' ? 'Ativa' : campaign.status === 'completed' ? 'Concluída' : 'Pendente'}
-                          </Badge>
+                          <Badge variant={campaign.status === "active" ? "default" : "secondary"}>{campaign.status}</Badge>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        {campaign.verification_status === 'proof_submitted' && (
-                          <Button 
+                        {campaign.verification_status === "proof_submitted" && (
+                          <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
                               setSelectedCampaignForReview(campaign.id);
-                              setActiveTab('verification');
+                              setActiveTab("payments");
                             }}
                           >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Revisar Prova
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            {t("dashboard.review")}
                           </Button>
                         )}
                       </div>
@@ -215,94 +247,54 @@ export const AdvertiserDashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="verification" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Verificação de Publicações</h2>
-            </div>
-            
+          <TabsContent value="payments" className="space-y-5">
             {selectedCampaignForReview ? (
               <div className="space-y-4">
                 <Button variant="outline" onClick={() => setSelectedCampaignForReview(null)}>
-                  ← Voltar para lista
+                  ← {t("common.back")}
                 </Button>
-                <ProofReviewPanel 
-                  campaignId={selectedCampaignForReview} 
-                  isAdvertiser={true}
-                />
+                <ProofReviewPanel campaignId={selectedCampaignForReview} isAdvertiser={true} />
               </div>
-            ) : (
-              <>
-                {campaigns.filter(c => c.verification_status === 'proof_submitted' || c.verification_status === 'under_review').length === 0 ? (
-                  <Card className="p-8 text-center">
-                    <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Nenhuma prova pendente de verificação.</p>
-                    <p className="text-sm text-muted-foreground mt-2">Quando criadores enviarem comprovantes, eles aparecerão aqui.</p>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4">
-                    {campaigns
-                      .filter(c => c.verification_status === 'proof_submitted' || c.verification_status === 'under_review')
-                      .map((campaign) => (
-                        <Card key={campaign.id} className="p-4 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedCampaignForReview(campaign.id)}>
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h3 className="font-semibold">{campaign.title}</h3>
-                              <p className="text-sm text-muted-foreground">{formatFromUSD(Number(campaign.price))}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <VerificationBadge status={(campaign.verification_status as 'not_started' | 'proof_submitted' | 'under_review' | 'verified' | 'rejected') || 'not_started'} />
-                              <Button size="sm">Revisar</Button>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              Pagamentos de Campanhas
-            </h2>
-            {selectedCampaignForPayment ? (
+            ) : selectedCampaignForPayment ? (
               <div className="max-w-lg mx-auto">
                 <PaymentCheckout
                   campaignId={selectedCampaignForPayment.id}
                   creatorId={selectedCampaignForPayment.creator_id}
                   amount={Number(selectedCampaignForPayment.price)}
                   campaignTitle={selectedCampaignForPayment.title}
-                  onSuccess={() => {
-                    setSelectedCampaignForPayment(null);
-                    refetch();
-                  }}
+                  onSuccess={() => { setSelectedCampaignForPayment(null); refetch(); }}
                   onCancel={() => setSelectedCampaignForPayment(null)}
                 />
               </div>
             ) : (
               <>
-                {campaigns.filter(c => c.status === 'pending' && (!('escrow_status' in c) || (c as any).escrow_status === 'pending')).length === 0 ? (
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  {t("dashboard.payments")}
+                </h2>
+                {campaigns.filter((c) => c.status === "pending").length === 0 ? (
                   <Card className="p-8 text-center">
                     <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Nenhuma campanha pendente de pagamento.</p>
-                    <p className="text-sm text-muted-foreground mt-2">Crie uma nova campanha para iniciar o processo de pagamento.</p>
+                    <p className="text-muted-foreground">{t("dashboard.noPaymentsPending")}</p>
                   </Card>
                 ) : (
-                  <div className="grid gap-4">
+                  <div className="grid gap-3">
                     {campaigns
-                      .filter(c => c.status === 'pending')
+                      .filter((c) => c.status === "pending")
                       .map((campaign) => (
-                        <Card key={campaign.id} className="p-4 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedCampaignForPayment(campaign)}>
+                        <Card
+                          key={campaign.id}
+                          className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setSelectedCampaignForPayment(campaign)}
+                        >
                           <div className="flex justify-between items-center">
                             <div>
-                              <h3 className="font-semibold">{campaign.title}</h3>
-                              <p className="text-sm text-muted-foreground">{formatFromUSD(Number(campaign.price))}</p>
+                              <h3 className="font-semibold text-sm">{campaign.title}</h3>
+                              <p className="text-xs text-muted-foreground">{formatFromUSD(Number(campaign.price))}</p>
                             </div>
-                            <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-                              <CreditCard className="h-4 w-4 mr-2" />
-                              Pagar
+                            <Button size="sm" className="bg-gradient-primary hover:opacity-90 gap-1">
+                              <CreditCard className="h-4 w-4" />
+                              {t("dashboard.pay")}
                             </Button>
                           </div>
                         </Card>
@@ -313,69 +305,44 @@ export const AdvertiserDashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="creators" className="space-y-6">
-            <h2 className="text-xl font-semibold">Encontrar Criadores</h2>
+          <TabsContent value="creators" className="space-y-5">
+            <h2 className="text-lg font-semibold">{t("dashboard.findCreators")}</h2>
             <SearchFilters onFiltersChange={() => {}} showPriceFilter showNicheFilter showRatingFilter showLocationFilter />
             {profiles.length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground">Nenhum criador disponível no momento.</p>
+                <p className="text-muted-foreground">{t("dashboard.noCreatorsAvailable")}</p>
               </Card>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {profiles.map((creator) => (
-                  <EnhancedProfileCard 
-                    key={creator.id} 
+                  <EnhancedProfileCard
+                    key={creator.id}
                     profile={{
                       id: creator.id,
                       display_name: creator.display_name,
-                      niche: creator.niche || '',
-                      price_range: creator.price_range || '',
+                      niche: creator.niche || "",
+                      price_range: creator.price_range || "",
                       rating: Number(creator.rating) || 0,
                       total_reviews: creator.total_reviews || 0,
                       total_campaigns: creator.total_campaigns || 0,
                       is_verified: creator.is_verified || false,
-                      badge_level: creator.badge_level || 'bronze',
-                      created_at: creator.created_at || ''
-                    }} 
-                    onSelect={() => {}} 
+                      badge_level: creator.badge_level || "bronze",
+                      created_at: creator.created_at || "",
+                    }}
+                    onSelect={() => {}}
                   />
                 ))}
               </div>
             )}
           </TabsContent>
 
-
-          <TabsContent value="statusai" className="space-y-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              StatusAI — Inteligência Artificial
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="statusai" className="space-y-5">
+            <div className="grid md:grid-cols-2 gap-5">
               <StatusAIMatchmaker />
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Previsão de ROI por Criador</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Selecione um criador na aba "Criadores" e use o StatusAI para prever o retorno.
-                    </p>
-                    {profiles.slice(0, 3).map((creator) => (
-                      <div key={creator.id} className="mb-4">
-                        <StatusAIROIPredictor 
-                          creatorId={creator.profile_id || creator.id} 
-                          creatorName={creator.display_name} 
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
+              <StatusAIROIPredictor />
             </div>
+            <AnalyticsDashboard />
           </TabsContent>
-
-          <TabsContent value="analytics"><AnalyticsDashboard /></TabsContent>
         </Tabs>
       </div>
     </div>
