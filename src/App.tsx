@@ -11,6 +11,7 @@ import { useAdaptiveTheme } from "@/hooks/useAdaptiveTheme";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { AnimatedLoading } from "@/components/AnimatedLoading";
 import { StatusBotMascot } from "@/components/StatusBotMascot";
+import { FloatingBackground } from "@/components/FloatingBackground";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -74,7 +75,8 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <FloatingBackground />
       <Navigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
       <main className="pb-20 md:pb-0">
         <PageTransition pageKey={currentPage}>
