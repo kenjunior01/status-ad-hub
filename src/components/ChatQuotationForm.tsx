@@ -37,7 +37,7 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
         return;
       }
 
-      // Create quotation
+      // Create quotation (always store in USD)
       const { data: quotation, error: qError } = await supabase
         .from('chat_quotations')
         .insert({
@@ -46,7 +46,7 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
           title: title.trim(),
           description: description.trim() || null,
           amount: amountNum,
-          currency,
+          currency: 'USD',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
