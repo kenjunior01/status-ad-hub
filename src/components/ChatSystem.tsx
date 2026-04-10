@@ -430,6 +430,32 @@ export const ChatSystem = () => {
                             />
                           )}
 
+                          {/* Offline Payment Proof */}
+                          {isProof && (
+                            <div className={`rounded-xl p-3 border-2 border-amber-500/30 ${isMine ? 'bg-amber-500/10' : 'bg-card'}`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Banknote className="h-5 w-5 text-amber-500" />
+                                <span className="font-semibold text-sm">Comprovativo de Pagamento</span>
+                              </div>
+                              {message.attachment_url && (
+                                <div className="mb-2">
+                                  {message.attachment_type?.startsWith('image/') ? (
+                                    <button onClick={() => handleImageClick(message.attachment_url!)} className="block cursor-zoom-in">
+                                      <img src={message.attachment_url} alt="Comprovativo" className="max-w-full rounded-lg max-h-40 object-cover" />
+                                    </button>
+                                  ) : (
+                                    <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                      <FileText className="h-5 w-5" />
+                                      <span className="text-sm truncate">{message.attachment_name || 'Comprovativo'}</span>
+                                      <Download className="h-4 w-4 ml-auto" />
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-xs text-amber-600 dark:text-amber-400">⏳ Aguardando verificação do admin</p>
+                            </div>
+                          )}
+
                           {/* Normal message */}
                           {!isSpecial && (
                             <>
