@@ -20,6 +20,8 @@ import { AdvertiserDashboard } from "./pages/AdvertiserDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { GlobalDashboard } from "./pages/GlobalDashboard";
 import { AcademiaStatusAds } from "./components/AcademiaStatusAds";
+import { Terms } from "./pages/Terms";
+import { Privacy } from "./pages/Privacy";
 
 import "@/lib/i18n";
 
@@ -67,6 +69,10 @@ function AppContent() {
         return <GlobalDashboard />;
       case "academia":
         return <div className="max-w-2xl mx-auto py-8 px-4"><AcademiaStatusAds /></div>;
+      case "terms":
+        return <Terms onNavigate={setCurrentPage} />;
+      case "privacy":
+        return <Privacy onNavigate={setCurrentPage} />;
       case "creators":
         return <Index onNavigate={setCurrentPage} />;
       default:

@@ -265,9 +265,11 @@ const Index = ({ onNavigate }: IndexProps) => {
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                   {t('index.exploreCreators')}
                 </h2>
-                <p className="text-muted-foreground">
-                  {activeProfiles.length} {t('index.creatorsAvailable')}
-                </p>
+                {activeProfiles.length > 0 && (
+                  <p className="text-muted-foreground">
+                    {activeProfiles.length} {t('index.creatorsAvailable')}
+                  </p>
+                )}
               </div>
               
               {/* Mobile Filters */}
@@ -446,36 +448,36 @@ const Index = ({ onNavigate }: IndexProps) => {
             <div>
               <h4 className="font-semibold mb-4 text-background">{t('footer.about')}</h4>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.about')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.terms')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.privacy')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('about')}>{t('footer.about')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('terms')}>{t('footer.terms')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('privacy')}>{t('footer.privacy')}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4 text-background">{t('navigation.creators')}</h4>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('auth.register')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.help')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.contact')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('auth.register')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4 text-background">{t('navigation.advertisers')}</h4>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('valueProposition.business.cta')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.help')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">{t('footer.contact')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('valueProposition.business.cta')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
+                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-muted mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              &copy; 2024 StatusAds. {t('global.platform')}
+              &copy; {new Date().getFullYear()} StatusAds. {t('global.platform')}
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span className="hover:text-primary cursor-pointer">{t('footer.terms')}</span>
-              <span className="hover:text-primary cursor-pointer">{t('footer.privacy')}</span>
-              <span className="hover:text-primary cursor-pointer">{t('footer.contact')}</span>
+              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('terms')}>{t('footer.terms')}</span>
+              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('privacy')}>{t('footer.privacy')}</span>
+              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</span>
             </div>
           </div>
         </div>
