@@ -77,48 +77,48 @@ export const SocialProof = ({ className }: SocialProofProps) => {
   };
   
   return (
-    <div className={cn("text-center space-y-4", className)}>
-      <div className="flex justify-center items-center gap-6">
-        <div className="text-center">
-          {loading ? <Skeleton className="h-8 w-16 mx-auto" /> : (
+    <div className={cn("text-center space-y-6", className)}>
+      {/* Only show stats when there's meaningful data */}
+      {!loading && (stats?.overview.total_creators || 0) > 0 && (
+        <div className="flex justify-center items-center gap-6">
+          <div className="text-center">
             <div className="text-2xl font-bold text-primary">
               {formatNumber(stats?.overview.total_creators || 0)}
             </div>
-          )}
-          <div className="text-xs text-muted-foreground">{t('socialProof.creators')}</div>
-        </div>
-        <div className="text-center">
-          {loading ? <Skeleton className="h-8 w-20 mx-auto" /> : (
+            <div className="text-xs text-muted-foreground">{t('socialProof.creators')}</div>
+          </div>
+          <div className="text-center">
             <div className="text-2xl font-bold text-success">
               {formatFromUSD(stats?.overview.total_campaign_value || 0)}
             </div>
-          )}
-          <div className="text-xs text-muted-foreground">{t('socialProof.paid')}</div>
-        </div>
-        <div className="text-center">
-          {loading ? <Skeleton className="h-8 w-16 mx-auto" /> : (
+            <div className="text-xs text-muted-foreground">{t('socialProof.paid')}</div>
+          </div>
+          <div className="text-center">
             <div className="text-2xl font-bold text-warning">
               {stats?.overview.completion_rate || 0}%
             </div>
-          )}
-          <div className="text-xs text-muted-foreground">Conclusão</div>
+            <div className="text-xs text-muted-foreground">{t('socialProof.completionRate')}</div>
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-muted/50 rounded-lg p-4">
-        <p className="text-sm text-muted-foreground italic">
-          "{t('socialProof.testimonial')}"
-        </p>
-        <div className="mt-2 flex items-center justify-center gap-2">
-          <img 
-            src="/placeholder.svg" 
-            alt={t('socialProof.user')} 
-            className="w-6 h-6 rounded-full"
-          />
-          <span className="text-xs text-muted-foreground">
-            {t('socialProof.userName')}
-          </span>
-          <Badge variant="secondary" className="text-xs">{t('creator.verified')}</Badge>
+      )}
+
+      {/* Trust badges instead of fake testimonial */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="flex items-center gap-2 justify-center bg-muted/50 rounded-lg p-3">
+          <Shield className="h-4 w-4 text-primary" />
+          <span className="text-xs font-medium">{t('trust.securePayment')}</span>
+        </div>
+        <div className="flex items-center gap-2 justify-center bg-muted/50 rounded-lg p-3">
+          <CheckCircle className="h-4 w-4 text-success" />
+          <span className="text-xs font-medium">{t('trust.verifiedCreators')}</span>
+        </div>
+        <div className="flex items-center gap-2 justify-center bg-muted/50 rounded-lg p-3">
+          <Globe className="h-4 w-4 text-primary" />
+          <span className="text-xs font-medium">{t('trustIndicators.globalReach')}</span>
+        </div>
+        <div className="flex items-center gap-2 justify-center bg-muted/50 rounded-lg p-3">
+          <CreditCard className="h-4 w-4 text-success" />
+          <span className="text-xs font-medium">{t('trustIndicators.multiCurrency')}</span>
         </div>
       </div>
     </div>
