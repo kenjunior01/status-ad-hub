@@ -301,9 +301,9 @@ export const SponsorAdPurchaseModal = ({ open, onOpenChange }: SponsorAdPurchase
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto"
+                  className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto"
                 >
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
                 </motion.div>
                 <h3 className="text-lg font-bold text-foreground">{t('sponsors.form.thankYou', 'Thank you!')}</h3>
                 <p className="text-sm text-muted-foreground">
