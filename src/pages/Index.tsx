@@ -9,6 +9,7 @@ import { SocialProof } from "@/components/TrustIndicators";
 import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { SponsorAdsCarousel } from "@/components/SponsorAdsCarousel";
+import { SponsorAdPurchaseModal } from "@/components/SponsorAdPurchaseModal";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
