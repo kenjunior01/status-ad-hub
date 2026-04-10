@@ -699,5 +699,10 @@
     "proofSent": "Comprovativo enviado",
     "proofSentDesc": "O comprovativo foi enviado para verificação.",
     "awaitingVerification": "Aguardando verificação do admin"
+  },
+  "profile": {
+    "autoPricing": "Preço Automático Activo",
+    "autoPricingDesc": "O seu preço é calculado automaticamente com base nas suas visualizações. CPV base: 0.70 MZN/visualização.",
+    "unlockPricing": "Desbloqueie preço personalizado por"
   }
 }
