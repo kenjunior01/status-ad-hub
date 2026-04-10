@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_listings: {
+        Row: {
+          advertiser_id: string
+          budget: number
+          category: string | null
+          closed_at: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          duration_days: number | null
+          id: string
+          max_applications: number | null
+          requirements: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          advertiser_id: string
+          budget?: number
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          max_applications?: number | null
+          requirements?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          advertiser_id?: string
+          budget?: number
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          max_applications?: number | null
+          requirements?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaign_proofs: {
         Row: {
           campaign_id: string
@@ -454,6 +505,47 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_applications: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          listing_id: string
+          message: string | null
+          proposed_price: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          listing_id: string
+          message?: string | null
+          proposed_price?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          listing_id?: string
+          message?: string | null
+          proposed_price?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_applications_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "ad_listings"
             referencedColumns: ["id"]
           },
         ]
