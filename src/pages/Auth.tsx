@@ -84,7 +84,6 @@ const Auth = ({ onNavigate }: AuthProps) => {
             <CardDescription className="text-sm text-muted-foreground">
               {t('hero.title')}
             </CardDescription>
-            </CardDescription>
           </CardHeader>
 
           <CardContent className="px-5 pb-5">
