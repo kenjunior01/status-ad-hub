@@ -57,6 +57,7 @@ const Index = ({ onNavigate }: IndexProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -250,7 +251,8 @@ const Index = ({ onNavigate }: IndexProps) => {
       </section>
 
       {/* Sponsor Ads Carousel */}
-      <SponsorAdsCarousel onAdvertise={() => onNavigate?.('auth')} />
+      <SponsorAdsCarousel onAdvertise={() => setSponsorModalOpen(true)} />
+      <SponsorAdPurchaseModal open={sponsorModalOpen} onOpenChange={setSponsorModalOpen} />
 
       {/* Main Listings Section with Sidebar */}
       <section className="py-12 px-4">
