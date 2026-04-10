@@ -58,7 +58,6 @@ const Index = ({ onNavigate }: IndexProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
-  const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
 
   // Greeting based on time of day
   const greeting = useMemo(() => {
