@@ -303,8 +303,6 @@ const Index = ({ onNavigate }: IndexProps) => {
       </section>
 
       {/* Sponsor Ads Carousel */}
-      <SponsorAdsCarousel onAdvertise={() => setSponsorModalOpen(true)} />
-      <SponsorAdPurchaseModal open={sponsorModalOpen} onOpenChange={setSponsorModalOpen} />
 
       {/* Main Listings Section with Sidebar */}
       <section className="py-12 px-4">
