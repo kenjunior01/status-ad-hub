@@ -75,10 +75,11 @@ export const SponsorAdsCarousel = ({ onAdvertise }: SponsorAdsCarouselProps) => 
             </span>
           </div>
           <button
-            onClick={onAdvertise}
-            className="text-[10px] text-muted-foreground hover:text-primary transition-colors font-medium px-2 py-0.5 rounded-full hover:bg-primary/5"
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAdvertise?.(); }}
+            className="text-[10px] text-primary font-semibold px-3 py-1 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all hover:scale-105 cursor-pointer z-10 relative"
           >
-            {t('sponsors.advertiseHere', 'Advertise here')} →
+            🚀 {t('sponsors.advertiseHere', 'Advertise here')}
           </button>
         </div>
 
