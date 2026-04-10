@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalizationContext } from '@/contexts/LocalizationContext';
 import { FileText, Loader2, X, Send } from 'lucide-react';
 
 interface ChatQuotationFormProps {
@@ -21,7 +20,6 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { currency } = useLocalizationContext();
 
   const handleSubmit = async () => {
     if (!title.trim() || !amount) return;
@@ -60,7 +58,7 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          content: `💼 Cotação: ${title.trim()} — ${currency} ${amountNum.toFixed(2)}`,
+          content: `💼 Cotação: ${title.trim()} — USD ${amountNum.toFixed(2)}`,
           status: 'sent',
         });
 
@@ -108,7 +106,7 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
           />
         </div>
         <div>
-          <Label className="text-xs">Valor ({currency})</Label>
+          <Label className="text-xs">Valor (USD)</Label>
           <Input
             type="number"
             step="0.01"
