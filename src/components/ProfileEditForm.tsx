@@ -52,10 +52,10 @@ export const ProfileEditForm = () => {
   ];
 
   const priceRanges = [
-    { value: "budget", label: "Econômico (R$ 10-50)" },
-    { value: "mid-range", label: "Intermediário (R$ 50-150)" },
-    { value: "premium", label: "Premium (R$ 150-500)" },
-    { value: "luxury", label: "Luxo (R$ 500+)" },
+    { value: "budget", label: "Econômico ($10-50)" },
+    { value: "mid-range", label: "Intermediário ($50-150)" },
+    { value: "premium", label: "Premium ($150-500)" },
+    { value: "luxury", label: "Luxo ($500+)" },
   ];
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +112,7 @@ export const ProfileEditForm = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-sm">Completude do Perfil</span>
+              <span className="font-semibold text-sm">{t("profile.completion")}</span>
             </div>
             <Badge variant={completion === 100 ? "default" : "secondary"}>
               {completion}%
@@ -126,7 +126,7 @@ export const ProfileEditForm = () => {
           </div>
           {completion < 100 && (
             <p className="text-xs text-muted-foreground mt-2">
-              Perfis completos recebem até 3x mais propostas!
+              {t("profile.completionTip")}
             </p>
           )}
         </CardContent>
@@ -137,7 +137,7 @@ export const ProfileEditForm = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Foto de Perfil
+            {t("profile.photo")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -179,10 +179,10 @@ export const ProfileEditForm = () => {
                 className="gap-2"
               >
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {uploading ? "Enviando..." : "Enviar Foto"}
+                {uploading ? t("profile.uploading") : t("profile.uploadPhoto")}
               </Button>
               <p className="text-xs text-muted-foreground">
-                JPG, PNG ou WebP. Máximo 5MB.
+                {t("profile.photoFormats")}
               </p>
             </div>
           </div>
@@ -192,28 +192,28 @@ export const ProfileEditForm = () => {
       {/* Basic Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Informações Básicas</CardTitle>
+          <CardTitle>{t("profile.basicInfo")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="display_name">Nome de Exibição *</Label>
+            <Label htmlFor="display_name">{t("profile.displayName")} *</Label>
             <Input
               id="display_name"
               value={formData.display_name}
               onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              placeholder="Como você quer ser conhecido"
+              placeholder={t("profile.displayNamePlaceholder")}
               required
               maxLength={100}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="bio">Biografia</Label>
+            <Label htmlFor="bio">{t("profile.biography")}</Label>
             <Textarea
               id="bio"
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
-              placeholder="Conte sobre você, seu conteúdo e seus diferenciais..."
+              placeholder={t("profile.bioPlaceholder")}
               rows={4}
               maxLength={500}
             />
@@ -223,21 +223,21 @@ export const ProfileEditForm = () => {
           </div>
 
           <div className="grid gap-2">
-              <Label htmlFor="niche">Nicho Principal</Label>
-              <Select
-                value={formData.niche}
-                onValueChange={(value) => setFormData({ ...formData, niche: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione seu nicho" />
-                </SelectTrigger>
-                <SelectContent>
-                  {niches.map((niche) => (
-                    <SelectItem key={niche} value={niche}>{niche}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Label htmlFor="niche">{t("profile.mainNiche")}</Label>
+            <Select
+              value={formData.niche}
+              onValueChange={(value) => setFormData({ ...formData, niche: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t("profile.selectNiche")} />
+              </SelectTrigger>
+              <SelectContent>
+                {niches.map((niche) => (
+                  <SelectItem key={niche} value={niche}>{niche}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Price Section - Locked unless can_set_own_price */}
           {!(profile as any)?.can_set_own_price ? (
@@ -260,13 +260,13 @@ export const ProfileEditForm = () => {
           ) : (
             <>
               <div className="grid gap-2">
-                <Label htmlFor="price_range">Faixa de Preço</Label>
+                <Label htmlFor="price_range">{t("profile.priceRange")}</Label>
                 <Select
                   value={formData.price_range}
                   onValueChange={(value) => setFormData({ ...formData, price_range: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a faixa" />
+                    <SelectValue placeholder={t("profile.selectRange")} />
                   </SelectTrigger>
                   <SelectContent>
                     {priceRanges.map((range) => (
@@ -276,7 +276,7 @@ export const ProfileEditForm = () => {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="price_per_post">Preço por Post (USD)</Label>
+                <Label htmlFor="price_per_post">{t("profile.pricePerPost")}</Label>
                 <Input
                   id="price_per_post"
                   type="number"
@@ -294,14 +294,14 @@ export const ProfileEditForm = () => {
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-semibold">📊 Dados de Audiência (CPV)</span>
+                <span className="text-sm font-semibold">📊 {t("profile.audienceData")}</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Esses dados são usados para calcular automaticamente seu CPV (Custo por Visualização).
+                {t("profile.audienceDataDesc")}
               </p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="follower_count">Seguidores no WhatsApp</Label>
+                  <Label htmlFor="follower_count">{t("profile.whatsappFollowers")}</Label>
                   <Input
                     id="follower_count"
                     type="number"
@@ -312,7 +312,7 @@ export const ProfileEditForm = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="engagement_rate">Taxa de Engajamento (%)</Label>
+                  <Label htmlFor="engagement_rate">{t("profile.engagementRate")}</Label>
                   <Input
                     id="engagement_rate"
                     type="number"
@@ -327,8 +327,8 @@ export const ProfileEditForm = () => {
               </div>
               {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
                 <div className="p-3 bg-background rounded-lg border">
-                  <p className="text-sm font-medium">Seu CPV calculado: <span className="text-primary font-bold">R$ {Number(profile.cpv_rate).toFixed(4)}</span></p>
-                  <p className="text-xs text-muted-foreground mt-1">Baseado nos seus seguidores, engajamento e nicho</p>
+                  <p className="text-sm font-medium">{t("profile.calculatedCPV")}: <span className="text-primary font-bold">{formatFromUSD(Number(profile.cpv_rate))}</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("profile.cpvBasis")}</p>
                 </div>
               )}
             </CardContent>
@@ -342,30 +342,30 @@ export const ProfileEditForm = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Star className="h-5 w-5" />
-              Estatísticas
+              {t("profile.statistics")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-muted/50 rounded-lg">
                 <p className="text-2xl font-bold text-foreground">{profile.rating || 0}</p>
-                <p className="text-xs text-muted-foreground">Avaliação</p>
+                <p className="text-xs text-muted-foreground">{t("profile.rating")}</p>
               </div>
               <div className="text-center p-3 bg-muted/50 rounded-lg">
                 <p className="text-2xl font-bold text-foreground">{profile.total_reviews || 0}</p>
-                <p className="text-xs text-muted-foreground">Avaliações</p>
+                <p className="text-xs text-muted-foreground">{t("profile.reviews")}</p>
               </div>
               <div className="text-center p-3 bg-muted/50 rounded-lg">
                 <p className="text-2xl font-bold text-foreground">{profile.total_campaigns || 0}</p>
-                <p className="text-xs text-muted-foreground">Campanhas</p>
+                <p className="text-xs text-muted-foreground">{t("profile.campaigns")}</p>
               </div>
               <div className="text-center p-3 bg-muted/50 rounded-lg">
                 <p className="text-2xl font-bold text-foreground">
                   <Badge variant={profile.is_verified ? "default" : "secondary"}>
-                    {profile.is_verified ? "Verificado" : "Pendente"}
+                    {profile.is_verified ? t("profile.verified") : t("profile.pending")}
                   </Badge>
                 </p>
-                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-xs text-muted-foreground">{t("profile.status")}</p>
               </div>
             </div>
           </CardContent>
@@ -375,9 +375,9 @@ export const ProfileEditForm = () => {
       {/* Submit */}
       <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90" disabled={saving}>
         {saving ? (
-          <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Salvando...</span>
+          <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{t("profile.saving")}</span>
         ) : (
-          <span className="flex items-center gap-2"><Save className="h-4 w-4" />Salvar Alterações</span>
+          <span className="flex items-center gap-2"><Save className="h-4 w-4" />{t("profile.saveChanges")}</span>
         )}
       </Button>
     </form>
