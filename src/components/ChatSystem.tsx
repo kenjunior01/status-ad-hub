@@ -307,6 +307,10 @@ export const ChatSystem = () => {
                       <Receipt className="h-4 w-4 mr-2" />
                       Criar Cotação
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Criar Factura
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       const input = document.createElement('input');
                       input.type = 'file';
