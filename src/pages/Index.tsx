@@ -60,6 +60,26 @@ const Index = ({ onNavigate }: IndexProps) => {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
 
+  // Greeting based on time of day
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return t('greeting.morning', 'Bom dia');
+    if (hour >= 12 && hour < 18) return t('greeting.afternoon', 'Boa tarde');
+    return t('greeting.evening', 'Boa noite');
+  }, [t]);
+
+  // Random inspirational quote
+  const inspirationalQuote = useMemo(() => {
+    const quotes = [
+      t('inspiration.q1', 'O sucesso é a soma de pequenos esforços repetidos dia após dia.'),
+      t('inspiration.q2', 'Cada visualização é uma oportunidade de transformar vidas.'),
+      t('inspiration.q3', 'Conecte, crie e monetize — o seu potencial é ilimitado.'),
+      t('inspiration.q4', 'Grandes resultados começam com o primeiro passo.'),
+      t('inspiration.q5', 'A sua criatividade é o seu maior ativo.'),
+    ];
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  }, [t]);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowFloatingCTA(window.scrollY > 600);
