@@ -132,14 +132,28 @@ export const useProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Try update first
       const { data, error } = await supabase
         .from('profiles')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // If no row was updated, insert instead
+      if (!data) {
+        const { data: inserted, error: insertErr } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id, ...updates })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+        setProfile(inserted);
+        toast({ title: "Perfil criado!", description: "Suas informações foram salvas com sucesso." });
+        return inserted;
+      }
 
       setProfile(data);
       toast({ title: "Perfil atualizado!", description: "Suas informações foram salvas com sucesso." });
