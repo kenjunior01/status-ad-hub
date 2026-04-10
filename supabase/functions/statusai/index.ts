@@ -440,3 +440,49 @@ Responda APENAS com JSON válido, sem markdown.`;
 
   return { success: true, ...matchResult };
 }
+
+async function mascotChat(apiKey: string, params: any) {
+  const { message, language, conversationHistory } = params;
+  logStep("Mascot chat", { language, messageLength: message?.length });
+
+  const langMap: Record<string, string> = {
+    'pt-BR': 'português',
+    'en-US': 'English',
+    'es-ES': 'español',
+    'fr-FR': 'français',
+  };
+  const lang = langMap[language] || 'português';
+
+  const messages = [
+    {
+      role: "system",
+      content: `You are StatusBot, the friendly AI mascot of StatusAds Connect — a WhatsApp Status advertising marketplace. You help users understand the platform, give tips about monetization, pricing, campaigns, payments, and more. Be concise, friendly, and use emojis. Always respond in ${lang}. Keep answers under 150 words.`
+    },
+    ...(conversationHistory || []),
+    { role: "user", content: message }
+  ];
+
+  const response = await fetch(AI_GATEWAY, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-lite",
+      messages,
+      max_tokens: 300,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logStep("AI API error", { status: response.status, error: errorText });
+    throw new Error(`AI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const reply = data.choices?.[0]?.message?.content || "Desculpe, não entendi. Pode reformular?";
+
+  return { success: true, response: reply };
+}
