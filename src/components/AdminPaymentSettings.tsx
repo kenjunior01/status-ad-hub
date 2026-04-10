@@ -27,7 +27,7 @@ const GATEWAY_ICONS: Record<string, React.ReactNode> = {
 
 const GATEWAY_LABELS: Record<string, string> = {
   gateway_stripe: 'Stripe',
-  gateway_paysuite: 'PaySuite / M-Pesa',
+  gateway_paysuite: 'PaySuite (M-Pesa / e-Mola)',
   gateway_paypal: 'PayPal',
   gateway_multicaixa: 'Multicaixa Express',
   gateway_mercadopago: 'Mercado Pago / PIX',
