@@ -5,11 +5,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import ptBR from '@/locales/pt-BR.json';
 import enUS from '@/locales/en-US.json';
 import esES from '@/locales/es-ES.json';
+import frFR from '@/locales/fr-FR.json';
 
 const resources = {
   'pt-BR': { translation: ptBR },
   'en-US': { translation: enUS },
   'es-ES': { translation: esES },
+  'fr-FR': { translation: frFR },
 };
 
 i18n
@@ -18,7 +20,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'pt-BR',
-    supportedLngs: ['pt-BR', 'en-US', 'es-ES'],
+    supportedLngs: ['pt-BR', 'en-US', 'es-ES', 'fr-FR'],
     interpolation: {
       escapeValue: false,
     },

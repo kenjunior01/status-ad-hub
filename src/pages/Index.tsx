@@ -74,16 +74,16 @@ const Index = ({ onNavigate }: IndexProps) => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     toast({
-      title: "Buscando...",
-      description: `Procurando criadores para: "${query}"`,
+      title: t('common.search'),
+      description: `${t('common.loading')}`,
     });
   };
 
   const handleCategorySelect = (category: string) => {
     setActiveCategory(category.toLowerCase());
     toast({
-      title: `Categoria: ${category}`,
-      description: "Filtrando criadores por categoria",
+      title: `${category}`,
+      description: t('common.filter'),
     });
   };
 
@@ -200,8 +200,8 @@ const Index = ({ onNavigate }: IndexProps) => {
         onBack={() => setSelectedProfile(null)}
         onContact={() => {
           toast({
-            title: "Iniciando conversa...",
-            description: `Abrindo chat com ${selectedProfile.display_name}`,
+            title: t('common.loading'),
+            description: selectedProfile.display_name,
           });
         }}
       />
@@ -214,8 +214,7 @@ const Index = ({ onNavigate }: IndexProps) => {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
           <div className="space-y-2">
-            <p className="text-lg font-medium text-foreground">Carregando criadores...</p>
-            <p className="text-sm text-muted-foreground">Preparando as melhores oportunidades</p>
+            <p className="text-lg font-medium text-foreground">{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -261,10 +260,10 @@ const Index = ({ onNavigate }: IndexProps) => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  Explore Criadores
+                  {t('index.exploreCreators')}
                 </h2>
                 <p className="text-muted-foreground">
-                  {activeProfiles.length} criadores disponíveis
+                  {activeProfiles.length} {t('index.creatorsAvailable')}
                 </p>
               </div>
               
@@ -285,7 +284,7 @@ const Index = ({ onNavigate }: IndexProps) => {
                   className="gap-2"
                 >
                   <Heart className="h-4 w-4" />
-                  Favoritos ({getFavoriteCount()})
+                  {t('index.favorites')} ({getFavoriteCount()})
                 </Button>
               </div>
             </div>
@@ -340,7 +339,7 @@ const Index = ({ onNavigate }: IndexProps) => {
                         className="gap-2 px-8"
                       >
                         <ChevronDown className="h-4 w-4" />
-                        Ver Mais ({activeProfiles.length - 8} criadores)
+                        {t('index.viewMore')} ({activeProfiles.length - 8} {t('index.creators')})
                       </Button>
                     </div>
                   )}

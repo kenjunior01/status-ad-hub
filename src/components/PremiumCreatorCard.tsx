@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/FavoriteButton";
@@ -47,6 +48,7 @@ export const PremiumCreatorCard = ({
   variant = "default",
   showFavoriteButton = false
 }: PremiumCreatorCardProps) => {
+  const { t } = useTranslation();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { formatFromUSD } = useLocalizationContext();
   const isNew = Date.now() - new Date(profile.created_at).getTime() < 7 * 24 * 60 * 60 * 1000;
@@ -80,7 +82,6 @@ export const PremiumCreatorCard = ({
         </div>
       )}
 
-      {/* Badges top-right */}
       <div className="absolute top-1.5 right-1.5 z-10 flex gap-0.5">
         {isTopRated && (
           <Badge className="bg-warning text-warning-foreground text-[9px] px-1 py-0 h-4">
@@ -88,11 +89,10 @@ export const PremiumCreatorCard = ({
           </Badge>
         )}
         {isNew && (
-          <Badge className="bg-success text-success-foreground text-[9px] px-1 py-0 h-4">Novo</Badge>
+          <Badge className="bg-success text-success-foreground text-[9px] px-1 py-0 h-4">{t('index.new')}</Badge>
         )}
       </div>
 
-      {/* Avatar — small square */}
       <div className="p-2 pb-0">
         <div className="relative">
           <div className={cn("w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br", getAvatarGradient(profile.display_name))}>
@@ -110,7 +110,6 @@ export const PremiumCreatorCard = ({
         </div>
       </div>
 
-      {/* Content — tight */}
       <div className="p-2 pt-1.5 space-y-1">
         <div>
           <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-1">
@@ -131,24 +130,23 @@ export const PremiumCreatorCard = ({
 
         <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
           <Eye className="h-2 w-2" />
-          <span>{profile.total_campaigns} campanhas</span>
+          <span>{profile.total_campaigns} {t('index.campaignsCount')}</span>
         </div>
 
         <div className="border-t border-border/30 pt-1" />
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[9px] text-muted-foreground">A partir de</p>
+            <p className="text-[9px] text-muted-foreground">{t('creator.startingAt')}</p>
             <p className="font-bold text-xs text-foreground">{formatFromUSD(getBasePrice())}</p>
           </div>
           <GamificationBadge badgeLevel={profile.badge_level || 'bronze'} size="xs" />
         </div>
 
-        {/* Hover CTA */}
         <div className="opacity-0 group-hover:opacity-100 transition-all duration-150 transform translate-y-0.5 group-hover:translate-y-0">
           <div className="bg-primary text-primary-foreground text-[10px] font-medium text-center py-1 rounded-md flex items-center justify-center gap-0.5">
             <ArrowUpRight className="h-2.5 w-2.5" />
-            Ver Perfil
+            {t('index.viewProfile')}
           </div>
         </div>
       </div>
