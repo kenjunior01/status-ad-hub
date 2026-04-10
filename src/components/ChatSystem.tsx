@@ -13,7 +13,7 @@ import { ChatQuotationForm } from "@/components/ChatQuotationForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
-  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus
+  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -160,6 +160,7 @@ export const ChatSystem = () => {
 
   const isQuotationMessage = (content: string) => content.startsWith('💼 Cotação:');
   const isInvoiceMessage = (content: string) => content.startsWith('🧾 Factura:');
+  const isPaymentProofMessage = (content: string) => content.startsWith('💳 Comprovativo de Pagamento Offline:');
   const isPaymentMessage = (content: string) => content.startsWith('✅ Pagamento:');
 
   const filteredConversations = conversations.filter(c =>
@@ -299,10 +300,37 @@ export const ChatSystem = () => {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
                       <Receipt className="h-4 w-4 mr-2" />
                       Criar Cotação
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*,.pdf';
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
+                          return;
+                        }
+                        setUploading(true);
+                        try {
+                          const attachment = await uploadAttachment(file);
+                          await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
+                          toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
+                        } catch (err) {
+                          console.error('Upload error:', err);
+                        } finally {
+                          setUploading(false);
+                        }
+                      };
+                      input.click();
+                    }}>
+                      <Banknote className="h-4 w-4 mr-2" />
+                      Enviar Comprovativo de Pagamento
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
                       <Paperclip className="h-4 w-4 mr-2" />
@@ -348,7 +376,8 @@ export const ChatSystem = () => {
                     const isInvoice = isInvoiceMessage(message.content);
                     const isPayment = isPaymentMessage(message.content);
                     const isRejection = message.content.startsWith('❌ Cotação recusada:');
-                    const isSpecial = isQuotation || isInvoice || isPayment;
+                    const isProof = isPaymentProofMessage(message.content);
+                    const isSpecial = isQuotation || isInvoice || isPayment || isProof;
 
                     return (
                       <div
@@ -399,6 +428,32 @@ export const ChatSystem = () => {
                               content={message.content.replace('✅ Pagamento: ', '')}
                               isMine={isMine}
                             />
+                          )}
+
+                          {/* Offline Payment Proof */}
+                          {isProof && (
+                            <div className={`rounded-xl p-3 border-2 border-amber-500/30 ${isMine ? 'bg-amber-500/10' : 'bg-card'}`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Banknote className="h-5 w-5 text-amber-500" />
+                                <span className="font-semibold text-sm">Comprovativo de Pagamento</span>
+                              </div>
+                              {message.attachment_url && (
+                                <div className="mb-2">
+                                  {message.attachment_type?.startsWith('image/') ? (
+                                    <button onClick={() => handleImageClick(message.attachment_url!)} className="block cursor-zoom-in">
+                                      <img src={message.attachment_url} alt="Comprovativo" className="max-w-full rounded-lg max-h-40 object-cover" />
+                                    </button>
+                                  ) : (
+                                    <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                      <FileText className="h-5 w-5" />
+                                      <span className="text-sm truncate">{message.attachment_name || 'Comprovativo'}</span>
+                                      <Download className="h-4 w-4 ml-auto" />
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-xs text-amber-600 dark:text-amber-400">⏳ Aguardando verificação do admin</p>
+                            </div>
                           )}
 
                           {/* Normal message */}

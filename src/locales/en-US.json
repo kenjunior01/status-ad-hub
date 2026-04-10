@@ -688,5 +688,23 @@
     "storage": "Storage",
     "auth": "Auth",
     "aiLabel": "AI"
+  },
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "inspiration": {
+    "q1": "Success is the sum of small efforts repeated day after day.",
+    "q2": "Every view is an opportunity to transform lives.",
+    "q3": "Connect, create and monetize — your potential is unlimited.",
+    "q4": "Great results start with the first step.",
+    "q5": "Your creativity is your greatest asset."
+  },
+  "chat": {
+    "sendPaymentProof": "Send Payment Proof",
+    "proofSent": "Proof sent",
+    "proofSentDesc": "The proof has been sent for verification.",
+    "awaitingVerification": "Awaiting admin verification"
   }
 }
