@@ -72,7 +72,7 @@ export const CreatorDashboard = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                  {t("common.hello")}, {profile?.display_name || "Criador"} 👋
+                  {t("common.hello")}, {profile?.display_name || t("navigation.creators")} 👋
                 </h1>
                 <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="md" />
               </div>
