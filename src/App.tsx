@@ -11,6 +11,7 @@ import { useAdaptiveTheme } from "@/hooks/useAdaptiveTheme";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { AnimatedLoading } from "@/components/AnimatedLoading";
 import { StatusBotMascot } from "@/components/StatusBotMascot";
+import { FloatingBackground } from "@/components/FloatingBackground";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";

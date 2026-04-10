@@ -339,7 +339,7 @@ export const AdvertiserDashboard = () => {
           <TabsContent value="statusai" className="space-y-5">
             <div className="grid md:grid-cols-2 gap-5">
               <StatusAIMatchmaker />
-              <StatusAIROIPredictor />
+              <StatusAIROIPredictor creatorId="" />
             </div>
             <AnalyticsDashboard />
           </TabsContent>
