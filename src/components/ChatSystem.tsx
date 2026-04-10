@@ -34,6 +34,7 @@ export const ChatSystem = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showQuotationForm, setShowQuotationForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
