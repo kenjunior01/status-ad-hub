@@ -465,5 +465,16 @@
     "tip1": "Monetize your WhatsApp Status",
     "tip2": "Connect with global brands",
     "tip3": "Secure and guaranteed payments"
+  },
+  "emptyState": {
+    "noCreators": "Be the first to explore!",
+    "noCreatorsDescription": "New creators are signing up every day. Check back soon or adjust your filters.",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting the filters or exploring other categories",
+    "tryAgain": "Clear Filters"
+  },
+  "global": {
+    "platform": "Global WhatsApp Status advertising platform",
+    "tagline": "Connecting brands and creators worldwide"
   }
 }
