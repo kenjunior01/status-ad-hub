@@ -224,7 +224,7 @@ const Index = ({ onNavigate }: IndexProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background wa-bg-pattern">
+    <div className="min-h-screen bg-transparent wa-bg-pattern">
       {/* Hero Section with Search */}
       <section className="relative py-12 px-4 bg-gradient-hero overflow-hidden">
         {/* Floating circles */}

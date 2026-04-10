@@ -5,22 +5,22 @@ import { motion } from "framer-motion";
 const TIME_CONFIGS = {
   aurora: {
     shapes: ["☀️", "🌅", "🌤️", "✨", "🌸"],
-    colors: ["hsl(45 80% 50% / 0.08)", "hsl(152 69% 40% / 0.06)", "hsl(30 80% 55% / 0.07)"],
+    colors: ["hsl(45 80% 50% / 0.12)", "hsl(152 69% 40% / 0.1)", "hsl(30 80% 55% / 0.11)"],
     particleCount: 12,
   },
   dia: {
     shapes: ["💬", "📱", "🚀", "💰", "⭐", "📊"],
-    colors: ["hsl(152 69% 40% / 0.06)", "hsl(168 76% 36% / 0.05)", "hsl(142 71% 45% / 0.06)"],
+    colors: ["hsl(152 69% 40% / 0.1)", "hsl(168 76% 36% / 0.08)", "hsl(142 71% 45% / 0.1)"],
     particleCount: 14,
   },
   crepusculo: {
     shapes: ["🌅", "🌇", "✨", "💫", "🌙"],
-    colors: ["hsl(25 75% 42% / 0.07)", "hsl(38 92% 50% / 0.06)", "hsl(152 60% 38% / 0.05)"],
+    colors: ["hsl(25 75% 42% / 0.12)", "hsl(38 92% 50% / 0.1)", "hsl(152 60% 38% / 0.08)"],
     particleCount: 10,
   },
   noite: {
     shapes: ["🌙", "⭐", "✨", "💫", "🌟"],
-    colors: ["hsl(220 30% 40% / 0.06)", "hsl(200 30% 25% / 0.05)", "hsl(260 30% 40% / 0.04)"],
+    colors: ["hsl(220 30% 40% / 0.1)", "hsl(200 30% 25% / 0.08)", "hsl(260 30% 40% / 0.07)"],
     particleCount: 8,
   },
 };
@@ -67,14 +67,14 @@ export const FloatingBackground = () => {
       size: 14 + Math.random() * 18,
       duration: 15 + Math.random() * 25,
       delay: Math.random() * -20,
-      driftX: (Math.random() - 0.5) * 60,
-      driftY: -20 - Math.random() * 40,
-      opacity: 0.15 + Math.random() * 0.2,
+      driftX: (Math.random() - 0.5) * 80,
+      driftY: -30 - Math.random() * 50,
+      opacity: 0.25 + Math.random() * 0.3,
     }));
   }, [period, config.particleCount, config.shapes]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden" aria-hidden="true">
       {/* Gradient orbs */}
       <motion.div
         className="absolute w-96 h-96 rounded-full blur-3xl"

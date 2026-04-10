@@ -78,7 +78,7 @@ function AppContent() {
     <div className="min-h-screen bg-background relative">
       <FloatingBackground />
       <Navigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
-      <main className="pb-20 md:pb-0">
+      <main className="pb-20 md:pb-0 relative z-[2]">
         <PageTransition pageKey={currentPage}>
           {renderPage()}
         </PageTransition>
