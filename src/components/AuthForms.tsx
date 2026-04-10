@@ -202,7 +202,7 @@ export const LoginForm = ({ onShowPassword, onTogglePassword, loading }: LoginFo
         ) : "Entrar"}
       </Button>
 
-      <GoogleSignInButton />
+      <SocialSignInButtons />
     </form>
   );
 };
@@ -605,7 +605,7 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
                 )}
               </Button>
 
-              <GoogleSignInButton />
+              <SocialSignInButtons />
             </form>
           </motion.div>
         )}
