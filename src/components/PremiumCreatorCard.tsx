@@ -5,7 +5,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Star, BadgeCheck, Eye, ArrowUpRight } from "lucide-react";
+import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -100,10 +100,11 @@ export const PremiumCreatorCard = ({
           )}
         </div>
 
+        {/* Avatar */}
         <div className="p-1.5 md:p-2 pb-0">
           <div className="relative">
             <div className={cn(
-              "w-full aspect-square rounded-xl overflow-hidden",
+              "w-full aspect-[4/5] rounded-xl overflow-hidden",
               !profile.avatar_url && `bg-gradient-to-br ${getAvatarGradient(profile.display_name)}`
             )}>
               {profile.avatar_url ? (
@@ -114,10 +115,16 @@ export const PremiumCreatorCard = ({
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-xl md:text-2xl font-bold text-white/90 drop-shadow-sm">
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                  <span className="text-2xl md:text-3xl font-bold text-white/90 drop-shadow-sm">
                     {profile.display_name.charAt(0).toUpperCase()}
                   </span>
+                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    <Smartphone className="h-2.5 w-2.5 text-white/80" />
+                    <span className="text-[8px] text-white/80 font-medium">
+                      {t('creator.availableForAds', 'Available')}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -129,6 +136,7 @@ export const PremiumCreatorCard = ({
           </div>
         </div>
 
+        {/* Info */}
         <div className="p-1.5 md:p-2 pt-1.5 space-y-0.5 md:space-y-1">
           <div>
             <h3 className="font-bold text-[11px] md:text-xs text-foreground group-hover:text-primary transition-colors line-clamp-1">

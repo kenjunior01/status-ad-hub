@@ -11,6 +11,7 @@ import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { SponsorAdsCarousel } from "@/components/SponsorAdsCarousel";
 import { SponsorAdPurchaseModal } from "@/components/SponsorAdPurchaseModal";
+import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -436,6 +437,9 @@ const Index = ({ onNavigate }: IndexProps) => {
           </div>
         </div>
       </section>
+
+      {/* Engagement Features */}
+      <EngagementFeatures onNavigate={onNavigate} />
 
       {/* Social Proof Section */}
       <section className="py-12 px-4 bg-muted/30">
