@@ -220,10 +220,7 @@ const Index = ({ onNavigate }: IndexProps) => {
         profile={selectedProfile}
         onBack={() => setSelectedProfile(null)}
         onContact={() => {
-          toast({
-            title: t('common.loading'),
-            description: selectedProfile.display_name,
-          });
+          onNavigate?.('messages');
         }}
       />
     );
