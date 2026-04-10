@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { HeroSearch } from "@/components/HeroSearch";
@@ -227,12 +227,26 @@ const Index = ({ onNavigate }: IndexProps) => {
     <div className="min-h-screen bg-transparent wa-bg-pattern">
       {/* Hero Section with Search */}
       <section className="relative py-12 px-4 bg-gradient-hero overflow-hidden">
-        {/* Floating circles */}
-        <div className="absolute top-10 left-[10%] w-32 h-32 bg-primary-foreground/5 rounded-full blur-2xl animate-float" />
-        <div className="absolute bottom-10 right-[15%] w-48 h-48 bg-primary-foreground/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
-        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-primary-foreground/3 rounded-full blur-xl animate-float" style={{ animationDelay: '0.8s' }} />
+        {/* Animated gradient orbs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 left-[10%] w-40 h-40 bg-primary-foreground/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-10 right-[15%] w-56 h-56 bg-primary-foreground/6 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+          <div className="absolute top-1/3 left-1/2 w-32 h-32 bg-primary-foreground/5 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
+          <div className="absolute bottom-1/4 left-[20%] w-24 h-24 bg-primary-foreground/7 rounded-full blur-xl animate-bounce" style={{ animationDuration: '8s' }} />
+          <div className="absolute top-[60%] right-[30%] w-36 h-36 bg-primary-foreground/4 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '3s' }} />
+        </div>
         
         <div className="relative z-10 max-w-5xl mx-auto text-center">
+          {/* Greeting & Inspirational Quote */}
+          <div className="mb-6 animate-fade-in">
+            <p className="text-lg md:text-xl font-semibold text-primary-foreground mb-1">
+              {greeting} 👋
+            </p>
+            <p className="text-sm md:text-base text-primary-foreground/70 italic max-w-lg mx-auto">
+              "{inspirationalQuote}"
+            </p>
+          </div>
+
           <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground px-3 py-1.5 rounded-full mb-4">
             <Globe2 className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">{t('global.platform')}</span>
