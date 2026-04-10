@@ -160,6 +160,7 @@ export const ChatSystem = () => {
 
   const isQuotationMessage = (content: string) => content.startsWith('💼 Cotação:');
   const isInvoiceMessage = (content: string) => content.startsWith('🧾 Factura:');
+  const isPaymentProofMessage = (content: string) => content.startsWith('💳 Comprovativo de Pagamento Offline:');
   const isPaymentMessage = (content: string) => content.startsWith('✅ Pagamento:');
 
   const filteredConversations = conversations.filter(c =>
@@ -375,7 +376,8 @@ export const ChatSystem = () => {
                     const isInvoice = isInvoiceMessage(message.content);
                     const isPayment = isPaymentMessage(message.content);
                     const isRejection = message.content.startsWith('❌ Cotação recusada:');
-                    const isSpecial = isQuotation || isInvoice || isPayment;
+                    const isProof = isPaymentProofMessage(message.content);
+                    const isSpecial = isQuotation || isInvoice || isPayment || isProof;
 
                     return (
                       <div
