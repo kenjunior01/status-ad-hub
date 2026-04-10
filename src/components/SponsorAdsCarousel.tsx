@@ -125,23 +125,24 @@ export const SponsorAdsCarousel = ({ onAdvertise }: SponsorAdsCarouselProps) => 
 
           {/* CTA card */}
           <motion.button
-            onClick={onAdvertise}
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAdvertise?.(); }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             className={cn(
               "flex-shrink-0",
               "flex items-center gap-2 px-2.5 py-2 rounded-lg",
-              "border border-dashed border-primary/30 hover:border-primary/60",
-              "transition-all duration-200 hover:bg-primary/5",
-              "w-[140px] md:w-[160px] cursor-pointer"
+              "border-2 border-dashed border-primary/50 hover:border-primary",
+              "transition-all duration-200 hover:bg-primary/10 hover:scale-[1.05]",
+              "w-[140px] md:w-[160px] cursor-pointer animate-pulse hover:animate-none"
             )}
           >
-            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-primary/20 flex items-center justify-center">
               <Megaphone className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="text-[11px] font-semibold text-primary truncate">
+              <p className="text-[11px] font-bold text-primary truncate">
                 {t('sponsors.yourBrand', 'Your brand')}
               </p>
               <p className="text-[9px] text-muted-foreground">$50/mo</p>
