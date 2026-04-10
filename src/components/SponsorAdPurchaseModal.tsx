@@ -126,16 +126,16 @@ export const SponsorAdPurchaseModal = ({ open, onOpenChange }: SponsorAdPurchase
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto p-0" aria-describedby="sponsor-modal-desc">
         {/* Header with gradient */}
         <div className="bg-gradient-hero text-primary-foreground p-5 pb-4 rounded-t-lg">
-          <DialogHeader>
+        <DialogHeader>
             <DialogTitle className="text-primary-foreground flex items-center gap-2 text-lg">
               <Megaphone className="h-5 w-5" />
               {t('sponsors.form.title', 'Advertise on StatusAds')}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-primary-foreground/70 text-xs mt-1">
+          <p className="text-primary-foreground/70 text-xs mt-1" id="sponsor-modal-desc">
             {t('sponsors.form.subtitle', 'Get your brand in front of thousands of creators and advertisers')}
           </p>
 
