@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Eye, EyeOff, ArrowLeft, ArrowRight, Check,
@@ -127,6 +128,8 @@ export const LoginForm = ({ onShowPassword, onTogglePassword, loading }: LoginFo
           </span>
         ) : "Entrar"}
       </Button>
+
+      <GoogleSignInButton />
     </form>
   );
 };
@@ -528,6 +531,8 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
                   </>
                 )}
               </Button>
+
+              <GoogleSignInButton />
             </form>
           </motion.div>
         )}
