@@ -196,7 +196,7 @@ export const AdminDashboard = () => {
               <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
               <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
-              <TabsTrigger value="offline">📄 Offline</TabsTrigger>
+              <TabsTrigger value="offline">📄 {t("admin.offlinePayments")}</TabsTrigger>
               <TabsTrigger value="disputes">⚠️ {t("admin.disputes")}</TabsTrigger>
               <TabsTrigger value="payments">⚙️ {t("admin.payments")}</TabsTrigger>
               <TabsTrigger value="settings">🔧 {t("admin.system")}</TabsTrigger>
