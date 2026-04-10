@@ -361,7 +361,17 @@ export const ChatSystem = () => {
               </div>
             )}
 
-            {/* Messages */}
+            {/* Invoice Form */}
+            {showInvoiceForm && selectedConversationId && (
+              <div className="p-3 border-b">
+                <ChatInvoiceForm
+                  conversationId={selectedConversationId}
+                  onClose={() => setShowInvoiceForm(false)}
+                  onCreated={() => {}}
+                />
+              </div>
+            )}
+
             <ScrollArea className="flex-1 p-4 bg-muted/10">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
