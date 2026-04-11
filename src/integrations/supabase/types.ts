@@ -430,6 +430,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_listings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_wallets: {
@@ -877,6 +884,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_favorites_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -932,7 +946,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          badge_level: string | null
+          bio: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          engagement_rate: number | null
+          follower_count: number | null
+          id: string | null
+          is_verified: boolean | null
+          niche: string | null
+          price_range: string | null
+          rating: number | null
+          total_campaigns: number | null
+          total_reviews: number | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge_level?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          engagement_rate?: number | null
+          follower_count?: number | null
+          id?: string | null
+          is_verified?: boolean | null
+          niche?: string | null
+          price_range?: string | null
+          rating?: number | null
+          total_campaigns?: number | null
+          total_reviews?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge_level?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          engagement_rate?: number | null
+          follower_count?: number | null
+          id?: string | null
+          is_verified?: boolean | null
+          niche?: string | null
+          price_range?: string | null
+          rating?: number | null
+          total_campaigns?: number | null
+          total_reviews?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_cpv_rate: {
