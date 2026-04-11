@@ -651,6 +651,8 @@ export type Database = {
           price_per_post: number | null
           price_range: string | null
           rating: number | null
+          referral_code: string | null
+          referral_points: number
           total_campaigns: number | null
           total_reviews: number | null
           updated_at: string | null
@@ -681,6 +683,8 @@ export type Database = {
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
+          referral_code?: string | null
+          referral_points?: number
           total_campaigns?: number | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -711,12 +715,44 @@ export type Database = {
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
+          referral_code?: string | null
+          referral_points?: number
           total_campaigns?: number | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
           whatsapp_views_max?: number | null
           whatsapp_views_min?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          points_earned: number
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_earned?: number
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_earned?: number
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -916,6 +952,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      process_referral: {
+        Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: boolean
       }
     }
