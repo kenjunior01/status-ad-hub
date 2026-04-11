@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Flame, Trophy, Target, Zap, Gift,
-  Star, TrendingUp, Users, Clock,
-  ArrowRight, Sparkles, Crown, Medal
+  Gift, Users, Link2, Copy, Check, Star, Share2, Trophy, Sparkles
 } from 'lucide-react';
 
 interface EngagementFeaturesProps {
@@ -18,185 +18,199 @@ interface EngagementFeaturesProps {
 
 export const EngagementFeatures = ({ onNavigate }: EngagementFeaturesProps) => {
   const { t } = useTranslation();
-  const [activeChallenge, setActiveChallenge] = useState(0);
+  const { toast } = useToast();
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralPoints, setReferralPoints] = useState(0);
+  const [referralCount, setReferralCount] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const dailyChallenges = [
-    {
-      id: 1,
-      title: t('engagement.challenge1', 'Complete your first campaign'),
-      xp: 50,
-      icon: Target,
-      color: 'from-primary to-accent',
-      progress: 0,
-    },
-    {
-      id: 2,
-      title: t('engagement.challenge2', 'Get 5 profile views'),
-      xp: 30,
-      icon: Users,
-      color: 'from-accent to-success',
-      progress: 60,
-    },
-    {
-      id: 3,
-      title: t('engagement.challenge3', 'Send a proposal'),
-      xp: 20,
-      icon: Zap,
-      color: 'from-warning to-destructive',
-      progress: 0,
-    },
+  useEffect(() => {
+    const fetchReferralData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('referral_code, referral_points')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        setReferralCode(profile.referral_code);
+        setReferralPoints(profile.referral_points || 0);
+      }
+
+      const { count } = await supabase
+        .from('referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('referrer_id', user.id);
+
+      setReferralCount(count || 0);
+    };
+
+    fetchReferralData();
+  }, []);
+
+  const referralLink = referralCode 
+    ? `${window.location.origin}?ref=${referralCode}` 
+    : '';
+
+  const handleCopy = async () => {
+    if (!referralLink) return;
+    await navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast({ title: '✅ Link copiado!', description: 'Partilha com os teus amigos.' });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    if (!referralLink) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'StatusAds Connect',
+          text: 'Junta-te à StatusAds e ganha pontos! Usa o meu link:',
+          url: referralLink,
+        });
+      } catch { /* user cancelled */ }
+    } else {
+      handleCopy();
+    }
+  };
+
+  const rewards = [
+    { points: 100, label: t('engagement.rewardHighlight', 'Perfil em Destaque (1 dia)'), icon: Star },
+    { points: 250, label: t('engagement.rewardBadge', 'Badge Especial no perfil'), icon: Trophy },
+    { points: 500, label: t('engagement.rewardBoost', 'Boost de visibilidade (7 dias)'), icon: Sparkles },
   ];
 
-  const leaderboard = [
-    { rank: 1, name: 'Top Creator', xp: 2450, badge: 'gold', icon: Crown },
-    { rank: 2, name: 'Rising Star', xp: 1890, badge: 'silver', icon: Medal },
-    { rank: 3, name: 'Active Seller', xp: 1240, badge: 'bronze', icon: Trophy },
-  ];
+  if (!userId) {
+    return (
+      <section className="py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="p-6 text-center border-border/30">
+            <Gift className="h-10 w-10 text-primary mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-foreground mb-1">
+              {t('engagement.inviteTitle', 'Convida e Ganha')}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('engagement.inviteDesc', 'Regista-te para ganhar pontos ao convidar amigos. Troca por recompensas exclusivas!')}
+            </p>
+            <Button onClick={() => onNavigate?.('auth')} className="gap-2">
+              <Users className="h-4 w-4" /> {t('engagement.signupToStart', 'Criar conta para começar')}
+            </Button>
+          </Card>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Section header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-warning/20 to-destructive/10 border border-warning/20">
-            <Flame className="h-5 w-5 text-warning" />
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20">
+            <Gift className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h2 className="text-lg md:text-xl font-bold text-foreground">
-              {t('engagement.title', 'Stay Engaged')}
+              {t('engagement.inviteTitle', 'Convida e Ganha')}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {t('engagement.subtitle', 'Complete challenges, earn XP, climb the ranks')}
+              {t('engagement.inviteSubtitle', 'Ganha 50 pontos por cada amigo que se registar')}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Daily Challenges */}
+          {/* Referral Link Card */}
           <Card className="col-span-1 md:col-span-2 p-4 border-border/30 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">
-                  {t('engagement.dailyChallenges', 'Daily Challenges')}
-                </h3>
-              </div>
-              <Badge variant="secondary" className="text-[10px]">
-                <Clock className="h-3 w-3 mr-1" />
-                {t('engagement.resetsIn', 'Resets in 12h')}
-              </Badge>
+            <div className="flex items-center gap-2 mb-3">
+              <Link2 className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">
+                {t('engagement.yourLink', 'O teu link de convite')}
+              </h3>
             </div>
 
-            <div className="space-y-3">
-              {dailyChallenges.map((challenge, i) => (
+            <div className="flex items-center gap-2 mb-4">
+              <Input
+                value={referralLink}
+                readOnly
+                className="h-10 bg-muted/30 border-border/40 text-xs font-mono"
+              />
+              <Button size="sm" variant="outline" onClick={handleCopy} className="shrink-0 gap-1">
+                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+              <Button size="sm" onClick={handleShare} className="shrink-0 gap-1">
+                <Share2 className="h-3.5 w-3.5" /> {t('engagement.share', 'Partilhar')}
+              </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: t('engagement.invited', 'Convidados'), value: referralCount, icon: Users, color: 'text-primary' },
+                { label: t('engagement.points', 'Pontos'), value: referralPoints, icon: Star, color: 'text-warning' },
+                { label: t('engagement.code', 'Código'), value: referralCode || '—', icon: Link2, color: 'text-accent' },
+              ].map((stat, i) => (
                 <motion.div
-                  key={challenge.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
-                    activeChallenge === i
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border/30 hover:border-primary/20 hover:bg-muted/50"
-                  )}
-                  onClick={() => setActiveChallenge(i)}
+                  className="flex flex-col items-center p-3 rounded-xl bg-muted/50 text-center"
                 >
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br",
-                    challenge.color
-                  )}>
-                    <challenge.icon className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{challenge.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Progress value={challenge.progress} className="h-1.5 flex-1" />
-                      <span className="text-[10px] text-muted-foreground">{challenge.progress}%</span>
-                    </div>
-                  </div>
-                  <Badge className="bg-warning/10 text-warning border-warning/20 text-[10px] px-1.5">
-                    +{challenge.xp} XP
-                  </Badge>
+                  <stat.icon className={cn("h-4 w-4 mb-1", stat.color)} />
+                  <p className="text-sm font-bold text-foreground">{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
           </Card>
 
-          {/* Mini Leaderboard */}
+          {/* Rewards Card */}
           <Card className="p-4 border-border/30 bg-card">
             <div className="flex items-center gap-2 mb-4">
               <Trophy className="h-4 w-4 text-warning" />
               <h3 className="text-sm font-bold text-foreground">
-                {t('engagement.topCreators', 'Top Creators')}
+                {t('engagement.rewards', 'Recompensas')}
               </h3>
             </div>
 
             <div className="space-y-3">
-              {leaderboard.map((entry, i) => (
+              {rewards.map((reward, i) => (
                 <motion.div
-                  key={entry.rank}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.15 }}
+                  key={i}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
                   className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50"
                 >
                   <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
-                    entry.rank === 1 ? "bg-warning/20 text-warning" :
-                    entry.rank === 2 ? "bg-slate-300/20 text-slate-400" :
-                    "bg-amber-700/20 text-amber-600"
+                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                    referralPoints >= reward.points ? "bg-primary/20 text-primary" : "bg-muted-foreground/10 text-muted-foreground"
                   )}>
-                    {entry.rank}
+                    <reward.icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{entry.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{entry.xp.toLocaleString()} XP</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{reward.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{reward.points} pontos</p>
                   </div>
-                  <entry.icon className={cn(
-                    "h-4 w-4",
-                    entry.rank === 1 ? "text-warning" :
-                    entry.rank === 2 ? "text-slate-400" :
-                    "text-amber-600"
-                  )} />
+                  {referralPoints >= reward.points ? (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
+                      {t('engagement.available', 'Disponível')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {reward.points - referralPoints} pts
+                    </Badge>
+                  )}
                 </motion.div>
               ))}
             </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full mt-3 text-xs gap-1 text-primary"
-              onClick={() => onNavigate?.('dashboard')}
-            >
-              {t('engagement.viewAll', 'View full leaderboard')}
-              <ArrowRight className="h-3 w-3" />
-            </Button>
           </Card>
-        </div>
-
-        {/* Quick Stats / Streak */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          {[
-            { icon: Flame, label: t('engagement.streak', 'Day Streak'), value: '3 🔥', color: 'text-destructive' },
-            { icon: Star, label: t('engagement.totalXP', 'Total XP'), value: '340', color: 'text-warning' },
-            { icon: TrendingUp, label: t('engagement.rank', 'Your Rank'), value: '#42', color: 'text-primary' },
-            { icon: Gift, label: t('engagement.nextReward', 'Next Reward'), value: '60 XP', color: 'text-accent' },
-          ].map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 + i * 0.1 }}
-              className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border/30"
-            >
-              <stat.icon className={cn("h-4 w-4", stat.color)} />
-              <div>
-                <p className="text-[10px] text-muted-foreground">{stat.label}</p>
-                <p className="text-sm font-bold text-foreground">{stat.value}</p>
-              </div>
-            </motion.div>
-          ))}
         </div>
       </div>
     </section>

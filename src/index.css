@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure bottom nav never hides on scroll */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  overscroll-behavior: none;
+}
+
 /* Design system optimized for user psychology, conversion and clean mobile experience */
 
 @layer base {
