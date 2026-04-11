@@ -353,6 +353,16 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
 
         await supabase.from('profiles').update(profileUpdate).eq('user_id', signUpData.user.id);
 
+        // Process referral code if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+          await supabase.rpc('process_referral', {
+            p_referral_code: refCode,
+            p_referred_user_id: signUpData.user.id,
+          });
+        }
+
         // Upload screenshots
         if (screenshots.length > 0 && signUpData.user) {
           for (const file of screenshots) {
@@ -361,7 +371,7 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
           }
         }
 
-        toast({ title: "🎉 Conta criada!", description: isCreator ? "A IA definiu seus nichos e preço!" : "Aguarde aprovação do administrador." });
+        toast({ title: "🎉 Conta criada!", description: isCreator ? "A IA definiu seus nichos e preço!" : "Bem-vindo à plataforma!" });
       }
     } catch {
       toast({ title: "Erro inesperado", description: "Tente novamente.", variant: "destructive" });

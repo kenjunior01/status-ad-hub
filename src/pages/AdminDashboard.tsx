@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -17,25 +16,24 @@ import {
   Users, Shield, TrendingUp, DollarSign, Eye, UserCheck, Settings,
   CreditCard, Search, ChevronRight, MessageSquare, FileText,
   AlertTriangle, CheckCircle, XCircle, Loader2, RefreshCw, Ban,
-  UserX, UserPlus,
+  UserX, UserPlus, Activity,
 } from "lucide-react";
 
 export const AdminDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
-  const [stats, setStats] = useState({ totalUsers: 0, totalCreators: 0, totalAdvertisers: 0, totalCampaigns: 0, totalRevenue: 0, pendingDisputes: 0, totalTransactions: 0, totalInvoices: 0, pendingAdvertisers: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalCreators: 0, totalAdvertisers: 0, totalCampaigns: 0, totalRevenue: 0, pendingDisputes: 0, totalTransactions: 0, totalInvoices: 0, totalReferrals: 0 });
   const [users, setUsers] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
-  const [pendingAdvertisers, setPendingAdvertisers] = useState<any[]>([]);
+  const [recentProfiles, setRecentProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterCampaignStatus, setFilterCampaignStatus] = useState("all");
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
   const { formatFromUSD } = useLocalizationContext();
 
@@ -44,15 +42,15 @@ export const AdminDashboard = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, pendingRes] = await Promise.all([
-        supabase.from("user_roles").select("user_id, role, created_at, profiles:user_id (display_name, is_verified, rating, niche, country, badge_level, total_campaigns, account_status)"),
+      const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, profilesRes, referralsRes] = await Promise.all([
+        supabase.from("user_roles").select("user_id, role, created_at, profiles:user_id (display_name, is_verified, rating, niche, country, badge_level, total_campaigns, account_status, referral_points, created_at)"),
         supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
         supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("disputes").select("*, campaigns:campaign_id (title)").order("created_at", { ascending: false }),
         supabase.from("chat_invoices").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        // Fetch pending advertiser profiles
-        supabase.from("profiles").select("*, user_roles:user_id (role)").eq("account_status", "pending_review"),
+        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id").order("created_at", { ascending: false }).limit(10),
+        supabase.from("referrals").select("*", { count: 'exact', head: true }),
       ]);
 
       const roles = rolesRes.data || [];
@@ -61,10 +59,6 @@ export const AdminDashboard = () => {
       const disps = disputesRes.data || [];
       const invs = invoicesRes.data || [];
       const wds = withdrawalsRes.data || [];
-      const pending = (pendingRes.data || []).filter((p: any) => {
-        const userRole = Array.isArray(p.user_roles) ? p.user_roles[0] : p.user_roles;
-        return userRole?.role === 'advertiser';
-      });
 
       setUsers(roles);
       setCampaigns(camps);
@@ -72,7 +66,7 @@ export const AdminDashboard = () => {
       setDisputes(disps);
       setInvoices(invs);
       setWithdrawals(wds);
-      setPendingAdvertisers(pending);
+      setRecentProfiles(profilesRes.data || []);
 
       setStats({
         totalUsers: roles.length,
@@ -83,7 +77,7 @@ export const AdminDashboard = () => {
         pendingDisputes: disps.filter((d: any) => d.status === "open").length,
         totalTransactions: txs.length,
         totalInvoices: invs.length,
-        pendingAdvertisers: pending.length,
+        totalReferrals: referralsRes.count || 0,
       });
     } catch (error) {
       console.error(error);
@@ -93,19 +87,15 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handleAdvertiserAction = async (userId: string, action: 'approve' | 'reject') => {
-    setActionLoading(userId);
+  const handleUserAction = async (userId: string, action: 'activate' | 'suspend') => {
     try {
-      const newStatus = action === 'approve' ? 'active' : 'suspended';
+      const newStatus = action === 'activate' ? 'active' : 'suspended';
       const { error } = await supabase.from('profiles').update({ account_status: newStatus }).eq('user_id', userId);
       if (error) throw error;
-      toast({ title: action === 'approve' ? "✅ Anunciante aprovado" : "❌ Anunciante rejeitado", description: action === 'approve' ? "A conta foi activada com sucesso." : "A conta foi suspensa." });
+      toast({ title: action === 'activate' ? "✅ Conta activada" : "⛔ Conta suspensa" });
       fetchAll();
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Erro", description: "Não foi possível processar a acção.", variant: "destructive" });
-    } finally {
-      setActionLoading(null);
+    } catch {
+      toast({ title: "Erro", variant: "destructive" });
     }
   };
 
@@ -133,7 +123,6 @@ export const AdminDashboard = () => {
     const map: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
       active: { variant: "default", label: t("admin.statusActive") },
       pending: { variant: "secondary", label: t("admin.statusPending") },
-      pending_review: { variant: "secondary", label: "Aguardando Aprovação" },
       completed: { variant: "outline", label: t("admin.statusCompleted") },
       open: { variant: "destructive", label: t("admin.statusOpen") },
       resolved: { variant: "default", label: t("admin.statusResolved") },
@@ -144,14 +133,6 @@ export const AdminDashboard = () => {
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
   };
 
-  const greetings = [
-    t("admin.greeting1", "Cada decisão sua impacta milhares de vidas. Continue fazendo a diferença! 🚀"),
-    t("admin.greeting2", "Liderar é servir. A plataforma cresce porque você cuida dela. 💪"),
-    t("admin.greeting3", "O sucesso da comunidade é o seu sucesso. Obrigado por estar aqui! 🌟"),
-    t("admin.greeting4", "Grandes plataformas começam com grandes administradores. Você é um deles! ⭐"),
-  ];
-  const dailyGreeting = greetings[new Date().getDay() % greetings.length];
-
   return (
     <div className="min-h-screen bg-background/80 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
@@ -160,7 +141,7 @@ export const AdminDashboard = () => {
             <Shield className="h-7 w-7 text-primary" />
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("common.hello")}, Admin 👋</h1>
-              <p className="text-sm text-muted-foreground italic">{dailyGreeting}</p>
+              <p className="text-sm text-muted-foreground">Painel de controlo em tempo real</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAll} className="gap-2">
@@ -168,30 +149,17 @@ export const AdminDashboard = () => {
           </Button>
         </motion.div>
 
-        {/* Alerts */}
-        {(stats.pendingDisputes > 0 || stats.pendingAdvertisers > 0) && (
-          <div className="space-y-2">
-            {stats.pendingAdvertisers > 0 && (
-              <Alert className="border-primary/30 bg-primary/5">
-                <UserPlus className="h-4 w-4 text-primary" />
-                <AlertDescription>
-                  <strong>{stats.pendingAdvertisers}</strong> anunciante(s) aguardando aprovação
-                  <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("approvals")}>Ver pedidos →</Button>
-                </AlertDescription>
-              </Alert>
-            )}
-            {stats.pendingDisputes > 0 && (
-              <Alert className="border-warning/30 bg-warning/5">
-                <AlertTriangle className="h-4 w-4 text-warning" />
-                <AlertDescription>
-                  <strong>{stats.pendingDisputes}</strong> {t("admin.disputesPending")}
-                  <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("disputes")}>{t("admin.viewDisputes")} →</Button>
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
+        {stats.pendingDisputes > 0 && (
+          <Card className="p-3 border-destructive/30 bg-destructive/5">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <p className="text-sm"><strong>{stats.pendingDisputes}</strong> {t("admin.disputesPending")}</p>
+              <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("disputes")}>{t("admin.viewDisputes")} →</Button>
+            </div>
+          </Card>
         )}
 
+        {/* Main Stats */}
         <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: t("admin.users"), value: stats.totalUsers, icon: Users, color: "text-primary" },
@@ -217,7 +185,7 @@ export const AdminDashboard = () => {
           {[
             { label: t("admin.campaigns"), value: stats.totalCampaigns, icon: Eye },
             { label: t("admin.transactions"), value: stats.totalTransactions, icon: CreditCard },
-            { label: "Aprovações", value: stats.pendingAdvertisers, icon: UserPlus, alert: stats.pendingAdvertisers > 0 },
+            { label: "Convites", value: stats.totalReferrals, icon: UserPlus },
             { label: t("admin.openDisputes"), value: stats.pendingDisputes, icon: AlertTriangle, alert: stats.pendingDisputes > 0 },
           ].map((s) => (
             <Card key={s.label} className={s.alert ? "border-destructive/30" : ""}>
@@ -234,16 +202,8 @@ export const AdminDashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-9">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-8">
               <TabsTrigger value="overview">📊 {t("admin.summary")}</TabsTrigger>
-              <TabsTrigger value="approvals" className="relative">
-                ✅ Aprovações
-                {stats.pendingAdvertisers > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                    {stats.pendingAdvertisers}
-                  </span>
-                )}
-              </TabsTrigger>
               <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
               <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
               <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
@@ -254,110 +214,13 @@ export const AdminDashboard = () => {
             </TabsList>
           </div>
 
-          {/* ═══ APPROVALS TAB ═══ */}
-          <TabsContent value="approvals" className="space-y-5">
-            <div className="flex items-center gap-3">
-              <UserPlus className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Aprovação de Anunciantes</h2>
-            </div>
-
-            {pendingAdvertisers.length === 0 ? (
-              <Card className="p-8 text-center">
-                <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-                <p className="font-medium text-foreground">Nenhum pedido pendente</p>
-                <p className="text-sm text-muted-foreground mt-1">Todos os anunciantes foram avaliados.</p>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {pendingAdvertisers.map((adv: any) => (
-                  <Card key={adv.id} className="border-primary/20">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-lg">
-                            {(adv.display_name || "?").charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-foreground">{adv.display_name || "Sem nome"}</p>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
-                              {adv.country && <span>🌍 {adv.country}</span>}
-                              <span>📅 {new Date(adv.created_at).toLocaleDateString()}</span>
-                              {adv.bio && <span className="col-span-2 line-clamp-1">💼 {adv.bio}</span>}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() => handleAdvertiserAction(adv.user_id, 'approve')}
-                            disabled={actionLoading === adv.user_id}
-                          >
-                            {actionLoading === adv.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                            Aprovar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="gap-1.5"
-                            onClick={() => handleAdvertiserAction(adv.user_id, 'reject')}
-                            disabled={actionLoading === adv.user_id}
-                          >
-                            {actionLoading === adv.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-                            Rejeitar
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {/* All advertisers section */}
-            <div className="pt-4">
-              <h3 className="text-base font-semibold mb-3">Todos os Anunciantes</h3>
-              <div className="space-y-2">
-                {users.filter((u: any) => u.role === 'advertiser').map((user: any, i: number) => (
-                  <Card key={user.user_id + i} className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
-                          {(user.profiles?.display_name || "?").charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{user.profiles?.display_name || "Sem nome"}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {user.profiles?.country && <span className="text-[10px] text-muted-foreground">{user.profiles.country}</span>}
-                            <StatusBadge status={user.profiles?.account_status || "active"} />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {user.profiles?.account_status === 'active' && (
-                          <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleAdvertiserAction(user.user_id, 'reject')}>
-                            <Ban className="h-3 w-3" /> Suspender
-                          </Button>
-                        )}
-                        {(user.profiles?.account_status === 'suspended' || user.profiles?.account_status === 'pending_review') && (
-                          <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleAdvertiserAction(user.user_id, 'approve')}>
-                            <CheckCircle className="h-3 w-3" /> Activar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
           <TabsContent value="overview" className="space-y-5">
+            {/* Quick Links */}
             <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: "Aprovações", icon: "✅", tab: "approvals", color: "bg-primary/10 text-primary" },
-                { label: t("admin.users"), icon: "👥", tab: "users", color: "bg-success/10 text-success" },
+                { label: t("admin.users"), icon: "👥", tab: "users", color: "bg-primary/10 text-primary" },
                 { label: t("admin.campaigns"), icon: "📋", tab: "campaigns", color: "bg-warning/10 text-warning" },
+                { label: t("admin.transactions"), icon: "💳", tab: "transactions", color: "bg-success/10 text-success" },
                 { label: t("admin.disputes"), icon: "⚠️", tab: "disputes", color: "bg-destructive/10 text-destructive" },
               ].map((a) => (
                 <button key={a.tab} onClick={() => setActiveTab(a.tab)} className={`${a.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}>
@@ -370,7 +233,30 @@ export const AdminDashboard = () => {
               ))}
             </motion.div>
 
+            {/* Recent Activity */}
             <div className="grid md:grid-cols-2 gap-5">
+              <Card>
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4" /> Registos Recentes</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  {recentProfiles.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Sem registos recentes</p>
+                  ) : recentProfiles.map((p: any, i: number) => (
+                    <div key={p.user_id + i} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs">
+                          {(p.display_name || "?").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-xs">{p.display_name || "Sem nome"}</p>
+                          <p className="text-[10px] text-muted-foreground">{p.country} • {p.niche || "—"}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader><CardTitle className="text-base">{t("admin.recentCampaigns")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
@@ -386,7 +272,9 @@ export const AdminDashboard = () => {
                   {campaigns.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noCampaigns")}</p>}
                 </CardContent>
               </Card>
+            </div>
 
+            <div className="grid md:grid-cols-2 gap-5">
               <Card>
                 <CardHeader><CardTitle className="text-base">{t("admin.lastTransactions")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
@@ -405,28 +293,28 @@ export const AdminDashboard = () => {
                   {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noTransactions")}</p>}
                 </CardContent>
               </Card>
-            </div>
 
-            <Card>
-              <CardHeader><CardTitle className="text-base">{t("admin.pendingWithdrawals")}</CardTitle></CardHeader>
-              <CardContent>
-                {withdrawals.filter((w: any) => w.status === "pending").length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noPendingWithdrawals")}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {withdrawals.filter((w: any) => w.status === "pending").map((w: any) => (
-                      <div key={w.id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm">{formatFromUSD(Number(w.amount))}</p>
-                          <p className="text-xs text-muted-foreground">PIX: {w.pix_key || "—"}</p>
+              <Card>
+                <CardHeader><CardTitle className="text-base">{t("admin.pendingWithdrawals")}</CardTitle></CardHeader>
+                <CardContent>
+                  {withdrawals.filter((w: any) => w.status === "pending").length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noPendingWithdrawals")}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {withdrawals.filter((w: any) => w.status === "pending").map((w: any) => (
+                        <div key={w.id} className="flex justify-between items-center p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{formatFromUSD(Number(w.amount))}</p>
+                            <p className="text-xs text-muted-foreground">PIX: {w.pix_key || "—"}</p>
+                          </div>
+                          <Badge variant="secondary">{t("admin.statusPending")}</Badge>
                         </div>
-                        <Badge variant="secondary">{t("admin.statusPending")}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="users" className="space-y-5">
@@ -459,22 +347,29 @@ export const AdminDashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{user.profiles?.display_name || t("admin.noName")}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <Badge variant={user.role === "admin" ? "destructive" : user.role === "creator" ? "default" : "secondary"} className="text-[10px]">
                             {user.role}
                           </Badge>
-                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[10px] text-primary">✓ {t("admin.verified")}</Badge>}
+                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[10px] text-primary">✓</Badge>}
                           {user.profiles?.country && <span className="text-[10px] text-muted-foreground">{user.profiles.country}</span>}
-                          {user.profiles?.account_status && user.profiles.account_status !== 'active' && (
-                            <StatusBadge status={user.profiles.account_status} />
-                          )}
+                          {user.profiles?.referral_points > 0 && <span className="text-[10px] text-warning">⭐ {user.profiles.referral_points} pts</span>}
+                          {user.profiles?.account_status === 'suspended' && <StatusBadge status="suspended" />}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       {user.profiles?.rating > 0 && <span className="text-muted-foreground">⭐ {user.profiles.rating}</span>}
                       {user.profiles?.total_campaigns > 0 && <span className="text-muted-foreground text-xs">{user.profiles.total_campaigns} camp.</span>}
-                      <Button variant="outline" size="sm"><Settings className="h-3 w-3" /></Button>
+                      {user.profiles?.account_status === 'active' ? (
+                        <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleUserAction(user.user_id, 'suspend')}>
+                          <Ban className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleUserAction(user.user_id, 'activate')}>
+                          <CheckCircle className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -506,7 +401,7 @@ export const AdminDashboard = () => {
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span>💰 {formatFromUSD(Number(c.price))}</span>
                         <span>📅 {new Date(c.created_at).toLocaleDateString()}</span>
-                        {c.escrow_status && <span>🔒 Escrow: {c.escrow_status}</span>}
+                        {c.escrow_status && <span>🔒 {c.escrow_status}</span>}
                       </div>
                     </div>
                     <StatusBadge status={c.status || "pending"} />
@@ -638,7 +533,7 @@ export const AdminDashboard = () => {
             <Card>
               <CardHeader><CardTitle className="text-base">⚙️ {t("admin.platformSettings")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.platformCommission")}</p>
                     <p className="text-2xl font-bold text-primary">18%</p>
@@ -647,34 +542,13 @@ export const AdminDashboard = () => {
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.baseCPV")}</p>
                     <p className="text-2xl font-bold text-primary">0.70 MZN</p>
-                    <p className="text-xs text-muted-foreground">≈ $0.011 USD {t("admin.costPerView")}</p>
+                    <p className="text-xs text-muted-foreground">≈ $0.011 USD</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="font-medium text-sm mb-1">{t("admin.adsPerDay")}</p>
                     <p className="text-2xl font-bold text-primary">3</p>
                     <p className="text-xs text-muted-foreground">{t("admin.maxAdsPerDay")}</p>
                   </div>
-                  <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.sponsorAd")}</p>
-                    <p className="text-2xl font-bold text-primary">$50/mês</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.homepageAd")}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <AdminPaymentSettings />
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">{t("admin.systemSummary")}</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">{t("admin.languages")}:</span> PT, EN, ES, FR</div>
-                  <div><span className="text-muted-foreground">{t("admin.baseCurrency")}:</span> USD</div>
-                  <div><span className="text-muted-foreground">{t("admin.gateways")}:</span> Stripe, PayPal, PaySuite, Multicaixa, M.Pago</div>
-                  <div><span className="text-muted-foreground">{t("admin.storage")}:</span> 3 buckets</div>
-                  <div><span className="text-muted-foreground">{t("admin.auth")}:</span> Email, Google</div>
-                  <div><span className="text-muted-foreground">{t("admin.aiLabel")}:</span> StatusAI (Gemini)</div>
                 </div>
               </CardContent>
             </Card>
