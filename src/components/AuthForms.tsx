@@ -339,7 +339,7 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
           country: country || null,
           whatsapp_views_min: selectedViewRange?.min || 0,
           whatsapp_views_max: selectedViewRange?.max || 0,
-          account_status: isCreator ? 'active' : 'pending_review',
+          account_status: 'active',
         };
         if (isCreator) {
           profileUpdate.age_range = ageRange || null;
@@ -709,9 +709,6 @@ export const SignupForm = ({ onShowPassword, onTogglePassword, loading }: LoginF
                     ))}
                   </div>
                 )}
-              </div>
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <p className="text-xs text-foreground"><Shield className="inline h-3 w-3 mr-1 text-amber-500" />A sua conta será avaliada pelo administrador antes de ser activada.</p>
               </div>
               <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20" disabled={isLoading || loading}>
                 {isLoading ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Criando...</span> : <><Sparkles className="h-4 w-4 mr-1" /> Criar conta</>}
