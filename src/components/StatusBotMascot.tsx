@@ -8,30 +8,41 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
+import mascotHappy from "@/assets/mascot-happy.png";
+import mascotThinking from "@/assets/mascot-thinking.png";
+import mascotExcited from "@/assets/mascot-excited.png";
+import mascotWaving from "@/assets/mascot-waving.png";
+import mascotLove from "@/assets/mascot-love.png";
+import mascotSleeping from "@/assets/mascot-sleeping.png";
+import mascotCool from "@/assets/mascot-cool.png";
+import mascotSurprised from "@/assets/mascot-surprised.png";
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
 }
 
-// Mascot emotions — WhatsApp emoji style
 type MascotMood = "happy" | "thinking" | "excited" | "waving" | "love" | "sleeping" | "cool" | "surprised";
 
-const MOOD_EMOJIS: Record<MascotMood, { face: string; label: string }> = {
-  happy:     { face: "😊", label: "Feliz" },
-  thinking:  { face: "🤔", label: "Pensando" },
-  excited:   { face: "🤩", label: "Animado" },
-  waving:    { face: "👋", label: "Olá" },
-  love:      { face: "😍", label: "Adorou" },
-  sleeping:  { face: "😴", label: "Sonolento" },
-  cool:      { face: "😎", label: "Tranquilo" },
-  surprised: { face: "😮", label: "Surpreso" },
+const MOOD_DATA: Record<MascotMood, { image: string; label: string }> = {
+  happy:     { image: mascotHappy, label: "Feliz" },
+  thinking:  { image: mascotThinking, label: "Pensando" },
+  excited:   { image: mascotExcited, label: "Animado" },
+  waving:    { image: mascotWaving, label: "Olá" },
+  love:      { image: mascotLove, label: "Adorou" },
+  sleeping:  { image: mascotSleeping, label: "Sonolento" },
+  cool:      { image: mascotCool, label: "Tranquilo" },
+  surprised: { image: mascotSurprised, label: "Surpreso" },
 };
 
-const getMoodFromContext = (isTyping: boolean, messageCount: number, hour: number): MascotMood => {
+const getMoodFromContext = (isTyping: boolean, messageCount: number, hour: number, lastResponse: string): MascotMood => {
   if (isTyping) return "thinking";
   if (hour >= 0 && hour < 6) return "sleeping";
   if (messageCount === 0) return "waving";
+  if (lastResponse.includes("parabéns") || lastResponse.includes("sucesso") || lastResponse.includes("!")) return "excited";
+  if (lastResponse.includes("❤") || lastResponse.includes("amor") || lastResponse.includes("adorei")) return "love";
+  if (lastResponse.includes("?") || lastResponse.includes("surpres")) return "surprised";
   if (messageCount > 5) return "love";
   if (hour >= 18) return "cool";
   return "happy";
@@ -41,7 +52,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "👋 Olá! Sou o **StatusBot**, seu assistente na plataforma StatusAds! Posso ajudar com:\n\n• Como monetizar seus Status\n• Dúvidas sobre pagamentos\n• Dicas para criadores\n• Como criar campanhas\n\nPergunta-me qualquer coisa! 🚀",
+    content: "👋 Olá! Sou o **Camaleão**, seu melhor amigo na StatusAds! 🦎✨\n\nConheço tudo sobre a plataforma e posso te ajudar com:\n\n• 💰 Como monetizar seus Status do WhatsApp\n• 📊 Dicas para aumentar seus ganhos\n• 🎯 Como criar campanhas incríveis\n• 💳 Dúvidas sobre pagamentos e saques\n• 🏆 Como subir de nível e ganhar badges\n\nPergunta-me qualquer coisa! Estou aqui para te ajudar a brilhar! 🚀",
   },
 ];
 
@@ -56,11 +67,12 @@ export const StatusBotMascot = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const hour = new Date().getHours();
+  const lastAssistantMsg = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
   const mood = useMemo(
-    () => getMoodFromContext(isTyping, messages.length - 1, hour),
-    [isTyping, messages.length, hour]
+    () => getMoodFromContext(isTyping, messages.length - 1, hour, lastAssistantMsg),
+    [isTyping, messages.length, hour, lastAssistantMsg]
   );
-  const moodEmoji = MOOD_EMOJIS[mood];
+  const moodData = MOOD_DATA[mood];
 
   useEffect(() => {
     const timer = setTimeout(() => setShowPulse(true), 5000);
@@ -96,7 +108,7 @@ export const StatusBotMascot = () => {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { id: `bot-${Date.now()}`, role: "assistant", content: "⚠️ Erro de conexão. Tente novamente em instantes." },
+        { id: `bot-${Date.now()}`, role: "assistant", content: "⚠️ Oops! Algo deu errado. Tenta de novo, eu sou persistente! 🦎💪" },
       ]);
     } finally {
       setIsTyping(false);
@@ -134,17 +146,16 @@ export const StatusBotMascot = () => {
                 />
               )}
 
-              <div className="relative w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-xl shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-                {/* Animated emoji face */}
-                <motion.span
+              <div className="relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl overflow-hidden bg-primary/10 border-2 border-primary/30 group-hover:border-primary/60 transition-all">
+                <motion.img
                   key={mood}
-                  className="text-3xl"
+                  src={moodData.image}
+                  alt="Camaleão mascote"
+                  className="w-14 h-14 object-contain"
                   initial={{ scale: 0, rotate: -30 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                >
-                  {moodEmoji.face}
-                </motion.span>
+                />
 
                 {/* Breathing animation */}
                 <motion.div
@@ -166,7 +177,7 @@ export const StatusBotMascot = () => {
                 className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card text-foreground text-xs px-2 py-1 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity border border-border"
                 initial={false}
               >
-                {moodEmoji.label}
+                🦎 {moodData.label}
               </motion.div>
             </button>
           </motion.div>
@@ -191,20 +202,13 @@ export const StatusBotMascot = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
               <div className="flex items-center gap-2">
-                <motion.span
-                  key={mood}
-                  className="text-xl"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  {moodEmoji.face}
-                </motion.span>
+                <img src={moodData.image} alt="Camaleão" className="w-8 h-8 rounded-full bg-primary-foreground/10" />
                 <div>
-                  <p className="text-sm font-bold">StatusBot</p>
+                  <p className="text-sm font-bold">🦎 Camaleão</p>
                   {!isMinimized && (
                     <p className="text-[10px] opacity-80 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block" />
-                      Online • {moodEmoji.label}
+                      Online • {moodData.label}
                     </p>
                   )}
                 </div>
@@ -231,9 +235,12 @@ export const StatusBotMascot = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}
                       >
+                        {msg.role === "assistant" && (
+                          <img src={mascotHappy} alt="" className="w-6 h-6 mr-1 mt-1 flex-shrink-0" />
+                        )}
                         <div
                           className={cn(
-                            "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                            "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground rounded-br-md"
                               : "bg-muted text-foreground rounded-bl-md"
@@ -249,8 +256,8 @@ export const StatusBotMascot = () => {
                     ))}
 
                     {isTyping && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-2 items-end">
-                        <span className="text-lg">{MOOD_EMOJIS.thinking.face}</span>
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-1 items-end">
+                        <img src={mascotThinking} alt="" className="w-6 h-6" />
                         <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                           <div className="flex gap-1">
                             {[0, 1, 2].map((i) => (
@@ -275,7 +282,7 @@ export const StatusBotMascot = () => {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Digite sua pergunta..."
+                      placeholder="Fala comigo! 🦎"
                       className="flex-1 h-10 bg-muted/30 border-border/40 rounded-xl text-sm"
                       disabled={isTyping}
                     />
