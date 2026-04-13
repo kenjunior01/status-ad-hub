@@ -368,11 +368,9 @@ export const ChatSystem = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-center">
-                <div>
-                  <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm">Comece a conversa!</p>
-                </div>
+              <div className="flex flex-col items-center justify-center h-full text-center gap-4">
+                <MascotInline mood="waving" size="lg" message="Diga olá e comece a negociar! 🤝" bubblePosition="top" />
+                <p className="text-muted-foreground text-sm mt-2">Envie uma mensagem para iniciar</p>
               </div>
             ) : (
               <div className="space-y-2.5">
