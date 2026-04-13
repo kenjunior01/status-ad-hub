@@ -29,12 +29,14 @@ import {
   DollarSign, TrendingUp, Star, Target, Award, Upload, ChevronRight, Eye, GraduationCap, Megaphone,
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
+import { useMascotContext } from "@/hooks/useMascotContext";
 
 type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
 
 export const CreatorDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
+  const mascotTip = useMascotContext("creator-dashboard");
   const [selectedCampaignForProof, setSelectedCampaignForProof] = useState<string | null>(null);
   const [applyingTo, setApplyingTo] = useState<{ id: string; title: string } | null>(null);
   const { profile, loading: profileLoading } = useProfile();
@@ -65,7 +67,7 @@ export const CreatorDashboard = () => {
                   {t("common.hello")}, {profile?.display_name || t("navigation.creators")} 👋
                 </h1>
                 <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="md" />
-                <MascotInline mood="happy" size="sm" showBubble={false} />
+                <MascotInline mood={mascotTip.mood} size="sm" message={mascotTip.message} bubblePosition="right" />
               </div>
             </div>
           </div>

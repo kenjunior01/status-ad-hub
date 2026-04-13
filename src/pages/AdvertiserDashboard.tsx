@@ -31,10 +31,12 @@ import {
   CheckCircle, Bot, CreditCard, ChevronRight, GraduationCap, Megaphone, ArrowLeft,
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
+import { useMascotContext } from "@/hooks/useMascotContext";
 
 export const AdvertiserDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
+  const mascotTip = useMascotContext("advertiser-dashboard");
   const [selectedCampaignForReview, setSelectedCampaignForReview] = useState<string | null>(null);
   const [selectedCampaignForPayment, setSelectedCampaignForPayment] = useState<any>(null);
   const [selectedListingForApps, setSelectedListingForApps] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export const AdvertiserDashboard = () => {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
               {t("common.hello")}, {profile?.display_name || t("navigation.advertiser")} 📢
-              <MascotInline mood="cool" size="sm" showBubble={false} />
+              <MascotInline mood={mascotTip.mood} size="sm" message={mascotTip.message} bubblePosition="right" />
             </h1>
           </div>
           <div className="flex gap-2 flex-wrap">
