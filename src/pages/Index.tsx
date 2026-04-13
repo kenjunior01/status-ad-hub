@@ -24,6 +24,7 @@ import {
   Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MascotInline } from "@/components/MascotInline";
 
 interface IndexProps {
   onNavigate?: (page: string) => void;
@@ -132,7 +133,8 @@ const Index = ({ onNavigate }: IndexProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto" />
+          <MascotInline mood="thinking" size="lg" message="A carregar criadores..." className="mx-auto justify-center" bubblePosition="top" />
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary/20 border-t-primary mx-auto" />
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
@@ -163,14 +165,17 @@ const Index = ({ onNavigate }: IndexProps) => {
             </span>
           </motion.h1>
           
-          <motion.p 
-            className="text-xs md:text-base text-primary-foreground/60 mb-5 md:mb-8 max-w-lg mx-auto"
+          <motion.div
+            className="flex items-center justify-center gap-2 mb-5 md:mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            {t('hero.subtitle')}
-          </motion.p>
+            <MascotInline mood="waving" size="sm" animate showBubble={false} />
+            <p className="text-xs md:text-base text-primary-foreground/60 max-w-lg">
+              {t('hero.subtitle')}
+            </p>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -293,14 +298,14 @@ const Index = ({ onNavigate }: IndexProps) => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    {activeCategory === "favorites" ? (
-                      <Heart className="h-8 w-8 text-primary" />
-                    ) : (
-                      <Sparkles className="h-8 w-8 text-primary" />
-                    )}
-                  </div>
+              <div className="text-center py-16">
+                  <MascotInline 
+                    mood={activeCategory === "favorites" ? "love" : "surprised"} 
+                    size="lg" 
+                    message={activeCategory === "favorites" ? "Adiciona favoritos! 💚" : "Nenhum criador encontrado 🔍"}
+                    className="mx-auto justify-center mb-4"
+                    bubblePosition="top"
+                  />
                   <h3 className="text-lg font-semibold text-foreground mb-2">
                     {activeCategory === "favorites" ? t('favorites.empty') : t('emptyState.noCreators')}
                   </h3>
@@ -331,6 +336,7 @@ const Index = ({ onNavigate }: IndexProps) => {
           <div className="absolute bottom-5 left-[10%] w-40 h-40 bg-primary-foreground/5 rounded-full blur-3xl" />
         </div>
         <div className="max-w-3xl mx-auto text-center relative z-10">
+          <MascotInline mood="excited" size="lg" className="mx-auto justify-center mb-3" showBubble={false} />
           <h2 className="text-2xl md:text-4xl font-bold mb-3">
             {t('valueProposition.creator.title')}
           </h2>
@@ -364,7 +370,7 @@ const Index = ({ onNavigate }: IndexProps) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <CircleDot className="h-5 w-5 text-primary" />
+                <MascotInline mood="cool" size="xs" showBubble={false} animate={false} />
                 <span className="text-base font-bold text-foreground">StatusAds</span>
               </div>
               <p className="text-xs text-muted-foreground">

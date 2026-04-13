@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Zap, Globe2, Shield } from "lucide-react";
+import mascotWaving from "@/assets/mascot-waving.png";
 
 const tips = [
   { icon: MessageCircle, key: "loading.tip1" },
@@ -89,13 +90,14 @@ export const AnimatedLoading = () => {
           />
           
           {/* Icon container */}
-          <div className="relative w-24 h-24 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <MessageCircle className="h-12 w-12 text-primary-foreground" />
-            </motion.div>
+          <div className="relative w-24 h-24 rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 overflow-hidden bg-primary/10">
+            <motion.img
+              src={mascotWaving}
+              alt="Camaleão"
+              className="w-20 h-20 object-contain"
+              animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
             
             {/* Sparkle dots */}
             {[0, 1, 2, 3].map((i) => (
