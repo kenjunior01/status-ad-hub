@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,13 +15,13 @@ import {
   Users, Shield, TrendingUp, DollarSign, Eye, UserCheck, Settings,
   CreditCard, Search, ChevronRight, MessageSquare, FileText,
   AlertTriangle, CheckCircle, XCircle, Loader2, RefreshCw, Ban,
-  UserX, UserPlus, Activity,
+  UserPlus, Activity, BarChart3, Wallet, Globe,
 } from "lucide-react";
 
 export const AdminDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
-  const [stats, setStats] = useState({ totalUsers: 0, totalCreators: 0, totalAdvertisers: 0, totalCampaigns: 0, totalRevenue: 0, pendingDisputes: 0, totalTransactions: 0, totalInvoices: 0, totalReferrals: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalCreators: 0, totalAdvertisers: 0, totalCampaigns: 0, totalRevenue: 0, pendingDisputes: 0, totalTransactions: 0, totalInvoices: 0, totalReferrals: 0, totalMessages: 0, pendingWithdrawals: 0, activeCampaigns: 0 });
   const [users, setUsers] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -30,6 +29,7 @@ export const AdminDashboard = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [recentProfiles, setRecentProfiles] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -42,15 +42,16 @@ export const AdminDashboard = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, profilesRes, referralsRes] = await Promise.all([
+      const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, profilesRes, referralsRes, convsRes] = await Promise.all([
         supabase.from("user_roles").select("user_id, role, created_at, profiles:user_id (display_name, is_verified, rating, niche, country, badge_level, total_campaigns, account_status, referral_points, created_at)"),
         supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
         supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("disputes").select("*, campaigns:campaign_id (title)").order("created_at", { ascending: false }),
         supabase.from("chat_invoices").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id").order("created_at", { ascending: false }).limit(10),
+        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id, avatar_url").order("created_at", { ascending: false }).limit(10),
         supabase.from("referrals").select("*", { count: 'exact', head: true }),
+        supabase.from("conversations").select("*").order("last_message_at", { ascending: false }).limit(50),
       ]);
 
       const roles = rolesRes.data || [];
@@ -67,17 +68,21 @@ export const AdminDashboard = () => {
       setInvoices(invs);
       setWithdrawals(wds);
       setRecentProfiles(profilesRes.data || []);
+      setConversations(convsRes.data || []);
 
       setStats({
         totalUsers: roles.length,
         totalCreators: roles.filter((r: any) => r.role === "creator").length,
         totalAdvertisers: roles.filter((r: any) => r.role === "advertiser").length,
         totalCampaigns: camps.length,
+        activeCampaigns: camps.filter((c: any) => c.status === "active").length,
         totalRevenue: camps.filter((c: any) => c.status === "completed").reduce((s: number, c: any) => s + Number(c.price || 0), 0),
         pendingDisputes: disps.filter((d: any) => d.status === "open").length,
         totalTransactions: txs.length,
         totalInvoices: invs.length,
         totalReferrals: referralsRes.count || 0,
+        totalMessages: convsRes.data?.length || 0,
+        pendingWithdrawals: wds.filter((w: any) => w.status === "pending").length,
       });
     } catch (error) {
       console.error(error);
@@ -133,241 +138,263 @@ export const AdminDashboard = () => {
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
   };
 
+  // Mobile nav tabs for admin
+  const navTabs = [
+    { key: "overview", icon: BarChart3, label: "Resumo" },
+    { key: "users", icon: Users, label: "Utilizadores" },
+    { key: "campaigns", icon: Eye, label: "Campanhas" },
+    { key: "messages", icon: MessageSquare, label: "Mensagens" },
+    { key: "transactions", icon: CreditCard, label: "Financeiro" },
+    { key: "disputes", icon: AlertTriangle, label: "Disputas" },
+    { key: "settings", icon: Settings, label: "Sistema" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background/80 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-5">
-        <motion.div {...fadeUp} className="flex flex-col md:flex-row justify-between items-start gap-3">
-          <div className="flex items-center gap-3">
-            <Shield className="h-7 w-7 text-primary" />
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
+      {/* Header */}
+      <div className="bg-card border-b border-border/30 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("common.hello")}, Admin 👋</h1>
-              <p className="text-sm text-muted-foreground">Painel de controlo em tempo real</p>
+              <h1 className="text-base md:text-xl font-bold text-foreground">Admin</h1>
+              <p className="text-[10px] text-muted-foreground hidden md:block">Painel de controlo em tempo real</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchAll} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> {t("admin.refresh")}
-          </Button>
-        </motion.div>
-
-        {stats.pendingDisputes > 0 && (
-          <Card className="p-3 border-destructive/30 bg-destructive/5">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              <p className="text-sm"><strong>{stats.pendingDisputes}</strong> {t("admin.disputesPending")}</p>
-              <Button variant="link" className="p-0 ml-2 h-auto" onClick={() => setActiveTab("disputes")}>{t("admin.viewDisputes")} →</Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Main Stats */}
-        <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: t("admin.users"), value: stats.totalUsers, icon: Users, color: "text-primary" },
-            { label: t("admin.creators"), value: stats.totalCreators, icon: UserCheck, color: "text-success" },
-            { label: t("admin.advertisers"), value: stats.totalAdvertisers, icon: TrendingUp, color: "text-warning" },
-            { label: t("admin.totalRevenue"), value: formatFromUSD(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
-          ].map((s) => (
-            <Card key={s.label}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">{s.label}</p>
-                    <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-                  </div>
-                  <s.icon className={`h-5 w-5 ${s.color} opacity-50`} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: t("admin.campaigns"), value: stats.totalCampaigns, icon: Eye },
-            { label: t("admin.transactions"), value: stats.totalTransactions, icon: CreditCard },
-            { label: "Convites", value: stats.totalReferrals, icon: UserPlus },
-            { label: t("admin.openDisputes"), value: stats.pendingDisputes, icon: AlertTriangle, alert: stats.pendingDisputes > 0 },
-          ].map((s) => (
-            <Card key={s.label} className={s.alert ? "border-destructive/30" : ""}>
-              <CardContent className="p-3 flex items-center gap-3">
-                <s.icon className={`h-4 w-4 ${s.alert ? "text-destructive" : "text-muted-foreground"}`} />
-                <div>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="font-bold">{s.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <div className="flex items-center gap-2">
+            {stats.pendingDisputes > 0 && (
+              <button onClick={() => setActiveTab("disputes")} className="bg-destructive/10 text-destructive text-[10px] font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" /> {stats.pendingDisputes}
+              </button>
+            )}
+            <Button variant="ghost" size="sm" onClick={fetchAll} className="h-8 w-8 p-0">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-8">
-              <TabsTrigger value="overview">📊 {t("admin.summary")}</TabsTrigger>
-              <TabsTrigger value="users">👥 {t("admin.users")}</TabsTrigger>
-              <TabsTrigger value="campaigns">📋 {t("admin.campaigns")}</TabsTrigger>
-              <TabsTrigger value="transactions">💳 {t("admin.transactions")}</TabsTrigger>
-              <TabsTrigger value="offline">📄 {t("admin.offlinePayments")}</TabsTrigger>
-              <TabsTrigger value="disputes">⚠️ {t("admin.disputes")}</TabsTrigger>
-              <TabsTrigger value="payments">⚙️ {t("admin.payments")}</TabsTrigger>
-              <TabsTrigger value="settings">🔧 {t("admin.system")}</TabsTrigger>
-            </TabsList>
-          </div>
+      {/* Tab Navigation — horizontal scroll */}
+      <div className="bg-card border-b border-border/20 overflow-x-auto">
+        <div className="max-w-7xl mx-auto flex">
+          {navTabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-          <TabsContent value="overview" className="space-y-5">
-            {/* Quick Links */}
-            <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 space-y-4">
+
+        {/* ═══ OVERVIEW ═══ */}
+        {activeTab === "overview" && (
+          <div className="space-y-4">
+            {/* Primary Stats */}
+            <motion.div {...fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
-                { label: t("admin.users"), icon: "👥", tab: "users", color: "bg-primary/10 text-primary" },
-                { label: t("admin.campaigns"), icon: "📋", tab: "campaigns", color: "bg-warning/10 text-warning" },
-                { label: t("admin.transactions"), icon: "💳", tab: "transactions", color: "bg-success/10 text-success" },
-                { label: t("admin.disputes"), icon: "⚠️", tab: "disputes", color: "bg-destructive/10 text-destructive" },
-              ].map((a) => (
-                <button key={a.tab} onClick={() => setActiveTab(a.tab)} className={`${a.color} rounded-xl p-4 flex items-center gap-3 hover:scale-[1.02] transition-transform text-left`}>
-                  <span className="text-2xl">{a.icon}</span>
-                  <div>
-                    <p className="font-semibold text-sm">{a.label}</p>
-                    <ChevronRight className="h-3 w-3 opacity-50 mt-0.5" />
-                  </div>
-                </button>
+                { label: "Utilizadores", value: stats.totalUsers, icon: Users, color: "text-primary" },
+                { label: "Criadores", value: stats.totalCreators, icon: UserCheck, color: "text-emerald-500" },
+                { label: "Anunciantes", value: stats.totalAdvertisers, icon: TrendingUp, color: "text-amber-500" },
+                { label: "Receita Total", value: formatFromUSD(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
+              ].map((s) => (
+                <Card key={s.label} className="border-border/30">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg bg-muted/50`}>
+                        <s.icon className={`h-4 w-4 ${s.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                        <p className={`text-sm font-bold ${s.color}`}>{s.value}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </motion.div>
 
+            {/* Secondary Stats */}
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+              {[
+                { label: "Campanhas", value: stats.totalCampaigns, icon: Eye },
+                { label: "Activas", value: stats.activeCampaigns, icon: Activity },
+                { label: "Transacções", value: stats.totalTransactions, icon: CreditCard },
+                { label: "Conversas", value: stats.totalMessages, icon: MessageSquare },
+                { label: "Convites", value: stats.totalReferrals, icon: UserPlus },
+                { label: "Saques Pend.", value: stats.pendingWithdrawals, icon: Wallet, alert: stats.pendingWithdrawals > 0 },
+              ].map((s) => (
+                <button key={s.label} onClick={() => {
+                  if (s.label === "Conversas") setActiveTab("messages");
+                  else if (s.label === "Transacções" || s.label === "Saques Pend.") setActiveTab("transactions");
+                  else if (s.label.includes("Campanha") || s.label === "Activas") setActiveTab("campaigns");
+                }} className={`p-2 rounded-xl border text-left transition-colors hover:bg-muted/50 ${s.alert ? 'border-destructive/30 bg-destructive/5' : 'border-border/30'}`}>
+                  <s.icon className={`h-3 w-3 mb-1 ${s.alert ? 'text-destructive' : 'text-muted-foreground'}`} />
+                  <p className="font-bold text-sm">{s.value}</p>
+                  <p className="text-[9px] text-muted-foreground">{s.label}</p>
+                </button>
+              ))}
+            </div>
+
             {/* Recent Activity */}
-            <div className="grid md:grid-cols-2 gap-5">
-              <Card>
-                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4" /> Registos Recentes</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="border-border/30">
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Registos Recentes</CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3 space-y-1.5">
                   {recentProfiles.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Sem registos recentes</p>
-                  ) : recentProfiles.map((p: any, i: number) => (
-                    <div key={p.user_id + i} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
+                    <p className="text-xs text-muted-foreground text-center py-4">Sem registos</p>
+                  ) : recentProfiles.slice(0, 5).map((p: any, i: number) => (
+                    <div key={p.user_id + i} className="flex justify-between items-center p-2 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs">
+                        <div className="w-7 h-7 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-[10px]">
                           {(p.display_name || "?").charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-medium text-xs">{p.display_name || "Sem nome"}</p>
-                          <p className="text-[10px] text-muted-foreground">{p.country} • {p.niche || "—"}</p>
+                          <p className="text-[9px] text-muted-foreground">{p.country} • {p.niche || "—"}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
+                      <span className="text-[9px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
                     </div>
                   ))}
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle className="text-base">{t("admin.recentCampaigns")}</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
+              <Card className="border-border/30">
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><Eye className="h-4 w-4 text-primary" /> Campanhas Recentes</CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3 space-y-1.5">
                   {campaigns.slice(0, 5).map((c: any) => (
-                    <div key={c.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
+                    <div key={c.id} className="flex justify-between items-center p-2 bg-muted/30 rounded-lg">
                       <div>
-                        <p className="font-medium">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">{formatFromUSD(Number(c.price))}</p>
+                        <p className="font-medium text-xs">{c.title}</p>
+                        <p className="text-[9px] text-muted-foreground">{formatFromUSD(Number(c.price))}</p>
                       </div>
                       <StatusBadge status={c.status || "pending"} />
                     </div>
                   ))}
-                  {campaigns.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noCampaigns")}</p>}
+                  {campaigns.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem campanhas</p>}
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-5">
-              <Card>
-                <CardHeader><CardTitle className="text-base">{t("admin.lastTransactions")}</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  {transactions.slice(0, 5).map((tx: any) => (
-                    <div key={tx.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg text-sm">
+            {/* Withdrawals + Transactions preview */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="border-border/30">
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Últimas Transacções</CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3 space-y-1.5">
+                  {transactions.slice(0, 4).map((tx: any) => (
+                    <div key={tx.id} className="flex justify-between items-center p-2 bg-muted/30 rounded-lg">
                       <div>
-                        <p className="font-medium">{tx.type}</p>
-                        <p className="text-xs text-muted-foreground">{tx.description || "—"}</p>
+                        <p className="font-medium text-xs">{tx.type}</p>
+                        <p className="text-[9px] text-muted-foreground">{tx.description || "—"}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-success">{formatFromUSD(Number(tx.amount))}</p>
+                        <p className="font-semibold text-xs text-emerald-500">{formatFromUSD(Number(tx.amount))}</p>
                         <StatusBadge status={tx.status || "pending"} />
                       </div>
                     </div>
                   ))}
-                  {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noTransactions")}</p>}
+                  {transactions.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem transacções</p>}
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle className="text-base">{t("admin.pendingWithdrawals")}</CardTitle></CardHeader>
-                <CardContent>
+              <Card className="border-border/30">
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> Saques Pendentes</CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3 space-y-1.5">
                   {withdrawals.filter((w: any) => w.status === "pending").length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noPendingWithdrawals")}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {withdrawals.filter((w: any) => w.status === "pending").map((w: any) => (
-                        <div key={w.id} className="flex justify-between items-center p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium text-sm">{formatFromUSD(Number(w.amount))}</p>
-                            <p className="text-xs text-muted-foreground">PIX: {w.pix_key || "—"}</p>
-                          </div>
-                          <Badge variant="secondary">{t("admin.statusPending")}</Badge>
-                        </div>
-                      ))}
+                    <div className="flex flex-col items-center py-4">
+                      <CheckCircle className="h-8 w-8 text-emerald-500 mb-2" />
+                      <p className="text-xs text-muted-foreground">Nenhum saque pendente</p>
                     </div>
+                  ) : (
+                    withdrawals.filter((w: any) => w.status === "pending").slice(0, 4).map((w: any) => (
+                      <div key={w.id} className="flex justify-between items-center p-2 border rounded-lg border-border/30">
+                        <div>
+                          <p className="font-medium text-xs">{formatFromUSD(Number(w.amount))}</p>
+                          <p className="text-[9px] text-muted-foreground">PIX: {w.pix_key || "—"}</p>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">Pendente</Badge>
+                      </div>
+                    ))
                   )}
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="users" className="space-y-5">
-            <div className="flex flex-col md:flex-row gap-3">
+        {/* ═══ USERS ═══ */}
+        {activeTab === "users" && (
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder={t("admin.searchUsers")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+                <Input placeholder="Pesquisar utilizadores..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-9" />
               </div>
               <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("admin.filterRole")} /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[140px] h-9"><SelectValue placeholder="Papel" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("admin.allRoles")}</SelectItem>
-                  <SelectItem value="admin">{t("admin.admin")}</SelectItem>
-                  <SelectItem value="creator">{t("admin.creator")}</SelectItem>
-                  <SelectItem value="advertiser">{t("admin.advertiser")}</SelectItem>
-                  <SelectItem value="user">{t("admin.user")}</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="creator">Criador</SelectItem>
+                  <SelectItem value="advertiser">Anunciante</SelectItem>
+                  <SelectItem value="user">Utilizador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <p className="text-sm text-muted-foreground">{filteredUsers.length} {t("admin.usersFound")}</p>
+            <p className="text-xs text-muted-foreground">{filteredUsers.length} utilizadores encontrados</p>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {filteredUsers.map((user: any, i: number) => (
-                <Card key={user.user_id + i} className="p-3">
+                <Card key={user.user_id + i} className="p-3 border-border/30">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
                         {(user.profiles?.display_name || "?").charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{user.profiles?.display_name || t("admin.noName")}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <Badge variant={user.role === "admin" ? "destructive" : user.role === "creator" ? "default" : "secondary"} className="text-[10px]">
+                        <p className="font-medium text-xs">{user.profiles?.display_name || "Sem nome"}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <Badge variant={user.role === "admin" ? "destructive" : user.role === "creator" ? "default" : "secondary"} className="text-[9px] px-1.5 py-0">
                             {user.role}
                           </Badge>
-                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[10px] text-primary">✓</Badge>}
-                          {user.profiles?.country && <span className="text-[10px] text-muted-foreground">{user.profiles.country}</span>}
-                          {user.profiles?.referral_points > 0 && <span className="text-[10px] text-warning">⭐ {user.profiles.referral_points} pts</span>}
+                          {user.profiles?.is_verified && <Badge variant="outline" className="text-[9px] px-1 py-0 text-primary">✓</Badge>}
+                          {user.profiles?.country && <span className="text-[9px] text-muted-foreground">{user.profiles.country}</span>}
+                          {user.profiles?.niche && <span className="text-[9px] text-muted-foreground">• {user.profiles.niche}</span>}
                           {user.profiles?.account_status === 'suspended' && <StatusBadge status="suspended" />}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      {user.profiles?.rating > 0 && <span className="text-muted-foreground">⭐ {user.profiles.rating}</span>}
-                      {user.profiles?.total_campaigns > 0 && <span className="text-muted-foreground text-xs">{user.profiles.total_campaigns} camp.</span>}
+                    <div className="flex items-center gap-1.5">
+                      {user.profiles?.rating > 0 && <span className="text-[10px] text-muted-foreground">⭐{user.profiles.rating}</span>}
                       {user.profiles?.account_status === 'active' ? (
-                        <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleUserAction(user.user_id, 'suspend')}>
-                          <Ban className="h-3 w-3" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10" onClick={() => handleUserAction(user.user_id, 'suspend')}>
+                          <Ban className="h-3.5 w-3.5" />
                         </Button>
                       ) : (
-                        <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleUserAction(user.user_id, 'activate')}>
-                          <CheckCircle className="h-3 w-3" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-500 hover:bg-emerald-500/10" onClick={() => handleUserAction(user.user_id, 'activate')}>
+                          <CheckCircle className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -375,33 +402,36 @@ export const AdminDashboard = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="campaigns" className="space-y-5">
-            <div className="flex gap-3">
+        {/* ═══ CAMPAIGNS ═══ */}
+        {activeTab === "campaigns" && (
+          <div className="space-y-3">
+            <div className="flex gap-2 items-center">
               <Select value={filterCampaignStatus} onValueChange={setFilterCampaignStatus}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("admin.allRoles")}</SelectItem>
-                  <SelectItem value="pending">{t("admin.statusPending")}</SelectItem>
-                  <SelectItem value="active">{t("admin.statusActive")}</SelectItem>
-                  <SelectItem value="completed">{t("admin.statusCompleted")}</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="active">Activa</SelectItem>
+                  <SelectItem value="completed">Concluída</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground self-center">{filteredCampaigns.length} {t("admin.campaigns").toLowerCase()}</p>
+              <p className="text-xs text-muted-foreground">{filteredCampaigns.length} campanhas</p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {filteredCampaigns.map((c: any) => (
-                <Card key={c.id} className="p-3">
+                <Card key={c.id} className="p-3 border-border/30">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-sm">{c.title}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{c.description || "—"}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs truncate">{c.title}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{c.description || "—"}</p>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
                         <span>💰 {formatFromUSD(Number(c.price))}</span>
                         <span>📅 {new Date(c.created_at).toLocaleDateString()}</span>
-                        {c.escrow_status && <span>🔒 {c.escrow_status}</span>}
+                        {c.escrow_status && c.escrow_status !== 'pending' && <span>🔒 {c.escrow_status}</span>}
                       </div>
                     </div>
                     <StatusBadge status={c.status || "pending"} />
@@ -409,108 +439,161 @@ export const AdminDashboard = () => {
                 </Card>
               ))}
               {filteredCampaigns.length === 0 && (
-                <Card className="p-8 text-center"><p className="text-muted-foreground">{t("admin.noCampaigns")}</p></Card>
+                <Card className="p-8 text-center border-border/30"><p className="text-xs text-muted-foreground">Sem campanhas</p></Card>
               )}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="transactions" className="space-y-5">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" /> {t("admin.allTransactions")}
+        {/* ═══ MESSAGES ═══ */}
+        {activeTab === "messages" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" /> Conversas da Plataforma
+              </h2>
+              <Badge variant="outline" className="text-[10px]">{conversations.length} conversas</Badge>
+            </div>
+
+            {conversations.length === 0 ? (
+              <Card className="p-8 text-center border-border/30">
+                <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhuma conversa registada</p>
+              </Card>
+            ) : (
+              <div className="space-y-1.5">
+                {conversations.map((conv: any) => (
+                  <Card key={conv.id} className="p-3 border-border/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-xs">Conversa #{conv.id.slice(0, 8)}</p>
+                          <p className="text-[9px] text-muted-foreground">
+                            {conv.campaign_id ? "Campanha vinculada" : "Conversa directa"} • {conv.last_message_at ? new Date(conv.last_message_at).toLocaleDateString() : "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={conv.campaign_id ? "default" : "secondary"} className="text-[9px]">
+                        {conv.campaign_id ? "Negócio" : "Directa"}
+                      </Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ TRANSACTIONS ═══ */}
+        {activeTab === "transactions" && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" /> Financeiro
             </h2>
-            <div className="space-y-2">
+
+            <div className="space-y-1.5">
               {transactions.map((tx: any) => (
-                <Card key={tx.id} className="p-3">
+                <Card key={tx.id} className="p-3 border-border/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-sm">{tx.type}</p>
-                      <p className="text-xs text-muted-foreground">{tx.description || "—"}</p>
-                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{t("admin.fee")}: {formatFromUSD(Number(tx.platform_fee || 0))}</span>
-                        <span>{t("admin.net")}: {formatFromUSD(Number(tx.net_amount || 0))}</span>
-                        <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                      <p className="font-medium text-xs">{tx.type}</p>
+                      <p className="text-[9px] text-muted-foreground">{tx.description || "—"}</p>
+                      <div className="flex gap-2 mt-0.5 text-[9px] text-muted-foreground">
+                        <span>Taxa: {formatFromUSD(Number(tx.platform_fee || 0))}</span>
+                        <span>Líq: {formatFromUSD(Number(tx.net_amount || 0))}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-success">{formatFromUSD(Number(tx.amount))}</p>
+                      <p className="font-bold text-xs text-emerald-500">{formatFromUSD(Number(tx.amount))}</p>
                       <StatusBadge status={tx.status || "pending"} />
                     </div>
                   </div>
                 </Card>
               ))}
               {transactions.length === 0 && (
-                <Card className="p-8 text-center"><p className="text-muted-foreground">{t("admin.noTransactions")}</p></Card>
+                <Card className="p-8 text-center border-border/30"><p className="text-xs text-muted-foreground">Sem transacções</p></Card>
               )}
             </div>
 
-            <h3 className="text-base font-semibold flex items-center gap-2 pt-4">
-              <FileText className="h-4 w-4 text-primary" /> {t("admin.invoices")} ({invoices.length})
+            {/* Invoices */}
+            <h3 className="text-sm font-semibold flex items-center gap-2 pt-2">
+              <FileText className="h-4 w-4 text-primary" /> Facturas ({invoices.length})
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {invoices.slice(0, 20).map((inv: any) => (
-                <Card key={inv.id} className="p-3">
+                <Card key={inv.id} className="p-3 border-border/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-sm">#{inv.invoice_number}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</p>
+                      <p className="font-medium text-xs">#{inv.invoice_number}</p>
+                      <p className="text-[9px] text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold">{inv.currency} {Number(inv.total).toFixed(2)}</p>
+                      <p className="font-bold text-xs">{inv.currency} {Number(inv.total).toFixed(2)}</p>
                       <StatusBadge status={inv.status || "pending"} />
                     </div>
                   </div>
                 </Card>
               ))}
-              {invoices.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noInvoices")}</p>}
+              {invoices.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem facturas</p>}
             </div>
 
-            <h3 className="text-base font-semibold flex items-center gap-2 pt-4">
-              💸 {t("admin.withdrawals")} ({withdrawals.length})
+            {/* Withdrawals */}
+            <h3 className="text-sm font-semibold flex items-center gap-2 pt-2">
+              💸 Saques ({withdrawals.length})
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {withdrawals.map((w: any) => (
-                <Card key={w.id} className="p-3">
+                <Card key={w.id} className="p-3 border-border/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-sm">{formatFromUSD(Number(w.amount))}</p>
-                      <p className="text-xs text-muted-foreground">PIX: {w.pix_key || "—"} • {new Date(w.created_at).toLocaleDateString()}</p>
+                      <p className="font-medium text-xs">{formatFromUSD(Number(w.amount))}</p>
+                      <p className="text-[9px] text-muted-foreground">PIX: {w.pix_key || "—"} • {new Date(w.created_at).toLocaleDateString()}</p>
                     </div>
                     <StatusBadge status={w.status || "pending"} />
                   </div>
                 </Card>
               ))}
-              {withdrawals.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("admin.noWithdrawals")}</p>}
+              {withdrawals.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem saques</p>}
             </div>
-          </TabsContent>
 
-          <TabsContent value="disputes" className="space-y-5">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" /> {t("admin.disputeManagement")}
+            {/* Offline Payments */}
+            <AdminOfflinePayments />
+          </div>
+        )}
+
+        {/* ═══ DISPUTES ═══ */}
+        {activeTab === "disputes" && (
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" /> Gestão de Disputas
             </h2>
             {disputes.length === 0 ? (
-              <Card className="p-8 text-center">
-                <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-                <p className="text-muted-foreground">{t("admin.noDisputes")}</p>
+              <Card className="p-8 text-center border-border/30">
+                <CheckCircle className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhuma disputa registada 🎉</p>
               </Card>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {disputes.map((d: any) => (
-                  <Card key={d.id} className={`p-4 ${d.status === "open" ? "border-destructive/30" : ""}`}>
+                  <Card key={d.id} className={`p-3 border-border/30 ${d.status === "open" ? "border-destructive/30" : ""}`}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          {d.status === "open" ? <XCircle className="h-4 w-4 text-destructive" /> : <CheckCircle className="h-4 w-4 text-success" />}
-                          <p className="font-semibold text-sm">{d.reason}</p>
+                          {d.status === "open" ? <XCircle className="h-3.5 w-3.5 text-destructive" /> : <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />}
+                          <p className="font-semibold text-xs">{d.reason}</p>
                           <StatusBadge status={d.status || "open"} />
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1">{d.description || t("admin.noDescription")}</p>
-                        <div className="flex gap-3 text-xs text-muted-foreground">
-                          <span>{t("admin.campaign")}: {(d.campaigns as any)?.title || "—"}</span>
+                        <p className="text-[10px] text-muted-foreground mb-1">{d.description || "Sem descrição"}</p>
+                        <div className="flex gap-2 text-[9px] text-muted-foreground">
+                          <span>Campanha: {(d.campaigns as any)?.title || "—"}</span>
                           <span>{new Date(d.created_at).toLocaleDateString()}</span>
                         </div>
                         {d.resolution && (
-                          <div className="mt-2 p-2 bg-success/10 rounded-lg text-xs">
-                            <strong>{t("admin.resolution")}:</strong> {d.resolution}
+                          <div className="mt-2 p-2 bg-emerald-500/10 rounded-lg text-[10px]">
+                            <strong>Resolução:</strong> {d.resolution}
                           </div>
                         )}
                       </div>
@@ -519,42 +602,41 @@ export const AdminDashboard = () => {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="offline">
-            <AdminOfflinePayments />
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <AdminPaymentSettings />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-5">
-            <Card>
-              <CardHeader><CardTitle className="text-base">⚙️ {t("admin.platformSettings")}</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.platformCommission")}</p>
-                    <p className="text-2xl font-bold text-primary">18%</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.perTransaction")}</p>
+        {/* ═══ SETTINGS ═══ */}
+        {activeTab === "settings" && (
+          <div className="space-y-4">
+            <Card className="border-border/30">
+              <CardHeader className="pb-2 px-3 pt-3">
+                <CardTitle className="text-sm">⚙️ Configurações da Plataforma</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="p-3 border rounded-lg border-border/30 text-center">
+                    <p className="text-[10px] text-muted-foreground mb-1">Comissão</p>
+                    <p className="text-lg font-bold text-primary">18%</p>
                   </div>
-                  <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.baseCPV")}</p>
-                    <p className="text-2xl font-bold text-primary">0.70 MZN</p>
-                    <p className="text-xs text-muted-foreground">≈ $0.011 USD</p>
+                  <div className="p-3 border rounded-lg border-border/30 text-center">
+                    <p className="text-[10px] text-muted-foreground mb-1">CPV Base</p>
+                    <p className="text-lg font-bold text-primary">0.70</p>
+                    <p className="text-[9px] text-muted-foreground">MZN</p>
                   </div>
-                  <div className="p-4 border rounded-lg">
-                    <p className="font-medium text-sm mb-1">{t("admin.adsPerDay")}</p>
-                    <p className="text-2xl font-bold text-primary">3</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.maxAdsPerDay")}</p>
+                  <div className="p-3 border rounded-lg border-border/30 text-center">
+                    <p className="text-[10px] text-muted-foreground mb-1">Anúncios/Dia</p>
+                    <p className="text-lg font-bold text-primary">3</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+            <AdminPaymentSettings />
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+export default AdminDashboard;

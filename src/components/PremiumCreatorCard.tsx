@@ -2,10 +2,9 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { GamificationBadge } from "@/components/GamificationBadge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone } from "lucide-react";
+import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -160,21 +159,18 @@ export const PremiumCreatorCard = ({
             <span>{profile.total_campaigns} {t('index.campaignsCount')}</span>
           </div>
 
-          <div className="border-t border-border/30 pt-1" />
-
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[8px] md:text-[9px] text-muted-foreground">{t('creator.startingAt')}</p>
               <p className="font-extrabold text-[11px] md:text-xs text-foreground">{formatFromUSD(getBasePrice())}</p>
             </div>
-            <GamificationBadge badgeLevel={profile.badge_level || 'bronze'} size="xs" />
-          </div>
-
-          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
-            <div className="bg-gradient-to-r from-primary to-accent text-primary-foreground text-[10px] font-semibold text-center py-1.5 rounded-lg flex items-center justify-center gap-1 shadow-sm">
-              <ArrowUpRight className="h-3 w-3" />
-              {t('index.viewProfile')}
-            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelect?.(profile); }}
+              className="bg-primary/10 hover:bg-primary/20 text-primary rounded-full p-1.5 transition-colors"
+              title="Enviar mensagem"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       </Card>

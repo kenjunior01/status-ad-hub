@@ -123,6 +123,17 @@ export const CreatorDashboard = () => {
             </div>
           </div>
 
+          {/* Niche & Bio */}
+          <div className="px-4 pb-2">
+            <p className="text-sm font-semibold text-foreground">{profile?.display_name || "Criador"}</p>
+            {profile?.niche && (
+              <p className="text-xs text-primary font-medium">{profile.niche}</p>
+            )}
+            {profile?.bio && (
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{profile.bio}</p>
+            )}
+          </div>
+
           {/* Action buttons */}
           <div className="flex gap-1.5 px-4 pb-3">
             <Button variant="outline" size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("profile")}>
