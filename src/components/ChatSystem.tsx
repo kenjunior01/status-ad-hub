@@ -295,47 +295,61 @@ export const ChatSystem = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Criar Cotação
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Criar Factura
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*,.pdf';
-                    input.onchange = async (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (!file) return;
-                      if (file.size > 10 * 1024 * 1024) {
-                        toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
-                        return;
-                      }
-                      setUploading(true);
-                      try {
-                        const attachment = await uploadAttachment(file);
-                        await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
-                        toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
-                      } catch (err) {
-                        console.error('Upload error:', err);
-                      } finally {
-                        setUploading(false);
-                      }
-                    };
-                    input.click();
-                  }}>
-                    <Banknote className="h-4 w-4 mr-2" />
-                    Enviar Comprovativo
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    <Paperclip className="h-4 w-4 mr-2" />
-                    Enviar Arquivo
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                 <DropdownMenuContent align="end" className="w-56">
+                   <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
+                     <Receipt className="h-4 w-4 mr-2" />
+                     Criar Cotação
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
+                     <FileText className="h-4 w-4 mr-2" />
+                     Criar Factura
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => {
+                     sendMessage("🤝 Proposta de parceria — Vamos fechar negócio?");
+                   }}>
+                     <HandshakeIcon className="h-4 w-4 mr-2" />
+                     Propor Parceria
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => {
+                     sendMessage("✅ Pagamento confirmado! Obrigado pela confiança. 🎉");
+                   }}>
+                     <Banknote className="h-4 w-4 mr-2" />
+                     Confirmar Pagamento
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => {
+                     const input = document.createElement('input');
+                     input.type = 'file';
+                     input.accept = 'image/*,.pdf';
+                     input.onchange = async (e) => {
+                       const file = (e.target as HTMLInputElement).files?.[0];
+                       if (!file) return;
+                       if (file.size > 10 * 1024 * 1024) {
+                         toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
+                         return;
+                       }
+                       setUploading(true);
+                       try {
+                         const attachment = await uploadAttachment(file);
+                         await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
+                         toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
+                       } catch (err) {
+                         console.error('Upload error:', err);
+                       } finally {
+                         setUploading(false);
+                       }
+                     };
+                     input.click();
+                   }}>
+                     <Banknote className="h-4 w-4 mr-2" />
+                     Enviar Comprovativo
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                     <Paperclip className="h-4 w-4 mr-2" />
+                     Enviar Arquivo
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
