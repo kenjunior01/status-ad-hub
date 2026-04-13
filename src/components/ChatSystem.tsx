@@ -5,16 +5,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useConversations, useMessages } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { ImagePreview } from "@/components/ImagePreview";
 import { ChatQuotationForm } from "@/components/ChatQuotationForm";
 import { ChatInvoiceForm } from "@/components/ChatInvoiceForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
+import { MascotInline } from "@/components/MascotInline";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
-  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote, ArrowLeft
+  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote, ArrowLeft,
+  Smile, ThumbsUp, Heart, Star, Zap, Gift, PartyPopper, HandshakeIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
