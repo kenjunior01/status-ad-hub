@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Camera, User, Loader2, Shield, Star, Lock, Sparkles, ChevronRight, Check } from "lucide-react";
+import { Camera, User, Loader2, Shield, Lock, Sparkles, ChevronDown, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ProfileEditForm = () => {
@@ -28,6 +29,9 @@ export const ProfileEditForm = () => {
     follower_count: "",
     engagement_rate: "",
   });
+
+  const [audienceOpen, setAudienceOpen] = useState(false);
+  const [pricingOpen, setPricingOpen] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -97,7 +101,6 @@ export const ProfileEditForm = () => {
 
   const completion = completionPercentage();
 
-  // Instagram-style row item
   const SettingRow = ({ label, children, noBorder }: { label: string; children: React.ReactNode; noBorder?: boolean }) => (
     <div className={`flex items-center justify-between py-3 ${!noBorder ? 'border-b border-border/40' : ''}`}>
       <span className="text-sm text-muted-foreground shrink-0 w-28">{label}</span>
@@ -105,94 +108,72 @@ export const ProfileEditForm = () => {
     </div>
   );
 
+  const SectionToggle = ({ label, icon, open, onToggle, children }: { label: string; icon: string; open: boolean; onToggle: () => void; children: React.ReactNode }) => (
+    <Collapsible open={open} onOpenChange={onToggle}>
+      <CollapsibleTrigger asChild>
+        <button type="button" className="w-full flex items-center justify-between py-3 border-b border-border/40 group">
+          <span className="text-sm font-medium flex items-center gap-2">
+            {icon} {label}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
-      {/* Instagram-style Profile Header */}
-      <div className="flex items-center gap-5 px-4 py-6">
-        {/* Avatar with gradient ring */}
+      {/* Compact header: avatar + name + badge */}
+      <div className="flex items-center gap-4 px-4 py-4">
         <div className="relative shrink-0">
-          <div className="p-[3px] rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600">
-            <div className="p-[2px] rounded-full bg-background">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={formData.avatar_url} />
-                <AvatarFallback className="bg-muted">
-                  <User className="h-10 w-10 text-muted-foreground" />
-                </AvatarFallback>
-              </Avatar>
-            </div>
+          <div className="p-[2px] rounded-full bg-gradient-to-tr from-primary via-primary/70 to-primary/40">
+            <Avatar className="h-16 w-16 border-2 border-background">
+              <AvatarImage src={formData.avatar_url} />
+              <AvatarFallback className="bg-muted">
+                <User className="h-8 w-8 text-muted-foreground" />
+              </AvatarFallback>
+            </Avatar>
           </div>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg border-2 border-background"
+            className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background"
           >
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
           </button>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} className="hidden" />
         </div>
 
-        {/* Stats row like Instagram */}
-        <div className="flex-1 flex justify-around text-center">
-          <div>
-            <p className="text-lg font-bold">{profile?.total_campaigns || 0}</p>
-            <p className="text-[11px] text-muted-foreground">{t("profile.campaigns")}</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{profile?.rating ? profile.rating.toFixed(1) : '0'}</p>
-            <p className="text-[11px] text-muted-foreground">{t("profile.rating")}</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{profile?.total_reviews || 0}</p>
-            <p className="text-[11px] text-muted-foreground">{t("profile.reviews")}</p>
-          </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm truncate">{formData.display_name || 'Seu Nome'}</p>
+          {formData.niche && <p className="text-xs text-primary truncate">{formData.niche}</p>}
+          {profile?.is_verified && (
+            <Badge variant="secondary" className="mt-1 text-[10px] gap-1 h-5">
+              <Check className="h-3 w-3" /> Verificado
+            </Badge>
+          )}
         </div>
       </div>
 
-      {/* Name and Bio preview */}
-      <div className="px-4 pb-4">
-        <p className="font-semibold text-sm">{formData.display_name || 'Seu Nome'}</p>
-        {formData.niche && (
-          <p className="text-xs text-primary">{formData.niche}</p>
-        )}
-        {formData.bio && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{formData.bio}</p>
-        )}
-        {profile?.is_verified && (
-          <Badge variant="secondary" className="mt-1.5 text-[10px] gap-1">
-            <Check className="h-3 w-3" /> Verificado
-          </Badge>
-        )}
-      </div>
-
-      {/* Completion bar - minimal */}
+      {/* Completion bar - only if incomplete */}
       {completion < 100 && (
-        <div className="mx-4 mb-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-primary" />
-              {t("profile.completion")}
-            </span>
-            <span className="text-xs font-bold text-primary">{completion}%</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-1.5">
+        <div className="mx-4 mb-3 flex items-center gap-3">
+          <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
+          <div className="flex-1 bg-muted rounded-full h-1.5">
             <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${completion}%` }} />
           </div>
+          <span className="text-[11px] font-medium text-primary">{completion}%</span>
         </div>
       )}
 
-      {/* Edit Profile button */}
-      <div className="px-4 mb-4">
-        <div className="bg-muted/60 rounded-lg text-center py-2 text-sm font-semibold text-foreground">
-          Editar Perfil
-        </div>
-      </div>
-
-      {/* Divider */}
       <div className="border-t border-border/40" />
 
-      {/* Form fields - Instagram settings style */}
-      <div className="px-4 pt-2">
+      {/* Basic info — always visible */}
+      <div className="px-4 pt-1">
         <SettingRow label={t("profile.displayName")}>
           <Input
             value={formData.display_name}
@@ -215,7 +196,7 @@ export const ProfileEditForm = () => {
           />
         </SettingRow>
 
-        <SettingRow label={t("profile.mainNiche")}>
+        <SettingRow label={t("profile.mainNiche")} noBorder>
           <Select value={formData.niche} onValueChange={(v) => setFormData({ ...formData, niche: v })}>
             <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
               <SelectValue placeholder={t("profile.selectNiche")} />
@@ -227,90 +208,95 @@ export const ProfileEditForm = () => {
             </SelectContent>
           </Select>
         </SettingRow>
+      </div>
 
-        {/* Pricing section */}
-        {!(profile as any)?.can_set_own_price ? (
-          <div className="py-3 border-b border-border/40">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5" /> CPV Auto
-              </span>
-              {profile?.cpv_rate && (
-                <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}/view</span>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground">{t("profile.autoPricingDesc")}</p>
-            <p className="text-[11px] text-primary flex items-center gap-1 mt-1">
-              <Sparkles className="h-3 w-3" /> {t("profile.unlockPricing")} — {formatFromUSD(5)}
-            </p>
+      {/* Pricing — collapsible */}
+      <div className="px-4">
+        <SectionToggle label="Preço & CPV" icon="💰" open={pricingOpen} onToggle={() => setPricingOpen(!pricingOpen)}>
+          <div className="pl-1">
+            {!(profile as any)?.can_set_own_price ? (
+              <div className="py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <Lock className="h-3.5 w-3.5" /> CPV Auto
+                  </span>
+                  {profile?.cpv_rate && (
+                    <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}/view</span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">{t("profile.autoPricingDesc")}</p>
+                <p className="text-[11px] text-primary flex items-center gap-1 mt-1">
+                  <Sparkles className="h-3 w-3" /> {t("profile.unlockPricing")} — {formatFromUSD(5)}
+                </p>
+              </div>
+            ) : (
+              <>
+                <SettingRow label={t("profile.priceRange")}>
+                  <Select value={formData.price_range} onValueChange={(v) => setFormData({ ...formData, price_range: v })}>
+                    <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+                      <SelectValue placeholder={t("profile.selectRange")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priceRanges.map((range) => (
+                        <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingRow>
+                <SettingRow label={t("profile.pricePerPost")} noBorder>
+                  <Input
+                    type="number" min="0" step="0.01"
+                    value={formData.price_per_post}
+                    onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
+                    placeholder="50.00"
+                    className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                  />
+                </SettingRow>
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            <SettingRow label={t("profile.priceRange")}>
-              <Select value={formData.price_range} onValueChange={(v) => setFormData({ ...formData, price_range: v })}>
-                <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
-                  <SelectValue placeholder={t("profile.selectRange")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceRanges.map((range) => (
-                    <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </SettingRow>
-            <SettingRow label={t("profile.pricePerPost")}>
+        </SectionToggle>
+      </div>
+
+      {/* Audience Data — collapsible */}
+      <div className="px-4">
+        <SectionToggle label={t("profile.audienceData")} icon="📊" open={audienceOpen} onToggle={() => setAudienceOpen(!audienceOpen)}>
+          <div className="pl-1">
+            <p className="text-[11px] text-muted-foreground py-2">{t("profile.audienceDataDesc")}</p>
+            <SettingRow label={t("profile.whatsappFollowers")}>
               <Input
-                type="number" min="0" step="0.01"
-                value={formData.price_per_post}
-                onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
-                placeholder="50.00"
+                type="number" min="0"
+                value={formData.follower_count}
+                onChange={(e) => setFormData({ ...formData, follower_count: e.target.value })}
+                placeholder="5000"
                 className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
               />
             </SettingRow>
-          </>
-        )}
-      </div>
+            <SettingRow label={t("profile.engagementRate")} noBorder>
+              <Input
+                type="number" min="0" max="100" step="0.1"
+                value={formData.engagement_rate}
+                onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })}
+                placeholder="5.0"
+                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+              />
+            </SettingRow>
 
-      {/* Audience Data section */}
-      <div className="px-4 pt-4">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          📊 {t("profile.audienceData")}
-        </p>
-        <p className="text-[11px] text-muted-foreground mb-2">{t("profile.audienceDataDesc")}</p>
-
-        <SettingRow label={t("profile.whatsappFollowers")}>
-          <Input
-            type="number" min="0"
-            value={formData.follower_count}
-            onChange={(e) => setFormData({ ...formData, follower_count: e.target.value })}
-            placeholder="5000"
-            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
-          />
-        </SettingRow>
-
-        <SettingRow label={t("profile.engagementRate")} noBorder>
-          <Input
-            type="number" min="0" max="100" step="0.1"
-            value={formData.engagement_rate}
-            onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })}
-            placeholder="5.0"
-            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
-          />
-        </SettingRow>
-
-        {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
-          <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">{t("profile.calculatedCPV")}</span>
-            <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>
+            {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
+              <div className="mt-2 mb-1 p-2.5 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{t("profile.calculatedCPV")}</span>
+                <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>
+              </div>
+            )}
           </div>
-        )}
+        </SectionToggle>
       </div>
 
-      {/* Submit - Instagram blue button */}
-      <div className="px-4 py-6">
+      {/* Submit */}
+      <div className="px-4 py-5">
         <Button
           type="submit"
-          className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 font-semibold"
+          className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 font-semibold text-sm"
           disabled={saving}
         >
           {saving ? (
