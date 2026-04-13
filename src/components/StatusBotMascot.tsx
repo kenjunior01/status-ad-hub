@@ -128,7 +128,7 @@ export const StatusBotMascot = () => {
       <AnimatePresence>
         {!isOpen && (
           <motion.div
-            className="fixed bottom-20 md:bottom-6 right-4 z-[55]"
+            className="fixed bottom-24 md:bottom-6 right-3 z-[55]"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             exit={{ scale: 0, rotate: 180 }}

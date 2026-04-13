@@ -109,7 +109,7 @@ function AppContent() {
         </PageTransition>
       </main>
       <BottomNavigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
-      <StatusBotMascot />
+      {currentPage !== "messages" && <StatusBotMascot />}
     </div>
   );
 }
