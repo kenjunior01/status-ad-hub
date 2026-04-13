@@ -95,7 +95,16 @@ export const CreatorDashboard = () => {
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="sm" className="absolute -bottom-1 -right-1" />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-card z-10"
+              >
+                {avatarUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              </button>
+              <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} className="hidden" />
+              <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="sm" className="absolute -top-1 -right-1" />
             </div>
 
             <div className="flex-1 flex justify-around text-center">
