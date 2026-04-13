@@ -5,16 +5,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useConversations, useMessages } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { ImagePreview } from "@/components/ImagePreview";
 import { ChatQuotationForm } from "@/components/ChatQuotationForm";
 import { ChatInvoiceForm } from "@/components/ChatInvoiceForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
+import { MascotInline } from "@/components/MascotInline";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
-  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote, ArrowLeft
+  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote, ArrowLeft,
+  Smile, ThumbsUp, Heart, Star, Zap, Gift, PartyPopper, HandshakeIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -195,8 +197,8 @@ export const ChatSystem = () => {
       <ScrollArea className="flex-1">
         {filteredConversations.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Nenhuma conversa</p>
+            <MascotInline mood="thinking" size="md" message="Candidate-se a anúncios para iniciar conversas!" bubblePosition="top" />
+            <p className="text-sm mt-4">Nenhuma conversa ainda</p>
             <p className="text-xs text-muted-foreground/60 mt-1">As conversas aparecem quando candidata-se a anúncios</p>
           </div>
         ) : (
@@ -293,47 +295,61 @@ export const ChatSystem = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Criar Cotação
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Criar Factura
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*,.pdf';
-                    input.onchange = async (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (!file) return;
-                      if (file.size > 10 * 1024 * 1024) {
-                        toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
-                        return;
-                      }
-                      setUploading(true);
-                      try {
-                        const attachment = await uploadAttachment(file);
-                        await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
-                        toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
-                      } catch (err) {
-                        console.error('Upload error:', err);
-                      } finally {
-                        setUploading(false);
-                      }
-                    };
-                    input.click();
-                  }}>
-                    <Banknote className="h-4 w-4 mr-2" />
-                    Enviar Comprovativo
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    <Paperclip className="h-4 w-4 mr-2" />
-                    Enviar Arquivo
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                 <DropdownMenuContent align="end" className="w-56">
+                   <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
+                     <Receipt className="h-4 w-4 mr-2" />
+                     Criar Cotação
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
+                     <FileText className="h-4 w-4 mr-2" />
+                     Criar Factura
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => {
+                     sendMessage("🤝 Proposta de parceria — Vamos fechar negócio?");
+                   }}>
+                     <HandshakeIcon className="h-4 w-4 mr-2" />
+                     Propor Parceria
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => {
+                     sendMessage("✅ Pagamento confirmado! Obrigado pela confiança. 🎉");
+                   }}>
+                     <Banknote className="h-4 w-4 mr-2" />
+                     Confirmar Pagamento
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => {
+                     const input = document.createElement('input');
+                     input.type = 'file';
+                     input.accept = 'image/*,.pdf';
+                     input.onchange = async (e) => {
+                       const file = (e.target as HTMLInputElement).files?.[0];
+                       if (!file) return;
+                       if (file.size > 10 * 1024 * 1024) {
+                         toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
+                         return;
+                       }
+                       setUploading(true);
+                       try {
+                         const attachment = await uploadAttachment(file);
+                         await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
+                         toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
+                       } catch (err) {
+                         console.error('Upload error:', err);
+                       } finally {
+                         setUploading(false);
+                       }
+                     };
+                     input.click();
+                   }}>
+                     <Banknote className="h-4 w-4 mr-2" />
+                     Enviar Comprovativo
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                     <Paperclip className="h-4 w-4 mr-2" />
+                     Enviar Arquivo
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
@@ -366,11 +382,9 @@ export const ChatSystem = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-center">
-                <div>
-                  <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm">Comece a conversa!</p>
-                </div>
+              <div className="flex flex-col items-center justify-center h-full text-center gap-4">
+                <MascotInline mood="waving" size="lg" message="Diga olá e comece a negociar! 🤝" bubblePosition="top" />
+                <p className="text-muted-foreground text-sm mt-2">Envie uma mensagem para iniciar</p>
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -491,6 +505,18 @@ export const ChatSystem = () => {
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPendingAttachment(null)}><X className="h-3 w-3" /></Button>
               </div>
             )}
+            {/* Quick reactions */}
+            <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+              {["👍", "❤️", "🔥", "🎉", "💰", "✅", "🤝", "⭐"].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => sendMessage(emoji)}
+                  className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-base"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" />
               <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => fileInputRef.current?.click()} disabled={uploading || sending}>
@@ -511,16 +537,12 @@ export const ChatSystem = () => {
           </div>
         </>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center text-center p-8 bg-muted/10">
-          <div>
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="h-8 w-8 text-primary/50" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Suas Mensagens</h3>
-            <p className="text-muted-foreground text-sm max-w-[250px]">
-              Selecione uma conversa para começar
-            </p>
-          </div>
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-8 bg-muted/10 gap-4">
+          <MascotInline mood="happy" size="xl" message="Selecione uma conversa para negociar! 💬" bubblePosition="top" />
+          <h3 className="text-lg font-semibold mt-4">Suas Mensagens</h3>
+          <p className="text-muted-foreground text-sm max-w-[250px]">
+            Gerencie cotações, facturas e pagamentos directamente no chat
+          </p>
         </div>
       )}
     </div>
