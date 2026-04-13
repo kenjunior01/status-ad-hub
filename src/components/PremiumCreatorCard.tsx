@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { GamificationBadge } from "@/components/GamificationBadge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone, MessageCircle } from "lucide-react";
