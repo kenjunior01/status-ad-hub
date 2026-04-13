@@ -10,7 +10,6 @@ import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
-import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { 
