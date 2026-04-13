@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,32 @@ const Auth = ({ onNavigate }: AuthProps) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      localStorage.setItem("statusads_referral", ref.toUpperCase());
+    }
+  }, [searchParams]);
+
+  // Auto-apply referral after signup
+  useEffect(() => {
+    if (user) {
+      const refCode = localStorage.getItem("statusads_referral");
+      if (refCode) {
+        supabase.rpc("process_referral", {
+          p_referral_code: refCode,
+          p_referred_user_id: user.id,
+        }).then(({ data }) => {
+          if (data) {
+            localStorage.removeItem("statusads_referral");
+          }
+        });
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
