@@ -5,7 +5,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone } from "lucide-react";
+import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
