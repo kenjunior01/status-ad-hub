@@ -208,8 +208,7 @@ const Index = ({ onNavigate }: IndexProps) => {
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <TrustStatsBar />
+      {/* Categories — horizontal scrollable icons like bateu.online */}
 
       {/* Categories — horizontal scrollable icons like bateu.online */}
       <section className="py-4 md:py-6 px-4 border-b border-border/30">

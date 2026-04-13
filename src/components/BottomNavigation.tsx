@@ -56,8 +56,11 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
 
   const resolveNavPage = (key: string) => {
     if (key === "dashboard") return auth.user ? auth.getDashboardPage() : "auth";
-    if (key === "messages") return auth.user ? auth.getDashboardPage() : "auth";
+    if (key === "messages") return auth.user ? "messages" : "auth";
     if (key === "academia") return "academia";
+    if (key === "auth") return "auth";
+    return key;
+  };
     if (key === "auth") return "auth";
     return key;
   };
@@ -68,7 +71,7 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
     if (key === "academia") return currentPage === "academia";
     if (key === "creators") return currentPage === "creators";
     if (key === "auth") return currentPage === "auth";
-    if (key === "messages") return false; // TODO: messages page
+    if (key === "messages") return currentPage === "messages";
     return false;
   };
 
