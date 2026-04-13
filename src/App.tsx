@@ -20,6 +20,7 @@ import { AdvertiserDashboard } from "./pages/AdvertiserDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { GlobalDashboard } from "./pages/GlobalDashboard";
 import { AcademiaStatusAds } from "./components/AcademiaStatusAds";
+import { MessagesPage } from "./pages/MessagesPage";
 import { Terms } from "./pages/Terms";
 import { Privacy } from "./pages/Privacy";
 
@@ -83,6 +84,8 @@ function AppContent() {
         return <AdminDashboard />;
       case "global-dashboard":
         return <GlobalDashboard />;
+      case "messages":
+        return <MessagesPage />;
       case "academia":
         return <div className="max-w-2xl mx-auto py-8 px-4"><AcademiaStatusAds /></div>;
       case "terms":
