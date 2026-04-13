@@ -4,19 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Camera, User, Loader2, Shield, Lock, Sparkles, ChevronDown, Check } from "lucide-react";
+import { Loader2, Shield, Lock, Sparkles, ChevronDown, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ProfileEditForm = () => {
   const { t } = useTranslation();
-  const { profile, loading, saving, uploading, updateProfile, uploadAvatar } = useProfile();
+  const { profile, loading, saving, updateProfile } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
@@ -30,6 +28,7 @@ export const ProfileEditForm = () => {
     engagement_rate: "",
   });
 
+  const [basicInfoOpen, setBasicInfoOpen] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
 
@@ -60,15 +59,6 @@ export const ProfileEditForm = () => {
     { value: "premium", label: "Premium ($150-500)" },
     { value: "luxury", label: "Luxo ($500+)" },
   ];
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await uploadAvatar(file);
-    if (url) {
-      setFormData(prev => ({ ...prev, avatar_url: url }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,42 +116,9 @@ export const ProfileEditForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
-      {/* Compact header: avatar + name + badge */}
-      <div className="flex items-center gap-4 px-4 py-4">
-        <div className="relative shrink-0">
-          <div className="p-[2px] rounded-full bg-gradient-to-tr from-primary via-primary/70 to-primary/40">
-            <Avatar className="h-16 w-16 border-2 border-background">
-              <AvatarImage src={formData.avatar_url} />
-              <AvatarFallback className="bg-muted">
-                <User className="h-8 w-8 text-muted-foreground" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background"
-          >
-            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} className="hidden" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">{formData.display_name || 'Seu Nome'}</p>
-          {formData.niche && <p className="text-xs text-primary truncate">{formData.niche}</p>}
-          {profile?.is_verified && (
-            <Badge variant="secondary" className="mt-1 text-[10px] gap-1 h-5">
-              <Check className="h-3 w-3" /> Verificado
-            </Badge>
-          )}
-        </div>
-      </div>
-
       {/* Completion bar - only if incomplete */}
       {completion < 100 && (
-        <div className="mx-4 mb-3 flex items-center gap-3">
+        <div className="mx-4 my-3 flex items-center gap-3">
           <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
           <div className="flex-1 bg-muted rounded-full h-1.5">
             <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${completion}%` }} />
@@ -170,48 +127,49 @@ export const ProfileEditForm = () => {
         </div>
       )}
 
-      <div className="border-t border-border/40" />
-
-      {/* Basic info — always visible */}
-      <div className="px-4 pt-1">
-        <SettingRow label={t("profile.displayName")}>
-          <Input
-            value={formData.display_name}
-            onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-            placeholder={t("profile.displayNamePlaceholder")}
-            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
-            required
-            maxLength={100}
-          />
-        </SettingRow>
-
-        <SettingRow label={t("profile.biography")}>
-          <Textarea
-            value={formData.bio}
-            onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
-            placeholder={t("profile.bioPlaceholder")}
-            className="border-0 bg-transparent text-right text-sm p-0 min-h-0 h-auto resize-none focus-visible:ring-0"
-            rows={2}
-            maxLength={500}
-          />
-        </SettingRow>
-
-        <SettingRow label={t("profile.mainNiche")} noBorder>
-          <Select value={formData.niche} onValueChange={(v) => setFormData({ ...formData, niche: v })}>
-            <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
-              <SelectValue placeholder={t("profile.selectNiche")} />
-            </SelectTrigger>
-            <SelectContent>
-              {niches.map((niche) => (
-                <SelectItem key={niche} value={niche}>{niche}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingRow>
-      </div>
-
-      {/* Pricing — collapsible */}
+      {/* All sections collapsible */}
       <div className="px-4">
+        {/* Basic Info — collapsible */}
+        <SectionToggle label="Informações Básicas" icon="✏️" open={basicInfoOpen} onToggle={() => setBasicInfoOpen(!basicInfoOpen)}>
+          <div className="pl-1">
+            <SettingRow label={t("profile.displayName")}>
+              <Input
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                placeholder={t("profile.displayNamePlaceholder")}
+                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                required
+                maxLength={100}
+              />
+            </SettingRow>
+
+            <SettingRow label={t("profile.biography")}>
+              <Textarea
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
+                placeholder={t("profile.bioPlaceholder")}
+                className="border-0 bg-transparent text-right text-sm p-0 min-h-0 h-auto resize-none focus-visible:ring-0"
+                rows={2}
+                maxLength={500}
+              />
+            </SettingRow>
+
+            <SettingRow label={t("profile.mainNiche")} noBorder>
+              <Select value={formData.niche} onValueChange={(v) => setFormData({ ...formData, niche: v })}>
+                <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+                  <SelectValue placeholder={t("profile.selectNiche")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {niches.map((niche) => (
+                    <SelectItem key={niche} value={niche}>{niche}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
+          </div>
+        </SectionToggle>
+
+        {/* Pricing — collapsible */}
         <SectionToggle label="Preço & CPV" icon="💰" open={pricingOpen} onToggle={() => setPricingOpen(!pricingOpen)}>
           <div className="pl-1">
             {!(profile as any)?.can_set_own_price ? (
@@ -256,10 +214,8 @@ export const ProfileEditForm = () => {
             )}
           </div>
         </SectionToggle>
-      </div>
 
-      {/* Audience Data — collapsible */}
-      <div className="px-4">
+        {/* Audience Data — collapsible */}
         <SectionToggle label={t("profile.audienceData")} icon="📊" open={audienceOpen} onToggle={() => setAudienceOpen(!audienceOpen)}>
           <div className="pl-1">
             <p className="text-[11px] text-muted-foreground py-2">{t("profile.audienceDataDesc")}</p>
