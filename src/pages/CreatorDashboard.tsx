@@ -65,6 +65,7 @@ export const CreatorDashboard = () => {
                   {t("common.hello")}, {profile?.display_name || t("navigation.creators")} 👋
                 </h1>
                 <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="md" />
+                <MascotInline mood="happy" size="sm" showBubble={false} />
               </div>
             </div>
           </div>
