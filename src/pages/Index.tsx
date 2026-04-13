@@ -6,28 +6,22 @@ import { HeroSearch } from "@/components/HeroSearch";
 import { PremiumCreatorCard } from "@/components/PremiumCreatorCard";
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/components/AdvancedFiltersSidebar";
-import { SocialProof } from "@/components/TrustIndicators";
-import { FloatingCTA } from "@/components/EnhancedCTA";
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
+import { TrustStatsBar } from "@/components/TrustStatsBar";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { 
-  Users, 
-  MessageCircle, 
-  Banknote, 
-  Star, 
-  ShieldCheck,
-  Award,
-  Zap,
-  Globe2,
   ArrowRight,
   ChevronDown,
   Heart,
   Sparkles,
-  CircleDot
+  CircleDot,
+  Globe2,
+  Shield,
+  Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,41 +46,11 @@ const Index = ({ onNavigate }: IndexProps) => {
   const { formatFromUSD } = useLocalizationContext();
   const { profiles, loading, getFeaturedProfiles, getNewProfiles, getDiscoverProfiles } = useProfiles();
   const { favorites, getFavoriteCount } = useFavorites();
-  const [showFloatingCTA, setShowFloatingCTA] = useState(false);
   const [activeCategory, setActiveCategory] = useState("featured");
   const [showAllProfiles, setShowAllProfiles] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
-
-  // Greeting based on time of day
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 12) return t('greeting.morning', 'Bom dia');
-    if (hour >= 12 && hour < 18) return t('greeting.afternoon', 'Boa tarde');
-    return t('greeting.evening', 'Boa noite');
-  }, [t]);
-
-  // Random inspirational quote
-  const inspirationalQuote = useMemo(() => {
-    const quotes = [
-      t('inspiration.q1', 'O sucesso é a soma de pequenos esforços repetidos dia após dia.'),
-      t('inspiration.q2', 'Cada visualização é uma oportunidade de transformar vidas.'),
-      t('inspiration.q3', 'Conecte, crie e monetize — o seu potencial é ilimitado.'),
-      t('inspiration.q4', 'Grandes resultados começam com o primeiro passo.'),
-      t('inspiration.q5', 'A sua criatividade é o seu maior ativo.'),
-    ];
-    return quotes[Math.floor(Math.random() * quotes.length)];
-  }, [t]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowFloatingCTA(window.scrollY > 600);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleProfileSelect = (profile: any) => {
     setSelectedProfile(profile);
@@ -94,134 +58,72 @@ const Index = ({ onNavigate }: IndexProps) => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    toast({
-      title: t('common.search'),
-      description: `${t('common.loading')}`,
-    });
   };
 
   const handleCategorySelect = (category: string) => {
     setActiveCategory(category.toLowerCase());
-    toast({
-      title: `${category}`,
-      description: t('common.filter'),
-    });
   };
 
   const clearFilters = () => {
     setFilters(defaultFilters);
   };
 
-  // Apply filters to profiles
   const applyFilters = (profilesList: any[]) => {
     return profilesList.filter(profile => {
-      // Price filter
       const price = parseInt(profile.price_range?.replace(/\D/g, '') || '50');
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
-        return false;
-      }
-
-      // Rating filter
-      if (filters.minRating > 0 && profile.rating < filters.minRating) {
-        return false;
-      }
-
-      // Campaigns filter
-      if (filters.minCampaigns > 0 && profile.total_campaigns < filters.minCampaigns) {
-        return false;
-      }
-
-      // Verified filter
-      if (filters.verifiedOnly && !profile.is_verified) {
-        return false;
-      }
-
-      // Badge level filter
-      if (filters.badgeLevels.length > 0 && !filters.badgeLevels.includes(profile.badge_level)) {
-        return false;
-      }
-
-      // Niche filter
+      if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
+      if (filters.minRating > 0 && profile.rating < filters.minRating) return false;
+      if (filters.minCampaigns > 0 && profile.total_campaigns < filters.minCampaigns) return false;
+      if (filters.verifiedOnly && !profile.is_verified) return false;
+      if (filters.badgeLevels.length > 0 && !filters.badgeLevels.includes(profile.badge_level)) return false;
       if (filters.niches.length > 0) {
         const nicheMap: Record<string, string[]> = {
-          lifestyle: ["Lifestyle", "Viagem"],
-          fitness: ["Fitness & Saúde", "Fitness"],
-          tech: ["Tecnologia", "Tech"],
-          beauty: ["Beleza & Moda", "Beleza"],
-          food: ["Culinária", "Gastronomia"],
-          travel: ["Viagem", "Travel"],
-          gaming: ["Games", "Gaming"],
-          education: ["Educação", "Education"],
-          business: ["Negócios", "Business"],
-          design: ["Arte & Design", "Design"],
+          lifestyle: ["Lifestyle", "Viagem"], fitness: ["Fitness & Saúde", "Fitness"],
+          tech: ["Tecnologia", "Tech"], beauty: ["Beleza & Moda", "Beleza"],
+          food: ["Culinária", "Gastronomia"], travel: ["Viagem", "Travel"],
+          gaming: ["Games", "Gaming"], education: ["Educação", "Education"],
+          business: ["Negócios", "Business"], design: ["Arte & Design", "Design"],
         };
-        
         const matchesNiche = filters.niches.some(niche => {
           const niches = nicheMap[niche] || [];
-          return profile.niche && niches.some(n => 
-            profile.niche?.toLowerCase().includes(n.toLowerCase())
-          );
+          return profile.niche && niches.some((n: string) => profile.niche?.toLowerCase().includes(n.toLowerCase()));
         });
-        
         if (!matchesNiche) return false;
       }
-
       return true;
     });
   };
 
-  // Get profiles based on active category
   const getActiveProfiles = () => {
     let baseProfiles: any[];
-    
     switch (activeCategory) {
-      case "featured":
-        baseProfiles = getFeaturedProfiles();
-        break;
-      case "recent":
-        baseProfiles = getNewProfiles();
-        break;
-      case "trending":
-        baseProfiles = [...profiles].sort((a, b) => b.total_campaigns - a.total_campaigns).slice(0, 24);
-        break;
-      case "favorites":
-        baseProfiles = profiles.filter(p => favorites.some(f => f.id === p.id));
-        break;
+      case "featured": baseProfiles = getFeaturedProfiles(); break;
+      case "recent": baseProfiles = getNewProfiles(); break;
+      case "trending": baseProfiles = [...profiles].sort((a, b) => b.total_campaigns - a.total_campaigns).slice(0, 24); break;
+      case "favorites": baseProfiles = profiles.filter(p => favorites.some(f => f.id === p.id)); break;
       default:
-        // Filter by niche
         const nicheMap: Record<string, string[]> = {
-          lifestyle: ["Lifestyle", "Viagem"],
-          fitness: ["Fitness & Saúde", "Fitness"],
-          tech: ["Tecnologia", "Tech"],
-          beauty: ["Beleza & Moda", "Beleza"],
-          food: ["Culinária", "Gastronomia"],
-          travel: ["Viagem", "Travel"],
-          gaming: ["Games", "Gaming"],
-          education: ["Educação", "Education"],
-          business: ["Negócios", "Business"],
-          design: ["Arte & Design", "Design"],
+          lifestyle: ["Lifestyle", "Viagem"], fitness: ["Fitness & Saúde", "Fitness"],
+          tech: ["Tecnologia", "Tech"], beauty: ["Beleza & Moda", "Beleza"],
+          food: ["Culinária", "Gastronomia"], travel: ["Viagem", "Travel"],
+          gaming: ["Games", "Gaming"], education: ["Educação", "Education"],
+          business: ["Negócios", "Business"], design: ["Arte & Design", "Design"],
         };
         const niches = nicheMap[activeCategory] || [];
-        baseProfiles = profiles.filter(p => 
-          p.niche && niches.some(n => p.niche?.toLowerCase().includes(n.toLowerCase()))
-        );
+        baseProfiles = profiles.filter(p => p.niche && niches.some(n => p.niche?.toLowerCase().includes(n.toLowerCase())));
     }
-
     return applyFilters(baseProfiles);
   };
 
   const activeProfiles = getActiveProfiles();
-  const displayProfiles = showAllProfiles ? activeProfiles : activeProfiles.slice(0, 8);
+  const displayProfiles = showAllProfiles ? activeProfiles : activeProfiles.slice(0, 12);
 
-  // Show Creator Profile if selected
   if (selectedProfile) {
     return (
       <CreatorProfile 
         profile={selectedProfile}
         onBack={() => setSelectedProfile(null)}
-        onContact={() => {
-          onNavigate?.('messages');
-        }}
+        onContact={() => onNavigate?.('messages')}
       />
     );
   }
@@ -230,142 +132,139 @@ const Index = ({ onNavigate }: IndexProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
-          <div className="space-y-2">
-            <p className="text-lg font-medium text-foreground">{t('common.loading')}</p>
-          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-transparent wa-bg-pattern pb-20 md:pb-0">
-      {/* Hero Section with Search */}
-      <section className="relative py-8 md:py-12 px-4 bg-gradient-hero overflow-hidden">
-        {/* Animated gradient orbs */}
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      {/* Hero — clean and bold like bateu.online */}
+      <section className="relative py-8 md:py-14 px-4 overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-hero opacity-90" />
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-[10%] w-32 md:w-40 h-32 md:h-40 bg-primary-foreground/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-10 right-[15%] w-40 md:w-56 h-40 md:h-56 bg-primary-foreground/6 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
-          <div className="absolute top-1/3 left-1/2 w-24 md:w-32 h-24 md:h-32 bg-primary-foreground/5 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
+          <div className="absolute top-10 left-[10%] w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-[15%] w-56 h-56 bg-primary/5 rounded-full blur-3xl" />
         </div>
         
-        <div className="relative z-10 max-w-5xl mx-auto text-center">
-          {/* Greeting & Inspirational Quote */}
-          <motion.div 
-            className="mb-4 md:mb-6"
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <motion.h1 
+            className="text-2xl md:text-5xl font-extrabold text-primary-foreground mb-2 md:mb-4 leading-tight"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-base md:text-xl font-semibold text-primary-foreground mb-0.5">
-              {greeting} 👋
-            </p>
-            <p className="text-xs md:text-base text-primary-foreground/60 italic max-w-md mx-auto line-clamp-2">
-              "{inspirationalQuote}"
-            </p>
-          </motion.div>
-
-          <motion.div 
-            className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground px-3 py-1.5 rounded-full mb-3 md:mb-4"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Globe2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
-            <span className="text-[10px] md:text-xs font-medium">{t('global.platform')}</span>
-          </motion.div>
-          
-          <motion.h1 
-            className="text-2xl md:text-4xl lg:text-5xl font-extrabold text-primary-foreground mb-2 md:mb-3 leading-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            {t('hero.title')}
+            {t('hero.title').split(' ').slice(0, -2).join(' ')}{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-foreground to-primary-foreground/70">
+              {t('hero.title').split(' ').slice(-2).join(' ')}
+            </span>
           </motion.h1>
           
           <motion.p 
-            className="text-sm md:text-lg text-primary-foreground/70 mb-6 md:mb-8 max-w-2xl mx-auto"
+            className="text-xs md:text-base text-primary-foreground/60 mb-5 md:mb-8 max-w-lg mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.3 }}
           >
             {t('hero.subtitle')}
           </motion.p>
-          
-          {/* Search Component */}
-          <HeroSearch onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <HeroSearch onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+          </motion.div>
+
+          {/* Trust pills — inspired by bateu.online */}
+          <motion.div 
+            className="mt-5 flex flex-wrap items-center justify-center gap-3 md:gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-center gap-1.5 text-primary-foreground/50 text-[11px] md:text-xs">
+              <Shield className="h-3 w-3" />
+              <span>{t('trust.securePayment')}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-primary-foreground/50 text-[11px] md:text-xs">
+              <Zap className="h-3 w-3" />
+              <span>{t('global.platform')}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-primary-foreground/50 text-[11px] md:text-xs">
+              <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+              <span>{t('hero.stats.creators').toLowerCase()}</span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Sponsor Ads Carousel */}
+      {/* Stats Bar */}
+      <TrustStatsBar />
 
-      {/* Main Listings Section with Sidebar */}
-      <section className="py-12 px-4">
+      {/* Categories — horizontal scrollable icons like bateu.online */}
+      <section className="py-4 md:py-6 px-4 border-b border-border/30">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  {t('index.exploreCreators')}
-                </h2>
-                {activeProfiles.length > 0 && (
-                  <p className="text-muted-foreground">
-                    {activeProfiles.length} {t('index.creatorsAvailable')}
-                  </p>
-                )}
-              </div>
-              
-              {/* Mobile Filters */}
-              <div className="flex items-center gap-2">
-                <MobileFiltersSheet
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  onClearFilters={clearFilters}
-                >
-                  <span />
-                </MobileFiltersSheet>
-                
-                {/* Favorites Button */}
-                <Button
-                  variant={activeCategory === "favorites" ? "default" : "outline"}
-                  onClick={() => setActiveCategory("favorites")}
-                  className="gap-2"
-                >
-                  <Heart className="h-4 w-4" />
-                  {t('index.favorites')} ({getFavoriteCount()})
-                </Button>
-              </div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {t('index.exploreCreators')}
+            </h2>
+            <div className="flex items-center gap-2">
+              <MobileFiltersSheet
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClearFilters={clearFilters}
+              >
+                <span />
+              </MobileFiltersSheet>
+              <Button
+                variant={activeCategory === "favorites" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveCategory("favorites")}
+                className="gap-1 h-8 text-xs"
+              >
+                <Heart className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('index.favorites')}</span>
+                ({getFavoriteCount()})
+              </Button>
             </div>
-
-            {/* Category Tabs */}
-            <CategoryTabs 
-              activeTab={activeCategory} 
-              onTabChange={(tab) => {
-                setActiveCategory(tab);
-                setShowAllProfiles(false);
-              }}
-              counts={{
-                featured: getFeaturedProfiles().length,
-                recent: getNewProfiles().length,
-                trending: profiles.length,
-              }}
-            />
           </div>
+          <CategoryTabs 
+            activeTab={activeCategory} 
+            onTabChange={(tab) => {
+              setActiveCategory(tab);
+              setShowAllProfiles(false);
+            }}
+            counts={{
+              featured: getFeaturedProfiles().length,
+              recent: getNewProfiles().length,
+              trending: profiles.length,
+            }}
+          />
+        </div>
+      </section>
 
-          {/* Content Grid with Sidebar */}
+      {/* Profile Grid */}
+      <section className="py-6 md:py-10 px-4">
+        <div className="max-w-7xl mx-auto">
           <div className="flex gap-8">
-            {/* Desktop Sidebar */}
             <AdvancedFiltersSidebar
               filters={filters}
               onFiltersChange={setFilters}
               onClearFilters={clearFilters}
             />
 
-            {/* Profile Grid */}
             <div className="flex-1">
+              {activeProfiles.length > 0 && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  {activeProfiles.length} {t('index.creatorsAvailable')}
+                </p>
+              )}
+
               {displayProfiles.length > 0 ? (
                 <>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
@@ -380,47 +279,36 @@ const Index = ({ onNavigate }: IndexProps) => {
                     ))}
                   </div>
 
-                  {/* Load More */}
-                  {activeProfiles.length > 8 && !showAllProfiles && (
-                    <div className="text-center mt-10">
+                  {activeProfiles.length > 12 && !showAllProfiles && (
+                    <div className="text-center mt-8">
                       <Button 
                         variant="outline" 
-                        size="lg"
                         onClick={() => setShowAllProfiles(true)}
-                        className="gap-2 px-8"
+                        className="gap-2"
                       >
                         <ChevronDown className="h-4 w-4" />
-                        {t('index.viewMore')} ({activeProfiles.length - 8} {t('index.creators')})
+                        {t('index.viewMore')} ({activeProfiles.length - 12})
                       </Button>
                     </div>
                   )}
                 </>
               ) : (
                 <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     {activeCategory === "favorites" ? (
-                      <Heart className="h-10 w-10 text-primary" />
+                      <Heart className="h-8 w-8 text-primary" />
                     ) : (
-                      <Sparkles className="h-10 w-10 text-primary" />
+                      <Sparkles className="h-8 w-8 text-primary" />
                     )}
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">
-                    {activeCategory === "favorites" 
-                      ? t('favorites.empty')
-                      : t('emptyState.noCreators')
-                    }
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {activeCategory === "favorites" ? t('favorites.empty') : t('emptyState.noCreators')}
                   </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {activeCategory === "favorites"
-                      ? t('favorites.addSome')
-                      : t('emptyState.noCreatorsDescription')
-                    }
+                  <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+                    {activeCategory === "favorites" ? t('favorites.addSome') : t('emptyState.noCreatorsDescription')}
                   </p>
-                  <Button onClick={() => {
-                    setActiveCategory("featured");
-                    clearFilters();
-                  }} className="gap-2">
-                    <ArrowRight className="h-4 w-4" />
+                  <Button onClick={() => { setActiveCategory("featured"); clearFilters(); }} size="sm" className="gap-2">
+                    <ArrowRight className="h-3.5 w-3.5" />
                     {t('emptyState.tryAgain')}
                   </Button>
                 </div>
@@ -433,37 +321,26 @@ const Index = ({ onNavigate }: IndexProps) => {
       {/* Engagement Features */}
       <EngagementFeatures onNavigate={onNavigate} />
 
-      {/* Social Proof Section */}
-      <section className="py-12 px-4 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <SocialProof />
-        </div>
-      </section>
-
-      {/* Value Proposition Section - For Businesses & Individuals */}
+      {/* Value Proposition */}
       <ValuePropositionSection onNavigate={onNavigate} />
 
-      {/* Final CTA Section */}
-      <section className="py-16 px-4 bg-gradient-hero text-primary-foreground relative overflow-hidden">
-        <div className="absolute top-5 right-[20%] w-32 h-32 bg-primary-foreground/5 rounded-full blur-2xl animate-float" />
-        <div className="absolute bottom-5 left-[10%] w-40 h-40 bg-primary-foreground/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4">
-            <Globe2 className="h-3.5 w-3.5" />
-            <span className="text-xs">{t('valueProposition.trustedBy')}</span>
-          </div>
-          
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+      {/* Final CTA */}
+      <section className="py-12 md:py-16 px-4 bg-gradient-hero text-primary-foreground relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-5 right-[20%] w-32 h-32 bg-primary-foreground/5 rounded-full blur-2xl" />
+          <div className="absolute bottom-5 left-[10%] w-40 h-40 bg-primary-foreground/5 rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          <h2 className="text-2xl md:text-4xl font-bold mb-3">
             {t('valueProposition.creator.title')}
           </h2>
-          <p className="text-base text-primary-foreground/75 mb-6 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-primary-foreground/60 mb-6 max-w-xl mx-auto">
             {t('valueProposition.creator.description')}
           </p>
-          
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button 
               size="lg" 
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 gap-2 px-6"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 gap-2 w-full sm:w-auto"
               onClick={() => onNavigate?.('auth')}
             >
               {t('valueProposition.creator.cta')}
@@ -472,8 +349,8 @@ const Index = ({ onNavigate }: IndexProps) => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => onNavigate?.('advertiser-dashboard')}
+              className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 w-full sm:w-auto"
+              onClick={() => onNavigate?.('auth')}
             >
               {t('valueProposition.business.cta')}
             </Button>
@@ -482,62 +359,47 @@ const Index = ({ onNavigate }: IndexProps) => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-foreground text-background py-12">
+      <footer className="bg-card border-t border-border py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
                 <CircleDot className="h-5 w-5 text-primary" />
-                <span className="text-lg font-bold">StatusAds</span>
+                <span className="text-base font-bold text-foreground">StatusAds</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs text-muted-foreground">
                 {t('global.tagline')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-background">{t('footer.about')}</h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('about')}>{t('footer.about')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('terms')}>{t('footer.terms')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('privacy')}>{t('footer.privacy')}</li>
+              <h4 className="font-semibold text-sm mb-3 text-foreground">{t('footer.about')}</h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('terms')}>{t('footer.terms')}</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('privacy')}>{t('footer.privacy')}</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-background">{t('navigation.creators')}</h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('auth.register')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</li>
+              <h4 className="font-semibold text-sm mb-3 text-foreground">{t('navigation.creators')}</h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('auth')}>{t('auth.register')}</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-background">{t('navigation.advertisers')}</h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('valueProposition.business.cta')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
-                <li className="hover:text-primary transition-colors cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</li>
+              <h4 className="font-semibold text-sm mb-3 text-foreground">{t('navigation.advertisers')}</h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('auth')}>{t('valueProposition.business.cta')}</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => onNavigate?.('academia')}>{t('footer.help')}</li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-muted mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
+          <div className="border-t border-border mt-6 pt-6 text-center">
+            <p className="text-[11px] text-muted-foreground">
               &copy; {new Date().getFullYear()} StatusAds. {t('global.platform')}
             </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('terms')}>{t('footer.terms')}</span>
-              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('privacy')}>{t('footer.privacy')}</span>
-              <span className="hover:text-primary cursor-pointer" onClick={() => onNavigate?.('auth')}>{t('footer.contact')}</span>
-            </div>
           </div>
         </div>
       </footer>
-
-      {/* Floating CTA */}
-      <FloatingCTA 
-        show={showFloatingCTA} 
-        variant="creator" 
-        onClick={() => onNavigate?.('auth')} 
-      />
     </div>
   );
 };

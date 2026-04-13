@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Star, 
@@ -14,7 +13,8 @@ import {
   Gamepad2,
   GraduationCap,
   Briefcase,
-  Palette
+  Palette,
+  LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,13 +31,10 @@ interface CategoryTabsProps {
 export const CategoryTabs = ({ activeTab, onTabChange, counts }: CategoryTabsProps) => {
   const { t } = useTranslation();
 
-  const mainTabs = [
-    { id: "featured", label: t('categories.featured'), icon: Star, color: "text-warning" },
-    { id: "recent", label: t('categories.recent'), icon: Clock, color: "text-success" },
-    { id: "trending", label: t('categories.trending'), icon: TrendingUp, color: "text-primary" },
-  ];
-
-  const nicheTabs = [
+  const allTabs = [
+    { id: "featured", label: t('categories.featured'), icon: Star },
+    { id: "recent", label: t('categories.recent'), icon: Clock },
+    { id: "trending", label: t('categories.trending'), icon: TrendingUp },
     { id: "lifestyle", label: t('niches.lifestyle'), icon: Sparkles },
     { id: "fitness", label: t('niches.fitness'), icon: Dumbbell },
     { id: "tech", label: t('niches.tech'), icon: Laptop },
@@ -47,69 +44,40 @@ export const CategoryTabs = ({ activeTab, onTabChange, counts }: CategoryTabsPro
     { id: "gaming", label: t('niches.entertainment'), icon: Gamepad2 },
     { id: "education", label: t('niches.education'), icon: GraduationCap },
     { id: "business", label: t('niches.business'), icon: Briefcase },
-    { id: "design", label: t('niches.lifestyle'), icon: Palette },
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Main Category Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {mainTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          const count = counts?.[tab.id as keyof typeof counts];
-          
-          return (
-            <Button
-              key={tab.id}
-              variant={isActive ? "default" : "outline"}
-              size="lg"
-              onClick={() => onTabChange(tab.id)}
-              className={cn(
-                "flex items-center gap-2 whitespace-nowrap",
-                isActive && "shadow-medium"
-              )}
-            >
-              <Icon className={cn("h-4 w-4", !isActive && tab.color)} />
+    <div className="flex items-center gap-3 md:gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4">
+      {allTabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+        
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={cn(
+              "flex flex-col items-center gap-1.5 min-w-[56px] md:min-w-[64px] transition-all duration-200",
+              isActive ? "scale-105" : "opacity-70 hover:opacity-100"
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all duration-200",
+              isActive 
+                ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/30" 
+                : "bg-card border border-border/50 text-muted-foreground hover:border-primary/30 hover:text-primary"
+            )}>
+              <Icon className="h-5 w-5 md:h-5.5 md:w-5.5" />
+            </div>
+            <span className={cn(
+              "text-[10px] md:text-xs font-medium text-center leading-tight line-clamp-1",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )}>
               {tab.label}
-              {count !== undefined && count > 0 && (
-                <Badge 
-                  variant={isActive ? "secondary" : "outline"} 
-                  className="ml-1 text-xs"
-                >
-                  {count}
-                </Badge>
-              )}
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Niche Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">{t('filters.niches')}:</span>
-        {nicheTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          
-          return (
-            <Badge
-              key={tab.id}
-              variant={isActive ? "default" : "secondary"}
-              className={cn(
-                "cursor-pointer px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap transition-colors",
-                isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-primary/10 hover:text-primary"
-              )}
-              onClick={() => onTabChange(tab.id)}
-            >
-              <Icon className="h-3 w-3" />
-              {tab.label}
-            </Badge>
-          );
-        })}
-      </div>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 };

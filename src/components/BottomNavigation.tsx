@@ -40,10 +40,9 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* Frosted glass background */}
-      <div className="absolute inset-0 bg-card/90 backdrop-blur-xl border-t border-border/30" />
+      <div className="absolute inset-0 bg-card/95 backdrop-blur-xl border-t border-border/40" />
       
-      <div className="relative flex items-center justify-around h-16 px-2 safe-area-bottom">
+      <div className="relative flex items-center justify-around h-14 px-2 safe-area-bottom">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.key);
@@ -54,7 +53,7 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
               key={item.key}
               onClick={() => onNavigate(resolveNavPage(item.key))}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 relative transition-all duration-300",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1 relative transition-all duration-200",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -62,31 +61,24 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
                 {active && (
                   <motion.div
                     layoutId="bottomNavIndicator"
-                    className="absolute -inset-2.5 rounded-2xl bg-primary/12"
+                    className="absolute -inset-2 rounded-xl bg-primary/10"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
                 <Icon 
                   className={cn(
-                    "h-5 w-5 relative z-10 transition-transform duration-300",
-                    active && "text-primary scale-110"
+                    "h-5 w-5 relative z-10 transition-all duration-200",
+                    active && "text-primary"
                   )} 
                   strokeWidth={active ? 2.5 : 1.5} 
                 />
               </div>
               <span className={cn(
-                "text-[10px] font-semibold leading-tight transition-all duration-300",
+                "text-[9px] font-medium leading-tight",
                 active ? "text-primary" : "text-muted-foreground"
               )}>
                 {label}
               </span>
-              {active && (
-                <motion.div
-                  layoutId="bottomNavDot"
-                  className="absolute -top-0.5 w-5 h-1 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
             </button>
           );
         })}
