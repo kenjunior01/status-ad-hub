@@ -36,13 +36,16 @@ const detectUserLocale = (): LocalizationState => {
     'fr': 'FR', 'de': 'DE', 'it': 'IT',
   };
 
-  const detectedCode = tzCountryMap[tz] || langCountryMap[lang] || 'US';
+  const detectedCode = tzCountryMap[tz] || langCountryMap[lang] || 'MZ';
   const country = countries.find(c => c.code === detectedCode);
 
+  // Fallback to MZ if detected country not in supported list
+  const finalCountry = country || countries.find(c => c.code === 'MZ')!;
+
   return {
-    currency: country?.currency || 'USD',
-    country: detectedCode,
-    region: country?.region || 'north_america',
+    currency: finalCountry?.currency || 'MZN',
+    country: finalCountry?.code || 'MZ',
+    region: finalCountry?.region || 'africa',
   };
 };
 
@@ -50,7 +53,7 @@ export const useLocalization = () => {
   const { i18n } = useTranslation();
 
   const [state, setState] = useState<LocalizationState>(() => {
-    if (typeof window === 'undefined') return { currency: 'USD', country: 'US', region: 'north_america' };
+    if (typeof window === 'undefined') return { currency: 'MZN', country: 'MZ', region: 'africa' };
 
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {

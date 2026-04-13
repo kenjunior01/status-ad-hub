@@ -17,13 +17,19 @@ serve(async (req) => {
     let userPrompt: string;
 
     if (action === "suggest_price") {
-      systemPrompt = `You are a pricing expert for a WhatsApp Status advertising marketplace called StatusAds. 
-You help creators set competitive prices based on their metrics. 
-Always respond in the user's language (detect from the data provided).
-Be concise, specific, and data-driven. Format prices in USD.
-Consider: follower count, engagement rate, niche premium (tech/business/finance = +50%), WhatsApp views range, country market rates.
+      systemPrompt = `You are a pricing expert for a WhatsApp Status advertising marketplace called StatusAds.
+You help creators set competitive prices based on their metrics.
+Always respond in Portuguese (the user's language).
+Be concise, specific, and data-driven. Format prices in MZN (Metical) and BRL (Real).
+
+CRITICAL: Always compare StatusAds pricing with Meta Ads and Google Ads to show the value advantage:
+- Meta Ads (Facebook/Instagram): CPM médio $5-15 USD (320-960 MZN), CTR médio 0.9%
+- Google Ads: CPC médio $1-5 USD (64-320 MZN), CPM médio $3-10 USD
+- StatusAds: CPV muito mais baixo, audiência orgânica e de confiança, sem custos de gestão de anúncios
+
+Show how advertisers SAVE money by using StatusAds vs Meta/Google Ads.
 Base formula: (followers × engagement_rate / 100) / 1000 = base CPV, then multiply by views.
-Minimum price per post should be $5. Premium niches get 1.5x multiplier.`;
+Minimum price per post should be 300 MZN / R$15. Premium niches get 1.5x multiplier.`;
 
       userPrompt = `Analyze this creator's data and suggest an optimal price per post:
 - Display Name: ${creatorData.displayName || 'Unknown'}
@@ -32,27 +38,43 @@ Minimum price per post should be $5. Premium niches get 1.5x multiplier.`;
 - Niche: ${creatorData.niche || 'General'}
 - Country: ${creatorData.country || 'Unknown'}
 - WhatsApp Views Range: ${creatorData.viewsMin || 0} - ${creatorData.viewsMax || 0}
-- Current Price: ${creatorData.currentPrice ? '$' + creatorData.currentPrice : 'Not set'}
+- Current Price: ${creatorData.currentPrice ? creatorData.currentPrice + ' MZN' : 'Not set'}
 - Total Campaigns Completed: ${creatorData.totalCampaigns || 0}
 - Rating: ${creatorData.rating || 0}/5
 
-Provide: 1) Recommended price range (min-max in USD), 2) Brief justification, 3) Tips to increase value.`;
+Provide: 
+1) Recommended price range in MZN and BRL
+2) Comparação directa: quanto custaria o mesmo alcance no Meta Ads e Google Ads (mostrando que StatusAds é mais barato)
+3) Brief justification
+4) Tips to increase value`;
     } else if (action === "find_creator") {
       systemPrompt = `You are a campaign advisor for StatusAds, a WhatsApp Status advertising marketplace.
 You help advertisers find the best creators for their campaigns based on budget and goals.
-Always respond in the user's language. Be concise and actionable.`;
+Always respond in Portuguese. Be concise and actionable.
+
+CRITICAL: Always compare StatusAds costs vs Meta Ads and Google Ads:
+- Meta Ads: CPM $5-15, requer gestão profissional ($500+/mês), alta competição
+- Google Ads: CPC $1-5, requer expertise em keywords, Quality Score complexo
+- StatusAds: sem custos de gestão, audiência orgânica confiável, resultados directos via WhatsApp
+
+Show the total cost savings when using StatusAds over traditional platforms.
+Format all prices in MZN (Metical Moçambicano) and BRL (Real Brasileiro).`;
 
       userPrompt = `An advertiser wants advice on finding creators:
-- Budget: $${creatorData.budget || 0}
+- Budget: ${creatorData.budget || 0} MZN
 - Target Niche: ${creatorData.targetNiche || 'Any'}
 - Target Country: ${creatorData.targetCountry || 'Any'}
 - Campaign Goal: ${creatorData.campaignGoal || 'Brand awareness'}
 - Expected Views: ${creatorData.expectedViews || 'Not specified'}
 
 Available creators summary: ${creatorData.creatorsCount || 0} creators on platform.
-Average price range: $${creatorData.avgPriceMin || 10} - $${creatorData.avgPriceMax || 100}
+Average price range: ${creatorData.avgPriceMin || 300} - ${creatorData.avgPriceMax || 5000} MZN
 
-Provide: 1) Recommended creator profile type, 2) Budget allocation tips, 3) Expected ROI estimate.`;
+Provide:
+1) Recommended creator profile type
+2) Budget allocation tips with comparison table: StatusAds vs Meta Ads vs Google Ads
+3) Expected ROI estimate showing how much they save vs traditional ads
+4) Why StatusAds is the smarter investment`;
     } else {
       throw new Error("Invalid action. Use 'suggest_price' or 'find_creator'.");
     }

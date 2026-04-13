@@ -39,10 +39,32 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[60] md:hidden" style={{ position: 'fixed' }}>
-      <div className="absolute inset-0 bg-card backdrop-blur-xl border-t border-border/40" style={{ opacity: 0.98 }} />
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-[60] md:hidden"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+      }}
+    >
+      <div
+        className="bg-card border-t border-border/40"
+        style={{
+          opacity: 1,
+          backgroundColor: 'hsl(var(--card))',
+        }}
+      />
       
-      <div className="relative flex items-center justify-around h-14 px-2 safe-area-bottom">
+      <div
+        className="flex items-center justify-around px-2 safe-area-bottom bg-card border-t border-border/40"
+        style={{
+          height: '56px',
+          backgroundColor: 'hsl(var(--card))',
+        }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.key);
@@ -56,6 +78,7 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
                 "flex flex-col items-center justify-center gap-0.5 flex-1 py-1 relative transition-all duration-200",
                 active ? "text-primary" : "text-muted-foreground"
               )}
+              style={{ minHeight: '44px' }}
             >
               <div className="relative">
                 {active && (
