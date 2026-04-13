@@ -115,6 +115,9 @@ export const CreatorDashboard = () => {
             <Button size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("opportunities")}>
               Ver anúncios
             </Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold rounded-lg gap-1" onClick={() => setActiveTab("invite")}>
+              <Gift className="h-3 w-3" />
+            </Button>
           </div>
 
           {/* Tab navigation — icon only, clean */}
