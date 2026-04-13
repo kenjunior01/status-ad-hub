@@ -17,6 +17,7 @@ import { PaymentCheckout } from "@/components/PaymentCheckout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { AcademiaStatusAds } from "@/components/AcademiaStatusAds";
+import { ReferralInviteSystem } from "@/components/ReferralInviteSystem";
 import { CreateListingForm, AdListingCard, ListingApplicationsList } from "@/components/AdListings";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -402,6 +403,7 @@ export const AdvertiserDashboard = () => {
         )}
 
         {activeTab === "academia" && <AcademiaStatusAds />}
+        {activeTab === "invite" && <ReferralInviteSystem />}
       </div>
     </div>
   );
