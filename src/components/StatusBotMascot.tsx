@@ -178,7 +178,7 @@ export const StatusBotMascot = () => {
         {isOpen && (
           <motion.div
             className={cn(
-              "fixed z-50 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col",
+              "fixed z-[55] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col",
               isMinimized
                 ? "bottom-20 md:bottom-6 right-4 w-72 h-14"
                 : "bottom-20 md:bottom-6 right-4 w-[340px] sm:w-[380px] h-[500px] max-h-[80vh]"
