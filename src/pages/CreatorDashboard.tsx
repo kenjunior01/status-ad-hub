@@ -16,6 +16,7 @@ import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { SwipeCampaignCards } from "@/components/SwipeCampaignCards";
 import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { AcademiaStatusAds } from "@/components/AcademiaStatusAds";
+import { ReferralInviteSystem } from "@/components/ReferralInviteSystem";
 import { AdListingCard, ApplyToListingDialog } from "@/components/AdListings";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -24,7 +25,7 @@ import { useAdListings } from "@/hooks/useAdListings";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import {
-  DollarSign, TrendingUp, Star, Target, Upload, Eye, GraduationCap, Megaphone, Settings, Grid3X3, Bookmark, BarChart3,
+  DollarSign, TrendingUp, Star, Target, Upload, Eye, GraduationCap, Megaphone, Settings, Grid3X3, Bookmark, BarChart3, Gift,
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
 import { useMascotContext } from "@/hooks/useMascotContext";
@@ -113,6 +114,9 @@ export const CreatorDashboard = () => {
             </Button>
             <Button size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("opportunities")}>
               Ver anúncios
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold rounded-lg gap-1" onClick={() => setActiveTab("invite")}>
+              <Gift className="h-3 w-3" />
             </Button>
           </div>
 
@@ -344,6 +348,7 @@ export const CreatorDashboard = () => {
         {activeTab === "earnings" && <EarningsChart />}
         {activeTab === "academia" && <AcademiaStatusAds />}
         {activeTab === "profile" && <ProfileEditForm />}
+        {activeTab === "invite" && <ReferralInviteSystem />}
       </div>
     </div>
   );

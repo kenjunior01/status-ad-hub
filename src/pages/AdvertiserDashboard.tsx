@@ -17,6 +17,7 @@ import { PaymentCheckout } from "@/components/PaymentCheckout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { AIPricingAssistant } from "@/components/AIPricingAssistant";
 import { AcademiaStatusAds } from "@/components/AcademiaStatusAds";
+import { ReferralInviteSystem } from "@/components/ReferralInviteSystem";
 import { CreateListingForm, AdListingCard, ListingApplicationsList } from "@/components/AdListings";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -28,7 +29,7 @@ import { motion } from "framer-motion";
 import {
   Plus, Target, TrendingUp, Eye, DollarSign, Loader2,
   CheckCircle, Bot, CreditCard, GraduationCap, Megaphone, ArrowLeft,
-  Grid3X3, Users, BarChart3, Settings,
+  Grid3X3, Users, BarChart3, Settings, Gift,
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
 import { useMascotContext } from "@/hooks/useMascotContext";
@@ -121,6 +122,9 @@ export const AdvertiserDashboard = () => {
             </CreateCampaignDialog>
             <Button variant="outline" size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("creators")}>
               Encontrar Criadores
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold rounded-lg gap-1" onClick={() => setActiveTab("invite")}>
+              <Gift className="h-3 w-3" />
             </Button>
           </div>
 
@@ -402,6 +406,7 @@ export const AdvertiserDashboard = () => {
         )}
 
         {activeTab === "academia" && <AcademiaStatusAds />}
+        {activeTab === "invite" && <ReferralInviteSystem />}
       </div>
     </div>
   );
