@@ -60,10 +60,8 @@ export const BottomNavigation = ({ onNavigate, currentPage, auth }: BottomNaviga
     if (key === "academia") return "academia";
     if (key === "auth") return "auth";
     return key;
-  };
-    if (key === "auth") return "auth";
-    return key;
-  };
+
+
 
   const isActive = (key: string) => {
     if (key === "index") return currentPage === "index";
