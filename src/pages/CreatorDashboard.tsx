@@ -28,8 +28,7 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Star, Target, Award, Upload, ChevronRight, Eye, GraduationCap, Megaphone,
 } from "lucide-react";
-
-type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
+import { MascotInline } from "@/components/MascotInline";
 
 export const CreatorDashboard = () => {
   const { t } = useTranslation();

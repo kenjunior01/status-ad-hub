@@ -30,6 +30,7 @@ import {
   Plus, Target, TrendingUp, Eye, DollarSign, Loader2,
   CheckCircle, Bot, CreditCard, ChevronRight, GraduationCap, Megaphone, ArrowLeft,
 } from "lucide-react";
+import { MascotInline } from "@/components/MascotInline";
 
 export const AdvertiserDashboard = () => {
   const { t } = useTranslation();
