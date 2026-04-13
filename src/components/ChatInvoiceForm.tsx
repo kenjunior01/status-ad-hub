@@ -24,7 +24,10 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
   const [items, setItems] = useState<InvoiceItem[]>([{ description: '', quantity: 1, unit_price: 0 }]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { formatFromUSD } = useLocalizationContext();
+  const { formatFromUSD, currency, convert, getCurrentCurrency } = useLocalizationContext();
+
+  const currentCurrency = getCurrentCurrency();
+  const symbol = currentCurrency?.symbol || currency;
 
   const addItem = () => setItems(prev => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
   const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
@@ -32,10 +35,16 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
     setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-  const taxRate = 0; // Can be configured
-  const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  // Items are entered in local currency
+  const localSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+  const taxRate = 0;
+  const localTax = localSubtotal * taxRate;
+  const localTotal = localSubtotal + localTax;
+
+  // Convert to USD for storage
+  const subtotalUSD = convert(localSubtotal, currency, 'USD');
+  const taxUSD = convert(localTax, currency, 'USD');
+  const totalUSD = convert(localTotal, currency, 'USD');
 
   const handleSubmit = async () => {
     const validItems = items.filter(i => i.description && i.unit_price > 0);
@@ -48,16 +57,16 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
 
       const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
 
-      const { data: invoice, error } = await supabase
+      const { error } = await supabase
         .from('chat_invoices')
         .insert({
           conversation_id: conversationId,
           created_by: user.id,
           invoice_number: invoiceNumber,
           items: validItems as any,
-          subtotal,
-          tax_amount: taxAmount,
-          total,
+          subtotal: subtotalUSD,
+          tax_amount: taxUSD,
+          total: totalUSD,
           currency: 'USD',
         })
         .select()
@@ -65,15 +74,14 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
 
       if (error) throw error;
 
-      // Send as message
       await supabase.from('messages').insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content: `🧾 Factura: #${invoiceNumber} — USD ${total.toFixed(2)}`,
+        content: `🧾 Factura: #${invoiceNumber} — ${formatFromUSD(totalUSD)}`,
         status: 'sent',
       });
 
-      toast({ title: '🧾 Factura criada!', description: `#${invoiceNumber} — ${formatFromUSD(total)}` });
+      toast({ title: '🧾 Factura criada!', description: `#${invoiceNumber} — ${formatFromUSD(totalUSD)}` });
       onCreated();
       onClose();
     } catch (err: any) {
@@ -82,6 +90,11 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatLocal = (amount: number) => {
+    const curr = getCurrentCurrency();
+    return `${curr?.symbol || symbol} ${amount.toFixed(2)}`;
   };
 
   return (
@@ -107,7 +120,7 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
               <Input type="number" min="1" value={item.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-xs" />
             </div>
             <div className="w-20">
-              <Label className="text-[10px]">Preço ($)</Label>
+              <Label className="text-[10px]">Preço ({symbol})</Label>
               <Input type="number" min="0" step="0.01" value={item.unit_price || ''} onChange={e => updateItem(i, 'unit_price', parseFloat(e.target.value) || 0)} className="h-8 text-xs" />
             </div>
             {items.length > 1 && (
@@ -125,17 +138,17 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
         <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>{formatFromUSD(subtotal)}</span>
+            <span>{formatLocal(localSubtotal)}</span>
           </div>
-          {taxAmount > 0 && (
+          {localTax > 0 && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Imposto</span>
-              <span>{formatFromUSD(taxAmount)}</span>
+              <span>{formatLocal(localTax)}</span>
             </div>
           )}
           <div className="flex justify-between font-bold border-t pt-1">
             <span>Total</span>
-            <span className="text-green-600">{formatFromUSD(total)}</span>
+            <span className="text-green-600">{formatLocal(localTotal)}</span>
           </div>
         </div>
 
