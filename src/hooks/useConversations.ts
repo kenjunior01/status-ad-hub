@@ -132,13 +132,18 @@ export const useConversations = () => {
       if (!user) throw new Error('Usuário não autenticado');
 
       // Check if conversation already exists
-      const { data: existing } = await supabase
+      let query = supabase
         .from('conversations')
         .select('*')
-        .or(`and(participant_1.eq.${user.id},participant_2.eq.${otherUserId}),and(participant_1.eq.${otherUserId},participant_2.eq.${user.id})`)
-        .eq('campaign_id', campaignId || null)
-        .maybeSingle();
+        .or(`and(participant_1.eq.${user.id},participant_2.eq.${otherUserId}),and(participant_1.eq.${otherUserId},participant_2.eq.${user.id})`);
 
+      if (campaignId) {
+        query = query.eq('campaign_id', campaignId);
+      } else {
+        query = query.is('campaign_id', null);
+      }
+
+      const { data: existing } = await query.maybeSingle();
       if (existing) return existing;
 
       const { data, error } = await supabase
