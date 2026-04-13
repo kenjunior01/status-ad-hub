@@ -1,23 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Camera, Save, User, Loader2, Upload, Shield, Star, Lock, Sparkles } from "lucide-react";
+import { Camera, User, Loader2, Shield, Star, Lock, Sparkles, ChevronRight, Check } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ProfileEditForm = () => {
   const { t } = useTranslation();
   const { profile, loading, saving, uploading, updateProfile, uploadAvatar } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     display_name: "",
@@ -76,15 +75,9 @@ export const ProfileEditForm = () => {
       price_range: formData.price_range,
       avatar_url: formData.avatar_url,
     };
-    if (formData.price_per_post) {
-      updates.price_per_post = parseFloat(formData.price_per_post);
-    }
-    if (formData.follower_count) {
-      updates.follower_count = parseInt(formData.follower_count);
-    }
-    if (formData.engagement_rate) {
-      updates.engagement_rate = parseFloat(formData.engagement_rate);
-    }
+    if (formData.price_per_post) updates.price_per_post = parseFloat(formData.price_per_post);
+    if (formData.follower_count) updates.follower_count = parseInt(formData.follower_count);
+    if (formData.engagement_rate) updates.engagement_rate = parseFloat(formData.engagement_rate);
     await updateProfile(updates);
   };
 
@@ -104,282 +97,229 @@ export const ProfileEditForm = () => {
 
   const completion = completionPercentage();
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Profile Completion */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-sm">{t("profile.completion")}</span>
-            </div>
-            <Badge variant={completion === 100 ? "default" : "secondary"}>
-              {completion}%
-            </Badge>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div
-              className="bg-gradient-primary h-2 rounded-full transition-all duration-500"
-              style={{ width: `${completion}%` }}
-            />
-          </div>
-          {completion < 100 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {t("profile.completionTip")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+  // Instagram-style row item
+  const SettingRow = ({ label, children, noBorder }: { label: string; children: React.ReactNode; noBorder?: boolean }) => (
+    <div className={`flex items-center justify-between py-3 ${!noBorder ? 'border-b border-border/40' : ''}`}>
+      <span className="text-sm text-muted-foreground shrink-0 w-28">{label}</span>
+      <div className="flex-1 ml-3">{children}</div>
+    </div>
+  );
 
-      {/* Avatar Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            {t("profile.photo")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Avatar className="h-28 w-28 border-4 border-background shadow-lg">
+  return (
+    <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
+      {/* Instagram-style Profile Header */}
+      <div className="flex items-center gap-5 px-4 py-6">
+        {/* Avatar with gradient ring */}
+        <div className="relative shrink-0">
+          <div className="p-[3px] rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600">
+            <div className="p-[2px] rounded-full bg-background">
+              <Avatar className="h-20 w-20">
                 <AvatarImage src={formData.avatar_url} />
-                <AvatarFallback className="bg-primary/10">
-                  <User className="h-14 w-14 text-primary" />
+                <AvatarFallback className="bg-muted">
+                  <User className="h-10 w-10 text-muted-foreground" />
                 </AvatarFallback>
               </Avatar>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
-                ) : (
-                  <Camera className="h-6 w-6 text-white" />
-                )}
-              </button>
-            </div>
-            <div className="space-y-3 flex-1">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="gap-2"
-              >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {uploading ? t("profile.uploading") : t("profile.uploadPhoto")}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                {t("profile.photoFormats")}
-              </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg border-2 border-background"
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} className="hidden" />
+        </div>
 
-      {/* Basic Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile.basicInfo")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="display_name">{t("profile.displayName")} *</Label>
-            <Input
-              id="display_name"
-              value={formData.display_name}
-              onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              placeholder={t("profile.displayNamePlaceholder")}
-              required
-              maxLength={100}
-            />
+        {/* Stats row like Instagram */}
+        <div className="flex-1 flex justify-around text-center">
+          <div>
+            <p className="text-lg font-bold">{profile?.total_campaigns || 0}</p>
+            <p className="text-[11px] text-muted-foreground">{t("profile.campaigns")}</p>
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="bio">{t("profile.biography")}</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
-              placeholder={t("profile.bioPlaceholder")}
-              rows={4}
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {formData.bio.length}/500
-            </p>
+          <div>
+            <p className="text-lg font-bold">{profile?.rating ? profile.rating.toFixed(1) : '0'}</p>
+            <p className="text-[11px] text-muted-foreground">{t("profile.rating")}</p>
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="niche">{t("profile.mainNiche")}</Label>
-            <Select
-              value={formData.niche}
-              onValueChange={(value) => setFormData({ ...formData, niche: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("profile.selectNiche")} />
-              </SelectTrigger>
-              <SelectContent>
-                {niches.map((niche) => (
-                  <SelectItem key={niche} value={niche}>{niche}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div>
+            <p className="text-lg font-bold">{profile?.total_reviews || 0}</p>
+            <p className="text-[11px] text-muted-foreground">{t("profile.reviews")}</p>
           </div>
+        </div>
+      </div>
 
-          {/* Price Section - Locked unless can_set_own_price */}
-          {!(profile as any)?.can_set_own_price ? (
-            <Alert className="border-primary/20 bg-primary/5">
-              <Lock className="h-4 w-4" />
-              <AlertDescription className="space-y-2">
-                <p className="text-sm font-medium">{t("profile.autoPricing")}</p>
-                <p className="text-xs text-muted-foreground">{t("profile.autoPricingDesc")}</p>
-                {profile?.cpv_rate && (
-                  <div className="p-2 bg-background rounded-lg border mt-2">
-                    <p className="text-sm">CPV: <span className="font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>/view</p>
-                    <p className="text-xs text-muted-foreground">≈ 0.70 MZN/view</p>
-                  </div>
-                )}
-                <p className="text-xs text-primary flex items-center gap-1 mt-1">
-                  <Sparkles className="h-3 w-3" /> {t("profile.unlockPricing")} — {formatFromUSD(5)}
-                </p>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="price_range">{t("profile.priceRange")}</Label>
-                <Select
-                  value={formData.price_range}
-                  onValueChange={(value) => setFormData({ ...formData, price_range: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("profile.selectRange")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priceRanges.map((range) => (
-                      <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="price_per_post">{t("profile.pricePerPost")}</Label>
-                <Input
-                  id="price_per_post"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price_per_post}
-                  onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
-                  placeholder="Ex: 50.00"
-                />
-              </div>
-            </>
-          )}
+      {/* Name and Bio preview */}
+      <div className="px-4 pb-4">
+        <p className="font-semibold text-sm">{formData.display_name || 'Seu Nome'}</p>
+        {formData.niche && (
+          <p className="text-xs text-primary">{formData.niche}</p>
+        )}
+        {formData.bio && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{formData.bio}</p>
+        )}
+        {profile?.is_verified && (
+          <Badge variant="secondary" className="mt-1.5 text-[10px] gap-1">
+            <Check className="h-3 w-3" /> Verificado
+          </Badge>
+        )}
+      </div>
 
-          {/* CPV Fields */}
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-4 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-semibold">📊 {t("profile.audienceData")}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("profile.audienceDataDesc")}
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="follower_count">{t("profile.whatsappFollowers")}</Label>
-                  <Input
-                    id="follower_count"
-                    type="number"
-                    min="0"
-                    value={formData.follower_count}
-                    onChange={(e) => setFormData({ ...formData, follower_count: e.target.value })}
-                    placeholder="Ex: 5000"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="engagement_rate">{t("profile.engagementRate")}</Label>
-                  <Input
-                    id="engagement_rate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={formData.engagement_rate}
-                    onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })}
-                    placeholder="Ex: 5.0"
-                  />
-                </div>
-              </div>
-              {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
-                <div className="p-3 bg-background rounded-lg border">
-                  <p className="text-sm font-medium">{t("profile.calculatedCPV")}: <span className="text-primary font-bold">{formatFromUSD(Number(profile.cpv_rate))}</span></p>
-                  <p className="text-xs text-muted-foreground mt-1">{t("profile.cpvBasis")}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </CardContent>
-      </Card>
-
-      {/* Profile Stats (read-only) */}
-      {profile && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
-              {t("profile.statistics")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-foreground">{profile.rating || 0}</p>
-                <p className="text-xs text-muted-foreground">{t("profile.rating")}</p>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-foreground">{profile.total_reviews || 0}</p>
-                <p className="text-xs text-muted-foreground">{t("profile.reviews")}</p>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-foreground">{profile.total_campaigns || 0}</p>
-                <p className="text-xs text-muted-foreground">{t("profile.campaigns")}</p>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-foreground">
-                  <Badge variant={profile.is_verified ? "default" : "secondary"}>
-                    {profile.is_verified ? t("profile.verified") : t("profile.pending")}
-                  </Badge>
-                </p>
-                <p className="text-xs text-muted-foreground">{t("profile.status")}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Completion bar - minimal */}
+      {completion < 100 && (
+        <div className="mx-4 mb-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-primary" />
+              {t("profile.completion")}
+            </span>
+            <span className="text-xs font-bold text-primary">{completion}%</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-1.5">
+            <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${completion}%` }} />
+          </div>
+        </div>
       )}
 
-      {/* Submit */}
-      <Button type="submit" className="w-full h-12 bg-gradient-primary hover:opacity-90" disabled={saving}>
-        {saving ? (
-          <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{t("profile.saving")}</span>
+      {/* Edit Profile button */}
+      <div className="px-4 mb-4">
+        <div className="bg-muted/60 rounded-lg text-center py-2 text-sm font-semibold text-foreground">
+          Editar Perfil
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-border/40" />
+
+      {/* Form fields - Instagram settings style */}
+      <div className="px-4 pt-2">
+        <SettingRow label={t("profile.displayName")}>
+          <Input
+            value={formData.display_name}
+            onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+            placeholder={t("profile.displayNamePlaceholder")}
+            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+            required
+            maxLength={100}
+          />
+        </SettingRow>
+
+        <SettingRow label={t("profile.biography")}>
+          <Textarea
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
+            placeholder={t("profile.bioPlaceholder")}
+            className="border-0 bg-transparent text-right text-sm p-0 min-h-0 h-auto resize-none focus-visible:ring-0"
+            rows={2}
+            maxLength={500}
+          />
+        </SettingRow>
+
+        <SettingRow label={t("profile.mainNiche")}>
+          <Select value={formData.niche} onValueChange={(v) => setFormData({ ...formData, niche: v })}>
+            <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+              <SelectValue placeholder={t("profile.selectNiche")} />
+            </SelectTrigger>
+            <SelectContent>
+              {niches.map((niche) => (
+                <SelectItem key={niche} value={niche}>{niche}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingRow>
+
+        {/* Pricing section */}
+        {!(profile as any)?.can_set_own_price ? (
+          <div className="py-3 border-b border-border/40">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5" /> CPV Auto
+              </span>
+              {profile?.cpv_rate && (
+                <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}/view</span>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">{t("profile.autoPricingDesc")}</p>
+            <p className="text-[11px] text-primary flex items-center gap-1 mt-1">
+              <Sparkles className="h-3 w-3" /> {t("profile.unlockPricing")} — {formatFromUSD(5)}
+            </p>
+          </div>
         ) : (
-          <span className="flex items-center gap-2"><Save className="h-4 w-4" />{t("profile.saveChanges")}</span>
+          <>
+            <SettingRow label={t("profile.priceRange")}>
+              <Select value={formData.price_range} onValueChange={(v) => setFormData({ ...formData, price_range: v })}>
+                <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+                  <SelectValue placeholder={t("profile.selectRange")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {priceRanges.map((range) => (
+                    <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
+            <SettingRow label={t("profile.pricePerPost")}>
+              <Input
+                type="number" min="0" step="0.01"
+                value={formData.price_per_post}
+                onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
+                placeholder="50.00"
+                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+              />
+            </SettingRow>
+          </>
         )}
-      </Button>
+      </div>
+
+      {/* Audience Data section */}
+      <div className="px-4 pt-4">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          📊 {t("profile.audienceData")}
+        </p>
+        <p className="text-[11px] text-muted-foreground mb-2">{t("profile.audienceDataDesc")}</p>
+
+        <SettingRow label={t("profile.whatsappFollowers")}>
+          <Input
+            type="number" min="0"
+            value={formData.follower_count}
+            onChange={(e) => setFormData({ ...formData, follower_count: e.target.value })}
+            placeholder="5000"
+            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+          />
+        </SettingRow>
+
+        <SettingRow label={t("profile.engagementRate")} noBorder>
+          <Input
+            type="number" min="0" max="100" step="0.1"
+            value={formData.engagement_rate}
+            onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })}
+            placeholder="5.0"
+            className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+          />
+        </SettingRow>
+
+        {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
+          <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{t("profile.calculatedCPV")}</span>
+            <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Submit - Instagram blue button */}
+      <div className="px-4 py-6">
+        <Button
+          type="submit"
+          className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 font-semibold"
+          disabled={saving}
+        >
+          {saving ? (
+            <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{t("profile.saving")}</span>
+          ) : (
+            t("profile.saveChanges")
+          )}
+        </Button>
+      </div>
     </form>
   );
 };
