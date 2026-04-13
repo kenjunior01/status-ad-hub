@@ -168,7 +168,7 @@ export const ChatSystem = () => {
 
   if (loadingConversations) {
     return (
-      <div className="flex h-[calc(100vh-8rem)] md:h-[600px] items-center justify-center">
+      <div className="flex h-full md:h-[600px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -556,7 +556,7 @@ export const ChatSystem = () => {
         open={imagePreviewOpen}
         onOpenChange={setImagePreviewOpen}
       />
-      <div className="flex h-[calc(100vh-8rem)] md:h-[600px] rounded-xl border bg-card overflow-hidden shadow-lg">
+      <div className="flex h-full md:h-[600px] rounded-xl border bg-card overflow-hidden shadow-lg">
         {!isConnected && (
           <div className="absolute top-0 left-0 right-0 bg-destructive text-destructive-foreground text-xs py-1 px-2 flex items-center justify-center gap-1 z-10">
             <WifiOff className="h-3 w-3" /> Reconectando...

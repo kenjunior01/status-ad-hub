@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import { useAdListings } from "@/hooks/useAdListings";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import {
-  DollarSign, TrendingUp, Star, Target, Upload, Eye, GraduationCap, Megaphone, Settings, Grid3X3, Bookmark, BarChart3, Gift,
+  DollarSign, TrendingUp, Star, Target, Upload, Eye, GraduationCap, Megaphone, Settings, Grid3X3, Bookmark, BarChart3, Gift, Camera, Loader2,
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
 import { useMascotContext } from "@/hooks/useMascotContext";
@@ -38,11 +38,18 @@ export const CreatorDashboard = () => {
   const mascotTip = useMascotContext("creator-dashboard");
   const [selectedCampaignForProof, setSelectedCampaignForProof] = useState<string | null>(null);
   const [applyingTo, setApplyingTo] = useState<{ id: string; title: string } | null>(null);
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, loading: profileLoading, uploading: avatarUploading, uploadAvatar } = useProfile();
   const { campaigns, loading: campaignsLoading } = useCampaigns();
   const { listings, loading: listingsLoading, refetch: refetchListings } = useAdListings();
   const isMobile = useIsMobile();
   const { formatFromUSD } = useLocalizationContext();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadAvatar(file);
+  };
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active" || c.status === "pending");
   const completedCampaigns = campaigns.filter((c) => c.status === "completed");
@@ -88,7 +95,16 @@ export const CreatorDashboard = () => {
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="sm" className="absolute -bottom-1 -right-1" />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-card z-10"
+              >
+                {avatarUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              </button>
+              <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} className="hidden" />
+              <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="sm" className="absolute -top-1 -right-1" />
             </div>
 
             <div className="flex-1 flex justify-around text-center">
