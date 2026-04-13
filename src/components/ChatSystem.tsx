@@ -14,7 +14,7 @@ import { ChatInvoiceForm } from "@/components/ChatInvoiceForm";
 import { ChatSpecialCard } from "@/components/ChatInvoiceCard";
 import { 
   Send, MessageSquare, Search, MoreVertical, Check, CheckCheck, Loader2,
-  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote
+  WifiOff, Paperclip, Image as ImageIcon, FileText, X, Download, Receipt, Plus, Banknote, ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -64,11 +64,9 @@ export const ChatSystem = () => {
   // Presence channel
   useEffect(() => {
     if (!selectedConversationId || !currentUserId) return;
-
     const channel = supabase.channel(`presence-${selectedConversationId}`, {
       config: { presence: { key: currentUserId } },
     });
-
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -83,12 +81,8 @@ export const ChatSystem = () => {
           await channel.track({ typing: false, online_at: new Date().toISOString() });
         }
       });
-
     presenceChannelRef.current = channel;
-    return () => {
-      supabase.removeChannel(channel);
-      presenceChannelRef.current = null;
-    };
+    return () => { supabase.removeChannel(channel); presenceChannelRef.current = null; };
   }, [selectedConversationId, currentUserId]);
 
   const handleTyping = useCallback(() => {
@@ -172,449 +166,383 @@ export const ChatSystem = () => {
 
   if (loadingConversations) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
+      <div className="flex h-[calc(100vh-8rem)] md:h-[600px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  return (
-    <>
-    <ImagePreview 
-      images={chatImages}
-      initialIndex={selectedImageIndex}
-      open={imagePreviewOpen}
-      onOpenChange={setImagePreviewOpen}
-    />
-    <div className="flex h-[600px] rounded-xl border bg-card overflow-hidden shadow-lg">
-      {!isConnected && (
-        <div className="absolute top-0 left-0 right-0 bg-destructive text-destructive-foreground text-xs py-1 px-2 flex items-center justify-center gap-1 z-10">
-          <WifiOff className="h-3 w-3" /> Reconectando...
-        </div>
-      )}
-      
-      {/* Conversations List */}
-      <div className="w-1/3 border-r flex flex-col bg-muted/20">
-        <div className="p-4 border-b bg-card">
-          <h2 className="font-bold text-lg mb-3 flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Mensagens
-          </h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar conversas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-muted/50 border-0 focus-visible:ring-1"
-            />
-          </div>
-        </div>
+  // Mobile: show conversation list or chat, not both
+  const showMobileChat = selectedConversationId && selectedConversation;
 
-        <ScrollArea className="flex-1">
-          {filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Nenhuma conversa</p>
-            </div>
-          ) : (
-            filteredConversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                className={`p-3 border-b cursor-pointer transition-all hover:bg-primary/5 ${
-                  selectedConversationId === conversation.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''
-                }`}
-                onClick={() => { setSelectedConversationId(conversation.id); setShowQuotationForm(false); }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative">
-                    <Avatar className="h-11 w-11">
-                      <AvatarImage src={conversation.other_participant?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {conversation.other_participant?.display_name?.charAt(0) || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    {/* Online dot */}
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-card" />
+  const renderConversationList = () => (
+    <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 border-r flex-col bg-muted/20`}>
+      <div className="p-3 md:p-4 border-b bg-card">
+        <h2 className="font-bold text-base md:text-lg mb-2 md:mb-3 flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          Mensagens
+        </h2>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar conversas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 h-9"
+          />
+        </div>
+      </div>
+      <ScrollArea className="flex-1">
+        {filteredConversations.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">
+            <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">Nenhuma conversa</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">As conversas aparecem quando candidata-se a anúncios</p>
+          </div>
+        ) : (
+          filteredConversations.map((conversation) => (
+            <div
+              key={conversation.id}
+              className={`p-3 border-b cursor-pointer transition-all hover:bg-primary/5 ${
+                selectedConversationId === conversation.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''
+              }`}
+              onClick={() => { setSelectedConversationId(conversation.id); setShowQuotationForm(false); setShowInvoiceForm(false); }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="relative">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={conversation.other_participant?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                      {conversation.other_participant?.display_name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-card" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <p className="font-semibold text-sm truncate">
+                      {conversation.other_participant?.display_name || 'Usuário'}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      {formatDate(conversation.last_message_at)}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <p className="font-semibold text-sm truncate">
-                        {conversation.other_participant?.display_name || 'Usuário'}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground ml-1">
-                        {formatDate(conversation.last_message_at)}
-                      </span>
-                    </div>
-                    {conversation.campaign && (
-                      <Badge variant="secondary" className="text-[10px] h-4 mt-0.5 mb-0.5">
-                        {conversation.campaign.title}
+                  {conversation.campaign && (
+                    <Badge variant="secondary" className="text-[10px] h-4 mt-0.5 mb-0.5">
+                      {conversation.campaign.title}
+                    </Badge>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground truncate">
+                      {conversation.last_message || 'Nenhuma mensagem'}
+                    </p>
+                    {(conversation.unread_count || 0) > 0 && (
+                      <Badge className="bg-primary text-primary-foreground text-[10px] h-5 w-5 p-0 flex items-center justify-center rounded-full ml-1">
+                        {conversation.unread_count}
                       </Badge>
                     )}
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs text-muted-foreground truncate">
-                        {conversation.last_message || 'Nenhuma mensagem'}
-                      </p>
-                      {(conversation.unread_count || 0) > 0 && (
-                        <Badge className="bg-primary text-primary-foreground text-[10px] h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                          {conversation.unread_count}
-                        </Badge>
-                      )}
-                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </ScrollArea>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {selectedConversation ? (
-          <>
-            {/* Chat Header */}
-            <div className="px-4 py-3 border-b flex justify-between items-center bg-card shadow-sm">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={selectedConversation.other_participant?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {selectedConversation.other_participant?.display_name?.charAt(0) || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {selectedConversation.other_participant?.display_name || 'Usuário'}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {otherUserTyping ? (
-                      <span className="text-primary font-medium">digitando...</span>
-                    ) : selectedConversation.campaign ? (
-                      selectedConversation.campaign.title
-                    ) : 'Online'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
-                      <Receipt className="h-4 w-4 mr-2" />
-                      Criar Cotação
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Criar Factura
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*,.pdf';
-                      input.onchange = async (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (!file) return;
-                        if (file.size > 10 * 1024 * 1024) {
-                          toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
-                          return;
-                        }
-                        setUploading(true);
-                        try {
-                          const attachment = await uploadAttachment(file);
-                          await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
-                          toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
-                        } catch (err) {
-                          console.error('Upload error:', err);
-                        } finally {
-                          setUploading(false);
-                        }
-                      };
-                      input.click();
-                    }}>
-                      <Banknote className="h-4 w-4 mr-2" />
-                      Enviar Comprovativo de Pagamento
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                      <Paperclip className="h-4 w-4 mr-2" />
-                      Enviar Arquivo
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
               </div>
             </div>
+          ))
+        )}
+      </ScrollArea>
+    </div>
+  );
 
-            {/* Quotation Form */}
-            {showQuotationForm && selectedConversationId && (
-              <div className="p-3 border-b">
-                <ChatQuotationForm
-                  conversationId={selectedConversationId}
-                  onClose={() => setShowQuotationForm(false)}
-                  onCreated={() => {}}
-                />
+  const renderChatArea = () => (
+    <div className={`${!showMobileChat ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
+      {selectedConversation ? (
+        <>
+          {/* Chat Header */}
+          <div className="px-3 md:px-4 py-2.5 md:py-3 border-b flex justify-between items-center bg-card shadow-sm">
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Mobile back button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 md:hidden shrink-0"
+                onClick={() => setSelectedConversationId(null)}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Avatar className="h-8 w-8 md:h-9 md:w-9">
+                <AvatarImage src={selectedConversation.other_participant?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                  {selectedConversation.other_participant?.display_name?.charAt(0) || '?'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-sm">
+                  {selectedConversation.other_participant?.display_name || 'Usuário'}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {otherUserTyping ? (
+                    <span className="text-primary font-medium">digitando...</span>
+                  ) : selectedConversation.campaign ? (
+                    selectedConversation.campaign.title
+                  ) : 'Online'}
+                </p>
               </div>
-            )}
-
-            {/* Invoice Form */}
-            {showInvoiceForm && selectedConversationId && (
-              <div className="p-3 border-b">
-                <ChatInvoiceForm
-                  conversationId={selectedConversationId}
-                  onClose={() => setShowInvoiceForm(false)}
-                  onCreated={() => {}}
-                />
-              </div>
-            )}
-
-            <ScrollArea className="flex-1 p-4 bg-muted/10">
-              {loadingMessages ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-center">
-                  <div>
-                    <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground text-sm">Comece a conversa!</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {messages.map((message) => {
-                    const isMine = message.sender_id === currentUserId;
-                    const isQuotation = isQuotationMessage(message.content);
-                    const isInvoice = isInvoiceMessage(message.content);
-                    const isPayment = isPaymentMessage(message.content);
-                    const isRejection = message.content.startsWith('❌ Cotação recusada:');
-                    const isProof = isPaymentProofMessage(message.content);
-                    const isSpecial = isQuotation || isInvoice || isPayment || isProof;
-
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`max-w-[75%] ${isSpecial ? '' : `rounded-2xl px-3 py-2 ${
-                          isMine
-                            ? 'bg-primary text-primary-foreground rounded-br-sm'
-                            : 'bg-card border rounded-bl-sm shadow-sm'
-                        }`}`}>
-                          {/* Quotation special card */}
-                          {isQuotation && (
-                            <ChatSpecialCard
-                              type="quotation"
-                              title={message.content.replace('💼 Cotação: ', '').split(' — ')[0]}
-                              amount={parseFloat(message.content.split(' — ')[1]?.replace(/[^\d.]/g, '') || '0')}
-                              currency={message.content.split(' — ')[1]?.split(' ')[0] || 'USD'}
-                              status="pending"
-                              isMine={isMine}
-                              conversationId={selectedConversationId || undefined}
-                              onStatusChange={() => {}}
-                            />
-                          )}
-
-                          {/* Invoice special card */}
-                          {isInvoice && (() => {
-                            const parts = message.content.replace('🧾 Factura: #', '').split(' — ');
-                            const invoiceNum = parts[0] || '';
-                            const totalStr = parts[1]?.replace(/[^\d.]/g, '') || '0';
-                            const curr = parts[1]?.split(' ')[0] || 'USD';
-                            return (
-                              <ChatSpecialCard
-                                type="invoice"
-                                invoiceNumber={invoiceNum}
-                                total={parseFloat(totalStr)}
-                                currency={curr}
-                                status="pending"
-                                isMine={isMine}
-                              />
-                            );
-                          })()}
-
-                          {/* Payment receipt */}
-                          {isPayment && (
-                            <ChatSpecialCard
-                              type="payment"
-                              content={message.content.replace('✅ Pagamento: ', '')}
-                              isMine={isMine}
-                            />
-                          )}
-
-                          {/* Offline Payment Proof */}
-                          {isProof && (
-                            <div className={`rounded-xl p-3 border-2 border-amber-500/30 ${isMine ? 'bg-amber-500/10' : 'bg-card'}`}>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Banknote className="h-5 w-5 text-amber-500" />
-                                <span className="font-semibold text-sm">Comprovativo de Pagamento</span>
-                              </div>
-                              {message.attachment_url && (
-                                <div className="mb-2">
-                                  {message.attachment_type?.startsWith('image/') ? (
-                                    <button onClick={() => handleImageClick(message.attachment_url!)} className="block cursor-zoom-in">
-                                      <img src={message.attachment_url} alt="Comprovativo" className="max-w-full rounded-lg max-h-40 object-cover" />
-                                    </button>
-                                  ) : (
-                                    <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                                      <FileText className="h-5 w-5" />
-                                      <span className="text-sm truncate">{message.attachment_name || 'Comprovativo'}</span>
-                                      <Download className="h-4 w-4 ml-auto" />
-                                    </a>
-                                  )}
-                                </div>
-                              )}
-                              <p className="text-xs text-amber-600 dark:text-amber-400">⏳ Aguardando verificação do admin</p>
-                            </div>
-                          )}
-
-                          {/* Normal message */}
-                          {!isSpecial && (
-                            <>
-                              {/* Attachment */}
-                              {message.attachment_url && (
-                                <div className="mb-1.5">
-                                  {message.attachment_type?.startsWith('image/') ? (
-                                    <button
-                                      onClick={() => handleImageClick(message.attachment_url!)}
-                                      className="block cursor-zoom-in transition-transform hover:scale-[1.02] rounded-lg overflow-hidden"
-                                    >
-                                      <img 
-                                        src={message.attachment_url} 
-                                        alt={message.attachment_name || 'Imagem'} 
-                                        className="max-w-full rounded-lg max-h-48 object-cover"
-                                      />
-                                    </button>
-                                  ) : (
-                                    <a 
-                                      href={message.attachment_url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className={`flex items-center gap-2 p-2 rounded-lg ${
-                                        isMine ? 'bg-primary-foreground/10' : 'bg-muted'
-                                      }`}
-                                    >
-                                      <FileText className="h-5 w-5" />
-                                      <span className="text-sm truncate max-w-[150px]">
-                                        {message.attachment_name || 'Arquivo'}
-                                      </span>
-                                      <Download className="h-4 w-4 ml-auto" />
-                                    </a>
-                                  )}
-                                </div>
-                              )}
-                              
-                              {message.content && !message.content.startsWith('📎') && (
-                                <p className="text-sm leading-relaxed">{message.content}</p>
-                              )}
-                            </>
-                          )}
-
-                          {!isSpecial && (
-                            <div className={`flex items-center justify-end gap-1 mt-0.5 ${
-                              isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'
-                            }`}>
-                              <span className="text-[10px]">{formatTime(message.created_at)}</span>
-                              {isMine && <MessageStatus status={message.status} />}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Typing Indicator */}
-                  {otherUserTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-card border rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
-                        <div className="flex items-center gap-1">
-                          <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </ScrollArea>
-
-            {/* Message Input */}
-            <div className="p-3 border-t bg-card space-y-2">
-              {pendingAttachment && (
-                <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                  {pendingAttachment.type.startsWith('image/') ? (
-                    <ImageIcon className="h-4 w-4 text-primary" />
-                  ) : (
-                    <FileText className="h-4 w-4 text-primary" />
-                  )}
-                  <span className="text-sm truncate flex-1">{pendingAttachment.name}</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPendingAttachment(null)}>
-                    <X className="h-4 w-4" />
+            </div>
+            <div className="flex items-center gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Plus className="h-4 w-4" />
                   </Button>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept="image/*,.pdf,.doc,.docx,.txt"
-                  className="hidden"
-                />
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || sending}
-                >
-                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-                </Button>
-                
-                <Input
-                  placeholder="Escreva uma mensagem..."
-                  value={newMessage}
-                  onChange={handleInputChange}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-1 bg-muted/50 border-0 focus-visible:ring-1"
-                  disabled={sending || uploading}
-                />
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={(!newMessage.trim() && !pendingAttachment) || sending || uploading}
-                  size="icon"
-                  className="h-9 w-9 shrink-0 rounded-full"
-                >
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-center p-8 bg-muted/10">
-            <div>
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-10 w-10 text-primary/50" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Suas Mensagens</h3>
-              <p className="text-muted-foreground text-sm max-w-[250px]">
-                Selecione uma conversa para começar a trocar mensagens, cotações e facturas
-              </p>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowQuotationForm(true)}>
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Criar Cotação
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowInvoiceForm(true)}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Criar Factura
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*,.pdf';
+                    input.onchange = async (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (!file) return;
+                      if (file.size > 10 * 1024 * 1024) {
+                        toast({ title: "Arquivo muito grande", description: "Máximo 10MB.", variant: "destructive" });
+                        return;
+                      }
+                      setUploading(true);
+                      try {
+                        const attachment = await uploadAttachment(file);
+                        await sendMessage(`💳 Comprovativo de Pagamento Offline: ${file.name}`, attachment);
+                        toast({ title: "Comprovativo enviado", description: "O comprovativo foi enviado para verificação." });
+                      } catch (err) {
+                        console.error('Upload error:', err);
+                      } finally {
+                        setUploading(false);
+                      }
+                    };
+                    input.click();
+                  }}>
+                    <Banknote className="h-4 w-4 mr-2" />
+                    Enviar Comprovativo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Enviar Arquivo
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Quotation Form */}
+          {showQuotationForm && selectedConversationId && (
+            <div className="p-3 border-b">
+              <ChatQuotationForm
+                conversationId={selectedConversationId}
+                onClose={() => setShowQuotationForm(false)}
+                onCreated={() => {}}
+              />
+            </div>
+          )}
+
+          {/* Invoice Form */}
+          {showInvoiceForm && selectedConversationId && (
+            <div className="p-3 border-b">
+              <ChatInvoiceForm
+                conversationId={selectedConversationId}
+                onClose={() => setShowInvoiceForm(false)}
+                onCreated={() => {}}
+              />
+            </div>
+          )}
+
+          <ScrollArea className="flex-1 p-3 md:p-4 bg-muted/10">
+            {loadingMessages ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-center">
+                <div>
+                  <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">Comece a conversa!</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {messages.map((message) => {
+                  const isMine = message.sender_id === currentUserId;
+                  const isQuotation = isQuotationMessage(message.content);
+                  const isInvoice = isInvoiceMessage(message.content);
+                  const isPayment = isPaymentMessage(message.content);
+                  const isRejection = message.content.startsWith('❌ Cotação recusada:');
+                  const isProof = isPaymentProofMessage(message.content);
+                  const isSpecial = isQuotation || isInvoice || isPayment || isProof;
+
+                  return (
+                    <div key={message.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] md:max-w-[75%] ${isSpecial ? '' : `rounded-2xl px-3 py-2 ${
+                        isMine
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-card border rounded-bl-sm shadow-sm'
+                      }`}`}>
+                        {isQuotation && (
+                          <ChatSpecialCard
+                            type="quotation"
+                            title={message.content.replace('💼 Cotação: ', '').split(' — ')[0]}
+                            amount={parseFloat(message.content.split(' — ')[1]?.replace(/[^\d.]/g, '') || '0')}
+                            currency={message.content.split(' — ')[1]?.split(' ')[0] || 'USD'}
+                            status="pending"
+                            isMine={isMine}
+                            conversationId={selectedConversationId || undefined}
+                            onStatusChange={() => {}}
+                          />
+                        )}
+                        {isInvoice && (() => {
+                          const parts = message.content.replace('🧾 Factura: #', '').split(' — ');
+                          const invoiceNum = parts[0] || '';
+                          const totalStr = parts[1]?.replace(/[^\d.]/g, '') || '0';
+                          const curr = parts[1]?.split(' ')[0] || 'USD';
+                          return (
+                            <ChatSpecialCard type="invoice" invoiceNumber={invoiceNum} total={parseFloat(totalStr)} currency={curr} status="pending" isMine={isMine} />
+                          );
+                        })()}
+                        {isPayment && (
+                          <ChatSpecialCard type="payment" content={message.content.replace('✅ Pagamento: ', '')} isMine={isMine} />
+                        )}
+                        {isProof && (
+                          <div className={`rounded-xl p-3 border-2 border-amber-500/30 ${isMine ? 'bg-amber-500/10' : 'bg-card'}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Banknote className="h-4 w-4 text-amber-500" />
+                              <span className="font-semibold text-xs">Comprovativo de Pagamento</span>
+                            </div>
+                            {message.attachment_url && (
+                              <div className="mb-2">
+                                {message.attachment_type?.startsWith('image/') ? (
+                                  <button onClick={() => handleImageClick(message.attachment_url!)} className="block cursor-zoom-in">
+                                    <img src={message.attachment_url} alt="Comprovativo" className="max-w-full rounded-lg max-h-40 object-cover" />
+                                  </button>
+                                ) : (
+                                  <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                    <FileText className="h-4 w-4" /><span className="text-xs truncate">{message.attachment_name || 'Comprovativo'}</span><Download className="h-3 w-3 ml-auto" />
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400">⏳ Aguardando verificação</p>
+                          </div>
+                        )}
+                        {!isSpecial && (
+                          <>
+                            {message.attachment_url && (
+                              <div className="mb-1.5">
+                                {message.attachment_type?.startsWith('image/') ? (
+                                  <button onClick={() => handleImageClick(message.attachment_url!)} className="block cursor-zoom-in rounded-lg overflow-hidden">
+                                    <img src={message.attachment_url} alt={message.attachment_name || 'Imagem'} className="max-w-full rounded-lg max-h-48 object-cover" />
+                                  </button>
+                                ) : (
+                                  <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2 rounded-lg ${isMine ? 'bg-primary-foreground/10' : 'bg-muted'}`}>
+                                    <FileText className="h-4 w-4" /><span className="text-xs truncate max-w-[150px]">{message.attachment_name || 'Arquivo'}</span><Download className="h-3 w-3 ml-auto" />
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            {message.content && !message.content.startsWith('📎') && (
+                              <p className="text-sm leading-relaxed">{message.content}</p>
+                            )}
+                          </>
+                        )}
+                        {!isSpecial && (
+                          <div className={`flex items-center justify-end gap-1 mt-0.5 ${isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                            <span className="text-[10px]">{formatTime(message.created_at)}</span>
+                            {isMine && <MessageStatus status={message.status} />}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {otherUserTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-card border rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Message Input */}
+          <div className="p-2.5 md:p-3 border-t bg-card space-y-2">
+            {pendingAttachment && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                {pendingAttachment.type.startsWith('image/') ? <ImageIcon className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
+                <span className="text-xs truncate flex-1">{pendingAttachment.name}</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPendingAttachment(null)}><X className="h-3 w-3" /></Button>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => fileInputRef.current?.click()} disabled={uploading || sending}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
+              <Input
+                placeholder="Escreva uma mensagem..."
+                value={newMessage}
+                onChange={handleInputChange}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                className="flex-1 bg-muted/50 border-0 focus-visible:ring-1 h-9 text-sm"
+                disabled={sending || uploading}
+              />
+              <Button onClick={handleSendMessage} disabled={(!newMessage.trim() && !pendingAttachment) || sending || uploading} size="icon" className="h-9 w-9 shrink-0 rounded-full">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="hidden md:flex flex-1 items-center justify-center text-center p-8 bg-muted/10">
+          <div>
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="h-8 w-8 text-primary/50" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Suas Mensagens</h3>
+            <p className="text-muted-foreground text-sm max-w-[250px]">
+              Selecione uma conversa para começar
+            </p>
+          </div>
+        </div>
+      )}
     </div>
+  );
+
+  return (
+    <>
+      <ImagePreview 
+        images={chatImages}
+        initialIndex={selectedImageIndex}
+        open={imagePreviewOpen}
+        onOpenChange={setImagePreviewOpen}
+      />
+      <div className="flex h-[calc(100vh-8rem)] md:h-[600px] rounded-xl border bg-card overflow-hidden shadow-lg">
+        {!isConnected && (
+          <div className="absolute top-0 left-0 right-0 bg-destructive text-destructive-foreground text-xs py-1 px-2 flex items-center justify-center gap-1 z-10">
+            <WifiOff className="h-3 w-3" /> Reconectando...
+          </div>
+        )}
+        {renderConversationList()}
+        {renderChatArea()}
+      </div>
     </>
   );
 };
@@ -628,7 +556,7 @@ export const ChatButton = () => {
           Chat
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[900px] max-w-full p-0">
+      <SheetContent side="right" className="w-full md:w-[900px] max-w-full p-0">
         <SheetHeader className="sr-only">
           <SheetTitle>Chat</SheetTitle>
         </SheetHeader>
