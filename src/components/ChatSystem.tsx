@@ -505,6 +505,18 @@ export const ChatSystem = () => {
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPendingAttachment(null)}><X className="h-3 w-3" /></Button>
               </div>
             )}
+            {/* Quick reactions */}
+            <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+              {["👍", "❤️", "🔥", "🎉", "💰", "✅", "🤝", "⭐"].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => sendMessage(emoji)}
+                  className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-base"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" />
               <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => fileInputRef.current?.click()} disabled={uploading || sending}>
@@ -525,16 +537,12 @@ export const ChatSystem = () => {
           </div>
         </>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center text-center p-8 bg-muted/10">
-          <div>
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="h-8 w-8 text-primary/50" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Suas Mensagens</h3>
-            <p className="text-muted-foreground text-sm max-w-[250px]">
-              Selecione uma conversa para começar
-            </p>
-          </div>
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-8 bg-muted/10 gap-4">
+          <MascotInline mood="happy" size="xl" message="Selecione uma conversa para negociar! 💬" bubblePosition="top" />
+          <h3 className="text-lg font-semibold mt-4">Suas Mensagens</h3>
+          <p className="text-muted-foreground text-sm max-w-[250px]">
+            Gerencie cotações, facturas e pagamentos directamente no chat
+          </p>
         </div>
       )}
     </div>
