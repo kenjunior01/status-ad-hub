@@ -65,27 +65,24 @@ export const CreatorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ═══ INSTAGRAM-STYLE PROFILE HEADER (mobile) ═══ */}
+      {/* ═══ INSTAGRAM-STYLE HEADER (mobile) ═══ */}
       {isMobile ? (
         <div className="bg-card border-b border-border/30">
           {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-2">
-            <h1 className="text-base font-bold text-foreground truncate max-w-[180px]">
+          <div className="flex items-center justify-between px-4 h-11">
+            <h1 className="text-base font-bold text-foreground truncate max-w-[200px]">
               {profile?.display_name || "Criador"}
             </h1>
-            <div className="flex items-center gap-1">
-              <NotificationButton />
-              <MascotInline mood={mascotTip.mood} size="xs" showBubble={false} animate={false} />
-            </div>
+            <NotificationButton />
           </div>
 
-          {/* Profile row */}
-          <div className="flex items-center gap-4 px-4 py-3">
-            <div className="relative">
-              <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-primary via-primary/80 to-primary/60 p-[2px]">
+          {/* Profile row — avatar + 3 stats */}
+          <div className="flex items-center gap-4 px-4 pb-3">
+            <div className="relative shrink-0">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary via-primary/80 to-primary/60 p-[2px]">
                 <Avatar className="w-full h-full border-2 border-card">
                   <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">
                     {profile?.display_name?.charAt(0) || "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -93,72 +90,33 @@ export const CreatorDashboard = () => {
               <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="sm" className="absolute -bottom-1 -right-1" />
             </div>
 
-            {/* Stats row — Instagram style */}
             <div className="flex-1 flex justify-around text-center">
               <button onClick={() => setActiveTab("campaigns")} className="flex flex-col items-center">
-                <span className="text-lg font-bold text-foreground">{campaigns.length}</span>
+                <span className="text-base font-bold text-foreground">{campaigns.length}</span>
                 <span className="text-[10px] text-muted-foreground">Campanhas</span>
               </button>
               <button onClick={() => setActiveTab("earnings")} className="flex flex-col items-center">
-                <span className="text-lg font-bold text-foreground">{formatFromUSD(totalEarnings)}</span>
+                <span className="text-base font-bold text-foreground">{formatFromUSD(totalEarnings)}</span>
                 <span className="text-[10px] text-muted-foreground">Ganhos</span>
               </button>
               <button onClick={() => setActiveTab("opportunities")} className="flex flex-col items-center">
-                <span className="text-lg font-bold text-foreground">{listings.length}</span>
+                <span className="text-base font-bold text-foreground">{listings.length}</span>
                 <span className="text-[10px] text-muted-foreground">Anúncios</span>
               </button>
             </div>
           </div>
 
-          {/* Bio area */}
-          <div className="px-4 pb-3">
-            <p className="text-xs text-foreground font-medium">{profile?.niche || "Criador de conteúdo"}</p>
-            {profile?.bio && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{profile.bio}</p>}
-            {/* Mascot tip */}
-            <div className="mt-2 flex items-center gap-2 bg-primary/5 rounded-lg px-2 py-1.5">
-              <MascotInline mood={mascotTip.mood} size="xs" showBubble={false} animate={false} />
-              <p className="text-[10px] text-muted-foreground flex-1">{mascotTip.message}</p>
-            </div>
-          </div>
-
-          {/* Action buttons — Instagram style */}
-          <div className="flex gap-1 px-4 pb-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-8 text-xs font-semibold rounded-lg"
-              onClick={() => setActiveTab("profile")}
-            >
+          {/* Action buttons */}
+          <div className="flex gap-1.5 px-4 pb-3">
+            <Button variant="outline" size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("profile")}>
               Editar perfil
             </Button>
-            <Button
-              size="sm"
-              className="flex-1 h-8 text-xs font-semibold rounded-lg"
-              onClick={() => setActiveTab("opportunities")}
-            >
+            <Button size="sm" className="flex-1 h-8 text-xs font-semibold rounded-lg" onClick={() => setActiveTab("opportunities")}>
               Ver anúncios
             </Button>
           </div>
 
-          {/* Stories-like highlights row */}
-          <div className="flex gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide">
-            {[
-              { label: "Mês", value: formatFromUSD(monthlyEarnings), icon: "💰" },
-              { label: "Activas", value: activeCampaigns.length, icon: "🎯" },
-              { label: "Rating", value: profile?.rating ? `${Number(profile.rating).toFixed(1)}⭐` : "—", icon: "⭐" },
-              { label: "Level", value: profile?.badge_level || "bronze", icon: "🏅" },
-            ].map((h, i) => (
-              <div key={i} className="flex flex-col items-center gap-1 shrink-0">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-border/30 flex items-center justify-center text-lg">
-                  {h.icon}
-                </div>
-                <span className="text-[10px] font-semibold text-foreground">{String(h.value)}</span>
-                <span className="text-[9px] text-muted-foreground">{h.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Tab navigation — Instagram style icons */}
+          {/* Tab navigation — icon only, clean */}
           <div className="flex border-t border-border/30">
             {mobileNavTabs.map((tab) => {
               const Icon = tab.icon;
@@ -167,10 +125,9 @@ export const CreatorDashboard = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 flex flex-col items-center gap-0.5 py-2 relative transition-colors ${active ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`flex-1 flex items-center justify-center py-2.5 relative transition-colors ${active ? "text-foreground" : "text-muted-foreground"}`}
                 >
                   <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.5} />
-                  <span className="text-[9px]">{tab.label}</span>
                   {active && <div className="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-foreground rounded-full" />}
                 </button>
               );
