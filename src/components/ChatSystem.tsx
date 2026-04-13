@@ -197,8 +197,8 @@ export const ChatSystem = () => {
       <ScrollArea className="flex-1">
         {filteredConversations.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Nenhuma conversa</p>
+            <MascotInline mood="thinking" size="md" message="Candidate-se a anúncios para iniciar conversas!" bubblePosition="top" />
+            <p className="text-sm mt-4">Nenhuma conversa ainda</p>
             <p className="text-xs text-muted-foreground/60 mt-1">As conversas aparecem quando candidata-se a anúncios</p>
           </div>
         ) : (
