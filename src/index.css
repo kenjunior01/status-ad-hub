@@ -156,9 +156,8 @@ html, body {
     scroll-behavior: smooth;
   }
   
-  /* Performance optimizations for mobile */
-  * {
-    /* Enable hardware acceleration for smooth animations */
+  /* Hardware acceleration only for animated elements */
+  .will-animate {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
   }

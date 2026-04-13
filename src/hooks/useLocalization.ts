@@ -8,7 +8,17 @@ interface LocalizationState {
   region: string;
 }
 
-const STORAGE_KEY = 'statusads_localization';
+const STORAGE_KEY = 'statusads_localization_v2';
+const OLD_STORAGE_KEY = 'statusads_localization';
+
+const SUPPORTED_CURRENCIES = new Set(currencies.map(c => c.code));
+const SUPPORTED_COUNTRIES = new Set(countries.map(c => c.code));
+const SUPPORTED_REGIONS = new Set(['africa', 'south_america']);
+
+const isValidState = (s: LocalizationState): boolean =>
+  SUPPORTED_CURRENCIES.has(s.currency) &&
+  SUPPORTED_COUNTRIES.has(s.country) &&
+  SUPPORTED_REGIONS.has(s.region);
 
 const detectUserLocale = (): LocalizationState => {
   const lang = navigator.language || 'en-US';
@@ -17,35 +27,20 @@ const detectUserLocale = (): LocalizationState => {
   const tzCountryMap: Record<string, string> = {
     'America/Sao_Paulo': 'BR', 'America/Fortaleza': 'BR', 'America/Recife': 'BR',
     'America/Bahia': 'BR', 'America/Belem': 'BR', 'America/Manaus': 'BR',
-    'America/New_York': 'US', 'America/Chicago': 'US', 'America/Denver': 'US',
-    'America/Los_Angeles': 'US', 'America/Argentina/Buenos_Aires': 'AR',
-    'America/Santiago': 'CL', 'America/Bogota': 'CO', 'America/Lima': 'PE',
-    'America/Mexico_City': 'MX', 'America/Montevideo': 'UY',
-    'Europe/Lisbon': 'PT', 'Europe/Madrid': 'ES', 'Europe/Paris': 'FR',
-    'Europe/Berlin': 'DE', 'Europe/Rome': 'IT', 'Europe/London': 'GB',
-    'Africa/Maputo': 'MZ', 'Africa/Luanda': 'AO', 'Africa/Johannesburg': 'ZA',
-    'Africa/Lagos': 'NG', 'Africa/Nairobi': 'KE',
-    'America/Toronto': 'CA', 'Asia/Kolkata': 'IN', 'Australia/Sydney': 'AU',
+    'Africa/Maputo': 'MZ',
   };
 
   const langCountryMap: Record<string, string> = {
-    'pt-BR': 'BR', 'pt-PT': 'PT', 'pt-MZ': 'MZ', 'pt-AO': 'AO', 'pt': 'BR',
-    'en-US': 'US', 'en-GB': 'GB', 'en-AU': 'AU', 'en-IN': 'IN', 'en-ZA': 'ZA', 'en': 'US',
-    'es-ES': 'ES', 'es-AR': 'AR', 'es-MX': 'MX', 'es-CO': 'CO', 'es-CL': 'CL',
-    'es-PE': 'PE', 'es': 'ES',
-    'fr': 'FR', 'de': 'DE', 'it': 'IT',
+    'pt-BR': 'BR', 'pt-MZ': 'MZ', 'pt': 'BR',
   };
 
   const detectedCode = tzCountryMap[tz] || langCountryMap[lang] || 'MZ';
-  const country = countries.find(c => c.code === detectedCode);
-
-  // Fallback to MZ if detected country not in supported list
-  const finalCountry = country || countries.find(c => c.code === 'MZ')!;
+  const country = countries.find(c => c.code === detectedCode) || countries.find(c => c.code === 'MZ')!;
 
   return {
-    currency: finalCountry?.currency || 'MZN',
-    country: finalCountry?.code || 'MZ',
-    region: finalCountry?.region || 'africa',
+    currency: country.currency,
+    country: country.code,
+    region: country.region,
   };
 };
 
@@ -55,9 +50,15 @@ export const useLocalization = () => {
   const [state, setState] = useState<LocalizationState>(() => {
     if (typeof window === 'undefined') return { currency: 'MZN', country: 'MZ', region: 'africa' };
 
+    // Clean up old storage key
+    localStorage.removeItem(OLD_STORAGE_KEY);
+
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      try { return JSON.parse(stored); } catch { /* fall through */ }
+      try {
+        const parsed = JSON.parse(stored);
+        if (isValidState(parsed)) return parsed;
+      } catch { /* fall through */ }
     }
 
     return detectUserLocale();
@@ -78,22 +79,23 @@ export const useLocalization = () => {
   }, [state]);
 
   const setCurrency = useCallback((currencyCode: string) => {
+    if (!SUPPORTED_CURRENCIES.has(currencyCode)) return;
     setState(prev => ({ ...prev, currency: currencyCode }));
   }, []);
 
   const setCountry = useCallback((countryCode: string) => {
     const country = countries.find(c => c.code === countryCode);
     if (country) {
-      setState(prev => ({
-        ...prev,
+      setState({
         country: countryCode,
         region: country.region,
         currency: country.currency,
-      }));
+      });
     }
   }, []);
 
   const setRegion = useCallback((regionCode: string) => {
+    if (!SUPPORTED_REGIONS.has(regionCode)) return;
     setState(prev => ({ ...prev, region: regionCode }));
   }, []);
 

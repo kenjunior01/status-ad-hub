@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalizationContext } from '@/contexts/LocalizationContext';
 import { FileText, Download, Check, X, Clock, Loader2, Receipt } from 'lucide-react';
 
 interface QuotationCardProps {
@@ -46,6 +47,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
 export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
+  const { formatFromUSD } = useLocalizationContext();
 
   if (props.type === 'payment') {
     return (
@@ -63,19 +65,15 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
     if (props.type !== 'quotation' || !props.quotationId || !props.conversationId) return;
     setActionLoading('accept');
     try {
-      // Update quotation status
       const { error } = await supabase
         .from('chat_quotations')
         .update({ status: 'accepted', accepted_at: new Date().toISOString() })
         .eq('id', props.quotationId);
-
       if (error) throw error;
 
-      // Generate invoice from accepted quotation
       const { data, error: invError } = await supabase.functions.invoke('generate-invoice-pdf', {
         body: { quotation_id: props.quotationId, conversation_id: props.conversationId },
       });
-
       if (invError) throw invError;
 
       toast({ title: '✅ Cotação aceite!', description: `Factura #${data?.invoice?.invoice_number} gerada automaticamente.` });
@@ -96,10 +94,8 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
         .from('chat_quotations')
         .update({ status: 'rejected', rejected_at: new Date().toISOString() })
         .eq('id', props.quotationId);
-
       if (error) throw error;
 
-      // Send rejection message
       const { data: { user } } = await supabase.auth.getUser();
       if (user && props.conversationId) {
         await supabase.from('messages').insert({
@@ -121,6 +117,9 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
 
   if (props.type === 'quotation') {
     const statusCfg = STATUS_CONFIG[props.status] || STATUS_CONFIG.pending;
+    // Amount is stored in USD, display in user's currency
+    const displayAmount = props.currency === 'USD' ? formatFromUSD(props.amount) : `${props.currency} ${props.amount.toFixed(2)}`;
+
     return (
       <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-3 min-w-[220px] max-w-[280px]">
         <div className="flex items-center gap-2 mb-2">
@@ -131,30 +130,15 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
           </Badge>
         </div>
         <p className="font-medium text-sm mb-1">{props.title}</p>
-        {props.description && (
-          <p className="text-xs text-muted-foreground mb-2">{props.description}</p>
-        )}
-        <div className="text-lg font-bold text-primary mb-2">
-          {props.currency} {props.amount.toFixed(2)}
-        </div>
+        {props.description && <p className="text-xs text-muted-foreground mb-2">{props.description}</p>}
+        <div className="text-lg font-bold text-primary mb-2">{displayAmount}</div>
         {props.status === 'pending' && !props.isMine && (
           <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              className="flex-1 h-7 text-xs" 
-              onClick={handleAcceptQuotation}
-              disabled={!!actionLoading}
-            >
+            <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleAcceptQuotation} disabled={!!actionLoading}>
               {actionLoading === 'accept' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
               Aceitar
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="flex-1 h-7 text-xs" 
-              onClick={handleRejectQuotation}
-              disabled={!!actionLoading}
-            >
+            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={handleRejectQuotation} disabled={!!actionLoading}>
               {actionLoading === 'reject' ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-1" />}
               Recusar
             </Button>
@@ -172,6 +156,8 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
 
   // Invoice card
   const statusCfg = STATUS_CONFIG[props.status] || STATUS_CONFIG.pending;
+  const displayTotal = props.currency === 'USD' ? formatFromUSD(props.total) : `${props.currency} ${props.total.toFixed(2)}`;
+
   return (
     <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border border-green-500/20 rounded-xl p-3 min-w-[220px] max-w-[280px]">
       <div className="flex items-center gap-2 mb-2">
@@ -182,9 +168,7 @@ export const ChatSpecialCard = (props: ChatSpecialCardProps) => {
         </Badge>
       </div>
       <p className="font-medium text-sm mb-1">#{props.invoiceNumber}</p>
-      <div className="text-lg font-bold text-green-600 mb-2">
-        {props.currency} {props.total.toFixed(2)}
-      </div>
+      <div className="text-lg font-bold text-green-600 mb-2">{displayTotal}</div>
       {props.pdfUrl && (
         <Button size="sm" variant="outline" className="w-full h-7 text-xs" asChild>
           <a href={props.pdfUrl} target="_blank" rel="noopener noreferrer">
