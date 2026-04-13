@@ -30,6 +30,7 @@ import {
   Plus, Target, TrendingUp, Eye, DollarSign, Loader2,
   CheckCircle, Bot, CreditCard, ChevronRight, GraduationCap, Megaphone, ArrowLeft,
 } from "lucide-react";
+import { MascotInline } from "@/components/MascotInline";
 
 export const AdvertiserDashboard = () => {
   const { t } = useTranslation();
@@ -61,8 +62,9 @@ export const AdvertiserDashboard = () => {
       <div className="max-w-6xl mx-auto space-y-5">
         <motion.div {...fadeUp} className="flex flex-col md:flex-row justify-between items-start gap-3">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
               {t("common.hello")}, {profile?.display_name || t("navigation.advertiser")} 📢
+              <MascotInline mood="cool" size="sm" showBubble={false} />
             </h1>
           </div>
           <div className="flex gap-2 flex-wrap">

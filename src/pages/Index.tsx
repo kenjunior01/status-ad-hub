@@ -9,7 +9,6 @@ import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/compo
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
-import { TrustStatsBar } from "@/components/TrustStatsBar";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -208,8 +207,7 @@ const Index = ({ onNavigate }: IndexProps) => {
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <TrustStatsBar />
+      {/* Categories — horizontal scrollable icons like bateu.online */}
 
       {/* Categories — horizontal scrollable icons like bateu.online */}
       <section className="py-4 md:py-6 px-4 border-b border-border/30">

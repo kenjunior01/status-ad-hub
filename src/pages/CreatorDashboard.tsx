@@ -28,6 +28,7 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Star, Target, Award, Upload, ChevronRight, Eye, GraduationCap, Megaphone,
 } from "lucide-react";
+import { MascotInline } from "@/components/MascotInline";
 
 type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
 
@@ -64,6 +65,7 @@ export const CreatorDashboard = () => {
                   {t("common.hello")}, {profile?.display_name || t("navigation.creators")} 👋
                 </h1>
                 <GamificationBadge badgeLevel={profile?.badge_level || "bronze"} size="md" />
+                <MascotInline mood="happy" size="sm" showBubble={false} />
               </div>
             </div>
           </div>
