@@ -53,7 +53,7 @@ function AppContent() {
   useEffect(() => {
     if (auth.isReady && auth.user && !hasAutoRedirected) {
       const dashboardPages = ['creator-dashboard', 'advertiser-dashboard', 'admin-dashboard'];
-      if (!dashboardPages.includes(currentPage) && currentPage !== 'reset-password' && currentPage !== 'terms' && currentPage !== 'privacy' && currentPage !== 'academia') {
+      if (!dashboardPages.includes(currentPage) && currentPage !== 'reset-password' && currentPage !== 'terms' && currentPage !== 'privacy' && currentPage !== 'academia' && currentPage !== 'messages') {
         setCurrentPage(auth.getDashboardPage());
         setHasAutoRedirected(true);
       }

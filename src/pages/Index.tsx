@@ -9,7 +9,7 @@ import { AdvancedFiltersSidebar, MobileFiltersSheet, FilterState } from "@/compo
 import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { EngagementFeatures } from "@/components/EngagementFeatures";
 import { CreatorProfile } from "@/pages/CreatorProfile";
-import { TrustStatsBar } from "@/components/TrustStatsBar";
+import { ValuePropositionSection } from "@/components/ValuePropositionSection";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
