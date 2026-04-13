@@ -28,7 +28,7 @@ export const ReferralInviteSystem = () => {
   const [applyingCode, setApplyingCode] = useState("");
   const [applying, setApplying] = useState(false);
 
-  const referralCode = profile?.referral_code || "";
+  const referralCode = (profile as any)?.referral_code || "";
   const referralPoints = (profile as any)?.referral_points || 0;
   const shareUrl = `${window.location.origin}/auth?ref=${referralCode}`;
 
@@ -247,7 +247,7 @@ export const ReferralInviteSystem = () => {
         ) : referrals.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
-              <Gift className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <Gift className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Nenhum convidado ainda</p>
               <p className="text-xs text-muted-foreground/60 mt-1">Partilhe o seu link para começar</p>
             </CardContent>
