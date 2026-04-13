@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { MascotInline } from "@/components/MascotInline";
 
+type VerificationStatus = "not_started" | "proof_submitted" | "under_review" | "verified" | "rejected";
+
 export const CreatorDashboard = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
