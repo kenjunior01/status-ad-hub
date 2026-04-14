@@ -20,7 +20,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const ChatSystem = () => {
+interface ChatSystemProps {
+  initialConversationId?: string | null;
+  onConversationOpened?: () => void;
+}
+
+export const ChatSystem = ({ initialConversationId, onConversationOpened }: ChatSystemProps) => {
   const { toast } = useToast();
   const { conversations, loading: loadingConversations, currentUserId, refetch: refetchConversations } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
