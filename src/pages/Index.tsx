@@ -290,6 +290,7 @@ const Index = ({ onNavigate }: IndexProps) => {
                         key={profile.id} 
                         profile={profile} 
                         onSelect={handleProfileSelect}
+                        onMessage={handleMessageCreator}
                         variant={index < 2 && activeCategory === "featured" ? "featured" : "default"}
                         showFavoriteButton
                       />
