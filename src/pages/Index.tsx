@@ -47,6 +47,7 @@ const Index = ({ onNavigate }: IndexProps) => {
   const { formatFromUSD } = useLocalizationContext();
   const { profiles, loading, getFeaturedProfiles, getNewProfiles, getDiscoverProfiles } = useProfiles();
   const { favorites, getFavoriteCount } = useFavorites();
+  const { createConversation } = useConversations();
   const [activeCategory, setActiveCategory] = useState("featured");
   const [showAllProfiles, setShowAllProfiles] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,6 +56,18 @@ const Index = ({ onNavigate }: IndexProps) => {
 
   const handleProfileSelect = (profile: any) => {
     setSelectedProfile(profile);
+  };
+
+  const handleMessageCreator = async (profile: any) => {
+    try {
+      // profile.user_id is the auth user id, profile.id is the profile table id
+      const userId = profile.user_id || profile.id;
+      await createConversation(userId);
+      toast({ title: "Conversa criada!", description: `Conversa com ${profile.display_name} iniciada.` });
+      onNavigate?.("messages");
+    } catch (err) {
+      toast({ title: "Erro", description: "Faça login para enviar mensagens.", variant: "destructive" });
+    }
   };
 
   const handleSearch = (query: string) => {
