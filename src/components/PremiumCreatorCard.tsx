@@ -26,6 +26,7 @@ interface PremiumCreatorCardProps {
   profile: Profile;
   className?: string;
   onSelect?: (profile: Profile) => void;
+  onMessage?: (profile: Profile) => void;
   variant?: "default" | "featured" | "compact";
   showFavoriteButton?: boolean;
 }
@@ -46,6 +47,7 @@ export const PremiumCreatorCard = ({
   profile, 
   className, 
   onSelect,
+  onMessage,
   variant = "default",
   showFavoriteButton = false
 }: PremiumCreatorCardProps) => {
@@ -165,7 +167,7 @@ export const PremiumCreatorCard = ({
               <p className="font-extrabold text-[11px] md:text-xs text-foreground">{formatFromUSD(getBasePrice())}</p>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); onSelect?.(profile); }}
+              onClick={(e) => { e.stopPropagation(); onMessage ? onMessage(profile) : onSelect?.(profile); }}
               className="bg-primary/10 hover:bg-primary/20 text-primary rounded-full p-1.5 transition-colors"
               title="Enviar mensagem"
             >
