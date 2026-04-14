@@ -1,21 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Loader2, Shield, Lock, Sparkles, ChevronDown, Check } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Loader2, Shield, Lock, Sparkles, ChevronDown } from "lucide-react";
 
 export const ProfileEditForm = () => {
   const { t } = useTranslation();
   const { profile, loading, saving, updateProfile } = useProfile();
   const { formatFromUSD } = useLocalizationContext();
-  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     display_name: "",
@@ -91,32 +88,9 @@ export const ProfileEditForm = () => {
 
   const completion = completionPercentage();
 
-  const SettingRow = ({ label, children, noBorder }: { label: string; children: React.ReactNode; noBorder?: boolean }) => (
-    <div className={`flex items-center justify-between py-3 ${!noBorder ? 'border-b border-border/40' : ''}`}>
-      <span className="text-sm text-muted-foreground shrink-0 w-28">{label}</span>
-      <div className="flex-1 ml-3">{children}</div>
-    </div>
-  );
-
-  const SectionToggle = ({ label, icon, open, onToggle, children }: { label: string; icon: string; open: boolean; onToggle: () => void; children: React.ReactNode }) => (
-    <Collapsible open={open} onOpenChange={onToggle}>
-      <CollapsibleTrigger asChild>
-        <button type="button" className="w-full flex items-center justify-between py-3 border-b border-border/40 group">
-          <span className="text-sm font-medium flex items-center gap-2">
-            {icon} {label}
-          </span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
-      {/* Completion bar - only if incomplete */}
+      {/* Completion bar */}
       {completion < 100 && (
         <div className="mx-4 my-3 flex items-center gap-3">
           <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -127,36 +101,43 @@ export const ProfileEditForm = () => {
         </div>
       )}
 
-      {/* All sections collapsible */}
-      <div className="px-4">
-        {/* Basic Info — collapsible */}
-        <SectionToggle label="Informações Básicas" icon="✏️" open={basicInfoOpen} onToggle={() => setBasicInfoOpen(!basicInfoOpen)}>
-          <div className="pl-1">
-            <SettingRow label={t("profile.displayName")}>
+      <div className="px-4 space-y-1">
+        {/* Basic Info */}
+        <Collapsible open={basicInfoOpen} onOpenChange={setBasicInfoOpen}>
+          <CollapsibleTrigger asChild>
+            <button type="button" className="w-full flex items-center justify-between py-3 border-b border-border/40">
+              <span className="text-sm font-medium flex items-center gap-2">✏️ Informações Básicas</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${basicInfoOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 pb-1 space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.displayName")}</label>
               <Input
                 value={formData.display_name}
                 onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
                 placeholder={t("profile.displayNamePlaceholder")}
-                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                className="h-9 text-sm bg-muted/50 border-border/50"
                 required
                 maxLength={100}
               />
-            </SettingRow>
-
-            <SettingRow label={t("profile.biography")}>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.biography")}</label>
               <Textarea
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, 500) })}
                 placeholder={t("profile.bioPlaceholder")}
-                className="border-0 bg-transparent text-right text-sm p-0 min-h-0 h-auto resize-none focus-visible:ring-0"
+                className="text-sm bg-muted/50 border-border/50 min-h-[60px] resize-none"
                 rows={2}
                 maxLength={500}
               />
-            </SettingRow>
-
-            <SettingRow label={t("profile.mainNiche")} noBorder>
+              <span className="text-[10px] text-muted-foreground">{formData.bio.length}/500</span>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.mainNiche")}</label>
               <Select value={formData.niche} onValueChange={(v) => setFormData({ ...formData, niche: v })}>
-                <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+                <SelectTrigger className="h-9 text-sm bg-muted/50 border-border/50">
                   <SelectValue placeholder={t("profile.selectNiche")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,15 +146,21 @@ export const ProfileEditForm = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </SettingRow>
-          </div>
-        </SectionToggle>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Pricing — collapsible */}
-        <SectionToggle label="Preço & CPV" icon="💰" open={pricingOpen} onToggle={() => setPricingOpen(!pricingOpen)}>
-          <div className="pl-1">
+        {/* Pricing */}
+        <Collapsible open={pricingOpen} onOpenChange={setPricingOpen}>
+          <CollapsibleTrigger asChild>
+            <button type="button" className="w-full flex items-center justify-between py-3 border-b border-border/40">
+              <span className="text-sm font-medium flex items-center gap-2">💰 Preço & CPV</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${pricingOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 pb-1 space-y-3">
             {!(profile as any)?.can_set_own_price ? (
-              <div className="py-3">
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <Lock className="h-3.5 w-3.5" /> CPV Auto
@@ -189,9 +176,10 @@ export const ProfileEditForm = () => {
               </div>
             ) : (
               <>
-                <SettingRow label={t("profile.priceRange")}>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.priceRange")}</label>
                   <Select value={formData.price_range} onValueChange={(v) => setFormData({ ...formData, price_range: v })}>
-                    <SelectTrigger className="border-0 bg-transparent text-right text-sm p-0 h-auto shadow-none focus:ring-0 [&>svg]:ml-1">
+                    <SelectTrigger className="h-9 text-sm bg-muted/50 border-border/50">
                       <SelectValue placeholder={t("profile.selectRange")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -200,52 +188,61 @@ export const ProfileEditForm = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                </SettingRow>
-                <SettingRow label={t("profile.pricePerPost")} noBorder>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.pricePerPost")}</label>
                   <Input
                     type="number" min="0" step="0.01"
                     value={formData.price_per_post}
                     onChange={(e) => setFormData({ ...formData, price_per_post: e.target.value })}
                     placeholder="50.00"
-                    className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                    className="h-9 text-sm bg-muted/50 border-border/50"
                   />
-                </SettingRow>
+                </div>
               </>
             )}
-          </div>
-        </SectionToggle>
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Audience Data — collapsible */}
-        <SectionToggle label={t("profile.audienceData")} icon="📊" open={audienceOpen} onToggle={() => setAudienceOpen(!audienceOpen)}>
-          <div className="pl-1">
-            <p className="text-[11px] text-muted-foreground py-2">{t("profile.audienceDataDesc")}</p>
-            <SettingRow label={t("profile.whatsappFollowers")}>
+        {/* Audience Data */}
+        <Collapsible open={audienceOpen} onOpenChange={setAudienceOpen}>
+          <CollapsibleTrigger asChild>
+            <button type="button" className="w-full flex items-center justify-between py-3 border-b border-border/40">
+              <span className="text-sm font-medium flex items-center gap-2">📊 {t("profile.audienceData")}</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${audienceOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 pb-1 space-y-3">
+            <p className="text-[11px] text-muted-foreground">{t("profile.audienceDataDesc")}</p>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.whatsappFollowers")}</label>
               <Input
                 type="number" min="0"
                 value={formData.follower_count}
                 onChange={(e) => setFormData({ ...formData, follower_count: e.target.value })}
                 placeholder="5000"
-                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                className="h-9 text-sm bg-muted/50 border-border/50"
               />
-            </SettingRow>
-            <SettingRow label={t("profile.engagementRate")} noBorder>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("profile.engagementRate")}</label>
               <Input
                 type="number" min="0" max="100" step="0.1"
                 value={formData.engagement_rate}
                 onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })}
                 placeholder="5.0"
-                className="border-0 bg-transparent text-right text-sm p-0 h-auto focus-visible:ring-0"
+                className="h-9 text-sm bg-muted/50 border-border/50"
               />
-            </SettingRow>
+            </div>
 
             {profile?.cpv_rate && Number(profile.cpv_rate) > 0 && (
-              <div className="mt-2 mb-1 p-2.5 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t("profile.calculatedCPV")}</span>
                 <span className="text-sm font-bold text-primary">{formatFromUSD(Number(profile.cpv_rate))}</span>
               </div>
             )}
-          </div>
-        </SectionToggle>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Submit */}
