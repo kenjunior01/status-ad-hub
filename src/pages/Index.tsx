@@ -12,6 +12,7 @@ import { CreatorProfile } from "@/pages/CreatorProfile";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { useConversations } from "@/hooks/useConversations";
 import { 
   ArrowRight,
   ChevronDown,
