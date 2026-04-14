@@ -28,6 +28,7 @@ import { MascotInline } from "@/components/MascotInline";
 
 interface IndexProps {
   onNavigate?: (page: string) => void;
+  onNavigateWithData?: (page: string, data?: { conversationId?: string }) => void;
 }
 
 const defaultFilters: FilterState = {
@@ -41,7 +42,7 @@ const defaultFilters: FilterState = {
   badgeLevels: []
 };
 
-const Index = ({ onNavigate }: IndexProps) => {
+const Index = ({ onNavigate, onNavigateWithData }: IndexProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatFromUSD } = useLocalizationContext();
@@ -60,11 +61,14 @@ const Index = ({ onNavigate }: IndexProps) => {
 
   const handleMessageCreator = async (profile: any) => {
     try {
-      // profile.user_id is the auth user id, profile.id is the profile table id
       const userId = profile.user_id || profile.id;
-      await createConversation(userId);
+      const conversation = await createConversation(userId);
+      if (conversation?.id) {
+        onNavigateWithData?.("messages", { conversationId: conversation.id });
+      } else {
+        onNavigate?.("messages");
+      }
       toast({ title: "Conversa criada!", description: `Conversa com ${profile.display_name} iniciada.` });
-      onNavigate?.("messages");
     } catch (err) {
       toast({ title: "Erro", description: "Faça login para enviar mensagens.", variant: "destructive" });
     }
