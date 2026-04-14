@@ -58,6 +58,17 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
     setImagePreviewOpen(true);
   }, [chatImages]);
 
+  // Auto-select conversation from navigation
+  useEffect(() => {
+    if (initialConversationId && conversations.length > 0) {
+      const exists = conversations.find(c => c.id === initialConversationId);
+      if (exists) {
+        setSelectedConversationId(initialConversationId);
+        onConversationOpened?.();
+      }
+    }
+  }, [initialConversationId, conversations]);
+
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
   const scrollToBottom = useCallback(() => {
