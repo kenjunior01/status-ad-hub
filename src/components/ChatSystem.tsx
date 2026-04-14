@@ -20,7 +20,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const ChatSystem = () => {
+interface ChatSystemProps {
+  initialConversationId?: string | null;
+  onConversationOpened?: () => void;
+}
+
+export const ChatSystem = ({ initialConversationId, onConversationOpened }: ChatSystemProps) => {
   const { toast } = useToast();
   const { conversations, loading: loadingConversations, currentUserId, refetch: refetchConversations } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -52,6 +57,17 @@ export const ChatSystem = () => {
     setSelectedImageIndex(index >= 0 ? index : 0);
     setImagePreviewOpen(true);
   }, [chatImages]);
+
+  // Auto-select conversation from navigation
+  useEffect(() => {
+    if (initialConversationId && conversations.length > 0) {
+      const exists = conversations.find(c => c.id === initialConversationId);
+      if (exists) {
+        setSelectedConversationId(initialConversationId);
+        onConversationOpened?.();
+      }
+    }
+  }, [initialConversationId, conversations]);
 
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
