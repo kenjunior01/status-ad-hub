@@ -34,6 +34,12 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState("index");
   const [appReady, setAppReady] = useState(false);
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
+
+  const navigateWithData = (page: string, data?: { conversationId?: string }) => {
+    if (data?.conversationId) setPendingConversationId(data.conversationId);
+    setCurrentPage(page);
+  };
 
   // Splash screen
   useEffect(() => {
@@ -71,7 +77,7 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case "index":
-        return <Index onNavigate={setCurrentPage} />;
+        return <Index onNavigate={setCurrentPage} onNavigateWithData={navigateWithData} />;
       case "auth":
         return <Auth onNavigate={setCurrentPage} />;
       case "reset-password":
@@ -85,7 +91,7 @@ function AppContent() {
       case "global-dashboard":
         return <GlobalDashboard />;
       case "messages":
-        return <MessagesPage />;
+        return <MessagesPage initialConversationId={pendingConversationId} onConversationOpened={() => setPendingConversationId(null)} />;
       case "academia":
         return <div className="max-w-2xl mx-auto py-8 px-4"><AcademiaStatusAds /></div>;
       case "terms":
