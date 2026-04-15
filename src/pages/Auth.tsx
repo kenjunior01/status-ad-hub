@@ -29,7 +29,7 @@ const Auth = ({ onNavigate }: AuthProps) => {
     if (ref) {
       localStorage.setItem("statusads_referral", ref.toUpperCase());
     }
-  }, [searchParams]);
+  }, []);
 
   // Auto-apply referral after signup
   useEffect(() => {
