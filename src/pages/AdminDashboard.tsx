@@ -49,7 +49,7 @@ export const AdminDashboard = () => {
         supabase.from("disputes").select("*, campaigns:campaign_id (title)").order("created_at", { ascending: false }),
         supabase.from("chat_invoices").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id, avatar_url").order("created_at", { ascending: false }).limit(10),
+        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id, avatar_url, is_verified, rating, badge_level, total_campaigns, referral_points").order("created_at", { ascending: false }),
         supabase.from("referrals").select("*", { count: 'exact', head: true }),
         supabase.from("conversations").select("*").order("last_message_at", { ascending: false }).limit(50),
       ]);
