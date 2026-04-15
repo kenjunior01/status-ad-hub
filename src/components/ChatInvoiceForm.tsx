@@ -11,7 +11,7 @@ import { FileText, Loader2, X, Send, Plus, Trash2 } from 'lucide-react';
 interface ChatInvoiceFormProps {
   conversationId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (messageText?: string) => void;
 }
 
 interface InvoiceItem {
@@ -74,15 +74,10 @@ export const ChatInvoiceForm = ({ conversationId, onClose, onCreated }: ChatInvo
 
       if (error) throw error;
 
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: `🧾 Factura: #${invoiceNumber} — ${formatFromUSD(totalUSD)}`,
-        status: 'sent',
-      });
+      const messageText = `🧾 Factura: #${invoiceNumber} — ${formatFromUSD(totalUSD)}`;
 
       toast({ title: '🧾 Factura criada!', description: `#${invoiceNumber} — ${formatFromUSD(totalUSD)}` });
-      onCreated();
+      onCreated(messageText);
       onClose();
     } catch (err: any) {
       console.error(err);
