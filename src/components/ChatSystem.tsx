@@ -376,7 +376,10 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatQuotationForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowQuotationForm(false)}
-                onCreated={() => { refetchConversations(); }}
+                onCreated={(quotationMsg?: string) => {
+                  if (quotationMsg) sendMessage(quotationMsg);
+                  refetchConversations();
+                }}
               />
             </div>
           )}
