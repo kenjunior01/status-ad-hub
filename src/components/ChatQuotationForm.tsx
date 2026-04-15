@@ -12,7 +12,7 @@ import { FileText, Loader2, X, Send } from 'lucide-react';
 interface ChatQuotationFormProps {
   conversationId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (messageText?: string) => void;
 }
 
 export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQuotationFormProps) => {
@@ -59,15 +59,10 @@ export const ChatQuotationForm = ({ conversationId, onClose, onCreated }: ChatQu
 
       if (qError) throw qError;
 
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: `💼 Cotação: ${title.trim()} — ${formatFromUSD(amountUSD)}`,
-        status: 'sent',
-      });
+      const messageText = `💼 Cotação: ${title.trim()} — ${formatFromUSD(amountUSD)}`;
 
       toast({ title: 'Cotação enviada!', description: 'O outro participante pode aceitar ou recusar.' });
-      onCreated();
+      onCreated(messageText);
       onClose();
     } catch (err: any) {
       console.error(err);
