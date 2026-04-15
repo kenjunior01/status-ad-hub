@@ -43,13 +43,13 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, profilesRes, referralsRes, convsRes] = await Promise.all([
-        supabase.from("user_roles").select("user_id, role, created_at, profiles:user_id (display_name, is_verified, rating, niche, country, badge_level, total_campaigns, account_status, referral_points, created_at)"),
+        supabase.from("user_roles").select("user_id, role, created_at"),
         supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
         supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("disputes").select("*, campaigns:campaign_id (title)").order("created_at", { ascending: false }),
         supabase.from("chat_invoices").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id, avatar_url").order("created_at", { ascending: false }).limit(10),
+        supabase.from("profiles").select("display_name, country, created_at, niche, account_status, user_id, avatar_url, is_verified, rating, badge_level, total_campaigns, referral_points").order("created_at", { ascending: false }),
         supabase.from("referrals").select("*", { count: 'exact', head: true }),
         supabase.from("conversations").select("*").order("last_message_at", { ascending: false }).limit(50),
       ]);
@@ -61,13 +61,20 @@ export const AdminDashboard = () => {
       const invs = invoicesRes.data || [];
       const wds = withdrawalsRes.data || [];
 
-      setUsers(roles);
+      // Enrich roles with profile data
+      const allProfiles = profilesRes.data || [];
+      const enrichedRoles = roles.map((r: any) => {
+        const profile = allProfiles.find((p: any) => p.user_id === r.user_id);
+        return { ...r, profiles: profile || null };
+      });
+
+      setUsers(enrichedRoles);
       setCampaigns(camps);
       setTransactions(txs);
       setDisputes(disps);
       setInvoices(invs);
       setWithdrawals(wds);
-      setRecentProfiles(profilesRes.data || []);
+      setRecentProfiles((profilesRes.data || []).slice(0, 10));
       setConversations(convsRes.data || []);
 
       setStats({

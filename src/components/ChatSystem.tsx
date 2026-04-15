@@ -376,7 +376,10 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatQuotationForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowQuotationForm(false)}
-                onCreated={() => {}}
+                onCreated={(quotationMsg?: string) => {
+                  if (quotationMsg) sendMessage(quotationMsg);
+                  refetchConversations();
+                }}
               />
             </div>
           )}
@@ -387,7 +390,10 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatInvoiceForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowInvoiceForm(false)}
-                onCreated={() => {}}
+                onCreated={(invoiceMsg?: string) => {
+                  if (invoiceMsg) sendMessage(invoiceMsg);
+                  refetchConversations();
+                }}
               />
             </div>
           )}
