@@ -74,7 +74,7 @@ export const AdminDashboard = () => {
       setDisputes(disps);
       setInvoices(invs);
       setWithdrawals(wds);
-      setRecentProfiles(profilesRes.data || []);
+      setRecentProfiles((profilesRes.data || []).slice(0, 10));
       setConversations(convsRes.data || []);
 
       setStats({
