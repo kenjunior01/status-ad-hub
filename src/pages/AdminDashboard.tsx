@@ -43,7 +43,7 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       const [rolesRes, campaignsRes, txRes, disputesRes, invoicesRes, withdrawalsRes, profilesRes, referralsRes, convsRes] = await Promise.all([
-        supabase.from("user_roles").select("user_id, role, created_at, profiles:user_id (display_name, is_verified, rating, niche, country, badge_level, total_campaigns, account_status, referral_points, created_at)"),
+        supabase.from("user_roles").select("user_id, role, created_at"),
         supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
         supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("disputes").select("*, campaigns:campaign_id (title)").order("created_at", { ascending: false }),

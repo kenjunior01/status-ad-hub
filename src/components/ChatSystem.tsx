@@ -376,7 +376,7 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatQuotationForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowQuotationForm(false)}
-                onCreated={() => {}}
+                onCreated={() => { refetchConversations(); }}
               />
             </div>
           )}
@@ -387,7 +387,7 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatInvoiceForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowInvoiceForm(false)}
-                onCreated={() => {}}
+                onCreated={() => { refetchConversations(); }}
               />
             </div>
           )}
