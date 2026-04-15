@@ -44,6 +44,57 @@ const getAvatarGradient = (name: string) => {
   return gradients[name.charCodeAt(0) % gradients.length];
 };
 
+const PLACEHOLDER_IMAGES = [
+  "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=400&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=400&h=500&fit=crop",
+];
+
+const AvatarSlideshow = ({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) => {
+  const images = avatarUrl 
+    ? [avatarUrl, ...PLACEHOLDER_IMAGES.slice(0, 2)] 
+    : PLACEHOLDER_IMAGES;
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % images.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div className="w-full h-full relative">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={current}
+          src={images[current]}
+          alt={name}
+          className="w-full h-full object-cover absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          loading="lazy"
+        />
+      </AnimatePresence>
+      {/* Slide indicators */}
+      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+        {images.map((_, i) => (
+          <button
+            key={i}
+            onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+            className={cn(
+              "w-1.5 h-1.5 rounded-full transition-all duration-300",
+              i === current ? "bg-white w-3" : "bg-white/50"
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const PremiumCreatorCard = ({ 
   profile, 
   className, 
