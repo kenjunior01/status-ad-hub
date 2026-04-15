@@ -153,33 +153,11 @@ export const PremiumCreatorCard = ({
           )}
         </div>
 
-        {/* Avatar */}
+        {/* Avatar Slideshow */}
         <div className="p-1.5 md:p-2 pb-0">
           <div className="relative">
-            <div className={cn(
-              "w-full aspect-[4/5] rounded-xl overflow-hidden",
-              !profile.avatar_url && `bg-gradient-to-br ${getAvatarGradient(profile.display_name)}`
-            )}>
-              {profile.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt={profile.display_name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                  <span className="text-2xl md:text-3xl font-bold text-white/90 drop-shadow-sm">
-                    {profile.display_name.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    <Smartphone className="h-2.5 w-2.5 text-white/80" />
-                    <span className="text-[8px] text-white/80 font-medium">
-                      {t('creator.availableForAds', 'Available')}
-                    </span>
-                  </div>
-                </div>
-              )}
+            <div className="w-full aspect-[4/5] rounded-xl overflow-hidden bg-muted">
+              <AvatarSlideshow name={profile.display_name} avatarUrl={profile.avatar_url} />
             </div>
             {profile.is_verified && (
               <div className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-md ring-2 ring-card">
