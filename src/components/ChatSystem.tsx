@@ -387,7 +387,10 @@ export const ChatSystem = ({ initialConversationId, onConversationOpened }: Chat
               <ChatInvoiceForm
                 conversationId={selectedConversationId}
                 onClose={() => setShowInvoiceForm(false)}
-                onCreated={() => { refetchConversations(); }}
+                onCreated={(invoiceMsg?: string) => {
+                  if (invoiceMsg) sendMessage(invoiceMsg);
+                  refetchConversations();
+                }}
               />
             </div>
           )}
