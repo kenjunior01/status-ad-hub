@@ -61,7 +61,14 @@ export const AdminDashboard = () => {
       const invs = invoicesRes.data || [];
       const wds = withdrawalsRes.data || [];
 
-      setUsers(roles);
+      // Enrich roles with profile data
+      const allProfiles = profilesRes.data || [];
+      const enrichedRoles = roles.map((r: any) => {
+        const profile = allProfiles.find((p: any) => p.user_id === r.user_id);
+        return { ...r, profiles: profile || null };
+      });
+
+      setUsers(enrichedRoles);
       setCampaigns(camps);
       setTransactions(txs);
       setDisputes(disps);
