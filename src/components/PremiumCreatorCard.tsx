@@ -1,12 +1,13 @@
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import { Star, BadgeCheck, Eye, ArrowUpRight, Smartphone, MessageCircle } from "lucide-react";
+import { Star, BadgeCheck, Eye, Smartphone, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Profile {
   id: string;

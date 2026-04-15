@@ -81,6 +81,7 @@ export const Navigation = ({ onNavigate, currentPage, auth }: NavigationProps) =
           </div>
 
           <div className="flex md:hidden items-center gap-1">
+            <LanguageSelector />
             <ThemeToggle />
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
