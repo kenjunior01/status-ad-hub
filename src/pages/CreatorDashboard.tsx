@@ -244,10 +244,29 @@ export const CreatorDashboard = () => {
         {activeTab === "overview" && (
           <div className="space-y-4">
             {isMobile ? (
-              /* Mobile overview: clean cards */
               <div className="space-y-3">
+                {/* Quick stats for mobile */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Card className="p-3 border-border/30">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-lg font-bold text-foreground">{formatFromUSD(monthlyEarnings)}</p>
+                        <p className="text-[10px] text-muted-foreground">Este mês</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-3 border-border/30">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-lg font-bold text-foreground">{activeCampaigns.length}</p>
+                        <p className="text-[10px] text-muted-foreground">Activas</p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
                 <GamificationProgress />
-                <AIPricingAssistant mode="creator" />
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-5">
