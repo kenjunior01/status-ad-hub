@@ -9,7 +9,11 @@ const CACHE_KEY = 'statusads_exchange_rates';
 const CACHE_TTL = 3600_000; // 1 hour
 
 export const useExchangeRates = () => {
-  const [rates, setRates] = useState<ExchangeRates>({ USD: 1 });
+  const FALLBACK_RATES: ExchangeRates = {
+    USD: 1, BRL: 5.15, EUR: 0.92, GBP: 0.79, MZN: 63.5,
+    AOA: 835, ARS: 875, MXN: 17.2, COP: 3950, PEN: 3.72, CLP: 925,
+  };
+  const [rates, setRates] = useState<ExchangeRates>(FALLBACK_RATES);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 

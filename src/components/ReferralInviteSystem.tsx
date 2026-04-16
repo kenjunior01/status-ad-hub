@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check, Gift, Users, Star, Share2, Loader2, Trophy } from "lucide-react";
+import { Copy, Check, Gift, Users, Star, Share2, Loader2, Trophy, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Referral {
   id: string;
@@ -49,7 +49,6 @@ export const ReferralInviteSystem = () => {
 
       if (error) throw error;
 
-      // Get referred user names
       const enriched = await Promise.all(
         (data || []).map(async (ref) => {
           const { data: profileData } = await supabase
@@ -76,7 +75,6 @@ export const ReferralInviteSystem = () => {
       toast({ title: "Link copiado!", description: "Partilhe com amigos para ganhar pontos." });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback
       const input = document.createElement("input");
       input.value = shareUrl;
       document.body.appendChild(input);
@@ -129,75 +127,56 @@ export const ReferralInviteSystem = () => {
     }
   };
 
-  // Reward tiers
   const tiers = [
-    { count: 3, reward: "Badge Embaixador 🥉", unlocked: referrals.length >= 3 },
-    { count: 10, reward: "Destaque no Marketplace ⭐", unlocked: referrals.length >= 10 },
-    { count: 25, reward: "Status Premium 💎", unlocked: referrals.length >= 25 },
+    { count: 3, reward: "Embaixador 🥉", unlocked: referrals.length >= 3 },
+    { count: 10, reward: "Destaque ⭐", unlocked: referrals.length >= 10 },
+    { count: 25, reward: "Premium 💎", unlocked: referrals.length >= 25 },
   ];
 
   return (
     <div className="space-y-4">
-      {/* Points & Stats Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl p-4 border border-primary/10">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Trophy className="h-5 w-5 text-primary" />
+      {/* Hero share card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-accent/10 border border-primary/15 p-5"
+      >
+        <div className="absolute top-2 right-2 opacity-10">
+          <Gift className="h-24 w-24 text-primary" />
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{referralPoints}</p>
-              <p className="text-[10px] text-muted-foreground">Pontos acumulados</p>
+              <h3 className="text-lg font-bold text-foreground">Convide & Ganhe</h3>
+              <p className="text-xs text-muted-foreground">50 pontos por cada amigo registado</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-foreground">{referrals.length}</p>
-            <p className="text-[10px] text-muted-foreground">Convidados</p>
-          </div>
-        </div>
 
-        {/* Reward tiers progress */}
-        <div className="flex gap-1">
-          {tiers.map((tier, i) => (
-            <div key={i} className="flex-1">
-              <div className={`h-1.5 rounded-full ${tier.unlocked ? "bg-primary" : "bg-muted"}`} />
-              <p className="text-[9px] text-center mt-1 text-muted-foreground">
-                {tier.count} = {tier.reward}
-              </p>
+          {/* Pretty code display */}
+          <div className="bg-card/80 backdrop-blur-sm rounded-xl p-3 mb-3 border border-border/30">
+            <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wider font-medium">Seu código exclusivo</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-muted/60 rounded-lg px-4 py-2.5 font-mono text-lg font-bold tracking-[0.3em] text-center text-primary">
+                {referralCode || "..."}
+              </div>
+              <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 rounded-xl" onClick={copyCode}>
+                {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+              </Button>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Share section */}
-      <Card className="border-primary/10">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Gift className="h-4 w-4 text-primary" />
-            <p className="text-sm font-semibold">Convide e ganhe 50 pontos</p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Cada amigo que se registar com o seu link ganha 25 pontos e você ganha 50!
-          </p>
-
-          {/* Referral code display */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-muted/60 rounded-lg px-3 py-2 font-mono text-sm font-bold tracking-wider text-center">
-              {referralCode || "..."}
-            </div>
-            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={copyCode}>
-              {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
-            </Button>
           </div>
 
           {/* Share buttons */}
           <div className="flex gap-2">
-            <Button className="flex-1 h-9 text-xs gap-1.5" onClick={shareNative}>
-              <Share2 className="h-3.5 w-3.5" /> Partilhar link
+            <Button className="flex-1 h-10 text-sm gap-2 rounded-xl" onClick={shareNative}>
+              <Share2 className="h-4 w-4" /> Partilhar
             </Button>
             <Button
               variant="outline"
-              className="h-9 text-xs gap-1.5"
+              className="h-10 text-sm gap-2 rounded-xl"
               onClick={() => {
                 const text = encodeURIComponent(`Junte-se ao StatusAds! ${shareUrl}`);
                 window.open(`https://wa.me/?text=${text}`, "_blank");
@@ -206,14 +185,45 @@ export const ReferralInviteSystem = () => {
               WhatsApp
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
 
-      {/* Apply referral code */}
-      <Card>
-        <CardContent className="p-4">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "Pontos", value: referralPoints, icon: Star, color: "text-amber-500" },
+          { label: "Convidados", value: referrals.length, icon: Users, color: "text-primary" },
+          { label: "Nível", value: referrals.length >= 25 ? "💎" : referrals.length >= 10 ? "⭐" : referrals.length >= 3 ? "🥉" : "🌱", icon: Trophy, color: "text-primary" },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.08 }}
+          >
+            <Card className="p-3 text-center border-border/30">
+              <p className="text-xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Progress tiers */}
+      <div className="flex gap-1.5">
+        {tiers.map((tier, i) => (
+          <div key={i} className="flex-1">
+            <div className={`h-2 rounded-full transition-colors ${tier.unlocked ? "bg-primary" : "bg-muted"}`} />
+            <p className="text-[9px] text-center mt-1 text-muted-foreground">{tier.count} = {tier.reward}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Apply code */}
+      <Card className="border-border/30">
+        <CardContent className="p-3">
           <p className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-500" /> Tem um código de convite?
+            <Star className="h-4 w-4 text-amber-500" /> Tem um código?
           </p>
           <div className="flex gap-2">
             <Input
@@ -238,24 +248,24 @@ export const ReferralInviteSystem = () => {
       {/* Referral list */}
       <div>
         <p className="text-sm font-semibold mb-2 flex items-center gap-2 px-1">
-          <Users className="h-4 w-4 text-primary" /> Seus convidados ({referrals.length})
+          <Users className="h-4 w-4 text-primary" /> Convidados ({referrals.length})
         </p>
         {loading ? (
           <div className="flex justify-center py-6">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         ) : referrals.length === 0 ? (
-          <Card>
+          <Card className="border-border/30">
             <CardContent className="py-8 text-center">
               <Gift className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Nenhum convidado ainda</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Partilhe o seu link para começar</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Partilhe o seu código para começar</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-1.5">
             {referrals.map((ref) => (
-              <Card key={ref.id} className="p-3">
+              <Card key={ref.id} className="p-3 border-border/30">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
