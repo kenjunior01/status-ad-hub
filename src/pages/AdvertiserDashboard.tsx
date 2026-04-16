@@ -228,21 +228,40 @@ export const AdvertiserDashboard = () => {
               </div>
             )}
 
-            <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Megaphone className="h-4 w-4" />Anúncios Recentes</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  {myListings.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4 text-sm">Publique seu primeiro anúncio</p>
-                  ) : myListings.slice(0, 3).map((listing) => (
-                    <div key={listing.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg">
-                      <div><div className="font-medium text-xs">{listing.title}</div><div className="text-[10px] text-muted-foreground">{formatFromUSD(Number(listing.budget))}</div></div>
-                      <Badge variant={listing.status === "open" ? "default" : "secondary"} className="text-[10px]">{listing.status}</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-              <AIPricingAssistant mode="advertiser" advertiserData={{ budget: totalSpent || 100, creatorsCount: profiles.length, avgPriceMin: 10, avgPriceMax: 100 }} />
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-3`}>
+              {isMobile ? (
+                /* Mobile: simple recent listings only */
+                <Card className="border-border/30">
+                  <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Megaphone className="h-4 w-4" />Anúncios Recentes</CardTitle></CardHeader>
+                  <CardContent className="space-y-2">
+                    {myListings.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4 text-sm">Publique seu primeiro anúncio</p>
+                    ) : myListings.slice(0, 3).map((listing) => (
+                      <div key={listing.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg">
+                        <div><div className="font-medium text-xs">{listing.title}</div><div className="text-[10px] text-muted-foreground">{formatFromUSD(Number(listing.budget))}</div></div>
+                        <Badge variant={listing.status === "open" ? "default" : "secondary"} className="text-[10px]">{listing.status}</Badge>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Megaphone className="h-4 w-4" />Anúncios Recentes</CardTitle></CardHeader>
+                    <CardContent className="space-y-2">
+                      {myListings.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4 text-sm">Publique seu primeiro anúncio</p>
+                      ) : myListings.slice(0, 3).map((listing) => (
+                        <div key={listing.id} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg">
+                          <div><div className="font-medium text-xs">{listing.title}</div><div className="text-[10px] text-muted-foreground">{formatFromUSD(Number(listing.budget))}</div></div>
+                          <Badge variant={listing.status === "open" ? "default" : "secondary"} className="text-[10px]">{listing.status}</Badge>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                  <AIPricingAssistant mode="advertiser" advertiserData={{ budget: totalSpent || 100, creatorsCount: profiles.length, avgPriceMin: 10, avgPriceMax: 100 }} />
+                </>
+              )}
             </div>
           </>
         )}
