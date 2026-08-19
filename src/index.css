@@ -2,141 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure bottom nav never hides on scroll */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-html, body {
-  overscroll-behavior: none;
-}
-
-/* Design system optimized for user psychology, conversion and clean mobile experience */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 120 5% 96%;
-    --foreground: 200 15% 15%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 200 15% 15%;
-
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 200 15% 15%;
-
-    /* Primary: WhatsApp Teal-Green */
-    --primary: 152 69% 40%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 152 100% 25%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 152 69% 35%;
-    --primary-glow: 152 69% 50%;
-
-    /* Secondary: Light sage */
-    --secondary: 140 20% 94%;
-    --secondary-foreground: 200 15% 15%;
-
-    /* Success: Bright green for confirmations */
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --success-glow: 142 71% 55%;
-
-    /* Warning: Warm amber */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    
-    /* Accent: Deep teal for premium */
-    --accent: 168 76% 36%;
-    --accent-foreground: 0 0% 100%;
-
-    --muted: 140 10% 94%;
-    --muted-foreground: 200 8% 46%;
-
-    --destructive: 0 84% 60%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 140 10% 88%;
-    --input: 140 10% 88%;
-    --ring: 152 69% 40%;
-    
-    /* WhatsApp-inspired gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(152 69% 40%), hsl(168 76% 36%));
-    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(160 84% 39%));
-    --gradient-hero: linear-gradient(135deg, hsl(152 69% 40%), hsl(168 76% 30%));
-    
-    --shadow-soft: 0 1px 3px -1px hsl(200 15% 15% / 0.06);
-    --shadow-medium: 0 2px 8px -2px hsl(200 15% 15% / 0.1);
-    --shadow-strong: 0 4px 16px -4px hsl(200 15% 15% / 0.14);
-    --shadow-glow: 0 0 16px hsl(152 69% 40% / 0.2);
-
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 152 100% 25%;
     --radius: 0.75rem;
-
-    --sidebar-background: 120 5% 96%;
-    --sidebar-foreground: 200 15% 25%;
-    --sidebar-primary: 152 69% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 140 20% 94%;
-    --sidebar-accent-foreground: 200 15% 15%;
-    --sidebar-border: 140 10% 88%;
-    --sidebar-ring: 152 69% 40%;
   }
 
   .dark {
-    /* WhatsApp Dark Mode */
-    --background: 200 18% 8%;
-    --foreground: 140 10% 90%;
-
-    --card: 200 15% 11%;
-    --card-foreground: 140 10% 90%;
-
-    --popover: 200 16% 10%;
-    --popover-foreground: 140 10% 90%;
-
-    /* Primary: WhatsApp Teal-Green in dark */
-    --primary: 152 62% 45%;
+    --background: 224 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 47% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 47% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 152 100% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 152 62% 40%;
-    --primary-glow: 152 62% 55%;
-
-    --secondary: 200 12% 15%;
-    --secondary-foreground: 140 10% 85%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --success-glow: 142 71% 55%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    /* Accent: Lighter teal */
-    --accent: 168 60% 42%;
-    --accent-foreground: 0 0% 100%;
-
-    --muted: 200 12% 16%;
-    --muted-foreground: 140 8% 55%;
-
-    --destructive: 0 72% 51%;
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 11%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 222 47% 11%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 200 12% 18%;
-    --input: 200 12% 15%;
-    --ring: 152 62% 45%;
-
-    --gradient-primary: linear-gradient(135deg, hsl(152 62% 45%), hsl(168 60% 42%));
-    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(160 84% 39%));
-    --gradient-hero: linear-gradient(135deg, hsl(200 18% 8%), hsl(200 20% 14%));
-
-    --shadow-soft: 0 1px 3px -1px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 4px 12px -2px hsl(0 0% 0% / 0.4);
-    --shadow-strong: 0 8px 24px -4px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 24px hsl(152 62% 45% / 0.15);
-
-    --sidebar-background: 200 16% 10%;
-    --sidebar-foreground: 140 10% 85%;
-    --sidebar-primary: 152 62% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 12% 15%;
-    --sidebar-accent-foreground: 140 10% 85%;
-    --sidebar-border: 200 12% 18%;
-    --sidebar-ring: 152 62% 45%;
+    --border: 222 47% 16%;
+    --input: 222 47% 16%;
+    --ring: 152 100% 48%;
   }
 }
 
@@ -144,128 +55,95 @@ html, body {
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
-    /* Optimize for mobile performance */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Prevent bounce scrolling on iOS */
-    overscroll-behavior-y: none;
-    /* Smooth scrolling with hardware acceleration */
-    scroll-behavior: smooth;
-  }
-  
-  /* Hardware acceleration only for animated elements */
-  .will-animate {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-  
-  /* Clean focus states for accessibility */
-  *:focus-visible {
-    @apply outline-2 outline-primary outline-offset-2;
-  }
-  
-  /* Optimize touch targets for mobile (minimum 44px) */
-  button, a, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Safe area for bottom navigation on iOS */
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-/* Glassmorphism utilities */
-@layer utilities {
+@layer components {
   .glass {
-    background: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid hsl(var(--border) / 0.4);
+    @apply backdrop-blur-xl bg-background/60 border border-border/50;
   }
 
-  .glass-strong {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid hsl(var(--border) / 0.3);
+  .glass-card {
+    @apply backdrop-blur-xl bg-card/80 border border-border/50 rounded-xl shadow-lg;
   }
 
-  .glow-primary {
-    box-shadow: 0 0 16px hsl(var(--primary) / 0.25), 0 0 48px hsl(var(--primary) / 0.08);
+  .glass-dark {
+    @apply backdrop-blur-xl bg-navy-900/80 border border-white/10;
   }
 
-  .glow-accent {
-    box-shadow: 0 0 16px hsl(var(--accent) / 0.25), 0 0 48px hsl(var(--accent) / 0.08);
+  .gradient-safe {
+    @apply bg-gradient-to-r from-safe to-emerald-400;
   }
 
-  .glow-success {
-    box-shadow: 0 0 16px hsl(var(--success) / 0.25), 0 0 48px hsl(var(--success) / 0.08);
+  .gradient-danger {
+    @apply bg-gradient-to-r from-red-600 to-red-400;
   }
 
-  .text-gradient-primary {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .text-gradient-safe {
+    @apply bg-gradient-to-r from-safe to-emerald-400 bg-clip-text text-transparent;
   }
 
-  .border-glow {
-    border: 1px solid hsl(var(--primary) / 0.3);
-    box-shadow: inset 0 0 16px hsl(var(--primary) / 0.04);
+  .text-gradient-danger {
+    @apply bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent;
   }
 
-  /* WhatsApp-style floating doodle background */
-  .wa-bg-pattern {
-    position: relative;
+  .pulse-dot {
+    @apply relative;
   }
-  .wa-bg-pattern::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M10 10l5 5M25 5l-3 8M45 12l6-4M60 8l2 7M75 15l-5 2M8 30l7 1M30 28l4 5M50 32l-2 6M65 25l5 5M15 50l3 4M35 48l-4 3M55 52l6-2M70 45l-3 7M5 65l6 2M25 70l4-5M48 68l3 4M62 62l5 3M78 70l-4 4' stroke='%23128C7E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23128C7E'/%3E%3Ccircle cx='55' cy='40' r='1' fill='%23128C7E'/%3E%3Ccircle cx='40' cy='60' r='1.5' fill='%23128C7E'/%3E%3Ccircle cx='70' cy='55' r='1' fill='%23128C7E'/%3E%3C/svg%3E");
-    background-size: 80px 80px;
-    pointer-events: none;
-    z-index: 0;
+  .pulse-dot::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-safe animate-ping-slow;
   }
 
-  .dark .wa-bg-pattern::before {
-    opacity: 0.04;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M10 10l5 5M25 5l-3 8M45 12l6-4M60 8l2 7M75 15l-5 2M8 30l7 1M30 28l4 5M50 32l-2 6M65 25l5 5M15 50l3 4M35 48l-4 3M55 52l6-2M70 45l-3 7M5 65l6 2M25 70l4-5M48 68l3 4M62 62l5 3M78 70l-4 4' stroke='%2325D366' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%2325D366'/%3E%3Ccircle cx='55' cy='40' r='1' fill='%2325D366'/%3E%3Ccircle cx='40' cy='60' r='1.5' fill='%2325D366'/%3E%3Ccircle cx='70' cy='55' r='1' fill='%2325D366'/%3E%3C/svg%3E");
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-safe {
+    @apply max-w-7xl mx-auto section-padding;
   }
 }
 
-/* ===== Interface Adaptativa Aurora/Crepúsculo ===== */
-@layer base {
-  /* Aurora (6h-12h): warm sunrise with golden undertone */
-  :root.time-aurora {
-    --gradient-hero: linear-gradient(135deg, hsl(152 69% 42%), hsl(45 80% 45%));
-  }
-  :root.time-aurora:not(.dark) {
-    --background: 40 15% 97%;
-  }
+/* Leaflet dark theme overrides */
+.dark .leaflet-container {
+  background: #0A0F1A;
+}
 
-  /* Dia (12h-17h): standard vibrant — no overrides needed */
+.dark .leaflet-tile-pane {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
 
-  /* Crepúsculo (17h-20h): warm sunset amber tones */
-  :root.time-crepusculo {
-    --gradient-hero: linear-gradient(135deg, hsl(152 60% 38%), hsl(25 75% 42%));
-  }
-  :root.time-crepusculo:not(.dark) {
-    --background: 30 12% 96%;
-  }
+.dark .leaflet-control-zoom a {
+  background: hsl(224 47% 11%);
+  color: hsl(210 40% 98%);
+  border-color: hsl(222 47% 16%);
+}
 
-  /* Noite (20h-6h): cooler, deeper tones */
-  :root.time-noite:not(.dark) {
-    --background: 210 10% 95%;
-    --gradient-hero: linear-gradient(135deg, hsl(200 30% 25%), hsl(168 50% 30%));
-  }
-  :root.time-noite.dark {
-    --gradient-hero: linear-gradient(135deg, hsl(220 25% 8%), hsl(200 30% 12%));
-  }
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Emergency overlay animation */
+@keyframes emergency-border {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
+  50% { border-color: rgba(239, 68, 68, 1); }
+}
+
+.emergency-active {
+  animation: emergency-border 1s ease-in-out infinite;
+  border-width: 2px;
 }

@@ -1,137 +1,82 @@
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Navigation } from "@/components/Navigation";
-import { BottomNavigation } from "@/components/BottomNavigation";
-import { PageTransition } from "@/components/PageTransition";
-import { LocalizationProvider } from "@/contexts/LocalizationContext";
-import { useAdaptiveTheme } from "@/hooks/useAdaptiveTheme";
-import { useAuthReady } from "@/hooks/useAuthReady";
-import { AnimatedLoading } from "@/components/AnimatedLoading";
-import { StatusBotMascot } from "@/components/StatusBotMascot";
-import { FloatingBackground } from "@/components/FloatingBackground";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import { CreatorDashboard } from "./pages/CreatorDashboard";
-import { AdvertiserDashboard } from "./pages/AdvertiserDashboard";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { GlobalDashboard } from "./pages/GlobalDashboard";
-import { AcademiaStatusAds } from "./components/AcademiaStatusAds";
-import { MessagesPage } from "./pages/MessagesPage";
-import { Terms } from "./pages/Terms";
-import { Privacy } from "./pages/Privacy";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
+import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { lazy, Suspense } from 'react'
+import { Loader2 } from 'lucide-react'
 
-import "@/lib/i18n";
+const Landing = lazy(() => import('@/pages/Landing'))
+const Login = lazy(() => import('@/pages/Login'))
+const Register = lazy(() => import('@/pages/Register'))
+const DashboardLayout = lazy(() => import('@/components/layout/DashboardLayout'))
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Devices = lazy(() => import('@/pages/Devices'))
+const EmergencyContacts = lazy(() => import('@/pages/EmergencyContacts'))
+const History = lazy(() => import('@/pages/History'))
+const Settings = lazy(() => import('@/pages/Settings'))
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
-function AppContent() {
-  useAdaptiveTheme();
-  const auth = useAuthReady();
-  const [currentPage, setCurrentPage] = useState("index");
-  const [appReady, setAppReady] = useState(false);
-  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
-  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
-
-  const navigateWithData = (page: string, data?: { conversationId?: string }) => {
-    if (data?.conversationId) setPendingConversationId(data.conversationId);
-    setCurrentPage(page);
-  };
-
-  // Splash screen
-  useEffect(() => {
-    const timer = setTimeout(() => setAppReady(true), 2200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Detect password recovery link on load
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) {
-      setCurrentPage('reset-password');
-    }
-  }, []);
-
-  // Auto-redirect authenticated users to their dashboard
-  useEffect(() => {
-    if (auth.isReady && auth.user && !hasAutoRedirected) {
-      const dashboardPages = ['creator-dashboard', 'advertiser-dashboard', 'admin-dashboard'];
-      if (!dashboardPages.includes(currentPage) && currentPage !== 'reset-password' && currentPage !== 'terms' && currentPage !== 'privacy' && currentPage !== 'academia' && currentPage !== 'messages') {
-        setCurrentPage(auth.getDashboardPage());
-        setHasAutoRedirected(true);
-      }
-    }
-    // Reset redirect flag on logout
-    if (auth.isReady && !auth.user) {
-      setHasAutoRedirected(false);
-    }
-  }, [auth.isReady, auth.user, auth.userRole]);
-
-  if (!appReady) {
-    return <AnimatedLoading />;
-  }
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "index":
-        return <Index onNavigate={setCurrentPage} onNavigateWithData={navigateWithData} />;
-      case "auth":
-        return <Auth onNavigate={setCurrentPage} />;
-      case "reset-password":
-        return <ResetPassword onNavigate={setCurrentPage} />;
-      case "creator-dashboard":
-        return <CreatorDashboard />;
-      case "advertiser-dashboard":
-        return <AdvertiserDashboard />;
-      case "admin-dashboard":
-        return <AdminDashboard />;
-      case "global-dashboard":
-        return <GlobalDashboard />;
-      case "messages":
-        return <MessagesPage initialConversationId={pendingConversationId} onConversationOpened={() => setPendingConversationId(null)} />;
-      case "academia":
-        return <div className="max-w-2xl mx-auto py-8 px-4"><AcademiaStatusAds /></div>;
-      case "terms":
-        return <Terms onNavigate={setCurrentPage} />;
-      case "privacy":
-        return <Privacy onNavigate={setCurrentPage} />;
-      case "creators":
-        return <Index onNavigate={setCurrentPage} />;
-      default:
-        return <Index onNavigate={setCurrentPage} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background relative">
-      <FloatingBackground />
-      <Navigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
-      <main className="pb-20 md:pb-0 relative z-[2]">
-        <PageTransition pageKey={currentPage}>
-          {renderPage()}
-        </PageTransition>
-      </main>
-      <BottomNavigation onNavigate={setCurrentPage} currentPage={currentPage} auth={auth} />
-      {currentPage !== "messages" && <StatusBotMascot />}
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div className="dark min-h-screen bg-[#0A0F1A] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 text-[#25D366] animate-spin" />
     </div>
-  );
+  )
+  if (!user) return <Navigate to="/login" replace />
+  return <>{children}</>
 }
 
-function App() {
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div className="dark min-h-screen bg-[#0A0F1A] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 text-[#25D366] animate-spin" />
+    </div>
+  )
+  if (user) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+        <Route path="devices" element={<Devices />} />
+        <Route path="contacts" element={<EmergencyContacts />} />
+        <Route path="history" element={<History />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LocalizationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </TooltipProvider>
-      </LocalizationProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={
+            <div className="dark min-h-screen bg-[#0A0F1A] flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-[#25D366] animate-spin" />
+            </div>
+          }>
+            <AppRoutes />
+          </Suspense>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              className: 'dark:bg-[#1F2937] dark:text-white dark:border-white/10'
+            }}
+          />
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
-  );
+  )
 }
-
-export default App;
