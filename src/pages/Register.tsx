@@ -1,779 +1,152 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Shield,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  User,
-  Phone,
-  Users,
-  UserCircle,
-  ShieldCheck,
-  Check,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Users, UserCheck, Check } from "lucide-react";
+import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton, SpotlightCard } from "@/components/effects";
 
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-
-/* ------------------------------------------------------------------ */
-/*  Schema & Types                                                     */
-/* ------------------------------------------------------------------ */
-
-const registerSchema = z
-  .object({
-    fullName: z
-      .string()
-      .min(1, 'O nome é obrigatório')
-      .min(3, 'O nome deve ter pelo menos 3 caracteres'),
-    email: z
-      .string()
-      .min(1, 'O email é obrigatório')
-      .email('Insira um email válido'),
-    phone: z
-      .string()
-      .min(1, 'O telefone é obrigatório')
-      .regex(/^\d{9}$/, 'Insira 9 dígitos válidos (ex: 84XXXXXXX)'),
-    password: z
-      .string()
-      .min(1, 'A senha é obrigatória')
-      .min(8, 'A senha deve ter pelo menos 8 caracteres'),
-    confirmPassword: z
-      .string()
-      .min(1, 'Confirme a senha'),
-    role: z.enum(['pessoal', 'familia'], {
-      required_error: 'Selecione o tipo de conta',
-    }),
-    terms: z.literal(true, {
-      errorMap: () => ({ message: 'Você deve aceitar os termos para continuar' }),
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'As senhas não coincidem',
-    path: ['confirmPassword'],
-  });
-
-type RegisterFormData = z.infer<typeof registerSchema>;
-
-type AccountRole = 'pessoal' | 'familia';
-
-/* ------------------------------------------------------------------ */
-/*  Animation Variants                                                 */
-/* ------------------------------------------------------------------ */
-
-const floatVariant = {
-  animate: (i: number) => ({
-    y: [0, -18, 0],
-    x: [0, (i % 2 === 0 ? 8 : -8), 0],
-    rotate: [0, (i % 2 === 0 ? 4 : -4), 0],
-    transition: {
-      duration: 4 + i * 0.8,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
-  }),
-};
-
-const shieldPulse = {
-  initial: { scale: 0.8, opacity: 0 },
-  animate: {
-    scale: [0.95, 1.05, 0.95],
-    opacity: 1,
-    transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.08 },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 14 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: 'easeOut' },
-  },
-};
-
-const slideInLeft = {
-  hidden: { opacity: 0, x: -40 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.6, ease: 'easeOut' },
-  },
-};
-
-/* ------------------------------------------------------------------ */
-/*  Floating Background Shapes                                         */
-/* ------------------------------------------------------------------ */
-
-const floatingShapes = [
-  { size: 110, top: '10%', left: '15%', blur: 40 },
-  { size: 75, top: '60%', left: '10%', blur: 30 },
-  { size: 55, top: '28%', left: '68%', blur: 35 },
-  { size: 90, top: '78%', left: '60%', blur: 45 },
-];
-
-/* ------------------------------------------------------------------ */
-/*  Role Toggle Cards                                                  */
-/* ------------------------------------------------------------------ */
-
-function RoleCard({
-  value,
-  selected,
-  onSelect,
-}: {
-  value: AccountRole;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const isPessoal = value === 'pessoal';
-
-  return (
-    <motion.button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        'flex-1 relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer',
-        selected
-          ? 'border-[#25D366]/60 bg-[#25D366]/10 shadow-lg shadow-[#25D366]/10'
-          : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'
-      )}
-      whileTap={{ scale: 0.97 }}
-    >
-      <div
-        className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200',
-          selected
-            ? 'bg-[#25D366]/20 text-[#25D366]'
-            : 'bg-white/5 text-white/40'
-        )}
-      >
-        {isPessoal ? <UserCircle className="w-5 h-5" /> : <Users className="w-5 h-5" />}
-      </div>
-      <span
-        className={cn(
-          'text-sm font-medium transition-colors duration-200',
-          selected ? 'text-[#25D366]' : 'text-white/50'
-        )}
-      >
-        {isPessoal ? 'Pessoal' : 'Família'}
-      </span>
-      <span className="text-[10px] text-white/25 leading-tight text-center">
-        {isPessoal
-          ? 'Proteção individual para você'
-          : 'Segurança para toda a família'}
-      </span>
-      {selected && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center"
-        >
-          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-        </motion.div>
-      )}
-    </motion.button>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+const registerSchema = z.object({
+  name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres").max(60, "O nome e demasiado longo"),
+  email: z.string().min(1, "O email e obrigatorio").email("Insira um email valido"),
+  phone: z.string().min(1, "O telefone e obrigatorio").regex(/^\+258\d{9}$/, "Formato: +258 seguido de 9 digitos"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").regex(/[A-Z]/, "A senha deve conter uma maiuscula").regex(/[0-9]/, "A senha deve conter um numero"),
+  confirmPassword: z.string().min(1, "Confirme a sua senha"),
+  role: z.enum(["pessoal", "familia"], { required_error: "Selecione um plano" }),
+  terms: z.literal(true, { errorMap: () => ({ message: "Aceite os termos para continuar" }) }),
+}).refine((data) => data.password === data.confirmPassword, { path: ["confirmPassword"], message: "As senhas nao coincidem" });
+type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const [searchParams] = useSearchParams();
+  const prefillEmail = searchParams.get("email") || "";
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<AccountRole>('pessoal');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
+  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      role: 'pessoal',
-      terms: false as unknown as true,
-    },
+    defaultValues: { email: prefillEmail, phone: "+258", role: "pessoal", name: "", password: "", confirmPassword: "", terms: undefined as unknown as true },
   });
+  const selectedRole = watch("role");
 
-  const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    try {
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.fullName,
-            phone: `+258${data.phone}`,
-            role: data.role,
-          },
-        },
-      });
+  async function onSubmit(values: RegisterValues) {
+    setLoading(true);
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: values.email, password: values.password,
+      options: { data: { full_name: values.name, phone: values.phone, role: values.role } },
+    });
+    if (authError) { setLoading(false); toast.error("Erro ao criar conta", { description: authError.message }); return; }
+    if (authData.user) { await supabase.from("profiles").insert({ id: authData.user.id, full_name: values.name, email: values.email, phone: values.phone, role: values.role }); }
+    setLoading(false); toast.success("Conta criada!", { description: "Verifique o seu email para confirmar." }); navigate("/login");
+  }
 
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('Este email já está registrado');
-        } else {
-          toast.error(error.message);
-        }
-        return;
-      }
-
-      // Insert into profiles table
-      if (authData.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          full_name: data.fullName,
-          email: data.email,
-          phone: `+258${data.phone}`,
-          role: data.role,
-          created_at: new Date().toISOString(),
-        });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Still proceed — the auth user was created
-        }
-      }
-
-      toast.success('Conta criada com sucesso! Bem-vindo ao StatusAds Connect.');
-      navigate('/dashboard');
-    } catch {
-      toast.error('Erro inesperado. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRoleSelect = (role: AccountRole) => {
-    setSelectedRole(role);
-    setValue('role', role, { shouldValidate: true });
-  };
-
-  const handleTermsChange = (checked: boolean) => {
-    setTermsAccepted(checked);
-    setValue('terms', checked as unknown as true, { shouldValidate: true });
-  };
+  const inputCls = (hasError: boolean) =>
+    `h-11 border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30'} bg-white/[0.03] text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm rounded-xl pl-10 pr-4 w-full`
 
   return (
-    <div className="dark min-h-screen flex bg-[#0A0F1A] text-white">
-      {/* ===================== LEFT PANEL ===================== */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden bg-gradient-to-br from-[#0A0F1A] via-[#0D1B2A] to-[#0A0F1A]">
-        {/* Floating shapes */}
-        {floatingShapes.map((shape, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: shape.size,
-              height: shape.size,
-              top: shape.top,
-              left: shape.left,
-              filter: `blur(${shape.blur}px)`,
-              background:
-                `radial-gradient(circle, ${i % 2 === 0 ? 'rgba(37,211,102,0.15)' : 'rgba(56,189,248,0.1)'}, transparent)`,
-            }}
-            variants={floatVariant}
-            animate="animate"
-            custom={i}
-          />
-        ))}
-
-        {/* Grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-
-        {/* Content */}
-        <motion.div
-          className="relative z-10 flex flex-col items-center justify-center w-full px-12"
-          variants={slideInLeft}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Animated Shield */}
-          <motion.div
-            className="relative mb-10"
-            variants={shieldPulse}
-            initial="initial"
-            animate="animate"
-          >
-            <div className="relative">
-              <div className="absolute -inset-4 rounded-full bg-[#25D366]/20 blur-xl animate-pulse" />
-              <div className="relative w-32 h-32 rounded-3xl bg-gradient-to-br from-[#25D366]/30 to-[#25D366]/5 border border-[#25D366]/30 flex items-center justify-center backdrop-blur-sm">
-                <ShieldCheck className="w-16 h-16 text-[#25D366]" strokeWidth={1.5} />
-              </div>
-              <motion.div
-                className="absolute w-3 h-3 rounded-full bg-[#25D366]"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                style={{ top: -6, left: '50%', transformOrigin: '0 70px' }}
-              />
-              <motion.div
-                className="absolute w-2 h-2 rounded-full bg-sky-400"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                style={{ bottom: -4, left: '50%', transformOrigin: '0 70px' }}
-              />
+    <div className="dark flex min-h-screen bg-[#0A0F1A]">
+      <div className="relative hidden flex-1 items-center justify-center overflow-hidden lg:flex">
+        <AnimatedGrid opacity={0.3} />
+        <FloatingOrbs />
+        <NoiseTexture opacity={0.02} />
+        <MorphingBlob className="-left-20 top-1/3" color="rgba(37, 211, 102, 0.05)" size={350} />
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="relative z-10 flex flex-col items-center text-center px-8">
+          <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="mb-8 relative">
+            <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-[#25D366]/20 bg-[#25D366]/[0.06] backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)]">
+              <Shield className="h-14 w-14 text-[#25D366]" strokeWidth={1} />
             </div>
           </motion.div>
-
-          {/* Brand */}
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            <h1 className="text-3xl xl:text-4xl font-bold mb-3 tracking-tight">
-              <span className="text-[#25D366]">StatusAds</span> Connect
-            </h1>
-            <p className="text-lg xl:text-xl text-white/60 max-w-md leading-relaxed">
-              Crie sua conta e proteja<br />o que mais importa.
-            </p>
-          </motion.div>
-
-          {/* Feature pills */}
-          <motion.div
-            className="flex flex-wrap gap-3 mt-10 justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            {['Rastreamento em Tempo Real', 'Modo Família', 'Alerta de Emergência'].map(
-              (feature, i) => (
-                <motion.span
-                  key={feature}
-                  className="px-4 py-2 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-white/70 backdrop-blur-sm"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.7 + i * 0.1, duration: 0.3 }}
-                >
-                  {feature}
-                </motion.span>
-              )
-            )}
-          </motion.div>
+          <h2 className="font-display text-3xl font-bold text-white">Junte-se a <span className="bg-gradient-to-r from-[#25D366] to-emerald-400 bg-clip-text text-transparent">2 Milhoes</span> de Pessoas</h2>
+          <p className="mt-4 max-w-sm text-sm text-white/35 leading-relaxed">Crie a sua conta em segundos e comece a proteger quem mais importa.</p>
         </motion.div>
       </div>
-
-      {/* ===================== RIGHT PANEL ===================== */}
-      <div className="flex-1 flex items-center justify-center relative px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
-        {/* Mobile background blobs */}
-        <div className="lg:hidden absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute w-64 h-64 rounded-full top-[-10%] right-[-20%]"
-            style={{
-              filter: 'blur(60px)',
-              background: 'radial-gradient(circle, rgba(37,211,102,0.1), transparent)',
-            }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute w-48 h-48 rounded-full bottom-[-5%] left-[-15%]"
-            style={{
-              filter: 'blur(50px)',
-              background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent)',
-            }}
-            animate={{ scale: [1.1, 1, 1.1], opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </div>
-
-        <motion.div
-          className="w-full max-w-md relative z-10"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Mobile logo */}
-          <motion.div
-            variants={staggerItem}
-            className="lg:hidden flex items-center justify-center gap-2 mb-6"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#25D366] to-[#1a9e4d] flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
+      <div className="flex flex-1 items-center justify-center px-4 py-12 relative">
+        <NoiseTexture opacity={0.015} />
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-10 w-full max-w-md">
+          <motion.div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
+              <Shield className="h-5 w-5 text-[#25D366]" />
             </div>
-            <span className="text-xl font-bold">
-              <span className="text-[#25D366]">StatusAds</span> Connect
-            </span>
+            <span className="font-display text-xl font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
           </motion.div>
-
-          {/* Header */}
-          <motion.div variants={staggerItem} className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Criar conta
-            </h2>
-            <p className="mt-2 text-sm text-white/50">
-              Comece a sua jornada de segurança pessoal
-            </p>
-          </motion.div>
-
-          {/* Form Card — Glass morphism */}
-          <motion.div
-            variants={staggerItem}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-6 sm:p-8 shadow-2xl shadow-black/20"
-          >
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Nome Completo */}
-              <div className="space-y-1.5">
-                <Label htmlFor="fullName" className="text-white/80 text-sm">
-                  Nome Completo
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="João da Silva"
-                    className={cn(
-                      'pl-10 bg-white/[0.04] border-white/10 text-white placeholder:text-white/25 h-11 rounded-xl focus-visible:ring-[#25D366]/40 focus-visible:border-[#25D366]/40',
-                      errors.fullName &&
-                        'border-red-500/50 focus-visible:ring-red-500/40 focus-visible:border-red-500/40'
-                    )}
-                    {...register('fullName')}
-                  />
-                </div>
-                <AnimatePresence>
-                  {errors.fullName && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.fullName.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-2xl shadow-2xl shadow-black/20">
+            <h1 className="font-display text-2xl font-bold text-white">Criar Conta</h1>
+            <p className="mt-2 text-sm text-white/35">Preencha os dados abaixo para comecar.</p>
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Nome Completo</Label>
+                <div className="relative"><User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20" /><Input id="name" placeholder="Joao Silva" className={inputCls(!!errors.name)} {...register("name")} /></div>
+                {errors.name && <p className="text-xs text-red-400/80">{errors.name.message}</p>}
               </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-white/80 text-sm">
-                  Email
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    className={cn(
-                      'pl-10 bg-white/[0.04] border-white/10 text-white placeholder:text-white/25 h-11 rounded-xl focus-visible:ring-[#25D366]/40 focus-visible:border-[#25D366]/40',
-                      errors.email &&
-                        'border-red-500/50 focus-visible:ring-red-500/40 focus-visible:border-red-500/40'
-                    )}
-                    {...register('email')}
-                  />
-                </div>
-                <AnimatePresence>
-                  {errors.email && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.email.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Email</Label>
+                <div className="relative"><Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20" /><Input id="email" type="email" placeholder="seu@email.com" className={inputCls(!!errors.email)} {...register("email")} /></div>
+                {errors.email && <p className="text-xs text-red-400/80">{errors.email.message}</p>}
               </div>
-
-              {/* Telefone */}
-              <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-white/80 text-sm">
-                  Telefone
-                </Label>
-                <div className="flex">
-                  <div className="flex items-center gap-1 px-3 bg-white/[0.04] border border-white/10 border-r-0 rounded-l-xl text-sm text-white/50 select-none">
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>+258</span>
-                  </div>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="84XXXXXXX"
-                    maxLength={9}
-                    className={cn(
-                      'bg-white/[0.04] border-white/10 text-white placeholder:text-white/25 h-11 rounded-r-xl rounded-l-none focus-visible:ring-[#25D366]/40 focus-visible:border-[#25D366]/40',
-                      errors.phone &&
-                        'border-red-500/50 focus-visible:ring-red-500/40 focus-visible:border-red-500/40'
-                    )}
-                    {...register('phone')}
-                  />
-                </div>
-                <AnimatePresence>
-                  {errors.phone && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.phone.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Telefone</Label>
+                <div className="relative"><Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20" /><Input id="phone" type="tel" placeholder="+258840000000" className={inputCls(!!errors.phone)} {...register("phone")} /></div>
+                {errors.phone && <p className="text-xs text-red-400/80">{errors.phone.message}</p>}
               </div>
-
-              {/* Senha */}
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-white/80 text-sm">
-                  Senha
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Mínimo 8 caracteres"
-                    className={cn(
-                      'pl-10 pr-10 bg-white/[0.04] border-white/10 text-white placeholder:text-white/25 h-11 rounded-xl focus-visible:ring-[#25D366]/40 focus-visible:border-[#25D366]/40',
-                      errors.password &&
-                        'border-red-500/50 focus-visible:ring-red-500/40 focus-visible:border-red-500/40'
-                    )}
-                    {...register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20" />
+                  <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className={cn(inputCls(!!errors.password), 'pr-10')} {...register("password")} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <AnimatePresence>
-                  {errors.password && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.password.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                {errors.password && <p className="text-xs text-red-400/80">{errors.password.message}</p>}
               </div>
-
-              {/* Confirmar Senha */}
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="text-white/80 text-sm">
-                  Confirmar Senha
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Confirmar Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Repita a senha"
-                    className={cn(
-                      'pl-10 pr-10 bg-white/[0.04] border-white/10 text-white placeholder:text-white/25 h-11 rounded-xl focus-visible:ring-[#25D366]/40 focus-visible:border-[#25D366]/40',
-                      errors.confirmPassword &&
-                        'border-red-500/50 focus-visible:ring-red-500/40 focus-visible:border-red-500/40'
-                    )}
-                    {...register('confirmPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                  >
-                    {showConfirm ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20" />
+                  <Input id="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" className={cn(inputCls(!!errors.confirmPassword), 'pr-10')} {...register("confirmPassword")} />
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition">
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <AnimatePresence>
-                  {errors.confirmPassword && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.confirmPassword.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                {errors.confirmPassword && <p className="text-xs text-red-400/80">{errors.confirmPassword.message}</p>}
               </div>
-
-              {/* Role Selector */}
-              <div className="space-y-1.5">
-                <Label className="text-white/80 text-sm">
-                  Tipo de Conta
-                </Label>
-                <input type="hidden" {...register('role')} />
-                <div className="flex gap-3">
-                  <RoleCard
-                    value="pessoal"
-                    selected={selectedRole === 'pessoal'}
-                    onSelect={() => handleRoleSelect('pessoal')}
-                  />
-                  <RoleCard
-                    value="familia"
-                    selected={selectedRole === 'familia'}
-                    onSelect={() => handleRoleSelect('familia')}
-                  />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium text-white/50">Tipo de Conta</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[{ val: 'pessoal', Icon: User, label: 'Pessoal' }, { val: 'familia', Icon: Users, label: 'Familia' }].map(r => (
+                    <button key={r.val} type="button" onClick={() => setValue("role", r.val as any)} className={cn(
+                      'relative flex flex-col items-center gap-2 rounded-xl border p-4 transition-all duration-300',
+                      selectedRole === r.val ? 'border-[#25D366]/40 bg-[#25D366]/[0.06] shadow-[0_0_20px_-5px_rgba(37,211,102,0.1)]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/15'
+                    )}>
+                      {selectedRole === r.val && <motion.div layoutId="role-ind" className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#25D366] shadow-[0_0_10px_rgba(37,211,102,0.4)]"><Check className="h-3 w-3 text-white" /></motion.div>}
+                      <r.Icon className={cn('h-5 w-5', selectedRole === r.val ? 'text-[#25D366]' : 'text-white/25')} strokeWidth={1.5} />
+                      <span className={cn('text-xs font-medium', selectedRole === r.val ? 'text-white' : 'text-white/35')}>{r.label}</span>
+                    </button>
+                  ))}
                 </div>
-                <AnimatePresence>
-                  {errors.role && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.role.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                {errors.role && <p className="text-xs text-red-400/80">{errors.role.message}</p>}
               </div>
-
-              {/* Terms Checkbox */}
-              <div className="space-y-1.5">
-                <div className="flex items-start gap-3">
-                  <input type="hidden" {...register('terms')} />
-                  <Checkbox
-                    id="terms"
-                    checked={termsAccepted}
-                    onCheckedChange={(checked) =>
-                      handleTermsChange(checked === true)
-                    }
-                    className={cn(
-                      'mt-0.5 data-[state=checked]:bg-[#25D366] data-[state=checked]:border-[#25D366] border-white/20'
-                    )}
-                  />
-                  <label
-                    htmlFor="terms"
-                    className="text-xs text-white/40 leading-relaxed cursor-pointer select-none"
-                  >
-                    Aceito os{' '}
-                    <a
-                      href="#"
-                      className="text-[#25D366] hover:text-[#25D366]/80 underline underline-offset-2"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      Termos de Uso
-                    </a>{' '}
-                    e{' '}
-                    <a
-                      href="#"
-                      className="text-[#25D366] hover:text-[#25D366]/80 underline underline-offset-2"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      Política de Privacidade
-                    </a>
-                  </label>
-                </div>
-                <AnimatePresence>
-                  {errors.terms && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.terms.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className={cn(
-                  'w-full h-12 rounded-xl text-base font-semibold mt-2',
-                  'bg-gradient-to-r from-[#1a9e4d] via-[#25D366] to-[#1a9e4d]',
-                  'bg-[length:200%_100%] hover:bg-right',
-                  'text-white shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/30',
-                  'transition-all duration-300 disabled:opacity-60',
-                  'border-0'
-                )}
-              >
-                <AnimatePresence mode="wait">
-                  {isLoading ? (
-                    <motion.div
-                      key="loading"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center gap-2"
-                    >
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Criando conta...</span>
-                    </motion.div>
-                  ) : (
-                    <motion.span
-                      key="idle"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center gap-2"
-                    >
-                      <span>Criar Conta</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Button>
+              <label className="flex items-start gap-3 cursor-pointer pt-1">
+                <input id="terms" type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/15 bg-white/5 accent-[#25D366]" {...register("terms")} />
+                <Label htmlFor="terms" className="text-[11px] leading-relaxed text-white/30">Aceito os <a href="#" className="text-[#25D366]/70 hover:text-[#25D366] hover:underline">Termos de Uso</a> e a <a href="#" className="text-[#25D366]/70 hover:text-[#25D366] hover:underline">Politica de Privacidade</a>, incluindo o processamento dos meus dados conforme a LGPD.</Label>
+              </label>
+              {errors.terms && <p className="text-xs text-red-400/80">{errors.terms.message}</p>}
+              <MagneticButton strength={0.15}>
+                <RippleButton onClick={handleSubmit(onSubmit)} disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
+                  {loading ? <span className="flex items-center gap-2"><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>A criar conta...</span> : <>Criar Conta <ArrowRight className="h-4 w-4" /></>}
+                </RippleButton>
+              </MagneticButton>
             </form>
-          </motion.div>
-
-          {/* Login Link */}
-          <motion.p
-            variants={staggerItem}
-            className="mt-6 text-center text-sm text-white/40"
-          >
-            Já tem uma conta?{' '}
-            <Link
-              to="/login"
-              className="text-[#25D366] font-medium hover:text-[#25D366]/80 transition-colors"
-            >
-              Entrar
-            </Link>
+          </div>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-center text-sm text-white/30">
+            Ja tem conta? <Link to="/login" className="font-medium text-[#25D366]/70 hover:text-[#25D366]">Entrar</Link>
           </motion.p>
         </motion.div>
       </div>

@@ -1,1179 +1,566 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { motion, useInView, useScroll, useTransform } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
-  Shield,
-  MapPin,
-  Mic,
-  BellOff,
-  Crosshair,
-  Wifi,
-  ShieldCheck,
-  ChevronRight,
-  Menu,
-  X,
-  Smartphone,
-  Headphones,
-  Watch,
-  AlertTriangle,
-  Radio,
-  Phone,
-  Users,
-  Building2,
-  Globe,
-  Lock,
-  Mail,
-  Check,
-  ArrowRight,
-  Zap,
-  Eye,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+  AnimatedGrid, AuroraBackground, ParticleField, FloatingOrbs,
+  NoiseTexture, MagneticButton, CounterAnimated, Marquee,
+  RippleButton, TextReveal, SpotlightCard, MorphingBlob, ScrollProgress,
+} from '@/components/effects'
+import {
+  Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,
+  BellOff, Crosshair, Wifi, Menu, X, ChevronRight, Check,
+  ArrowRight, Play, Users, Activity, Zap, Lock, Eye, Globe,
+  Fingerprint, Smartphone, Radar, Sparkles,
+} from 'lucide-react'
 
-/* ------------------------------------------------------------------ */
-/*  Animation helpers                                                  */
-/* ------------------------------------------------------------------ */
-
+/* ── Animation Presets ── */
 const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: 'easeOut' },
+  hidden: { opacity: 0, y: 40 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.1, duration: 0.7, ease: [0.25, 0.4, 0.25, 1] },
   }),
-};
-
+}
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.85 },
+  visible: (i: number) => ({
+    opacity: 1, scale: 1,
+    transition: { delay: i * 0.1, duration: 0.6, ease: [0.25, 0.4, 0.25, 1] },
+  }),
+}
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: (i: number = 0) => ({
-    opacity: 1,
-    transition: { duration: 0.5, delay: i * 0.08 },
-  }),
-};
+  visible: { opacity: 1, transition: { duration: 0.8 } },
+}
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: (i: number = 0) => ({
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, delay: i * 0.12 },
-  }),
-};
-
-function Section({
-  children,
-  className,
-  id,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  id?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
-
+function Section({ children, className, id }: { children: React.ReactNode; className?: string; id?: string }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-100px' })
   return (
-    <motion.section
-      ref={ref}
-      id={id}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      className={className}
-    >
+    <motion.section id={id} ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'} className={cn('relative', className)}>
       {children}
     </motion.section>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Animated section wrapper with stagger                             */
-/* ------------------------------------------------------------------ */
-function StaggerContainer({
-  children,
-  className,
-  staggerDelay = 0.08,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  staggerDelay?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-60px' });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={{
-        visible: { transition: { staggerChildren: staggerDelay } },
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  1. NAVBAR                                                          */
-/* ------------------------------------------------------------------ */
-
+/* ════════════════════════════════════════════════ */
+/*  NAVBAR                                        */
+/* ════════════════════════════════════════════════ */
 function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+  const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const links = [
     { label: 'Funcionalidades', href: '#funcionalidades' },
     { label: 'Como Funciona', href: '#como-funciona' },
-    { label: 'Preços', href: '#precos' },
-    { label: 'Login', href: '#login' },
-  ];
+    { label: 'Pre\u00e7os', href: '#precos' },
+    { label: 'Emerg\u00eancia', href: '#emergencia' },
+  ]
+
+  useState(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  })
 
   return (
-    <nav
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrolled ? 'glass shadow-lg' : 'bg-transparent'
-      )}
-    >
-      <div className="container-safe">
-        <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="relative">
-              <Shield className="w-8 h-8 text-safe transition-transform duration-300 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-safe/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Status<span className="text-gradient-safe">Ads</span>
-            </span>
-          </a>
-
-          {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-8">
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-              >
-                {link.label}
-              </a>
-            ))}
+    <nav className={cn(
+      'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
+      scrolled
+        ? 'bg-[#0A0F1A]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20'
+        : 'bg-transparent'
+    )}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+        <Link to="/" className="group flex items-center gap-2.5">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 transition-all group-hover:bg-[#25D366]/20 group-hover:border-[#25D366]/40 group-hover:shadow-[0_0_20px_rgba(37,211,102,0.15)]">
+            <Shield className="h-4.5 w-4.5 text-[#25D366] transition-transform group-hover:scale-110" />
           </div>
-
-          {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Login
-            </Button>
-            <Button variant="safe" size="sm">
-              Começar Agora
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-
-          {/* Mobile toggle */}
-          <button
-            className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition"
-            onClick={() => setOpen(!open)}
-            aria-label="Menu"
-          >
-            {open ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden glass-card mt-2 p-6 space-y-4"
-          >
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="block text-base text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </a>
-            ))}
-            <div className="pt-4 border-t border-white/10">
-              <Button variant="safe" className="w-full">
-                Começar Agora
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </nav>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  2. HERO SECTION                                                    */
-/* ------------------------------------------------------------------ */
-
-function Hero() {
-  const stats = [
-    { value: '2M+', label: 'Utilizadores' },
-    { value: '99.9%', label: 'Uptime' },
-    { value: '<3s', label: 'Tempo de Resposta' },
-  ];
-
-  return (
-    <section
-      id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-    >
-      {/* Grid pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      {/* Hero glow */}
-      <div className="absolute inset-0 bg-hero-glow" />
-
-      {/* Floating blobs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-safe/10 rounded-full blur-[128px] animate-float" />
-      <div
-        className="absolute bottom-1/4 -right-32 w-80 h-80 bg-safe/5 rounded-full blur-[100px] animate-float"
-        style={{ animationDelay: '2s' }}
-      />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-safe/[0.03] rounded-full blur-[150px]"
-      />
-
-      {/* Floating small circles */}
-      <motion.div
-        className="absolute top-[20%] left-[15%] w-3 h-3 bg-safe/30 rounded-full"
-        animate={{ y: [0, -20, 0], opacity: [0.3, 0.7, 0.3] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute top-[30%] right-[20%] w-2 h-2 bg-safe/20 rounded-full"
-        animate={{ y: [0, -15, 0], opacity: [0.2, 0.5, 0.2] }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 1,
-        }}
-      />
-      <motion.div
-        className="absolute bottom-[35%] left-[25%] w-4 h-4 bg-emerald-400/15 rounded-full"
-        animate={{ y: [0, -25, 0], opacity: [0.15, 0.35, 0.15] }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 0.5,
-        }}
-      />
-      <motion.div
-        className="absolute bottom-[25%] right-[15%] w-2.5 h-2.5 bg-safe/25 rounded-full"
-        animate={{ y: [0, -18, 0], opacity: [0.25, 0.5, 0.25] }}
-        transition={{
-          duration: 4.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 1.5,
-        }}
-      />
-      <motion.div
-        className="absolute top-[60%] left-[70%] w-2 h-2 bg-emerald-300/20 rounded-full"
-        animate={{ y: [0, -12, 0], opacity: [0.2, 0.4, 0.2] }}
-        transition={{
-          duration: 3.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 2,
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 container-safe text-center pt-24 pb-12">
-        {/* Shield pulse animation */}
-        <motion.div
-          className="relative mx-auto w-24 h-24 mb-8 flex items-center justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        >
-          {/* Pulse rings */}
-          <div className="absolute inset-0 rounded-full border-2 border-safe/30 animate-ping-slow" />
-          <div
-            className="absolute inset-0 rounded-full border border-safe/20 animate-ping-slow"
-            style={{ animationDelay: '0.5s' }}
-          />
-          <div
-            className="absolute inset-0 rounded-full border border-safe/10 animate-ping-slow"
-            style={{ animationDelay: '1s' }}
-          />
-          {/* Shield icon */}
-          <div className="relative w-16 h-16 rounded-full bg-safe/10 border border-safe/30 flex items-center justify-center">
-            <Shield className="w-8 h-8 text-safe" />
-            <div className="absolute inset-0 bg-safe/10 rounded-full blur-xl" />
-          </div>
-        </motion.div>
-
-        {/* Badge */}
-        <motion.div
-          variants={fadeUp}
-          custom={0}
-          initial="hidden"
-          animate="visible"
-          className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full glass-card text-sm text-safe"
-        >
-          <Zap className="w-3.5 h-3.5" />
-          Tecnologia Bluetooth Low Energy
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          variants={fadeUp}
-          custom={1}
-          initial="hidden"
-          animate="visible"
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto"
-        >
-          A Sua Segurança.
-          <br />
-          <span className="text-gradient-safe">
-            Um Botão de Distância.
+          <span className="font-display text-lg font-bold text-white tracking-tight">
+            Status<span className="text-[#25D366]">Ads</span>
           </span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          variants={fadeUp}
-          custom={2}
-          initial="hidden"
-          animate="visible"
-          className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-        >
-          Transforme qualquer dispositivo Bluetooth — AirPods, óculos
-          inteligentes ou smartwatch — num botão de pânico invisível.
-          Rastreamento GPS, gravação automática e alerta instantâneo para
-          quem você ama.
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          variants={fadeUp}
-          custom={3}
-          initial="hidden"
-          animate="visible"
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <Button variant="safe" size="xl">
-            Criar Conta Grátis
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-          <Button variant="outline" size="xl" className="border-white/20">
-            <Eye className="w-5 h-5 mr-2" />
-            Ver Demo
-          </Button>
-        </motion.div>
-
-        {/* Floating stat cards */}
-        <motion.div
-          variants={fadeUp}
-          custom={4}
-          initial="hidden"
-          animate="visible"
-          className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto"
-        >
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="glass-card px-6 py-4 text-center animate-float"
-            >
-              <div className="text-2xl sm:text-3xl font-bold text-gradient-safe">
-                {stat.value}
-              </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                {stat.label}
-              </div>
-            </div>
+        </Link>
+        <div className="hidden items-center gap-1 md:flex">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="px-4 py-2 text-sm text-white/50 transition-all hover:text-white rounded-lg hover:bg-white/5">
+              {l.label}
+            </a>
           ))}
-        </motion.div>
+          <div className="ml-4">
+            <MagneticButton strength={0.15}>
+              <Button asChild className="bg-[#25D366] text-white hover:bg-[#1fb855] hover:shadow-[0_0_30px_-5px_rgba(37,211,102,0.4)] transition-all duration-300 rounded-xl">
+                <Link to="/register">Come\u00e7ar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+              </Button>
+            </MagneticButton>
+          </div>
+        </div>
+        <button onClick={() => setOpen(!open)} className="text-white/60 md:hidden hover:text-white transition" aria-label="Menu">
+          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
       </div>
-    </section>
-  );
+      {open && (
+        <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }} className="border-t border-white/[0.06] bg-[#0A0F1A]/95 backdrop-blur-2xl md:hidden overflow-hidden">
+          <div className="flex flex-col gap-1 px-4 py-3">
+            {links.map((l) => (
+              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-3 py-2.5 text-sm text-white/60 transition hover:text-white hover:bg-white/5 rounded-xl">
+                {l.label}
+              </a>
+            ))}
+            <Button asChild className="mt-2 w-full bg-[#25D366] text-white hover:bg-[#1fb855] rounded-xl">
+              <Link to="/register" onClick={() => setOpen(false)}>Come\u00e7ar Agora</Link>
+            </Button>
+          </div>
+        </motion.div>
+      )}
+    </nav>
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  3. TRUST BAR                                                       */
-/* ------------------------------------------------------------------ */
-
-function TrustBar() {
-  const partners = [
-    'Policia Federal',
-    'GSMA',
-    'Bluetooth SIG',
-    'Anatel',
-    'CERT.br',
-    'SaferNet',
-  ];
-
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-40px' });
+/* ════════════════════════════════════════════════ */
+/*  HERO                                          */
+/* ════════════════════════════════════════════════ */
+function Hero() {
+  const { scrollYProgress } = useScroll()
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0])
 
   return (
-    <Section className="py-12 border-y border-white/5" id="trust">
-      <div className="container-safe">
-        <motion.p
-          variants={fadeIn}
-          custom={0}
-          className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-8"
-        >
-          Parceiros de confiança em segurança digital
-        </motion.p>
-        <motion.div
-          ref={ref}
-          variants={fadeIn}
-          custom={1}
-          className="flex flex-wrap items-center justify-center gap-8 md:gap-14"
-        >
-          {partners.map((name) => (
-            <span
-              key={name}
-              className="text-lg md:text-xl font-semibold text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors duration-300 select-none"
-            >
-              {name}
-            </span>
-          ))}
-        </motion.div>
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 pt-20">
+      <AuroraBackground className="opacity-60" />
+      <ParticleField count={35} className="opacity-50" />
+      <NoiseTexture opacity={0.025} />
+      <AnimatedGrid className="opacity-40" />
+
+      {/* Decorative rings */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="relative h-[600px] w-[600px]">
+          <div className="absolute inset-0 rounded-full border border-white/[0.03] animate-slow-rotate" />
+          <div className="absolute inset-8 rounded-full border border-[#25D366]/[0.06] animate-slow-rotate" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
+          <div className="absolute inset-16 rounded-full border border-white/[0.02] animate-slow-rotate" style={{ animationDuration: '35s' }} />
+        </div>
       </div>
-    </Section>
-  );
+
+      <MorphingBlob className="-left-32 top-1/4" color="rgba(37, 211, 102, 0.06)" size={400} />
+      <MorphingBlob className="-right-32 bottom-1/4" color="rgba(59, 130, 246, 0.05)" size={350} />
+
+      <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-5xl text-center">
+        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#25D366]/20 bg-[#25D366]/5 px-4 py-1.5 text-xs font-medium text-[#25D366] backdrop-blur-sm">
+            <Sparkles className="h-3.5 w-3.5" />
+            Protec\u00e7\u00e3o Pessoal Inteligente via BLE
+          </div>
+          <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            A Sua Seguran\u00e7a.{' '}
+            <span className="bg-gradient-to-r from-[#25D366] via-emerald-400 to-[#25D366] bg-clip-text text-transparent bg-[length:200%_auto] animate-[text-shimmer_4s_linear_infinite]">
+              Um Bot\u00e3o de Dist\u00e2ncia.
+            </span>
+          </h1>
+        </motion.div>
+        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="mx-auto mt-6 max-w-2xl text-base text-white/50 leading-relaxed sm:text-lg md:text-xl">
+          Monitoriza\u00e7\u00e3o por Bluetooth em tempo real para protec\u00e7\u00e3o pessoal.
+          Pareie qualquer dispositivo BLE e active a seguran\u00e7a com um \u00fanico toque.
+        </motion.p>
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8 }} className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <MagneticButton strength={0.2}>
+            <RippleButton className="h-13 px-8 text-base font-semibold">
+              Criar Conta Gr\u00e1tis <ArrowRight className="ml-2 h-4 w-4" />
+            </RippleButton>
+          </MagneticButton>
+          <MagneticButton strength={0.15}>
+            <Button variant="outline" size="lg" className="h-13 border-white/10 bg-white/[0.03] px-8 text-base text-white/80 backdrop-blur-sm hover:bg-white/[0.08] hover:border-white/20 hover:text-white rounded-xl transition-all duration-300">
+              <Play className="mr-2 h-4 w-4" /> Ver Demo
+            </Button>
+          </MagneticButton>
+        </motion.div>
+
+        <div className="mt-20 grid grid-cols-3 gap-4 sm:gap-8">
+          {[
+            { value: 2, suffix: 'M+', label: 'Utilizadores Activos' },
+            { value: 99.9, suffix: '%', label: 'Uptime Garantido', decimals: 1 },
+            { value: 0, suffix: '<3s', label: 'Tempo de Resposta', isText: true },
+          ].map((s, i) => (
+            <motion.div key={s.label} custom={i} variants={scaleIn} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }} className="group">
+              <div className="mx-auto w-full max-w-[200px] rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all duration-500 group-hover:border-[#25D366]/20 group-hover:bg-[#25D366]/[0.03] group-hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.1)]">
+                <p className="text-3xl font-display font-extrabold text-[#25D366]">
+                  {s.isText ? s.suffix : <CounterAnimated target={s.value} suffix={s.suffix} decimals={(s as any).decimals || 0} />}
+                </p>
+                <p className="mt-1.5 text-xs text-white/40 font-medium">{s.label}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  4. HOW IT WORKS                                                    */
-/* ------------------------------------------------------------------ */
+/* ════════════════════════════════════════════════ */
+/*  TRUST MARQUEE                                 */
+/* ════════════════════════════════════════════════ */
+function TrustMarquee() {
+  const partners = ['Policia Federal', 'GSMA', 'Bluetooth SIG', 'Anatel', 'CERT.br', 'SaferNet', 'Google Cloud', 'AWS Security', 'Cloudflare']
+  const items = [...partners, ...partners]
+  return (
+    <Section className="border-y border-white/[0.04] bg-white/[0.01] py-8">
+      <motion.p variants={fadeUp} custom={0} className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
+        Parceiros de Confian\u00e7a
+      </motion.p>
+      <Marquee speed={30} className="mask-edges">
+        {items.map((name, i) => (
+          <span key={`${name}-${i}`} className="mx-8 text-sm font-semibold text-white/20 whitespace-nowrap transition hover:text-white/40">
+            {name}
+          </span>
+        ))}
+      </Marquee>
+    </Section>
+  )
+}
 
+/* ════════════════════════════════════════════════ */
+/*  HOW IT WORKS                                 */
+/* ════════════════════════════════════════════════ */
 function HowItWorks() {
   const steps = [
-    {
-      num: '01',
-      icon: Headphones,
-      title: 'Pareie o Dispositivo',
-      desc: 'Conecte o seu dispositivo BLE — AirPods, smartwatch, óculos inteligentes ou qualquer acessório Bluetooth compatível com o seu smartphone.',
-    },
-    {
-      num: '02',
-      icon: ShieldCheck,
-      title: 'Active a Proteção',
-      desc: 'Ative o modo de monitorização na aplicação. O sistema fica em standby, pronto para agir no momento em que precisar.',
-    },
-    {
-      num: '03',
-      icon: AlertTriangle,
-      title: 'Um Botão Salva Vidas',
-      desc: 'Em situação de perigo, pressione o botão do dispositivo. A sua localização é enviada instantaneamente para contactos de emergência e autoridades.',
-    },
-  ];
-
+    { num: '01', title: 'Pareie o Dispositivo', desc: 'Conecte qualquer dispositivo BLE \u2014 fones, pulseira ou tracker \u2014 ao seu smartphone em segundos.', Icon: Headphones },
+    { num: '02', title: 'Active a Protec\u00e7\u00e3o', desc: 'Com um toque, active o modo de seguran\u00e7a que monitora a dist\u00e2ncia e o sinal do dispositivo pareado.', Icon: ShieldCheck },
+    { num: '03', title: 'Um Bot\u00e3o Salva Vidas', desc: 'Se o sinal for perdido ou o bot\u00e3o de emerg\u00eancia pressionado, contactos e autoridades s\u00e3o notificados.', Icon: AlertTriangle },
+  ]
   return (
-    <Section className="py-24 md:py-32" id="como-funciona">
-      <div className="container-safe">
-        <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 mb-4 rounded-full glass-card text-sm text-safe">
-            Simples & Eficaz
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+    <Section id="como-funciona" className="py-28">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Processo Simples</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Como <span className="text-gradient-safe">Funciona</span>
           </h2>
-          <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            Três passos. Um botão. Segurança total.
+          <p className="mx-auto mt-4 max-w-lg text-white/40">
+            Tr\u00eas passos simples entre voc\u00ea e a tranquilidade.
           </p>
         </motion.div>
-
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {steps.map((step) => (
-            <motion.div
-              key={step.num}
-              variants={fadeUp}
-              className="relative glass-card p-8 text-center group hover:border-safe/30 transition-colors duration-300"
-            >
-              {/* Number badge */}
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-safe/10 border border-safe/20 text-safe font-bold text-sm mb-6 group-hover:bg-safe/20 transition-colors">
-                {step.num}
+        <div className="relative mt-20 grid grid-cols-1 gap-12 md:grid-cols-3">
+          <div className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-16 hidden h-px bg-gradient-to-r from-transparent via-[#25D366]/30 to-transparent md:block" />
+          {steps.map((step, i) => (
+            <motion.div key={step.num} custom={i} variants={fadeUp} className="relative flex flex-col items-center text-center">
+              <div className="relative">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#25D366]/20 bg-[#25D366]/[0.06] backdrop-blur-sm transition-all duration-500 hover:border-[#25D366]/40 hover:bg-[#25D366]/10 hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.15)]">
+                  <step.Icon className="h-8 w-8 text-[#25D366]" />
+                </div>
+                <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-[#0A0F1A] border border-[#25D366]/30 text-[10px] font-bold text-[#25D366] font-mono">
+                  {step.num}
+                </span>
               </div>
-
-              {/* Icon */}
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-navy-800 border border-white/10 flex items-center justify-center mb-5 group-hover:border-safe/30 transition-colors">
-                <step.icon className="w-7 h-7 text-safe" />
-              </div>
-
-              <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {step.desc}
-              </p>
-
-              {/* Connector line (hidden on last item & mobile) */}
-              {step.num !== '03' && (
-                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-safe/40 to-transparent" />
-              )}
+              <h3 className="mt-6 text-lg font-display font-semibold text-white">{step.title}</h3>
+              <p className="mt-2.5 max-w-xs text-sm leading-relaxed text-white/40">{step.desc}</p>
             </motion.div>
           ))}
-        </StaggerContainer>
+        </div>
       </div>
     </Section>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  5. FEATURES GRID                                                   */
-/* ------------------------------------------------------------------ */
-
+/* ════════════════════════════════════════════════ */
+/*  FEATURES GRID                                 */
+/* ════════════════════════════════════════════════ */
 function FeaturesGrid() {
   const features = [
-    {
-      icon: MapPin,
-      title: 'Rastreamento em Tempo Real',
-      desc: 'GPS de alta precisão com actualizações a cada segundo. Veja a localização exacta em tempo real no mapa interactivo.',
-    },
-    {
-      icon: Mic,
-      title: 'Gravação de Áudio Automática',
-      desc: 'Ao activar o alerta, a gravação de áudio inicia automaticamente — prova crucial para investigações.',
-    },
-    {
-      icon: BellOff,
-      title: 'Alerta Silencioso',
-      desc: 'Envie pedidos de socorro sem chamar atenção. Notificações discretas que não comprometem a sua segurança.',
-    },
-    {
-      icon: Crosshair,
-      title: 'Geofencing Inteligente',
-      desc: 'Defina zonas seguras e receba alertas automáticos quando entrar ou sair dessas áreas.',
-    },
-    {
-      icon: Wifi,
-      title: 'Rede de Dispositivos',
-      desc: 'Crowdsourced mesh network que amplifica o sinal BLE em áreas densas, garantindo cobertura mesmo sem internet.',
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Partilha com Autoridades',
-      desc: 'Integração directa com forças policiais e serviços de emergência. Relatórios automáticos com dados de localização.',
-    },
-  ];
-
+    { title: 'Rastreamento Tempo Real', desc: 'Veja a localiza\u00e7\u00e3o exacta do seu dispositivo BLE a cada segundo no mapa interactivo.', Icon: MapPin },
+    { title: 'Grava\u00e7\u00e3o de \u00c1udio', desc: 'Grava automaticamente o ambiente quando o alerta \u00e9 activado, para uso como prova forense.', Icon: Mic },
+    { title: 'Alerta Silencioso', desc: 'Notifique contactos de emerg\u00eancia sem que o agressor perceba \u2014 zero som, zero vibra\u00e7\u00e3o.', Icon: BellOff },
+    { title: 'Geofencing Inteligente', desc: 'Crie zonas seguras e receba alertas instant\u00e2neos ao entrar ou sair dessas \u00e1reas.', Icon: Crosshair },
+    { title: 'Rede de Dispositivos', desc: 'Aproveite outros dispositivos pr\u00f3ximos para ampliar o alcance do sinal BLE.', Icon: Wifi },
+    { title: 'Partilha com Autoridades', desc: 'Envie dados de localiza\u00e7\u00e3o e \u00e1udio directamente para a Pol\u00edcia com um toque.', Icon: ShieldCheck },
+  ]
   return (
-    <Section className="py-24 md:py-32" id="funcionalidades">
-      <div className="container-safe">
-        <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 mb-4 rounded-full glass-card text-sm text-safe">
+    <Section id="funcionalidades" className="relative py-28 overflow-hidden">
+      <ParticleField count={20} className="opacity-30" />
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Tecnologia Avan\u00e7ada</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Funcionalidades
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            Proteção <span className="text-gradient-safe">Completa</span>
           </h2>
-          <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            Cada funcionalidade foi projectada para oferecer segurança máxima com a menor fricção possível.
+          <p className="mx-auto mt-4 max-w-lg text-white/40">
+            Ao servi\u00e7o da sua seguran\u00e7a pessoal.
           </p>
         </motion.div>
-
-        <StaggerContainer
-          staggerDelay={0.08}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {features.map((f) => (
-            <motion.div
-              key={f.title}
-              variants={scaleIn}
-              className="glass-card p-6 lg:p-8 group hover:border-safe/30 transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-xl bg-safe/10 border border-safe/20 flex items-center justify-center mb-5 group-hover:bg-safe/20 group-hover:scale-110 transition-all duration-300">
-                <f.icon className="w-6 h-6 text-safe" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {f.desc}
-              </p>
+        <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div key={f.title} custom={i} variants={fadeUp}>
+              <SpotlightCard className="p-7 h-full">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366]/[0.08] text-[#25D366] border border-[#25D366]/10">
+                  <f.Icon className="h-5 w-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-display mt-5 text-base font-semibold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/40">{f.desc}</p>
+              </SpotlightCard>
             </motion.div>
           ))}
-        </StaggerContainer>
-      </div>
-    </Section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  6. EMERGENCY DEMO SECTION                                          */
-/* ------------------------------------------------------------------ */
-
-function EmergencyDemo() {
-  const flowSteps = [
-    {
-      icon: Smartphone,
-      label: 'Botão Pressionado',
-      time: '0s',
-    },
-    {
-      icon: MapPin,
-      label: 'GPS Capturado',
-      time: '<1s',
-    },
-    {
-      icon: Mic,
-      label: 'Áudio a Gravar',
-      time: '<1.5s',
-    },
-    {
-      icon: Phone,
-      label: 'Contactos & Polícia Notificados',
-      time: '<3s',
-    },
-  ];
-
-  return (
-    <Section
-      className="py-24 md:py-32 relative overflow-hidden"
-      id="emergency"
-    >
-      {/* Red-tinted background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-danger/5 via-danger/10 to-transparent" />
-      <div className="absolute inset-0 bg-danger-glow" />
-
-      <div className="relative z-10 container-safe">
-        <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full border border-danger/30 bg-danger/10 text-sm text-danger">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Emergência
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            Em Caso de Emergência,{' '}
-            <span className="text-gradient-danger">Cada Segundo Conta</span>
-          </h2>
-          <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Veja como o sistema responde em menos de 3 segundos quando o
-            botão de emergência é activado.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-          {/* Mock phone screen */}
-          <motion.div variants={fadeUp} custom={1} className="flex justify-center">
-            <div className="relative w-64 sm:w-72">
-              {/* Phone frame */}
-              <div className="rounded-[2.5rem] border-2 border-danger/60 bg-navy-900 p-3 emergency-active">
-                <div className="rounded-[2rem] bg-navy-950 overflow-hidden">
-                  {/* Status bar */}
-                  <div className="flex items-center justify-between px-6 py-2 text-xs text-muted-foreground">
-                    <span>21:47</span>
-                    <div className="flex items-center gap-1">
-                      <Wifi className="w-3 h-3" />
-                      <Radio className="w-3 h-3" />
-                    </div>
-                  </div>
-
-                  {/* Emergency content */}
-                  <div className="px-6 pb-8 pt-4 text-center space-y-4">
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="mx-auto w-16 h-16 rounded-full bg-danger/20 border-2 border-danger flex items-center justify-center"
-                    >
-                      <AlertTriangle className="w-8 h-8 text-danger" />
-                    </motion.div>
-
-                    <div>
-                      <p className="text-danger font-bold text-lg">
-                        ALERTA ACTIVADO
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Emergência em andamento
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 text-left">
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-danger/10 border border-danger/20">
-                        <MapPin className="w-4 h-4 text-danger flex-shrink-0" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Localização
-                          </p>
-                          <p className="text-sm font-mono">
-                            -23.5505, -46.6333
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-danger/10 border border-danger/20">
-                        <Mic className="w-4 h-4 text-danger flex-shrink-0" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Áudio
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-0.5">
-                              {[...Array(12)].map((_, i) => (
-                                <motion.div
-                                  key={i}
-                                  className="w-1 bg-danger rounded-full"
-                                  animate={{
-                                    height: [
-                                      '8px',
-                                      `${Math.random() * 16 + 8}px`,
-                                      '8px',
-                                    ],
-                                  }}
-                                  transition={{
-                                    duration: 0.5 + Math.random() * 0.3,
-                                    repeat: Infinity,
-                                    repeatType: 'reverse',
-                                    delay: i * 0.05,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-danger">
-                              Gravando...
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <p className="text-[10px] text-muted-foreground">
-                        Contactos notificados: 3 de 3 ✓
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        Polícia Militar: Notificada ✓
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Glow behind phone */}
-              <div className="absolute inset-0 bg-danger/10 rounded-[3rem] blur-2xl -z-10" />
-            </div>
-          </motion.div>
-
-          {/* Flow steps with connecting lines */}
-          <motion.div variants={fadeUp} custom={2} className="space-y-0">
-            {flowSteps.map((step, idx) => (
-              <div key={step.label} className="relative">
-                {/* Connector line */}
-                {idx < flowSteps.length - 1 && (
-                  <div className="absolute left-6 top-14 bottom-0 w-px bg-gradient-to-b from-danger/40 to-danger/10" />
-                )}
-
-                <motion.div
-                  variants={fadeUp}
-                  custom={idx}
-                  className="flex items-start gap-5 pb-8 last:pb-0"
-                >
-                  {/* Icon circle */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-danger/10 border border-danger/30 flex items-center justify-center">
-                      <step.icon className="w-5 h-5 text-danger" />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="pt-1">
-                    <h4 className="font-semibold text-base">
-                      {step.label}
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      Tempo de resposta: {step.time}
-                    </p>
-                  </div>
-
-                  {/* Time badge */}
-                  <div className="ml-auto flex-shrink-0">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-danger/10 border border-danger/20 text-xs font-mono text-danger">
-                      {step.time}
-                    </span>
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </div>
     </Section>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  7. PRICING                                                         */
-/* ------------------------------------------------------------------ */
+/* ════════════════════════════════════════════════ */
+/*  SOCIAL PROOF / TESTIMONIALS                  */
+/* ════════════════════════════════════════════════ */
+function SocialProof() {
+  const testimonials = [
+    { name: 'Ana Costa', role: 'Empres\u00e1ria, Maputo', text: 'O StatusAds deu-me a tranquilidade que precisava. Agora sei que a minha fam\u00edlia est\u00e1 sempre protegida.' },
+    { name: 'Carlos Mondlane', role: 'Motorista, Beira', text: 'J\u00e1 usei o bot\u00e3o de emerg\u00eancia duas vezes. A resposta foi imediata. Recomendo a todos.' },
+    { name: 'Fernanda Nhaca', role: 'Estudante, Nampula', text: 'A interface \u00e9 incr\u00edvel e f\u00e1cil de usar. Sinto-me muito mais segura a andar na cidade.' },
+    { name: 'Roberto Silva', role: 'Pai de fam\u00edlia, Matola', text: 'O geofencing avisa-me quando os meus filhos chegam \u00e0 escola e quando saem. Perfeito.' },
+  ]
+  return (
+    <Section className="py-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Depoimentos</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">Quem Confia em N\u00f3s</h2>
+        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {testimonials.map((t, i) => (
+            <motion.div key={t.name} custom={i} variants={fadeUp}>
+              <SpotlightCard className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#25D366]/20 to-emerald-600/20 border border-[#25D366]/20 flex items-center justify-center text-sm font-bold text-[#25D366]">
+                    {t.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{t.name}</p>
+                    <p className="text-xs text-white/30">{t.role}</p>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-white/50 italic">\u201c{t.text}\u201d</p>
+              </SpotlightCard>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </Section>
+  )
+}
 
+/* ════════════════════════════════════════════════ */
+/*  EMERGENCY DEMO                                */
+/* ════════════════════════════════════════════════ */
+function EmergencyDemo() {
+  const flow = [
+    { step: 'Bot\u00e3o Pressionado', icon: AlertTriangle, time: '0s' },
+    { step: 'GPS Capturado', icon: MapPin, time: '0.5s' },
+    { step: '\u00c1udio Gravado', icon: Mic, time: '1.5s' },
+    { step: 'Contactos Notificados', icon: Users, time: '2.5s' },
+  ]
+  return (
+    <Section id="emergencia" className="relative overflow-hidden py-28">
+      <div className="pointer-events-none absolute inset-0 bg-red-900/[0.04]" />
+      <MorphingBlob className="-left-40 top-1/2 -translate-y-1/2" color="rgba(239, 68, 68, 0.04)" size={400} />
+      <MorphingBlob className="-right-40 top-1/2 -translate-y-1/2" color="rgba(239, 68, 68, 0.03)" size={350} />
+      <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <motion.div className="text-center">
+          <motion.div variants={scaleIn} custom={0} className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/[0.06]">
+            <AlertTriangle className="h-8 w-8 text-red-400" />
+          </motion.div>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400/60">Protocolo de Emerg\u00eancia</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            Cada Segundo <span className="text-red-400">Conta</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-white/40">
+            O sistema actua em menos de 3 segundos \u2014 do alerta \u00e0 notifica\u00e7\u00e3o completa.
+          </p>
+        </motion.div>
+        <div className="relative mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {flow.map((item, i) => (
+            <motion.div key={item.step} custom={i} variants={fadeUp}>
+              <SpotlightCard spotlightColor="rgba(239, 68, 68, 0.06)" className="p-6 text-center relative">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/[0.08] border border-red-500/15 mx-auto">
+                  <item.icon className="h-5 w-5 text-red-400" strokeWidth={1.5} />
+                </div>
+                <p className="mt-4 text-sm font-medium text-white">{item.step}</p>
+                <span className="mt-1 inline-block text-[10px] font-mono text-red-400/50">{item.time}</span>
+                {i < flow.length - 1 && (
+                  <ChevronRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-red-500/20 lg:block" />
+                )}
+              </SpotlightCard>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+/* ════════════════════════════════════════════════ */
+/*  PRICING                                       */
+/* ════════════════════════════════════════════════ */
 function Pricing() {
   const plans = [
-    {
-      name: 'Pessoal',
-      price: 'Grátis',
-      period: '',
-      description: 'Para quem quer protecção básica pessoal.',
-      popular: false,
-      features: [
-        '1 dispositivo conectado',
-        '3 contactos de emergência',
-        '7 dias de histórico',
-        'Rastreamento GPS em tempo real',
-        'Alerta por notificação push',
-      ],
-      cta: 'Começar Grátis',
-      icon: Users,
-    },
-    {
-      name: 'Família',
-      price: '$7.99',
-      period: '/mês',
-      description: 'Protecção completa para toda a família.',
-      popular: true,
-      features: [
-        'Até 5 dispositivos',
-        'Contactos ilimitados',
-        '90 dias de histórico',
-        'Geofencing inteligente',
-        'Dashboard familiar',
-        'Gravação de áudio automática',
-        'Suporte por chat',
-      ],
-      cta: 'Começar Agora',
-      icon: Users,
-    },
-    {
-      name: 'Empresa',
-      price: '$19.99',
-      period: '/mês',
-      description: 'Para organizações que precisam de segurança avançada.',
-      popular: false,
-      features: [
-        'Dispositivos ilimitados',
-        'Acesso à API completa',
-        'Suporte prioritário 24/7',
-        'Histórico ilimitado',
-        'Relatórios avançados',
-        'Integração com sistemas de segurança',
-        'SLA garantido',
-      ],
-      cta: 'Falar com Vendas',
-      icon: Building2,
-    },
-  ];
-
+    { name: 'Pessoal', price: 'Gr\u00e1tis', period: '', features: ['1 dispositivo BLE', '3 contactos de emerg\u00eancia', '7 dias de hist\u00f3rico', 'Alertas b\u00e1sicos'], cta: 'Come\u00e7ar Gr\u00e1tis', popular: false },
+    { name: 'Fam\u00edlia', price: '$7.99', period: '/m\u00eas', features: ['5 dispositivos BLE', 'Geofences ilimitados', '90 dias de hist\u00f3rico', 'Grava\u00e7\u00e3o de \u00e1udio', 'Suporte priorit\u00e1rio', 'Partilha familiar'], cta: 'Assinar Agora', popular: true },
+    { name: 'Empresa', price: '$19.99', period: '/m\u00eas', features: ['Dispositivos ilimitados', 'Acesso \u00e0 API', 'Painel administrativo', 'Relat\u00f3rios avan\u00e7ados', 'SLA garantido', 'Suporte 24/7'], cta: 'Falar com Vendas', popular: false },
+  ]
   return (
-    <Section className="py-24 md:py-32" id="precos">
-      <div className="container-safe">
-        <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 mb-4 rounded-full glass-card text-sm text-safe">
-            Preços
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            Escolha o Plano{' '}
-            <span className="text-gradient-safe">Ideal</span>
+    <Section id="precos" className="py-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Planos</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            Escolha o Plano Ideal
           </h2>
-          <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            Comece grátis. Actualize quando precisar de mais protecção.
-          </p>
+          <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem voc\u00ea ama ao pre\u00e7o certo.</p>
         </motion.div>
-
-        <StaggerContainer
-          staggerDelay={0.12}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch"
-        >
-          {plans.map((plan) => (
-            <motion.div
-              key={plan.name}
-              variants={scaleIn}
-              className={cn(
-                'relative glass-card p-8 flex flex-col',
-                plan.popular &&
-                  'border-safe/50 ring-1 ring-safe/20 scale-[1.02] md:scale-105'
-              )}
-            >
-              {/* Popular badge */}
-              {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full gradient-safe text-xs font-semibold text-white">
-                  Popular
-                </div>
-              )}
-
-              {/* Header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <plan.icon className="w-5 h-5 text-safe" />
-                  <h3 className="text-lg font-semibold">{plan.name}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {plan.description}
-                </p>
-              </div>
-
-              {/* Price */}
-              <div className="mb-6">
-                <span
-                  className={cn(
-                    'text-4xl font-bold',
-                    plan.popular ? 'text-gradient-safe' : ''
-                  )}
-                >
-                  {plan.price}
-                </span>
-                {plan.period && (
-                  <span className="text-muted-foreground text-sm">
-                    {plan.period}
+        <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {plans.map((plan, i) => (
+            <motion.div key={plan.name} custom={i} variants={scaleIn}>
+              <GlowCard className={cn(
+                'p-8 flex flex-col h-full',
+                plan.popular && 'border-[#25D366]/30'
+              )}>
+                {plan.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#25D366] to-emerald-400 px-4 py-1 text-[11px] font-semibold text-white shadow-[0_0_20px_rgba(37,211,102,0.3)]">
+                    Mais Popular
                   </span>
                 )}
-              </div>
-
-              {/* Features list */}
-              <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-start gap-3 text-sm"
-                  >
-                    <Check className="w-4 h-4 text-safe flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              <Button
-                variant={plan.popular ? 'safe' : 'outline'}
-                className={cn(
-                  'w-full',
-                  !plan.popular && 'border-white/20 hover:border-safe/40'
-                )}
-                size="lg"
-              >
-                {plan.cta}
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+                <h3 className="font-display text-lg font-semibold text-white">{plan.name}</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="font-display text-4xl font-extrabold text-white">{plan.price}</span>
+                  {plan.period && <span className="text-white/40">{plan.period}</span>}
+                </div>
+                <ul className="mt-8 flex flex-1 flex-col gap-3.5">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
+                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#25D366]/10">
+                        <Check className="h-2.5 w-2.5 text-[#25D366]" />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8">
+                  {plan.popular ? (
+                    <RippleButton className="w-full h-11">
+                      <Link to="/register">{plan.cta}</Link>
+                    </RippleButton>
+                  ) : (
+                    <Button asChild variant="outline" className={cn('w-full h-11 rounded-xl border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white transition-all')}
+                      >
+                      <Link to="/register">{plan.cta}</Link>
+                    </Button>
+                  )}
+                </div>
+              </GlowCard>
             </motion.div>
           ))}
-        </StaggerContainer>
+        </div>
       </div>
     </Section>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  8. FINAL CTA                                                       */
-/* ------------------------------------------------------------------ */
-
-function FinalCTA() {
-  const [email, setEmail] = useState('');
-
+/* ════════════════════════════════════════════════ */
+/*  FINAL CTA                                     */
+/* ════════════════════════════════════════════════ */
+function FinalCta() {
+  const [email, setEmail] = useState('')
   return (
-    <Section className="py-24 md:py-32 relative overflow-hidden">
-      {/* Green gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-safe/20 via-safe/10 to-emerald-500/5" />
-      <div className="absolute inset-0 bg-hero-glow opacity-50" />\n
-      {/* Decorative circles */}
-      <div className="absolute -top-20 -left-20 w-64 h-64 bg-safe/10 rounded-full blur-[100px]" />
-      <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]" />
-
-      <div className="relative z-10 container-safe text-center">
-        <motion.div variants={fadeUp} custom={0}>
-          <motion.div
-            className="mx-auto w-16 h-16 rounded-full bg-safe/10 border border-safe/30 flex items-center justify-center mb-8"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Shield className="w-8 h-8 text-safe" />
-          </motion.div>
-
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            Proteja Quem Você{' '}
-            <span className="text-gradient-safe">Ama</span>
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
-            Não espere que algo aconteça. A segurança pessoal começa com um
-            único passo — e é grátis.
-          </p>
-        </motion.div>
-
-        <motion.div
-          variants={fadeUp}
-          custom={1}
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto"
-        >
-          <div className="relative flex-1 w-full">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="O seu melhor email"
-              className="w-full h-14 pl-12 pr-4 rounded-xl bg-navy-800/80 border border-white/10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-safe/50 focus:border-safe/50 transition-all"
-            />
-          </div>
-          <Button variant="safe" size="lg" className="w-full sm:w-auto">
-            Criar Conta
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </motion.div>
-
-        <motion.p
-          variants={fadeIn}
-          custom={2}
-          className="mt-4 text-xs text-muted-foreground"
-        >
-          Sem cartão de crédito. Configuração em 30 segundos.
-        </motion.p>
-      </div>
-    </Section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  9. FOOTER                                                          */
-/* ------------------------------------------------------------------ */
-
-function Footer() {
-  const columns = [
-    {
-      title: 'Produto',
-      links: [
-        'Funcionalidades',
-        'Preços',
-        'Como Funciona',
-        'Integrações',
-        'API',
-      ],
-    },
-    {
-      title: 'Empresa',
-      links: ['Sobre Nós', 'Blog', 'Carreiras', 'Imprensa', 'Parceiros'],
-    },
-    {
-      title: 'Legal',
-      links: [
-        'Termos de Uso',
-        'Política de Privacidade',
-        'Cookies',
-        'LGPD',
-      ],
-    },
-    {
-      title: 'Suporte',
-      links: [
-        'Central de Ajuda',
-        'Contacto',
-        'Status do Sistema',
-        'Comunidade',
-      ],
-    },
-  ];
-
-  return (
-    <footer className="border-t border-white/5 bg-navy-950/50">
-      <div className="container-safe py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-10">
-          {/* Brand column */}
-          <div className="col-span-2">
-            <a href="#" className="flex items-center gap-2 mb-4">
-              <Shield className="w-7 h-7 text-safe" />
-              <span className="text-lg font-bold">
-                Status<span className="text-gradient-safe">Ads</span>
-              </span>
-            </a>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Segurança pessoal através de tecnologia Bluetooth Low Energy.
-              Proteja quem você ama com um simples toque.
+    <Section className="py-28">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={scaleIn} custom={0} className="relative overflow-hidden rounded-3xl border border-[#25D366]/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#25D366] to-emerald-600" />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
+          <FloatingOrbs className="opacity-30" />
+          <div className="relative z-10 p-10 text-center sm:p-14">
+            <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
+              Proteja Quem Voc\u00ea Ama
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-emerald-100/80">
+              Crie a sua conta gratuita em menos de 30 segundos e comece a monitorizar agora.
             </p>
-            <div className="flex items-center gap-4 mt-6">
-              <a
-                href="#"
-                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-safe hover:border-safe/30 transition-all"
-                aria-label="Globe"
-              >
-                <Globe className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-safe hover:border-safe/30 transition-all"
-                aria-label="Lock"
-              >
-                <Lock className="w-4 h-4" />
-              </a>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Input
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 w-full max-w-xs border-white/20 bg-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-xl backdrop-blur-sm"
+              />
+              <MagneticButton strength={0.15}>
+                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6">
+                  Criar Conta <ArrowRight className="ml-2 h-4 w-4" />
+                </RippleButton>
+              </MagneticButton>
             </div>
           </div>
+        </motion.div>
+      </div>
+    </Section>
+  )
+}
 
-          {/* Link columns */}
+/* ════════════════════════════════════════════════ */
+/*  FOOTER                                        */
+/* ════════════════════════════════════════════════ */
+function Footer() {
+  const columns = [
+    { title: 'Produto', links: ['Funcionalidades', 'Pre\u00e7os', 'Integra\u00e7\u00f5es', 'API', 'Changelog'] },
+    { title: 'Empresa', links: ['Sobre N\u00f3s', 'Blog', 'Carreiras', 'Imprensa', 'Parceiros'] },
+    { title: 'Legal', links: ['Termos de Uso', 'Privacidade', 'Cookies', 'LGPD', 'SLA'] },
+    { title: 'Suporte', links: ['Central de Ajuda', 'Contacto', 'Status', 'Comunidade', 'FAQ'] },
+  ]
+  return (
+    <footer className="border-t border-white/[0.04] bg-[#0A0F1A]">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+          <div className="col-span-2 md:col-span-1">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20">
+                <Shield className="h-4 w-4 text-[#25D366]" />
+              </div>
+              <span className="font-display text-base font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+            </Link>
+            <p className="mt-3 text-xs leading-relaxed text-white/25">
+              Seguran\u00e7a pessoal atrav\u00e9s de tecnologia BLE. Protegendo pessoas em Mo\u00e7ambique e no mundo.
+            </p>
+          </div>
           {columns.map((col) => (
             <div key={col.title}>
-              <h4 className="text-sm font-semibold mb-4">{col.title}</h4>
-              <ul className="space-y-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">{col.title}</h4>
+              <ul className="mt-4 flex flex-col gap-2.5">
                 {col.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link}
-                    </a>
-                  </li>
+                  <li key={link}><a href="#" className="text-xs text-white/20 transition hover:text-white/50">{link}</a></li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
-
-        {/* Bottom bar */}
-        <div className="mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} StatusAds Connect — statusmonetize.com.
-            Todos os direitos reservados.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Feito com <span className="text-safe">♥</span> para a sua segurança.
-          </p>
+        <div className="mt-14 border-t border-white/[0.04] pt-6 text-center text-xs text-white/15">
+          \u00a9 {new Date().getFullYear()} StatusAds Connect \u2014 statusmonetize.com. Todos os direitos reservados.
         </div>
       </div>
     </footer>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  LANDING PAGE                                                       */
-/* ------------------------------------------------------------------ */
-
+/* ════════════════════════════════════════════════ */
+/*  PAGE                                          */
+/* ════════════════════════════════════════════════ */
 export default function Landing() {
   return (
-    <div className="dark min-h-screen bg-navy-900 text-foreground overflow-x-hidden">
+    <div className="dark min-h-screen bg-[#0A0F1A] text-white overflow-x-hidden">
+      <ScrollProgress />
       <Navbar />
       <Hero />
-      <TrustBar />
+      <TrustMarquee />
       <HowItWorks />
       <FeaturesGrid />
+      <SocialProof />
       <EmergencyDemo />
       <Pricing />
-      <FinalCTA />
+      <FinalCta />
       <Footer />
     </div>
-  );
+  )
 }

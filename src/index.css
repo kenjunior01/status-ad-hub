@@ -1,149 +1,249 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 152 100% 25%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 152 100% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 152 100% 25%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 152 100% 48%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 47% 4%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
-    --card: 224 47% 6%;
+    --card: 224 71% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 47% 6%;
+    --popover: 224 71% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 152 100% 48%;
+    --primary: 152 100% 25%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 47% 11%;
+    --secondary: 215 28% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 11%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 222 47% 11%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 215 28% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 47% 16%;
-    --input: 222 47% 16%;
-    --ring: 152 100% 48%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 152 100% 25%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection color */
+  ::selection {
+    background: rgba(37, 211, 102, 0.3);
+    color: white;
   }
 }
 
 @layer components {
   .glass {
-    @apply backdrop-blur-xl bg-background/60 border border-border/50;
+    @apply backdrop-blur-xl bg-card/80 border border-border/50;
   }
 
   .glass-card {
     @apply backdrop-blur-xl bg-card/80 border border-border/50 rounded-xl shadow-lg;
   }
 
-  .glass-dark {
-    @apply backdrop-blur-xl bg-navy-900/80 border border-white/10;
-  }
-
   .gradient-safe {
     @apply bg-gradient-to-r from-safe to-emerald-400;
-  }
-
-  .gradient-danger {
-    @apply bg-gradient-to-r from-red-600 to-red-400;
   }
 
   .text-gradient-safe {
     @apply bg-gradient-to-r from-safe to-emerald-400 bg-clip-text text-transparent;
   }
 
-  .text-gradient-danger {
-    @apply bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent;
-  }
-
-  .pulse-dot {
-    @apply relative;
-  }
-  .pulse-dot::before {
-    content: '';
-    @apply absolute inset-0 rounded-full bg-safe animate-ping-slow;
+  .container-safe {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
   .section-padding {
-    @apply px-4 sm:px-6 lg:px-8;
+    @apply py-12 md:py-16 lg:py-20;
   }
 
-  .container-safe {
-    @apply max-w-7xl mx-auto section-padding;
+  /* Heading font */
+  .font-display {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  }
+
+  /* Mono font */
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
 }
 
-/* Leaflet dark theme overrides */
-.dark .leaflet-container {
-  background: #0A0F1A;
+/* ══════════════════════════════════════════════════════════════ */
+/*  ADVANCED ANIMATIONS                                             */
+/* ══════════════════════════════════════════════════════════════ */
+
+/* Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
 }
+
+/* Ripple */
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Beam spin for BeamBorder */
+@keyframes beam-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Emergency border */
+@keyframes emergency-border {
+  0%, 100% {
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.4);
+  }
+  50% {
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 8px hsl(var(--destructive) / 0);
+  }
+}
+
+.animate-emergency-border {
+  animation: emergency-border 1.5s ease-in-out infinite;
+}
+
+/* Glow pulse for icons */
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 211, 102, 0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgba(37, 211, 102, 0.6)); }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Subtle rotation */
+@keyframes slow-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-slow-rotate {
+  animation: slow-rotate 30s linear infinite;
+}
+
+/* Gradient text shimmer */
+@keyframes text-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.text-shimmer {
+  background-size: 200% auto;
+  animation: text-shimmer 4s linear infinite;
+}
+
+/* Breathing glow */
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  LEAFLET DARK THEME                                              */
+/* ══════════════════════════════════════════════════════════════ */
 
 .dark .leaflet-tile-pane {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
 
-.dark .leaflet-control-zoom a {
-  background: hsl(224 47% 11%);
-  color: hsl(210 40% 98%);
-  border-color: hsl(222 47% 16%);
+.dark .leaflet-container {
+  background-color: hsl(224 71% 4%);
 }
 
-/* Scrollbar styling */
+/* ══════════════════════════════════════════════════════════════ */
+/*  CUSTOM SCROLLBAR                                                */
+/* ══════════════════════════════════════════════════════════════ */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
+  @apply bg-white/10 rounded-full;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  @apply bg-white/20;
 }
 
-/* Emergency overlay animation */
-@keyframes emergency-border {
-  0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
-  50% { border-color: rgba(239, 68, 68, 1); }
-}
-
-.emergency-active {
-  animation: emergency-border 1s ease-in-out infinite;
-  border-width: 2px;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
 }

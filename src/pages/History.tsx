@@ -1,503 +1,92 @@
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ArrowLeft,
-  Search,
-  MapPin,
-  AlertTriangle,
-  Shield,
-  Bluetooth,
-  ChevronRight,
-  Activity,
-  Filter,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { MapPin, AlertTriangle, Shield, Bluetooth, Clock, Activity } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { SpotlightCard } from '@/components/effects'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type EventType = 'localizacao' | 'emergencia' | 'geofence' | 'dispositivo';
+type FilterPeriod = 'hoje' | '7dias' | '30dias' | 'tudo'
+type EventItem = { id: string; type: 'location' | 'alert' | 'shield' | 'bluetooth'; timestamp: string; description: string; coordinates?: string }
 
-interface HistoryEvent {
-  id: string;
-  timestamp: string;
-  type: EventType;
-  title: string;
-  description: string;
-  location?: string;
-  expanded?: boolean;
+const events: EventItem[] = [
+  { id: '1', type: 'location', timestamp: '14:32 - Hoje', description: 'Localizacao actualizada - iPhone 15 Pro', coordinates: '-25.9660, 32.5700' },
+  { id: '2', type: 'shield', timestamp: '13:15 - Hoje', description: 'Modo seguro activado automaticamente ao entrar na zona de trabalho' },
+  { id: '3', type: 'bluetooth', timestamp: '12:48 - Hoje', description: 'AirPods Pro 2 conectados ao iPhone 15 Pro' },
+  { id: '4', type: 'alert', timestamp: '11:30 - Hoje', description: 'Alerta de bateria baixa - Galaxy Watch 6 (15%)', coordinates: '-25.9630, 32.5650' },
+  { id: '5', type: 'location', timestamp: '10:05 - Hoje', description: 'Localizacao partilhada com Maria Silva', coordinates: '-25.9680, 32.5745' },
+  { id: '6', type: 'bluetooth', timestamp: '09:20 - Hoje', description: 'Galaxy Watch 6 desconectado - fora do alcance' },
+  { id: '7', type: 'shield', timestamp: '08:00 - Hoje', description: 'Verificacao de seguranca diaria concluida com sucesso' },
+  { id: '8', type: 'location', timestamp: '07:45 - Hoje', description: 'Primeira localizacao do dia - iPhone 15 Pro', coordinates: '-25.9710, 32.5690' },
+]
+
+const eventConfig = {
+  location: { icon: MapPin, color: 'text-[#25D366]', bg: 'bg-[#25D366]/10 border border-[#25D366]/15' },
+  alert: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10 border border-red-500/15' },
+  shield: { icon: Shield, color: 'text-blue-400', bg: 'bg-blue-500/10 border border-blue-500/15' },
+  bluetooth: { icon: Bluetooth, color: 'text-purple-400', bg: 'bg-purple-500/10 border border-purple-500/15' },
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const ALL_EVENTS: HistoryEvent[] = [
-  {
-    id: '1',
-    timestamp: 'Hoje, 14:32',
-    type: 'localizacao',
-    title: 'Localização actualizada',
-    description: 'A sua localização foi actualizada automaticamente.',
-    location: '-25.9692, 32.5732',
-  },
-  {
-    id: '2',
-    timestamp: 'Hoje, 13:15',
-    type: 'emergencia',
-    title: 'Emergência activada — Botão BLE',
-    description:
-      'O botão de pânico BLE nos seus AirPods Pro 2 foi premido. Contactos de emergência notificados.',
-    location: '-25.9710, 32.5680',
-  },
-  {
-    id: '3',
-    timestamp: 'Hoje, 12:08',
-    type: 'geofence',
-    title: 'Entrou na zona: Casa',
-    description: 'Detectada entrada na geofence "Casa" (raio 200m).',
-    location: '-25.9665, 32.5710',
-  },
-  {
-    id: '4',
-    timestamp: 'Hoje, 09:42',
-    type: 'dispositivo',
-    title: 'Dispositivo AirPods desconectado',
-    description:
-      'Os AirPods Pro 2 deixaram de comunicar via BLE. Última conecção há 25 min.',
-  },
-  {
-    id: '5',
-    timestamp: 'Hoje, 08:00',
-    type: 'localizacao',
-    title: 'Localização actualizada',
-    description: 'Registo periódico de localização.',
-    location: '-25.9735, 32.5750',
-  },
-  {
-    id: '6',
-    timestamp: 'Ontem, 22:30',
-    type: 'geofence',
-    title: 'Saiu da zona: Escritório',
-    description:
-      'Detectada saída da geofence "Escritório" (raio 150m). Tempo de permanência: 8h 45min.',
-    location: '-25.9620, 32.5800',
-  },
-  {
-    id: '7',
-    timestamp: 'Ontem, 18:12',
-    type: 'localizacao',
-    title: 'Localização actualizada',
-    description: 'Registo periódico de localização.',
-    location: '-25.9610, 32.5790',
-  },
-  {
-    id: '8',
-    timestamp: 'Ontem, 14:05',
-    type: 'emergencia',
-    title: 'Teste de emergência executado',
-    description:
-      'Foi executado um teste do sistema de emergência. Todos os contactos receberam o alerta de teste.',
-    location: '-25.9640, 32.5765',
-  },
-  {
-    id: '9',
-    timestamp: 'Ontem, 09:30',
-    type: 'dispositivo',
-    title: 'Galaxy Watch 6 conectado',
-    description:
-      'O Galaxy Watch 6 foi pareado com sucesso via Bluetooth Low Energy.',
-  },
-  {
-    id: '10',
-    timestamp: '12 Dez, 20:45',
-    type: 'geofence',
-    title: 'Entrou na zona: Casa',
-    description: 'Detectada entrada na geofence "Casa" (raio 200m).',
-    location: '-25.9665, 32.5710',
-  },
-];
-
-// ─── Type Config ──────────────────────────────────────────────────────────────
-const TYPE_CONFIG: Record<
-  EventType,
-  { icon: typeof MapPin; color: string; bg: string; label: string }
-> = {
-  localizacao: {
-    icon: MapPin,
-    color: 'text-[#25D366]',
-    bg: 'bg-[#25D366]/15',
-    label: 'Localização',
-  },
-  emergencia: {
-    icon: AlertTriangle,
-    color: 'text-red-400',
-    bg: 'bg-red-500/15',
-    label: 'Emergência',
-  },
-  geofence: {
-    icon: Shield,
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/15',
-    label: 'Geofence',
-  },
-  dispositivo: {
-    icon: Bluetooth,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/15',
-    label: 'Dispositivo',
-  },
-};
-
-// ─── Date Range Filters ───────────────────────────────────────────────────────
-const DATE_RANGES = ['Hoje', '7 dias', '30 dias', 'Tudo'] as const;
-type DateRange = (typeof DATE_RANGES)[number];
-
-// ─── Type Filters ─────────────────────────────────────────────────────────────
-const TYPE_FILTERS: { value: string; label: string }[] = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'localizacao', label: 'Localização' },
-  { value: 'emergencia', label: 'Emergência' },
-  { value: 'geofence', label: 'Geofence' },
-];
-
-// ─── Stagger Animation ────────────────────────────────────────────────────────
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0 },
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function History() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange>('Tudo');
-  const [typeFilter, setTypeFilter] = useState('todos');
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // Simple mock filtering by date range
-  const filteredEvents = useMemo(() => {
-    let events = ALL_EVENTS;
-
-    // Date range filter
-    if (dateRange === 'Hoje') {
-      events = events.filter((e) => e.timestamp.startsWith('Hoje'));
-    } else if (dateRange === '7 dias') {
-      events = events; // all mock events are within 7 days
-    } else if (dateRange === '30 dias') {
-      events = events;
-    }
-
-    // Type filter
-    if (typeFilter !== 'todos') {
-      events = events.filter((e) => e.type === typeFilter);
-    }
-
-    // Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      events = events.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          e.description.toLowerCase().includes(q) ||
-          (e.location && e.location.includes(q))
-      );
-    }
-
-    return events;
-  }, [dateRange, typeFilter, searchQuery]);
-
-  // Summary stats
-  const stats = useMemo(
-    () => ({
-      total: ALL_EVENTS.length,
-      emergencies: ALL_EVENTS.filter((e) => e.type === 'emergencia').length,
-      geofences: ALL_EVENTS.filter((e) => e.type === 'geofence').length,
-    }),
-    []
-  );
+  const { user } = useAuth()
+  const [activeFilter, setActiveFilter] = useState<FilterPeriod>('hoje')
+  const filters: { key: FilterPeriod; label: string }[] = [{ key: 'hoje', label: 'Hoje' }, { key: '7dias', label: '7 dias' }, { key: '30dias', label: '30 dias' }, { key: 'tudo', label: 'Tudo' }]
+  const stats = [{ label: 'Eventos Hoje', value: '8', icon: Activity, color: 'text-white' }, { label: 'Alertas', value: '1', icon: AlertTriangle, color: 'text-red-400' }, { label: 'Localizacoes', value: '3', icon: MapPin, color: 'text-[#25D366]' }]
 
   return (
-    <div className="dark min-h-screen bg-[#0A0F1A] text-white">
-      {/* ═══ INLINE STYLES ═══ */}
-      <style>{`
-        .glass {
-          background: rgba(10, 15, 26, 0.75);
-          backdrop-filter: blur(20px) saturate(1.4);
-          -webkit-backdrop-filter: blur(20px) saturate(1.4);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-hover:hover {
-          background: rgba(10, 15, 26, 0.85);
-          border-color: rgba(255, 255, 255, 0.12);
-        }
-      `}</style>
+    <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <h1 className="font-display text-2xl font-bold text-white">Historico</h1>
+        <p className="text-sm text-white/30 mt-1">Registo de actividades e eventos</p>
+      </motion.div>
 
-      {/* ═══ HEADER ═══ */}
-      <header className="glass fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between gap-4 px-4 md:px-6">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => window.history.back()}
-            className="text-white/60 hover:text-white hover:bg-white/5"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold tracking-tight">
-            Histórico
-          </h1>
-        </div>
-      </header>
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
+        {filters.map(f => (
+          <button key={f.key} onClick={() => setActiveFilter(f.key)} className={cn(
+            'px-4 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 border',
+            activeFilter === f.key ? 'bg-[#25D366] text-white border-[#25D366]/30 shadow-[0_0_20px_-5px_rgba(37,211,102,0.2)]' : 'bg-white/[0.02] text-white/35 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/60'
+          )}>{f.label}</button>
+        ))}
+      </div>
 
-      {/* ═══ CONTENT ═══ */}
-      <main className="mx-auto max-w-4xl px-4 pt-24 pb-12 md:px-6">
-        {/* ─── Date Range Buttons ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex gap-2 overflow-x-auto pb-1"
-        >
-          {DATE_RANGES.map((range) => (
-            <Button
-              key={range}
-              variant={dateRange === range ? 'safe' : 'glass'}
-              size="sm"
-              onClick={() => setDateRange(range)}
-              className={cn(
-                'shrink-0',
-                dateRange !== range &&
-                  'border-white/[0.06] text-white/50 hover:text-white'
-              )}
-            >
-              {range}
-            </Button>
-          ))}
-        </motion.div>
-
-        {/* ─── Summary Stats ─── */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="mb-6 grid grid-cols-3 gap-3"
-        >
-          {[
-            {
-              label: 'Total de eventos',
-              value: stats.total,
-              icon: Activity,
-              color: 'text-white/60',
-              bg: 'bg-white/[0.06]',
-            },
-            {
-              label: 'Emergências',
-              value: stats.emergencies,
-              icon: AlertTriangle,
-              color: 'text-red-400',
-              bg: 'bg-red-500/10',
-            },
-            {
-              label: 'Geofences',
-              value: stats.geofences,
-              icon: Shield,
-              color: 'text-blue-400',
-              bg: 'bg-blue-500/10',
-            },
-          ].map((stat) => (
-            <motion.div key={stat.label} variants={item}>
-              <Card className="glass border-white/[0.06]">
-                <CardContent className="flex flex-col items-center gap-1.5 p-4">
-                  <stat.icon className={cn('h-4 w-4', stat.color)} />
-                  <span className={cn('text-xl font-bold', stat.color)}>
-                    {stat.value}
-                  </span>
-                  <span className="text-[10px] text-white/35 text-center leading-tight">
-                    {stat.label}
-                  </span>
-                </CardContent>
-              </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        {stats.map((s, i) => {
+          const IconComp = s.icon
+          return (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+              <SpotlightCard className="p-5 flex items-center gap-4">
+                <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}><IconComp className="h-5 w-5" /></div>
+                <div><p className="text-2xl font-display font-bold">{s.value}</p><p className="text-[11px] text-white/30">{s.label}</p></div>
+              </SpotlightCard>
             </motion.div>
-          ))}
-        </motion.div>
+          )
+        })}
+      </div>
 
-        {/* ─── Filter Bar ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center"
-        >
-          <div className="glass relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-            <Input
-              placeholder="Pesquisar eventos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-0 bg-transparent pl-10 pr-4 text-white placeholder:text-white/25 focus-visible:ring-0"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-white/25" />
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="flex h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/40"
-            >
-              {TYPE_FILTERS.map((f) => (
-                <option key={f.value} value={f.value} className="bg-[#0A0F1A]">
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </motion.div>
-
-        {/* ─── Timeline ─── */}
-        <div className="relative">
-          {/* Vertical line */}
-          <div className="absolute left-[19px] top-2 bottom-2 w-px bg-white/[0.06]" />
-
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col gap-1"
-          >
-            {filteredEvents.map((event) => {
-              const cfg = TYPE_CONFIG[event.type];
-              const Icon = cfg.icon;
-              const isExpanded = expandedIds.has(event.id);
-
-              return (
-                <motion.div key={event.id} variants={item} className="relative pl-12">
-                  {/* Timeline dot */}
-                  <div
-                    className={cn(
-                      'absolute left-2.5 top-5 z-10 flex h-4 w-4 items-center justify-center rounded-full',
-                      cfg.bg
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'h-2 w-2 rounded-full',
-                        event.type === 'localizacao'
-                          ? 'bg-[#25D366]'
-                          : event.type === 'emergencia'
-                            ? 'bg-red-400'
-                            : event.type === 'geofence'
-                              ? 'bg-blue-400'
-                              : 'bg-purple-400'
-                      )}
-                    />
-                  </div>
-
-                  {/* Event card */}
-                  <Card className="glass glass-hover border-white/[0.06] transition-colors">
-                    <button
-                      onClick={() => toggleExpand(event.id)}
-                      className="flex w-full items-center gap-3 p-4 text-left"
-                    >
-                      <div
-                        className={cn(
-                          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                          cfg.bg
-                        )}
-                      >
-                        <Icon className={cn('h-4 w-4', cfg.color)} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-white">
-                            {event.title}
-                          </span>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <span className="text-[11px] text-white/30">
-                            {event.timestamp}
-                          </span>
-                          {event.location && !isExpanded && (
-                            <span className="truncate text-[11px] text-white/20">
-                              · {event.location}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 90 : 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="shrink-0"
-                      >
-                        <ChevronRight className="h-4 w-4 text-white/20" />
-                      </motion.div>
-                    </button>
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t border-white/[0.06] px-4 py-3">
-                            <p className="text-sm leading-relaxed text-white/50">
-                              {event.description}
-                            </p>
-                            {event.location && (
-                              <div className="mt-2 flex items-center gap-1.5">
-                                <MapPin className="h-3 w-3 text-white/25" />
-                                <span className="font-mono text-xs text-white/30">
-                                  {event.location}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-
-          {filteredEvents.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="ml-12 mt-10 flex flex-col items-center gap-2 text-center"
-            >
-              <Search className="h-8 w-8 text-white/10" />
-              <p className="text-sm text-white/30">
-                Nenhum evento encontrado
-              </p>
-            </motion.div>
-          )}
+      <div className="relative">
+        <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.04]" />
+        <div className="space-y-0">
+          {events.map((event, i) => {
+            const config = eventConfig[event.type]
+            const IconComp = config.icon
+            return (
+              <motion.div key={event.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06, type: 'spring', stiffness: 120 }} className="relative flex gap-4 pb-5 last:pb-0">
+                <div className={cn('relative z-10 h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border border-[#0A0F1A]', config.bg)}>
+                  <IconComp className={cn('h-4 w-4', config.color)} strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 pt-1">
+                  <SpotlightCard className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-white/60 leading-relaxed">{event.description}</p>
+                      <span className="text-[10px] text-white/20 whitespace-nowrap flex items-center gap-1 shrink-0 font-mono"><Clock className="h-3 w-3" />{event.timestamp}</span>
+                    </div>
+                    {event.coordinates && <p className="text-[10px] text-white/15 mt-2 font-mono flex items-center gap-1"><MapPin className="h-3 w-3" />{event.coordinates}</p>}
+                  </SpotlightCard>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
-      </main>
+      </div>
     </div>
-  );
+  )
 }
