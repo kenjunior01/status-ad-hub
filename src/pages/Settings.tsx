@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp, Camera, Trash2, ExternalLink, Smartphone, Headphones, Watch, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard } from '@/components/effects'
+import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 
 type SectionId = 'perfil' | 'notificacoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sobre'
 
@@ -38,6 +38,9 @@ export default function Settings() {
   const [notifToggles, setNotifToggles] = useState({ alerts: true, location: true, battery: true, tips: false })
   const [privToggles, setPrivToggles] = useState({ shareLocation: true, anonymous: false, dataRetention: true })
   const [autoActivate, setAutoActivate] = useState(true)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 500); return () => clearTimeout(t) }, [])
   const toggleSection = (id: SectionId) => { setOpenSections((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next }) }
   const pairedDevices = [{ name: 'iPhone 15 Pro', icon: Smartphone, color: '#25D366' }, { name: 'AirPods Pro 2', icon: Headphones, color: '#3B82F6' }, { name: 'Galaxy Watch 6', icon: Watch, color: '#F59E0B' }]
 
@@ -60,12 +63,52 @@ export default function Settings() {
         <p className="text-sm text-white/30 mt-1">Gerir a sua conta e preferencias</p>
       </motion.div>
 
+      {loading ? (
+        <div className="space-y-3 max-w-3xl">
+          {sections.map((section) => (
+            <div key={section.id} className="space-y-2">
+              <Shimmer className="h-14 w-full rounded-2xl" />
+            </div>
+          ))}
+          <Shimmer className="h-12 w-full rounded-xl" />
+        </div>
+      ) : (
       <div className="space-y-3 max-w-3xl">
         {sections.map((section, si) => {
           const isOpen = openSections.has(section.id)
           const IconComp = section.icon
           return (
             <motion.div key={section.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: si * 0.04 }}>
+              {section.id === 'plano' ? (
+                <BeamBorder color="#25D366">
+                  <SpotlightCard className="overflow-hidden">
+                    <button onClick={() => toggleSection(section.id)} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-[#25D366]/[0.08] border border-[#25D366]/15"><IconComp className="h-4 w-4 text-[#25D366]" strokeWidth={1.5} /></div>
+                        <span className="font-medium text-sm text-[#25D366]">{section.title}</span>
+                      </div>
+                      {isOpen ? <ChevronUp className="h-4 w-4 text-white/20" /> : <ChevronDown className="h-4 w-4 text-white/20" />}
+                    </button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                          <div className="px-4 pb-5 border-t border-[#25D366]/10 pt-5">
+                            {section.id === 'plano' && (
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 rounded-xl bg-[#25D366]/[0.05] border border-[#25D366]/15">
+                                  <div><p className="font-display font-semibold text-[#25D366] text-sm">Plano Familia</p><p className="text-[11px] text-white/25 mt-0.5">Ate 5 dispositivos - Suporte prioritario</p></div>
+                                  <span className="text-sm font-display font-bold text-white">249 MT/mes</span>
+                                </div>
+                                <Button className="bg-[#25D366] hover:bg-[#1fb855] text-white gap-2 rounded-xl"><Shield className="h-4 w-4" />Fazer Upgrade para Premium</Button>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </SpotlightCard>
+                </BeamBorder>
+              ) : (
               <SpotlightCard className="overflow-hidden">
                 <button onClick={() => toggleSection(section.id)} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition">
                   <div className="flex items-center gap-3">
@@ -94,15 +137,6 @@ export default function Settings() {
                         )}
                         {section.id === 'notificacoes' && <div className="space-y-4">{notifItems.map(item => (<div key={item.key} className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div><Toggle enabled={notifToggles[item.key]} onToggle={() => setNotifToggles(p => ({ ...p, [item.key]: !p[item.key] }))} /></div>))}</div>}
                         {section.id === 'privacidade' && <div className="space-y-4">{privItems.map(item => (<div key={item.key} className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div><Toggle enabled={privToggles[item.key]} onToggle={() => setPrivToggles(p => ({ ...p, [item.key]: !p[item.key] }))} /></div>))}</div>}
-                        {section.id === 'plano' && (
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-[#25D366]/[0.05] border border-[#25D366]/15">
-                              <div><p className="font-display font-semibold text-[#25D366] text-sm">Plano Familia</p><p className="text-[11px] text-white/25 mt-0.5">Ate 5 dispositivos - Suporte prioritario</p></div>
-                              <span className="text-sm font-display font-bold text-white">249 MT/mes</span>
-                            </div>
-                            <Button className="bg-[#25D366] hover:bg-[#1fb855] text-white gap-2 rounded-xl"><Shield className="h-4 w-4" />Fazer Upgrade para Premium</Button>
-                          </div>
-                        )}
                         {section.id === 'dispositivos' && <div className="space-y-2">{pairedDevices.map(d => { const DIcon = d.icon; return (<div key={d.name} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition"><div className="p-2 rounded-lg border border-white/[0.06]" style={{ backgroundColor: d.color + '10' }}><DIcon className="h-4 w-4" style={{ color: d.color }} /></div><div><p className="text-sm font-medium text-white/80">{d.name}</p><p className="text-[10px] text-white/20">Pareado</p></div></div>) })}</div>}
                         {section.id === 'zona' && (
                           <div className="space-y-4">
@@ -125,6 +159,7 @@ export default function Settings() {
                   )}
                 </AnimatePresence>
               </SpotlightCard>
+              )}
             </motion.div>
           )
         })}
@@ -136,6 +171,7 @@ export default function Settings() {
           <p className="text-[10px] text-white/15 text-center mt-2">Esta accao e irreversivel.</p>
         </motion.div>
       </div>
+      )}
     </div>
   )
 }

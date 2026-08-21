@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Plus, Phone, Mail, Edit3, Trash2, Copy, Check, Link2, AlertCircle, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard, BeamBorder } from '@/components/effects'
+import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 
 type Contact = { id: string; name: string; relation: string; phone: string; email: string; primary: boolean; alertEnabled: boolean }
 
@@ -23,6 +23,9 @@ export default function EmergencyContacts() {
   const [showAdd, setShowAdd] = useState(false)
   const [copied, setCopied] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', relation: 'parente', primary: false })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 500); return () => clearTimeout(t) }, [])
 
   const toggleAlert = (id: string) => setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, alertEnabled: !c.alertEnabled } : c)))
   const handleCopy = () => { navigator.clipboard.writeText('https://statusad.co/emergency/share/a1b2c3d4e5'); setCopied(true); setTimeout(() => setCopied(false), 2000) }
@@ -78,6 +81,20 @@ export default function EmergencyContacts() {
         )}
       </AnimatePresence>
 
+      {loading ? (
+        <div className="space-y-3 mb-8">
+          {initialContacts.map((_, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <Shimmer className="h-11 w-11 rounded-xl shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Shimmer className="h-4 w-36 rounded-lg" />
+                <Shimmer className="h-3 w-24 rounded-lg" />
+              </div>
+              <Shimmer className="h-5 w-10 rounded-full shrink-0" />
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="space-y-3 mb-8">
         {contacts.map((c, i) => (
           <motion.div key={c.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}>
@@ -106,7 +123,9 @@ export default function EmergencyContacts() {
           </motion.div>
         ))}
       </div>
+      )}
 
+      {!loading && (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <BeamBorder color="#3B82F6">
         <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.06)" className="p-6">
@@ -120,6 +139,7 @@ export default function EmergencyContacts() {
         </SpotlightCard>
         </BeamBorder>
       </motion.div>
+      )}
     </div>
   )
 }

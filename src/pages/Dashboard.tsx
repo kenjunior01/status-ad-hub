@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard, CounterAnimated, Shimmer } from '@/components/effects'
+import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 const devices = [
@@ -49,11 +49,14 @@ function MapController() {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
   const [emergency, setEmergency] = useState(false)
   const [countdown, setCountdown] = useState(3)
   const [safeMode, setSafeMode] = useState(true)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [showSearch, setShowSearch] = useState(false)
+
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [])
 
   const handleEmergency = useCallback(() => {
     if (navigator.geolocation) {
@@ -75,6 +78,23 @@ export default function Dashboard() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#0A0F1A]">
+      {loading && (
+        <>
+          <div className="absolute top-4 left-4 z-50 w-80 space-y-3">
+            <Shimmer className="h-48 w-full rounded-2xl" />
+            <Shimmer className="h-6 w-32 rounded-lg" />
+          </div>
+          <div className="absolute top-20 right-4 z-50 w-80 space-y-3">
+            <Shimmer className="h-64 w-full rounded-2xl" />
+          </div>
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 flex gap-2">
+            <Shimmer className="h-10 w-24 rounded-xl" />
+            <Shimmer className="h-10 w-24 rounded-xl" />
+            <Shimmer className="h-10 w-24 rounded-xl" />
+            <Shimmer className="h-10 w-32 rounded-xl" />
+          </div>
+        </>
+      )}
       {/* TOP BAR */}
       <motion.header
         initial={{ y: -60 }} animate={{ y: 0 }}
@@ -123,6 +143,7 @@ export default function Dashboard() {
       </MapContainer>
 
       {/* LEFT PANEL */}
+      {!loading && (
       <motion.div
         initial={{ x: -340, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
@@ -157,8 +178,10 @@ export default function Dashboard() {
           <button className="w-full text-center text-[11px] text-[#25D366]/60 hover:text-[#25D366] pt-2 mt-2 transition">Ver Todos</button>
         </SpotlightCard>
       </motion.div>
+      )}
 
       {/* RIGHT PANEL */}
+      {!loading && (
       <motion.div
         initial={{ x: 340, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
@@ -193,6 +216,7 @@ export default function Dashboard() {
           </div>
         </SpotlightCard>
       </motion.div>
+      )}
 
       {/* BOTTOM BAR */}
       <motion.div

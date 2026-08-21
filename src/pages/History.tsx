@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, AlertTriangle, Shield, Bluetooth, Clock, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard, BeamBorder, CounterAnimated } from '@/components/effects'
+import { SpotlightCard, BeamBorder, CounterAnimated, Shimmer } from '@/components/effects'
 
 type FilterPeriod = 'hoje' | '7dias' | '30dias' | 'tudo'
 type EventItem = { id: string; type: 'location' | 'alert' | 'shield' | 'bluetooth'; timestamp: string; description: string; coordinates?: string }
@@ -26,11 +26,40 @@ const eventConfig = {
   bluetooth: { icon: Bluetooth, color: 'text-purple-400', bg: 'bg-purple-500/10 border border-purple-500/15' },
 }
 
+const allEvents: Record<FilterPeriod, EventItem[]> = {
+  hoje: events,
+  '7dias': [
+    { id: '9', type: 'location', timestamp: '18:00 - Ontem', description: 'Localizacao actualizada - AirPods Pro 2', coordinates: '-25.9700, 32.5750' },
+    { id: '10', type: 'alert', timestamp: '15:20 - Ontem', description: 'Dispositivo desconectado por mais de 30 minutos' },
+    ...events,
+  ],
+  '30dias': [
+    { id: '11', type: 'shield', timestamp: '10/08 - 09:00', description: 'Teste mensal de emergencia concluido' },
+    { id: '12', type: 'bluetooth', timestamp: '05/08 - 14:30', description: 'Novo dispositivo pareado - Galaxy Watch 6' },
+    { id: '13', type: 'location', timestamp: '01/08 - 08:15', description: 'Geofence activada - Zona de Trabalho' },
+    ...events,
+  ],
+  tudo: [
+    { id: '14', type: 'shield', timestamp: '15/07 - 16:00', description: 'Conta verificada com sucesso' },
+    { id: '15', type: 'location', timestamp: '01/07 - 07:00', description: 'Primeira localizacao registada no sistema' },
+    ...events,
+  ],
+}
+
 export default function History() {
   const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState<FilterPeriod>('hoje')
+  const [loading, setLoading] = useState(true)
   const filters: { key: FilterPeriod; label: string }[] = [{ key: 'hoje', label: 'Hoje' }, { key: '7dias', label: '7 dias' }, { key: '30dias', label: '30 dias' }, { key: 'tudo', label: 'Tudo' }]
-  const stats = [{ label: 'Eventos Hoje', value: 8, icon: Activity, color: 'text-white' }, { label: 'Alertas', value: 1, icon: AlertTriangle, color: 'text-red-400' }, { label: 'Localizacoes', value: 3, icon: MapPin, color: 'text-[#25D366]' }]
+
+  const filteredEvents = useMemo(() => allEvents[activeFilter] || events, [activeFilter])
+  const stats = useMemo(() => [
+    { label: 'Eventos', value: filteredEvents.length, icon: Activity, color: 'text-white' },
+    { label: 'Alertas', value: filteredEvents.filter(e => e.type === 'alert').length, icon: AlertTriangle, color: 'text-red-400' },
+    { label: 'Localizacoes', value: filteredEvents.filter(e => e.type === 'location').length, icon: MapPin, color: 'text-[#25D366]' },
+  ], [filteredEvents])
+
+  useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 400); return () => clearTimeout(t) }, [activeFilter])
 
   return (
     <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
@@ -64,10 +93,25 @@ export default function History() {
         })}
       </div>
 
+      {loading ? (
+        <div className="relative">
+          <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.04]" />
+          <div className="space-y-0">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="relative flex gap-4 pb-5">
+                <Shimmer className="h-12 w-12 rounded-xl shrink-0" />
+                <div className="flex-1 pt-1 space-y-2">
+                  <Shimmer className="h-16 w-full rounded-2xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="relative">
         <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.04]" />
         <div className="space-y-0">
-          {events.map((event, i) => {
+          {filteredEvents.map((event, i) => {
             const config = eventConfig[event.type]
             const IconComp = config.icon
             return (
@@ -89,6 +133,7 @@ export default function History() {
           })}
         </div>
       </div>
+      )}
     </div>
   )
 }
