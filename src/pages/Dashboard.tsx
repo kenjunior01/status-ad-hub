@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard } from '@/components/effects'
+import { SpotlightCard, CounterAnimated, Shimmer } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 const devices = [
@@ -172,9 +172,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-4">
-            {[{ l: 'Dispositivos', v: '3' }, { l: 'Alertas Hoje', v: '0' }, { l: 'Zonas Seguras', v: '2' }].map(s => (
+            {[{ l: 'Dispositivos', v: 3 }, { l: 'Alertas Hoje', v: 0 }, { l: 'Zonas Seguras', v: 2 }].map(s => (
               <div key={s.l} className="text-center p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                <p className="text-lg font-display font-bold text-white">{s.v}</p>
+                <p className="text-lg font-display font-bold text-white"><CounterAnimated target={s.v} /></p>
                 <p className="text-[9px] text-white/25">{s.l}</p>
               </div>
             ))}

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { MapPin, AlertTriangle, Shield, Bluetooth, Clock, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard } from '@/components/effects'
+import { SpotlightCard, BeamBorder, CounterAnimated } from '@/components/effects'
 
 type FilterPeriod = 'hoje' | '7dias' | '30dias' | 'tudo'
 type EventItem = { id: string; type: 'location' | 'alert' | 'shield' | 'bluetooth'; timestamp: string; description: string; coordinates?: string }
@@ -30,7 +30,7 @@ export default function History() {
   const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState<FilterPeriod>('hoje')
   const filters: { key: FilterPeriod; label: string }[] = [{ key: 'hoje', label: 'Hoje' }, { key: '7dias', label: '7 dias' }, { key: '30dias', label: '30 dias' }, { key: 'tudo', label: 'Tudo' }]
-  const stats = [{ label: 'Eventos Hoje', value: '8', icon: Activity, color: 'text-white' }, { label: 'Alertas', value: '1', icon: AlertTriangle, color: 'text-red-400' }, { label: 'Localizacoes', value: '3', icon: MapPin, color: 'text-[#25D366]' }]
+  const stats = [{ label: 'Eventos Hoje', value: 8, icon: Activity, color: 'text-white' }, { label: 'Alertas', value: 1, icon: AlertTriangle, color: 'text-red-400' }, { label: 'Localizacoes', value: 3, icon: MapPin, color: 'text-[#25D366]' }]
 
   return (
     <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
@@ -53,10 +53,12 @@ export default function History() {
           const IconComp = s.icon
           return (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-              <SpotlightCard className="p-5 flex items-center gap-4">
-                <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}><IconComp className="h-5 w-5" /></div>
-                <div><p className="text-2xl font-display font-bold">{s.value}</p><p className="text-[11px] text-white/30">{s.label}</p></div>
-              </SpotlightCard>
+              <BeamBorder color={s.color === 'text-red-400' ? '#EF4444' : s.color === 'text-[#25D366]' ? '#25D366' : '#ffffff'}>
+                <SpotlightCard className="p-5 flex items-center gap-4">
+                  <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}><IconComp className="h-5 w-5" /></div>
+                  <div><p className="text-2xl font-display font-bold"><CounterAnimated target={s.value} /></p><p className="text-[11px] text-white/30">{s.label}</p></div>
+                </SpotlightCard>
+              </BeamBorder>
             </motion.div>
           )
         })}

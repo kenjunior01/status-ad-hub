@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { NoiseTexture } from '@/components/effects'
+import { NoiseTexture, Shimmer } from '@/components/effects'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -99,14 +99,18 @@ export default function DashboardLayout() {
       <NoiseTexture opacity={0.015} />
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-[260px] bg-[#0A0F1A]/95 border-r border-white/[0.04] z-40 backdrop-blur-xl">
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-[260px] bg-[#0A0F1A]/95 border-r border-white/[0.04] z-40 backdrop-blur-xl relative overflow-hidden">
+        <div className="pointer-events-none absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#25D366]/[0.03] to-transparent" />
+        <NoiseTexture opacity={0.01} />
+        <div className="relative z-10 flex flex-col flex-1">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.04]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 animate-glow-pulse">
             <Shield className="h-4 w-4 text-[#25D366]" />
           </div>
           <span className="font-display font-bold text-white text-base tracking-tight">Status<span className="text-[#25D366]">Ads</span></span>
         </div>
         <NavContent />
+        </div>
       </aside>
 
       {/* MOBILE SIDEBAR OVERLAY */}

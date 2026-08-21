@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import {
   AnimatedGrid, AuroraBackground, ParticleField, FloatingOrbs,
   NoiseTexture, MagneticButton, CounterAnimated, Marquee,
-  RippleButton, TextReveal, SpotlightCard, GlowCard, MorphingBlob, ScrollProgress,
+  RippleButton, TextReveal, SpotlightCard, GlowCard, MorphingBlob, ScrollProgress, BeamBorder,
 } from '@/components/effects'
 import {
   Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,
@@ -412,8 +412,8 @@ function Pricing() {
           <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem voc\u00ea ama ao pre\u00e7o certo.</p>
         </motion.div>
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {plans.map((plan, i) => (
-            <motion.div key={plan.name} custom={i} variants={scaleIn}>
+          {plans.map((plan, i) => {
+            const card = (
               <GlowCard className={cn(
                 'p-8 flex flex-col h-full',
                 plan.popular && 'border-[#25D366]/30'
@@ -451,8 +451,13 @@ function Pricing() {
                   )}
                 </div>
               </GlowCard>
-            </motion.div>
-          ))}
+            )
+            return (
+              <motion.div key={plan.name} custom={i} variants={scaleIn}>
+                {plan.popular ? <BeamBorder>{card}</BeamBorder> : card}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </Section>

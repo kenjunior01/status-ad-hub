@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard } from '@/components/effects'
+import { SpotlightCard, BeamBorder, Shimmer, CounterAnimated } from '@/components/effects'
 
 const deviceIconMap = { phone: Smartphone, airpods: Headphones, smartwatch: Watch }
 const statusLabels: Record<string, { label: string; className: string }> = {
@@ -52,10 +52,12 @@ export default function Devices() {
           const IconComp = s.icon
           return (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-              <SpotlightCard className="p-5 flex items-center gap-4">
-                <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}><IconComp className="h-5 w-5" /></div>
-                <div><p className="text-2xl font-display font-bold">{s.value}</p><p className="text-[11px] text-white/30">{s.label}</p></div>
-              </SpotlightCard>
+              <BeamBorder color={s.color === 'text-[#25D366]' ? '#25D366' : s.color === 'text-amber-400' ? '#F59E0B' : '#ffffff'}>
+                <SpotlightCard className="p-5 flex items-center gap-4">
+                  <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] animate-glow-pulse', s.color)}><IconComp className="h-5 w-5" /></div>
+                  <div><p className="text-2xl font-display font-bold"><CounterAnimated target={s.value} /></p><p className="text-[11px] text-white/30">{s.label}</p></div>
+                </SpotlightCard>
+              </BeamBorder>
             </motion.div>
           )
         })}
@@ -96,6 +98,7 @@ export default function Devices() {
           const battColor = d.battery > 50 ? 'bg-[#25D366]' : d.battery > 20 ? 'bg-amber-400' : 'bg-red-500'
           return (
             <motion.div key={d.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+              <BeamBorder color={d.color}>
               <SpotlightCard className="p-6 space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="p-3 rounded-xl border border-white/[0.06]" style={{ backgroundColor: d.color + '10' }}><IconComp className="h-5 w-5" style={{ color: d.color }} strokeWidth={1.5} /></div>
@@ -115,6 +118,7 @@ export default function Devices() {
                   <Button variant="outline" size="sm" className="text-[11px] gap-1.5 border-red-500/15 text-red-400/60 hover:text-red-400 hover:bg-red-500/[0.06] rounded-xl"><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
               </SpotlightCard>
+              </BeamBorder>
             </motion.div>
           )
         })}

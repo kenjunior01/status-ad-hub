@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { SpotlightCard } from '@/components/effects'
+import { SpotlightCard, BeamBorder } from '@/components/effects'
 
 type Contact = { id: string; name: string; relation: string; phone: string; email: string; primary: boolean; alertEnabled: boolean }
 
@@ -108,6 +108,7 @@ export default function EmergencyContacts() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <BeamBorder color="#3B82F6">
         <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.06)" className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2.5 rounded-xl bg-blue-500/[0.08] border border-blue-500/15"><AlertCircle className="h-5 w-5 text-blue-400" strokeWidth={1.5} /></div>
@@ -117,6 +118,7 @@ export default function EmergencyContacts() {
             {copied ? <><Check className="h-4 w-4" />Link Copiado!</> : <><Link2 className="h-4 w-4" />Gerar Link de Acesso</>}
           </Button>
         </SpotlightCard>
+        </BeamBorder>
       </motion.div>
     </div>
   )
