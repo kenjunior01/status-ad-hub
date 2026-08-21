@@ -28,7 +28,7 @@ export default function EmergencyContacts() {
   const handleCopy = () => { navigator.clipboard.writeText('https://statusad.co/emergency/share/a1b2c3d4e5'); setCopied(true); setTimeout(() => setCopied(false), 2000) }
   const handleAdd = () => {
     const relationMap: Record<string, string> = { parente: 'Parente', conjuge: 'Conjuge', amigo: 'Amigo', colega: 'Colega', outro: 'Outro' }
-    setContacts((prev) => [...prev, { id: Date.now().toString(), ...form, relation: relationMap[form.relation] || form.relation }])
+    setContacts((prev) => [...prev, { id: Date.now().toString(), ...form, relation: relationMap[form.relation] || form.relation, alertEnabled: true }])
     setForm({ name: '', phone: '', email: '', relation: 'parente', primary: false }); setShowAdd(false)
   }
 

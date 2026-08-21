@@ -109,7 +109,7 @@ export default function Dashboard() {
           </button>
 
           <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(37,211,102,0.2)]">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
         </div>
       </motion.header>

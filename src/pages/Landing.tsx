@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import {
   AnimatedGrid, AuroraBackground, ParticleField, FloatingOrbs,
   NoiseTexture, MagneticButton, CounterAnimated, Marquee,
-  RippleButton, TextReveal, SpotlightCard, MorphingBlob, ScrollProgress,
+  RippleButton, TextReveal, SpotlightCard, GlowCard, MorphingBlob, ScrollProgress,
 } from '@/components/effects'
 import {
   Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,

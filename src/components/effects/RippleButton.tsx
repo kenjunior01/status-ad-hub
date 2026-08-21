@@ -2,10 +2,10 @@ import { type ReactNode, type MouseEvent, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export function RippleButton({
-  children, className, onClick, variant = 'default',
+  children, className, onClick, variant = 'default', disabled = false,
 }: {
   children: ReactNode; className?: string; onClick?: () => void
-  variant?: 'default' | 'outline' | 'danger'
+  variant?: 'default' | 'outline' | 'danger'; disabled?: boolean
 }) {
   const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([])
 
@@ -25,7 +25,7 @@ export function RippleButton({
   }
 
   return (
-    <button onClick={handleClick} className={cn(base, variants[variant], className)}>
+    <button onClick={handleClick} disabled={disabled} className={cn(base, variants[variant], disabled && 'opacity-50 cursor-not-allowed pointer-events-none', className)}>
       {ripples.map(r => (
         <span
           key={r.id}

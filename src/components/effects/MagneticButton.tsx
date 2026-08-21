@@ -8,7 +8,7 @@ export function MagneticButton({
   children: ReactNode; className?: string; onClick?: () => void
   strength?: number; as?: 'button' | 'a'; href?: string
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLButtonElement & HTMLAnchorElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const sx = useSpring(x, { stiffness: 200, damping: 20 })
@@ -23,8 +23,9 @@ export function MagneticButton({
   const leave = () => { x.set(0); y.set(0) }
 
   const Comp = as === 'a' ? motion.a : motion.button
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
-    <Comp ref={ref} className={cn('relative inline-block', className)} href={href} onClick={onClick}
+    <Comp ref={ref as any} className={cn('relative inline-block', className)} href={href} onClick={onClick}
       onMouseMove={(e: MouseEvent) => move(e.clientX, e.clientY)}
       onMouseLeave={leave} onTouchEnd={leave}
       style={{ x: sx, y: sy }}

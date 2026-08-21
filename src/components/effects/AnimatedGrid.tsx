@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
-export function AnimatedGrid({ className }: { className?: string }) {
+export function AnimatedGrid({ className, opacity = 1 }: { className?: string; opacity?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -66,5 +66,5 @@ export function AnimatedGrid({ className }: { className?: string }) {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className={cn('absolute inset-0 w-full h-full', className)} />
+  return <canvas ref={canvasRef} className={cn('absolute inset-0 w-full h-full', className)} style={{ opacity }} />
 }

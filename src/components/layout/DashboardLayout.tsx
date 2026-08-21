@@ -74,12 +74,12 @@ export default function DashboardLayout() {
         <div className="flex items-center gap-3 px-3 mb-3">
           <div className="relative">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(37,211,102,0.2)]">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#25D366] border-2 border-[#0D1321]" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user?.name || 'Utilizador'}</p>
+            <p className="text-sm font-medium text-white truncate">{(user?.user_metadata as any)?.full_name || 'Utilizador'}</p>
             <p className="text-[10px] text-white/25 truncate font-mono">{user?.email || 'user@email.com'}</p>
           </div>
         </div>

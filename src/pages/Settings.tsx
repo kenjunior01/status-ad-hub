@@ -33,7 +33,7 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 export default function Settings() {
   const { user } = useAuth()
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['perfil']))
-  const [profileName, setProfileName] = useState(user?.name || 'Utilizador')
+  const [profileName, setProfileName] = useState((user?.user_metadata as any)?.full_name || 'Utilizador')
   const [profilePhone, setProfilePhone] = useState('+258 84 123 4567')
   const [notifToggles, setNotifToggles] = useState({ alerts: true, location: true, battery: true, tips: false })
   const [privToggles, setPrivToggles] = useState({ shareLocation: true, anonymous: false, dataRetention: true })
