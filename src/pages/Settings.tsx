@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp, Camera, Trash2, ExternalLink, Smartphone, Headphones, Watch, Shield, Loader2 } from 'lucide-react'
+import { User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp, Camera, Trash2, ExternalLink, Smartphone, Headphones, Watch, Shield, Loader2, Crosshair, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import { useDevices } from '@/hooks/useDevices'
+import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 
 type SectionId = 'perfil' | 'notificacoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sobre'
@@ -36,6 +38,8 @@ export default function Settings() {
   const { user } = useAuth()
   const { profile, loading: profileLoading, updateProfile, isUpdating } = useProfile()
   const { devices } = useDevices()
+  const { zoneState, distance, zone: geoZone, setZoneFromCurrentPosition, isMonitoring: geoMonitoring } = useGeofenceMonitor()
+  const { position: geoPosition, permissionState: geoPermission } = useGeolocation()
 
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['perfil']))
   const [profileName, setProfileName] = useState('')
@@ -43,6 +47,8 @@ export default function Settings() {
   const [notifToggles, setNotifToggles] = useState({ alerts: true, location: true, battery: true, tips: false })
   const [privToggles, setPrivToggles] = useState({ shareLocation: true, anonymous: false, dataRetention: true })
   const [autoActivate, setAutoActivate] = useState(true)
+  const [zoneRadius, setZoneRadius] = useState(500)
+  const [settingZone, setSettingZone] = useState(false)
   const [loading, setLoading] = useState(true)
 
   // Sync profile data when loaded
@@ -51,6 +57,7 @@ export default function Settings() {
       setProfileName(profile.full_name || '')
       setProfilePhone(profile.phone || '')
       setAutoActivate(profile.auto_activate_emergency ?? true)
+      setZoneRadius(profile.emergency_zone_radius ?? 500)
     }
   }, [profile])
 
@@ -223,12 +230,101 @@ export default function Settings() {
                               <div><p className="text-sm font-medium text-white/80">Activar automaticamente</p><p className="text-xs text-white/25 mt-0.5">Activar o modo de emergencia ao sair da zona</p></div>
                               <Toggle enabled={autoActivate} onToggle={() => setAutoActivate(!autoActivate)} />
                             </div>
+
+                            {/* Live geofence status */}
+                            {geoMonitoring && (
+                              <div className={cn(
+                                'p-4 rounded-xl border transition-colors',
+                                zoneState === 'inside'
+                                  ? 'bg-[#25D366]/[0.05] border-[#25D366]/15'
+                                  : zoneState === 'outside'
+                                    ? 'bg-red-500/[0.05] border-red-500/15'
+                                    : 'bg-white/[0.02] border-white/[0.06]'
+                              )}>
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    'p-2 rounded-lg',
+                                    zoneState === 'inside' ? 'bg-[#25D366]/10' : zoneState === 'outside' ? 'bg-red-500/10' : 'bg-white/[0.04]'
+                                  )}>
+                                    <Navigation className={cn(
+                                      'h-4 w-4',
+                                      zoneState === 'inside' ? 'text-[#25D366]' : zoneState === 'outside' ? 'text-red-400' : 'text-white/30'
+                                    )} />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className={cn(
+                                      'text-sm font-medium',
+                                      zoneState === 'inside' ? 'text-[#25D366]' : zoneState === 'outside' ? 'text-red-400' : 'text-white/40'
+                                    )}>
+                                      {zoneState === 'inside' ? 'Dentro da zona' : zoneState === 'outside' ? 'FORA DA ZONA' : 'A aguardar GPS...'}
+                                    </p>
+                                    {distance !== null && (
+                                      <p className="text-[11px] text-white/25 mt-0.5">
+                                        A {Math.round(distance)}m do centro | Precisao: {geoPosition ? Math.round(geoPosition.accuracy) : '?'}m
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className={cn(
+                                    'w-2.5 h-2.5 rounded-full',
+                                    zoneState === 'inside' ? 'bg-[#25D366] animate-pulse' : zoneState === 'outside' ? 'bg-red-500 animate-pulse' : 'bg-white/20'
+                                  )} />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Current zone info */}
                             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                              <div className="flex items-center gap-2 mb-2"><MapPin className="h-4 w-4 text-[#25D366]" /><span className="text-sm font-medium text-white/70">Zona Actual</span></div>
-                              <p className="text-[11px] text-white/20 font-mono">
-                                Centro: {profile?.emergency_zone_lat?.toFixed(4) ?? '-25.9692'}, {profile?.emergency_zone_lng?.toFixed(4) ?? '32.5732'} | Raio: {profile?.emergency_zone_radius ?? 500}m
+                              <div className="flex items-center gap-2 mb-3">
+                                <MapPin className="h-4 w-4 text-[#25D366]" />
+                                <span className="text-sm font-medium text-white/70">Zona Configurada</span>
+                              </div>
+                              <p className="text-[11px] text-white/20 font-mono mb-3">
+                                Centro: {geoZone?.lat?.toFixed(5) ?? profile?.emergency_zone_lat?.toFixed(4) ?? '---'}, {geoZone?.lng?.toFixed(5) ?? profile?.emergency_zone_lng?.toFixed(4) ?? '---'}
                               </p>
+
+                              {/* Radius slider */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] text-white/30">Raio da zona</span>
+                                  <span className="text-[11px] font-mono text-white/60">{zoneRadius}m</span>
+                                </div>
+                                <input
+                                  type="range" min={100} max={5000} step={50} value={zoneRadius}
+                                  onChange={(e) => setZoneRadius(Number(e.target.value))}
+                                  className="w-full h-1 rounded-full appearance-none bg-white/[0.08] accent-[#25D366] cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[9px] text-white/15">
+                                  <span>100m</span><span>5km</span>
+                                </div>
+                              </div>
                             </div>
+
+                            {/* Set zone from GPS button */}
+                            <Button
+                              onClick={async () => {
+                                setSettingZone(true)
+                                await setZoneFromCurrentPosition(zoneRadius)
+                                setSettingZone(false)
+                              }}
+                              disabled={settingZone || geoPermission === 'denied'}
+                              className={cn(
+                                'w-full gap-2 rounded-xl h-11 transition-all',
+                                geoPermission === 'denied'
+                                  ? 'bg-white/[0.03] border border-white/[0.08] text-white/20 cursor-not-allowed'
+                                  : 'bg-[#25D366] hover:bg-[#1fb855] text-white hover:shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)]'
+                              )}
+                            >
+                              {settingZone
+                                ? <><Loader2 className="h-4 w-4 animate-spin" /> A definir zona...</>
+                                : <><Crosshair className="h-4 w-4" /> Definir Zona Aqui (GPS Actual)</>
+                              }
+                            </Button>
+
+                            {geoPermission === 'denied' && (
+                              <p className="text-[11px] text-amber-400/70 text-center">
+                                Permissao de localizacao negada. Active nas definicoes do navegador.
+                              </p>
+                            )}
                           </div>
                         )}
                         {section.id === 'sobre' && (

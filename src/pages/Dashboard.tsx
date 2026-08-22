@@ -9,7 +9,7 @@ L.Icon.Default.mergeOptions({
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap } from 'react-leaflet'
 import {
   Smartphone, Headphones, Watch, Bell, Search, Shield, ShieldAlert,
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
@@ -23,6 +23,8 @@ import { useDashboardStats, useDeviceLocations } from '@/hooks/useHistory'
 import { useEmergency } from '@/hooks/useEmergency'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useProximityMonitor } from '@/hooks/useProximityMonitor'
+import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Device } from '@/lib/types'
@@ -51,6 +53,37 @@ function MapController() {
   const map = useMap()
   useEffect(() => { map.invalidateSize() }, [map])
   return null
+}
+
+/** Emergency zone circle on the map */
+function ZoneCircle({ center, radius, inside }: { center: [number, number]; radius: number; inside: boolean }) {
+  const color = inside ? '#25D366' : '#EF4444'
+  const fillColor = inside ? '#25D366' : '#EF4444'
+  return (
+    <Circle
+      center={center}
+      radius={radius}
+      pathOptions={{
+        color,
+        fillColor,
+        fillOpacity: 0.06,
+        weight: 2,
+        dashArray: '6 4',
+        opacity: 0.6,
+      }}
+    />
+  )
+}
+
+/** User's live GPS position marker */
+function UserMarker({ position }: { position: [number, number] }) {
+  const html = '<div style="position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">' +
+    '<div style="position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(37,211,102,0.15);animation:pulse-ring 2.5s infinite;"></div>' +
+    '<div style="width:10px;height:10px;border-radius:50%;background:#25D366;border:2.5px solid rgba(10,15,26,0.9);box-shadow:0 0 12px rgba(37,211,102,0.5);z-index:2;position:relative;"></div>' +
+    '</div>' +
+    '<style>@keyframes pulse-ring{0%{transform:scale(1);opacity:0.8}100%{transform:scale(3);opacity:0}}</style>'
+  const icon = L.divIcon({ html, className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
+  return <Marker position={position} icon={icon} />
 }
 
 function timeAgo(dateStr: string): string {
@@ -82,6 +115,8 @@ export default function Dashboard() {
   const { triggerEmergency, isTriggering } = useEmergency()
   const { connections } = useBluetooth()
   const { isMonitoring, alerts } = useProximityMonitor()
+  const { zone, zoneState } = useGeofenceMonitor()
+  const { position: userPos } = useGeolocation()
 
   const [loading, setLoading] = useState(true)
   const [emergency, setEmergency] = useState(false)
@@ -229,13 +264,18 @@ export default function Dashboard() {
       </motion.header>
 
       {/* MAP */}
-      <MapContainer center={[-25.9692, 32.5732]} zoom={13} className="h-full w-full z-0" zoomControl={false} attributionControl={false}>
+      <MapContainer center={userPos ? [userPos.latitude, userPos.longitude] : [-25.9692, 32.5732]} zoom={15} className="h-full w-full z-0" zoomControl={false} attributionControl={false}>
         <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
         <MapController />
+        {/* Device markers */}
         {markers.map(d => <Marker key={d.id} position={[d.lat, d.lng]} icon={d.icon} />)}
         {markers.length >= 2 && (
           <Polyline positions={markers.map(m => [m.lat, m.lng] as [number, number])} pathOptions={{ color: '#25D366', weight: 2, dashArray: '8 6', opacity: 0.5 }} />
         )}
+        {/* Emergency zone circle */}
+        {zone && <ZoneCircle center={[zone.lat, zone.lng]} radius={zone.radius} inside={zoneState === 'inside'} />}
+        {/* User's live position marker */}
+        {userPos && <UserMarker position={[userPos.latitude, userPos.longitude]} />}
       </MapContainer>
 
       {/* LEFT PANEL - Device List */}
@@ -348,6 +388,18 @@ export default function Dashboard() {
             <span className="hidden sm:inline">{btn.label}</span>
           </Button>
         ))}
+        {/* Geofence status pill */}
+        {zone && zoneState !== 'unknown' && (
+          <div className={cn(
+            'hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-medium border',
+            zoneState === 'inside'
+              ? 'bg-[#25D366]/[0.08] border-[#25D366]/20 text-[#25D366]'
+              : 'bg-red-500/[0.08] border-red-500/20 text-red-400'
+          )}>
+            <MapPin className="h-3 w-3" />
+            {zoneState === 'inside' ? 'Na Zona' : 'Fora!'}
+          </div>
+        )}
       </motion.div>
 
       {/* EMERGENCY MODAL */}
