@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Bluetooth, Users, History, Settings,
-  Shield, Bell, LogOut, Menu, X, ChevronRight,
+  Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,8 @@ import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/emergency-contacts', label: 'Emergencia', icon: Users },
+  { to: '/emergency-contacts', label: 'Contactos', icon: Users },
+  { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
   { to: '/history', label: 'Historico', icon: History },
   { to: '/settings', label: 'Configuracoes', icon: Settings },
 ]
@@ -22,7 +23,7 @@ const navItems = [
 const mobileNavItems = [
   { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
   { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/emergency-contacts', label: 'Emergencia', icon: Users },
+  { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
   { to: '/history', label: 'Historico', icon: History },
   { to: '/settings', label: 'Config.', icon: Settings },
 ]

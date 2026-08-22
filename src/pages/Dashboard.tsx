@@ -14,6 +14,7 @@ import {
   Smartphone, Headphones, Watch, Bell, Search, Shield, ShieldAlert,
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useDevices } from '@/hooks/useDevices'
 import { useDashboardStats, useDeviceLocations } from '@/hooks/useHistory'
 import { useEmergency } from '@/hooks/useEmergency'
+import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useProximityMonitor } from '@/hooks/useProximityMonitor'
 import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
@@ -115,6 +117,8 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: locationPoints } = useDeviceLocations()
   const { triggerEmergency, isTriggering } = useEmergency()
+  const { activeEmergency } = useEmergencyAlerts()
+  const navigate = useNavigate()
   const { connections } = useBluetooth()
   const { isMonitoring, alerts } = useProximityMonitor()
   const { zone, zoneState } = useGeofenceMonitor()
@@ -186,7 +190,9 @@ export default function Dashboard() {
       triggerEmergency({ latitude: coords.lat, longitude: coords.lng })
     }
     setEmergency(false)
-  }, [coords, triggerEmergency])
+    // Navigate to emergency page after triggering
+    setTimeout(() => navigate('/emergency'), 500)
+  }, [coords, triggerEmergency, navigate])
 
   // Merge device data with location points for map markers
   const displayDevices: DisplayDevice[] = useMemo(() => {
@@ -221,7 +227,8 @@ export default function Dashboard() {
   )
 
   const activeDevices = displayDevices.filter(d => d.status !== 'offline').length
-  const alertCount = stats?.alerts_today ?? 0
+  const alertCount = (stats?.alerts_today ?? 0) + (stats?.active_emergencies ?? 0)
+  const hasActiveEmergency = !!activeEmergency
   const safeZones = stats?.safe_zones ?? 0
   const totalDevices = stats?.total_devices ?? displayDevices.length
 
@@ -282,10 +289,10 @@ export default function Dashboard() {
             </div>
           )}
 
-          <button className="relative p-2 rounded-xl hover:bg-white/[0.04] transition">
+          <button onClick={() => navigate('/emergency')} className="relative p-2 rounded-xl hover:bg-white/[0.04] transition">
             <Bell className="h-[18px] w-[18px] text-white/40" />
             {alertCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">{alertCount}</span>
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">{alertCount}</span>
             )}
           </button>
 

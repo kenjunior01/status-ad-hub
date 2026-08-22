@@ -5,6 +5,7 @@ import type {
   CreateContactInput, UpdateContactInput,
   UpdateProfileInput,
   DashboardStats, LocationPoint, HistoryPeriod,
+  EmergencyAlert, EmergencyHistoryItem,
 } from '@/lib/types'
 import { getPeriodDateRange } from '@/lib/types'
 
@@ -147,7 +148,7 @@ export async function getEvents(
 export async function getDashboardStats(userId: string): Promise<DashboardStats> {
   const { data, error } = await supabase
     .rpc('get_dashboard_stats', { p_user_id: userId })
-    if (error) throw error
+  if (error) throw error
   const row = data?.[0]
   return {
     total_devices: row?.total_devices ?? 0,
@@ -155,7 +156,8 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     low_battery_devices: row?.low_battery_devices ?? 0,
     alerts_today: row?.alerts_today ?? 0,
     locations_today: row?.locations_today ?? 0,
-    safe_zones: 2, // default, will come from profile later
+    safe_zones: 2,
+    active_emergencies: row?.active_emergencies ?? 0,
   }
 }
 
@@ -167,7 +169,6 @@ export async function getDeviceLocations(userId: string): Promise<LocationPoint[
     .not('last_location', 'is', null)
   if (error) throw error
   return (data || []).map((d: any) => {
-    // Extract lat/lng from PostGIS Point (returned as {coordinates: [lng, lat]})
     const coords = d.last_location?.coordinates || [0, 0]
     return {
       lat: coords[1],
@@ -220,10 +221,71 @@ export async function triggerEmergency(
       p_longitude: longitude,
     })
   if (error) throw error
+  const row = data?.[0]
   return {
-    alertId: data,
-    contactsNotified: [],
+    alertId: row?.alert_id,
+    contactsNotified: row?.notified_phones || [],
   }
+}
+
+/** Get the currently active emergency for a user (if any) */
+export async function getActiveEmergency(userId: string): Promise<EmergencyAlert | null> {
+  const { data, error } = await supabase
+    .rpc('get_active_emergency', { p_user_id: userId })
+  if (error) throw error
+  if (!data || data.length === 0) return null
+  const row = data[0]
+  return {
+    id: row.id,
+    status: row.status,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    contacts_notified: row.contacts_notified || [],
+    share_token: row.share_token,
+    created_at: row.created_at,
+    resolved_at: null,
+    resolve_reason: null,
+  }
+}
+
+/** Resolve an active emergency */
+export async function resolveEmergency(
+  alertId: string,
+  reason?: string
+): Promise<void> {
+  const { error } = await supabase
+    .rpc('resolve_emergency', { p_alert_id: alertId, p_reason: reason || null })
+  if (error) throw error
+}
+
+/** Mark an emergency as false alarm */
+export async function markFalseAlarm(alertId: string): Promise<void> {
+  const { error } = await supabase
+    .rpc('mark_false_alarm', { p_alert_id: alertId })
+  if (error) throw error
+}
+
+/** Get emergency history for a user */
+export async function getEmergencyHistory(userId: string, limit = 20): Promise<EmergencyHistoryItem[]> {
+  const { data, error } = await supabase
+    .rpc('get_emergency_history', { p_user_id: userId, p_limit: limit })
+  if (error) throw error
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    status: row.status,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    contacts_notified: row.contacts_notified || [],
+    created_at: row.created_at,
+    resolved_at: row.resolved_at,
+    resolve_reason: row.resolve_reason,
+    share_token: row.share_token,
+  }))
+}
+
+/** Generate a shareable tracking URL for an emergency */
+export function getEmergencyShareUrl(shareToken: string): string {
+  return `${window.location.origin}/track/${shareToken}`
 }
 
 // ============================================
@@ -251,6 +313,10 @@ export function subscribeToAlerts(
     .channel('alerts-realtime')
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${userId}` },
+      (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${userId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
     )
     .subscribe()

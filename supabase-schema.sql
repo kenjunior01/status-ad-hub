@@ -1,10 +1,10 @@
 -- ============================================
--- StatusAds Connect — Supabase Schema
+-- StatusAds Connect — Supabase Schema (v2)
 -- ============================================
 -- Execute this in the Supabase SQL Editor
 -- 
--- Tables: profiles, devices, emergency_contacts, location_events
--- Features: RLS, PostGIS, triggers, realtime
+-- Tables: profiles, devices, emergency_contacts, location_events, emergency_alerts
+-- Features: RLS, PostGIS, triggers, realtime, emergency resolution, share tokens
 -- ============================================
 
 -- Enable PostGIS for geospatial queries
@@ -151,91 +151,82 @@ CREATE TRIGGER events_set_location
 -- 5. EMERGENCY ALERTS (active emergencies)
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.emergency_alerts (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'resolved', 'false_alarm')),
-  latitude      DOUBLE PRECISION NOT NULL,
-  longitude     DOUBLE PRECISION NOT NULL,
-  location      GEOMETRY(Point, 4326),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status            TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'resolved', 'false_alarm')),
+  latitude          DOUBLE PRECISION NOT NULL,
+  longitude         DOUBLE PRECISION NOT NULL,
+  location          GEOMETRY(Point, 4326),
   contacts_notified TEXT[] DEFAULT '{}',
-  resolved_at   TIMESTAMPTZ,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  share_token       TEXT UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
+  resolved_at       TIMESTAMPTZ,
+  resolve_reason    TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_alerts_user ON public.emergency_alerts(user_id);
+CREATE INDEX idx_alerts_active ON public.emergency_alerts(user_id, status) WHERE status = 'active';
 CREATE INDEX idx_alerts_location ON public.emergency_alerts USING GIST(location);
+CREATE INDEX idx_alerts_share_token ON public.emergency_alerts(share_token) WHERE share_token IS NOT NULL;
+
+-- Auto-populate PostGIS point on emergency_alerts
+CREATE OR REPLACE FUNCTION public.set_alert_location()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
+    NEW.location = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS alerts_set_location ON public.emergency_alerts;
+CREATE TRIGGER alerts_set_location
+  BEFORE INSERT OR UPDATE ON public.emergency_alerts
+  FOR EACH ROW EXECUTE FUNCTION public.set_alert_location();
 
 -- ============================================
 -- 6. ROW LEVEL SECURITY
 -- ============================================
 
--- Profiles: users can only read/write their own
+-- Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own profile"
-  ON public.profiles FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can update own profile"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own profile"
-  ON public.profiles FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Devices: users can only manage their own
+-- Devices
 ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own devices"
-  ON public.devices FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own devices"
-  ON public.devices FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own devices"
-  ON public.devices FOR UPDATE
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own devices"
-  ON public.devices FOR DELETE
-  USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own devices" ON public.devices FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own devices" ON public.devices FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own devices" ON public.devices FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own devices" ON public.devices FOR DELETE USING (auth.uid() = user_id);
 
--- Emergency Contacts: users can only manage their own
+-- Emergency Contacts
 ALTER TABLE public.emergency_contacts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own contacts"
-  ON public.emergency_contacts FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own contacts"
-  ON public.emergency_contacts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own contacts"
-  ON public.emergency_contacts FOR UPDATE
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own contacts"
-  ON public.emergency_contacts FOR DELETE
-  USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own contacts" ON public.emergency_contacts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own contacts" ON public.emergency_contacts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own contacts" ON public.emergency_contacts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own contacts" ON public.emergency_contacts FOR DELETE USING (auth.uid() = user_id);
 
--- Location Events: users can only manage their own
+-- Location Events
 ALTER TABLE public.location_events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own events"
-  ON public.location_events FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own events"
-  ON public.location_events FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can view own events" ON public.location_events FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own events" ON public.location_events FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Emergency Alerts: users can only manage their own
+-- Emergency Alerts
 ALTER TABLE public.emergency_alerts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own alerts"
-  ON public.emergency_alerts FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own alerts"
-  ON public.emergency_alerts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own alerts"
-  ON public.emergency_alerts FOR UPDATE
-  USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own alerts" ON public.emergency_alerts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own alerts" ON public.emergency_alerts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own alerts" ON public.emergency_alerts FOR UPDATE USING (auth.uid() = user_id);
+
+-- Allow public read on alerts with share_token (for police/family tracking page)
+CREATE POLICY "Public read via share token" ON public.emergency_alerts
+  FOR SELECT USING (share_token IS NOT NULL);
 
 -- ============================================
 -- 7. REALTIME SUBSCRIPTIONS
 -- ============================================
--- Enable realtime for critical tables
 ALTER PUBLICATION supabase_realtime ADD TABLE public.devices;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.emergency_alerts;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.location_events;
@@ -251,7 +242,8 @@ RETURNS TABLE (
   online_devices INT,
   low_battery_devices INT,
   alerts_today INT,
-  locations_today INT
+  locations_today INT,
+  active_emergencies INT
 ) AS $$
 BEGIN
   RETURN QUERY
@@ -259,21 +251,22 @@ BEGIN
     (SELECT COUNT(*)::INT FROM public.devices WHERE user_id = p_user_id),
     (SELECT COUNT(*)::INT FROM public.devices WHERE user_id = p_user_id AND status IN ('online', 'connected')),
     (SELECT COUNT(*)::INT FROM public.devices WHERE user_id = p_user_id AND status = 'low_battery'),
-    (SELECT COUNT(*)::INT FROM public.location_events WHERE user_id = p_user_id AND type = 'alert' AND created_at >= date_trunc('day', now())),
-    (SELECT COUNT(*)::INT FROM public.location_events WHERE user_id = p_user_id AND type = 'location' AND created_at >= date_trunc('day', now()));
+    (SELECT COUNT(*)::INT FROM public.location_events WHERE user_id = p_user_id AND type IN ('alert', 'emergency') AND created_at >= date_trunc('day', now())),
+    (SELECT COUNT(*)::INT FROM public.location_events WHERE user_id = p_user_id AND type = 'location' AND created_at >= date_trunc('day', now())),
+    (SELECT COUNT(*)::INT FROM public.emergency_alerts WHERE user_id = p_user_id AND status = 'active');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
--- Create emergency alert and log event
+-- Create emergency alert, log event, return contacts notified
 CREATE OR REPLACE FUNCTION public.trigger_emergency(
   p_user_id UUID,
   p_latitude DOUBLE PRECISION,
   p_longitude DOUBLE PRECISION
 )
-RETURNS UUID AS $$
+RETURNS TABLE (alert_id UUID, notified_phones TEXT[]) AS $$
 DECLARE
   v_alert_id UUID;
-  v_contact_phone TEXT;
+  v_phones TEXT[];
 BEGIN
   -- Create the alert
   INSERT INTO public.emergency_alerts (user_id, latitude, longitude)
@@ -281,23 +274,156 @@ BEGIN
   RETURNING id INTO v_alert_id;
 
   -- Log the event
-  INSERT INTO public.location_events (user_id, type, description, latitude, longitude)
+  INSERT INTO public.location_events (user_id, type, description, latitude, longitude, metadata)
   VALUES (
     p_user_id,
     'emergency',
     'Emergencia activada - GPS: ' || p_latitude::TEXT || ', ' || p_longitude::TEXT,
     p_latitude,
-    p_longitude
+    p_longitude,
+    jsonb_build_object('alert_id', v_alert_id)
   );
 
-  -- Mark contacts as notified
+  -- Collect contacts to notify
+  SELECT ARRAY_AGG(phone) INTO v_phones
+  FROM public.emergency_contacts
+  WHERE user_id = p_user_id AND alert_enabled = true;
+
+  -- Update alert with notified contacts
   UPDATE public.emergency_alerts
-  SET contacts_notified = ARRAY(
-    SELECT phone FROM public.emergency_contacts
-    WHERE user_id = p_user_id AND alert_enabled = true
-  )
+  SET contacts_notified = COALESCE(v_phones, '{}')
   WHERE id = v_alert_id;
 
-  RETURN v_alert_id;
+  -- Return result
+  RETURN QUERY SELECT v_alert_id, COALESCE(v_phones, '{}');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Resolve an emergency alert
+CREATE OR REPLACE FUNCTION public.resolve_emergency(
+  p_alert_id UUID,
+  p_reason TEXT DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.emergency_alerts
+  SET 
+    status = 'resolved',
+    resolved_at = now(),
+    resolve_reason = COALESCE(p_reason, 'Resolvida manualmente pelo utilizador')
+  WHERE id = p_alert_id AND status = 'active';
+
+  -- Log resolution event
+  INSERT INTO public.location_events (user_id, type, description, metadata)
+  SELECT 
+    user_id, 
+    'emergency', 
+    'Emergencia resolvida: ' || COALESCE(p_reason, 'Resolvida manualmente'),
+    jsonb_build_object('alert_id', p_alert_id, 'action', 'resolved')
+  FROM public.emergency_alerts 
+  WHERE id = p_alert_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Mark emergency as false alarm
+CREATE OR REPLACE FUNCTION public.mark_false_alarm(
+  p_alert_id UUID
+)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.emergency_alerts
+  SET 
+    status = 'false_alarm',
+    resolved_at = now(),
+    resolve_reason = 'Marcada como falso alarme pelo utilizador'
+  WHERE id = p_alert_id AND status = 'active';
+
+  INSERT INTO public.location_events (user_id, type, description, metadata)
+  SELECT 
+    user_id, 
+    'emergency', 
+    'Falso alarme - emergencia cancelada',
+    jsonb_build_object('alert_id', p_alert_id, 'action', 'false_alarm')
+  FROM public.emergency_alerts 
+  WHERE id = p_alert_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get active emergency for a user (if any)
+CREATE OR REPLACE FUNCTION public.get_active_emergency(p_user_id UUID)
+RETURNS TABLE (
+  id UUID,
+  status TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  contacts_notified TEXT[],
+  share_token TEXT,
+  created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    ea.id, ea.status, ea.latitude, ea.longitude, 
+    ea.contacts_notified, ea.share_token, ea.created_at
+  FROM public.emergency_alerts ea
+  WHERE ea.user_id = p_user_id AND ea.status = 'active'
+  ORDER BY ea.created_at DESC
+  LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Get emergency alert by share token (public, for tracking page)
+CREATE OR REPLACE FUNCTION public.get_emergency_by_token(p_token TEXT)
+RETURNS TABLE (
+  id UUID,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  contacts_notified TEXT[],
+  created_at TIMESTAMPTZ,
+  resolved_at TIMESTAMPTZ,
+  status TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    ea.id, ea.latitude, ea.longitude, 
+    ea.contacts_notified, ea.created_at, ea.resolved_at, ea.status
+  FROM public.emergency_alerts ea
+  WHERE ea.share_token = p_token;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Get recent emergency history for a user
+CREATE OR REPLACE FUNCTION public.get_emergency_history(p_user_id UUID, p_limit INT DEFAULT 20)
+RETURNS TABLE (
+  id UUID,
+  status TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  contacts_notified TEXT[],
+  created_at TIMESTAMPTZ,
+  resolved_at TIMESTAMPTZ,
+  resolve_reason TEXT,
+  share_token TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    ea.id, ea.status, ea.latitude, ea.longitude,
+    ea.contacts_notified, ea.created_at, ea.resolved_at,
+    ea.resolve_reason, ea.share_token
+  FROM public.emergency_alerts ea
+  WHERE ea.user_id = p_user_id
+  ORDER BY ea.created_at DESC
+  LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Cleanup old location events (run daily via cron or pg_cron)
+CREATE OR REPLACE FUNCTION public.cleanup_old_events(p_days INT DEFAULT 90)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM public.location_events
+  WHERE created_at < now() - (p_days || ' days')::INTERVAL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -178,7 +178,7 @@ function showFallbackNotification(options: NotifyOptions) {
 export function setupServiceWorkerNotifications() {
   if (!('serviceWorker' in navigator)) return
 
-  navigator.serviceWorker.addEventListener('message', (event) => {
+  navigator.serviceWorker.addEventListener('message', (event: MessageEvent) => {
     const data = event.data
     if (data?.type === 'NOTIFICATION_CLICK') {
       // Handle notification click from SW

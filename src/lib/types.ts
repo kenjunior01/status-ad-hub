@@ -124,6 +124,7 @@ export interface DashboardStats {
   alerts_today: number
   locations_today: number
   safe_zones: number
+  active_emergencies: number
 }
 
 export interface LocationPoint {
@@ -163,3 +164,19 @@ export function getPeriodDateRange(period: HistoryPeriod): { start: Date; end: D
   }
   return { start, end }
 }
+
+// ---- EMERGENCY TYPES ----
+
+export interface EmergencyAlert {
+  id: string
+  status: 'active' | 'resolved' | 'false_alarm'
+  latitude: number
+  longitude: number
+  contacts_notified: string[]
+  share_token: string | null
+  created_at: string
+  resolved_at: string | null
+  resolve_reason: string | null
+}
+
+export interface EmergencyHistoryItem extends EmergencyAlert {}

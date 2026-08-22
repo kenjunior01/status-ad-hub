@@ -18,6 +18,7 @@ const Devices = lazy(() => import('@/pages/Devices'))
 const EmergencyContacts = lazy(() => import('@/pages/EmergencyContacts'))
 const History = lazy(() => import('@/pages/History'))
 const Settings = lazy(() => import('@/pages/Settings'))
+const Emergency = lazy(() => import('@/pages/Emergency'))
 
 const queryClient = new QueryClient()
 
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="contacts" element={<EmergencyContacts />} />
         <Route path="history" element={<History />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="emergency" element={<Emergency />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
