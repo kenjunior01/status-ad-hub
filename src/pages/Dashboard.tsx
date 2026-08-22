@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet'
 import {
   Smartphone, Headphones, Watch, Bell, Search, Shield, ShieldAlert,
-  MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi,
+  MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useDevices } from '@/hooks/useDevices'
 import { useDashboardStats, useDeviceLocations } from '@/hooks/useHistory'
 import { useEmergency } from '@/hooks/useEmergency'
+import { useBluetooth } from '@/hooks/useBluetooth'
+import { useProximityMonitor } from '@/hooks/useProximityMonitor'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Device } from '@/lib/types'
@@ -78,6 +80,8 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: locationPoints } = useDeviceLocations()
   const { triggerEmergency, isTriggering } = useEmergency()
+  const { connections } = useBluetooth()
+  const { isMonitoring, alerts } = useProximityMonitor()
 
   const [loading, setLoading] = useState(true)
   const [emergency, setEmergency] = useState(false)
@@ -200,6 +204,16 @@ export default function Dashboard() {
             <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]" />
             <span className="text-[11px] font-medium text-[#25D366]">{safeMode ? 'Seguro' : 'Inactivo'}</span>
           </div>
+
+          {isMonitoring && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/[0.06] border border-blue-500/15">
+              <BluetoothConnected className="h-3 w-3 text-blue-400" />
+              <span className="text-[11px] font-medium text-blue-400">BLE Monitor</span>
+              {alerts.length > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{alerts.length}</span>
+              )}
+            </div>
+          )}
 
           <button className="relative p-2 rounded-xl hover:bg-white/[0.04] transition">
             <Bell className="h-[18px] w-[18px] text-white/40" />

@@ -62,16 +62,3 @@ export function useDevices() {
     isDeleting: deleteMutation.isPending,
   }
 }
-
-export function useDeviceLocations() {
-  const { user } = useAuth()
-  const userId = user?.id
-
-  return useQuery({
-    queryKey: ['device-locations', userId],
-    queryFn: () => api.getDeviceLocations(userId!),
-    enabled: !!userId,
-    staleTime: 15_000,
-    refetchInterval: 30_000,
-  })
-}
