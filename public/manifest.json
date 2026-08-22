@@ -1,10 +1,10 @@
 {
-  "name": "StatusAds Connect",
+  "name": "StatusAds Connect — Seguranca Pessoal",
   "short_name": "StatusAds",
-  "description": "Global WhatsApp Status Advertising Platform - Connect creators with brands",
+  "description": "Plataforma de seguranca pessoal via BLE. Rastreamento de localizacao em tempo real, botao de panico invisivel e alertas instantaneos.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
+  "background_color": "#0A0F1A",
   "theme_color": "#25D366",
   "orientation": "portrait-primary",
   "icons": [
@@ -25,7 +25,7 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["business", "social"],
-  "lang": "en",
+  "categories": ["security", "lifestyle"],
+  "lang": "pt-BR",
   "dir": "ltr"
 }

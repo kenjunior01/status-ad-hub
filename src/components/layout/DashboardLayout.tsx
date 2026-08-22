@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { NoiseTexture, Shimmer } from '@/components/effects'
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -177,6 +178,7 @@ export default function DashboardLayout() {
           })}
         </div>
       </nav>
+      <PWAInstallPrompt />
     </div>
   )
 }

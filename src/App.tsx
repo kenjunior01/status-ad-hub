@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { PWAProvider } from '@/hooks/usePWA'
 import { lazy, Suspense } from 'react'
 import { Shield, Loader2 } from 'lucide-react'
 import { NoiseTexture, MorphingBlob, Shimmer } from '@/components/effects'
@@ -76,6 +77,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <PWAProvider>
         <BrowserRouter>
           <Suspense fallback={<LoadingScreen />}>
             <AppRoutes />
@@ -87,6 +89,7 @@ function App() {
             }}
           />
         </BrowserRouter>
+        </PWAProvider>
       </AuthProvider>
     </QueryClientProvider>
   )
