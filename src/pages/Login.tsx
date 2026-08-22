@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, MailWarning } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton } from "@/components/effects";
 
@@ -19,6 +19,9 @@ export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (values: LoginValues) => {
@@ -28,6 +31,16 @@ export default function Login() {
     if (error) { toast.error("Falha na autenticacao", { description: error.message }); return; }
     toast.success("Bem-vindo de volta!");
     navigate("/dashboard");
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim()) { toast.error("Insira o seu email"); return; }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim());
+    setResetLoading(false);
+    if (error) { toast.error("Erro ao enviar email", { description: error.message }); return; }
+    toast.success("Email enviado!", { description: "Verifique a sua caixa de entrada." });
+    setResetMode(false);
   };
 
   const inputCls = (hasError: boolean) =>
@@ -89,10 +102,10 @@ export default function Login() {
                 {errors.password && <p className="text-xs text-red-400/80">{errors.password.message}</p>}
               </div>
               <div className="flex justify-end">
-                <a href="#" className="text-xs text-[#25D366]/70 transition hover:text-[#25D366]">Esqueceu a senha?</a>
+                <button type="button" onClick={() => setResetMode(true)} className="text-xs text-[#25D366]/70 transition hover:text-[#25D366]">Esqueceu a senha?</button>
               </div>
               <MagneticButton strength={0.15}>
-                <RippleButton onClick={handleSubmit(onSubmit)} disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
+                <RippleButton disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Entrar <ArrowRight className="h-4 w-4" /></>}
                 </RippleButton>
               </MagneticButton>
@@ -116,6 +129,48 @@ export default function Login() {
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-center text-sm text-white/30">
             Nao tem conta? <Link to="/register" className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]">Criar conta</Link>
           </motion.p>
+
+          {/* PASSWORD RESET MODAL */}
+          {resetMode && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+              onClick={(e) => e.target === e.currentTarget && setResetMode(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-sm mx-4 rounded-2xl border border-white/[0.08] bg-[#0D1321] p-8"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/15">
+                    <MailWarning className="h-5 w-5 text-[#25D366]" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-semibold text-white">Redefinir Senha</h3>
+                    <p className="text-[11px] text-white/25 mt-0.5">Enviaremos um link de recuperacao para o seu email.</p>
+                  </div>
+                </div>
+                <input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                  className="w-full h-11 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-4 pr-4 text-white text-sm placeholder:text-white/20 outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30 transition-all duration-200 mb-4"
+                />
+                <div className="flex gap-3">
+                  <button onClick={() => setResetMode(false)} className="flex-1 h-11 rounded-xl border border-white/[0.08] text-sm text-white/50 hover:text-white hover:bg-white/[0.04] transition">Cancelar</button>
+                  <button
+                    onClick={handleResetPassword}
+                    disabled={resetLoading}
+                    className="flex-1 h-11 rounded-xl bg-[#25D366] hover:bg-[#1fb855] text-white text-sm font-semibold disabled:opacity-50 transition gap-2 flex items-center justify-center"
+                  >
+                    {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar Link'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </div>

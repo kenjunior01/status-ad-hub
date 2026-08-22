@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Users, UserCheck, Check } from "lucide-react";
+import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Users, Check } from "lucide-react";
 import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton, SpotlightCard } from "@/components/effects";
 
 const registerSchema = z.object({
@@ -43,7 +43,10 @@ export default function Register() {
       options: { data: { full_name: values.name, phone: values.phone, role: values.role } },
     });
     if (authError) { setLoading(false); toast.error("Erro ao criar conta", { description: authError.message }); return; }
-    if (authData.user) { await supabase.from("profiles").insert({ id: authData.user.id, full_name: values.name, email: values.email, phone: values.phone, role: values.role }); }
+    if (authData.user) {
+      const { error: profileError } = await supabase.from("profiles").insert({ user_id: authData.user.id, full_name: values.name, phone: values.phone });
+      if (profileError) console.error('[Register] Profile insert error:', profileError.message);
+    }
     setLoading(false); toast.success("Conta criada!", { description: "Verifique o seu email para confirmar." }); navigate("/login");
   }
 
@@ -139,7 +142,7 @@ export default function Register() {
               </label>
               {errors.terms && <p className="text-xs text-red-400/80">{errors.terms.message}</p>}
               <MagneticButton strength={0.15}>
-                <RippleButton onClick={handleSubmit(onSubmit)} disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
+                <RippleButton disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
                   {loading ? <span className="flex items-center gap-2"><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>A criar conta...</span> : <>Criar Conta <ArrowRight className="h-4 w-4" /></>}
                 </RippleButton>
               </MagneticButton>

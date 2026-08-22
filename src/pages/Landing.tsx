@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -59,11 +59,11 @@ function Navbar() {
     { label: 'Emerg\u00eancia', href: '#emergencia' },
   ]
 
-  useState(() => {
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  })
+  }, [])
 
   return (
     <nav className={cn(
@@ -163,12 +163,12 @@ function Hero() {
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8 }} className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <MagneticButton strength={0.2}>
-            <RippleButton className="h-13 px-8 text-base font-semibold">
+            <RippleButton className="h-13 px-8 text-base font-semibold" onClick={() => window.location.href = '/register'}>
               Criar Conta Gr\u00e1tis <ArrowRight className="ml-2 h-4 w-4" />
             </RippleButton>
           </MagneticButton>
           <MagneticButton strength={0.15}>
-            <Button variant="outline" size="lg" className="h-13 border-white/10 bg-white/[0.03] px-8 text-base text-white/80 backdrop-blur-sm hover:bg-white/[0.08] hover:border-white/20 hover:text-white rounded-xl transition-all duration-300">
+            <Button variant="outline" size="lg" onClick={() => window.location.href = '/login'} className="h-13 border-white/10 bg-white/[0.03] px-8 text-base text-white/80 backdrop-blur-sm hover:bg-white/[0.08] hover:border-white/20 hover:text-white rounded-xl transition-all duration-300">
               <Play className="mr-2 h-4 w-4" /> Ver Demo
             </Button>
           </MagneticButton>
@@ -493,7 +493,7 @@ function FinalCta() {
                 className="h-12 w-full max-w-xs border-white/20 bg-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-xl backdrop-blur-sm"
               />
               <MagneticButton strength={0.15}>
-                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6">
+                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/register'}>
                   Criar Conta <ArrowRight className="ml-2 h-4 w-4" />
                 </RippleButton>
               </MagneticButton>
@@ -535,7 +535,7 @@ function Footer() {
               <h4 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">{col.title}</h4>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {col.links.map((link) => (
-                  <li key={link}><a href="#" className="text-xs text-white/20 transition hover:text-white/50">{link}</a></li>
+                  <li key={link}><span className="text-xs text-white/20">{link}</span></li>
                 ))}
               </ul>
             </div>

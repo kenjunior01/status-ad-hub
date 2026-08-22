@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
 import { useDevices } from '@/hooks/useDevices'
 import { SpotlightCard, BeamBorder, Shimmer, CounterAnimated } from '@/components/effects'
+import { Signal } from 'lucide-react'
 
 const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch, other: Smartphone }
 const statusLabels: Record<string, { label: string; className: string }> = {
@@ -17,12 +17,7 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.06]' },
 }
 
-// Fallback mock data when Supabase is not configured
-const mockDevices = [
-  { id: '1', name: 'iPhone 15 Pro', type: 'phone' as const, mac_address: 'A4:B1:C2:D3:E4:F5', color: '#25D366', status: 'online' as const, battery: 92, last_seen: new Date().toISOString() },
-  { id: '2', name: 'AirPods Pro 2', type: 'airpods' as const, mac_address: 'F6:E5:D4:C3:B2:A1', color: '#3B82F6', status: 'connected' as const, battery: 85, last_seen: new Date().toISOString() },
-  { id: '3', name: 'Galaxy Watch 6', type: 'smartwatch' as const, mac_address: '1A:2B:3C:4D:5E:6F', color: '#F59E0B', status: 'low_battery' as const, battery: 15, last_seen: new Date().toISOString() },
-]
+const EmptyStateIcon = Signal
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -35,18 +30,12 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function Devices() {
-  const { user } = useAuth()
-  const { devices: dbDevices, loading: apiLoading, addDevice, deleteDevice, isAdding } = useDevices()
+  const { devices, loading, addDevice, deleteDevice, isAdding } = useDevices()
 
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState('phone')
   const [scanning, setScanning] = useState(false)
-
-  // Use DB data if available, otherwise fall back to mock
-  const isSupabaseConfigured = !import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
-  const devices = isSupabaseConfigured ? dbDevices : mockDevices
-  const loading = isSupabaseConfigured ? apiLoading : false
 
   const stats = useMemo(() => [
     { label: 'Total', value: devices.length, icon: Signal, color: 'text-white' },
@@ -56,15 +45,14 @@ export default function Devices() {
 
   const handleAdd = () => {
     if (!newName.trim()) return
-    if (isSupabaseConfigured) {
-      const colors = ['#25D366', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899']
-      addDevice({ name: newName, type: newType as any, mac_address: `XX:XX:XX:${Date.now().toString(16).slice(-6)}`, color: colors[Math.floor(Math.random() * colors.length)] })
-    }
-    setNewName(''); setNewType('phone'); setShowAdd(false)
+    const colors = ['#25D366', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899']
+    addDevice({ name: newName, type: newType as any, mac_address: `XX:XX:XX:${Date.now().toString(16).slice(-6)}`, color: colors[Math.floor(Math.random() * colors.length)] }, {
+      onSuccess: () => { setNewName(''); setNewType('phone'); setShowAdd(false) },
+    })
   }
 
   const handleDelete = (id: string) => {
-    if (isSupabaseConfigured) deleteDevice(id)
+    deleteDevice(id)
   }
 
   return (
@@ -142,13 +130,21 @@ export default function Devices() {
           ))}
         </div>
       ) : (
+        <>
+        {devices.length === 0 ? (
+          <div className="text-center py-16">
+            <EmptyStateIcon className="h-12 w-12 text-white/10 mx-auto mb-3" />
+            <p className="text-sm text-white/30">Nenhum dispositivo pareado</p>
+            <p className="text-xs text-white/15 mt-1">Adicione o seu primeiro dispositivo para comecar a monitorizar</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {devices.map((d, i) => {
             const IconComp = deviceIconMap[d.type] || Smartphone
             const st = statusLabels[d.status] || statusLabels.offline
             const battColor = d.battery > 50 ? 'bg-[#25D366]' : d.battery > 20 ? 'bg-amber-400' : 'bg-red-500'
-            const mac = 'mac_address' in d ? d.mac_address : (d as any).mac
-            const lastSeen = 'last_seen' in d ? timeAgo(d.last_seen) : (d as any).lastSeen
+            const mac = d.mac_address
+            const lastSeen = timeAgo(d.last_seen)
             return (
               <motion.div key={d.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <BeamBorder color={d.color}>
@@ -176,6 +172,8 @@ export default function Devices() {
             )
           })}
         </div>
+        )}
+        </>
       )}
     </div>
   )
