@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useGeolocation, type GeoPosition } from '@/hooks/useGeolocation'
+import { useNotifications } from '@/hooks/useNotifications'
 import * as api from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -36,6 +37,7 @@ export interface GeofenceZone {
 export function useGeofenceMonitor() {
   const { user } = useAuth()
   const { position } = useGeolocation()
+  const { notify, notifyEmergency } = useNotifications()
   const [zone, setZone] = useState<GeofenceZone | null>(null)
   const [zoneState, setZoneState] = useState<ZoneState>('unknown')
   const [alerts, setAlerts] = useState<GeofenceAlert[]>([])
@@ -162,16 +164,32 @@ export function useGeofenceMonitor() {
             description: `A ${Math.round(dist)}m do centro. Contactos serao notificados.`,
             duration: 12_000,
           })
+          notifyEmergency(
+            'EMERGENCIA — Zona de Seguranca',
+            `Saiu da zona de seguranca! A ${Math.round(dist)}m do centro. Contactos notificados.`,
+            { latitude: position.latitude, longitude: position.longitude, distance: dist }
+          )
         } catch {
           toast.error('Alerta: Saiu da zona de seguranca', {
             description: 'Nao foi possivel activar emergencia automatica.',
             duration: 10_000,
+          })
+          notify({
+            title: 'Saiu da Zona de Seguranca',
+            body: `A ${Math.round(dist)}m do centro. Falha ao activar emergencia automatica.`,
+            tag: 'geofence-exit-fail',
+            data: { latitude: position.latitude, longitude: position.longitude },
           })
         }
       } else {
         toast.warning('Saiu da zona de seguranca', {
           description: 'Activacao automatica desactivada nas definicoes.',
           duration: 8_000,
+        })
+        notify({
+          title: 'Saiu da Zona de Seguranca',
+          body: 'Activacao automatica desactivada. Verifique manualmente.',
+          tag: 'geofence-exit-manual',
         })
       }
 
@@ -200,6 +218,11 @@ export function useGeofenceMonitor() {
       } catch {}
 
       toast.success('Entrou na zona de seguranca', { duration: 5_000 })
+      notify({
+        title: 'Zona de Seguranca',
+        body: `Entrou na zona de seguranca (a ${Math.round(dist)}m do centro)`,
+        tag: 'geofence-enter',
+      })
 
       setAlerts((prev) => [{
         id: `enter-${Date.now()}`,

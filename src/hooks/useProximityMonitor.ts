@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useAuth } from '@/hooks/useAuth'
+import { useNotifications } from '@/hooks/useNotifications'
 import * as api from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -32,6 +33,7 @@ export function useProximityMonitor(
 ) {
   const { user } = useAuth()
   const { connections, disconnectDevice } = useBluetooth()
+  const { notify, notifyEmergency } = useNotifications()
   const [alerts, setAlerts] = useState<DisconnectionAlert[]>([])
   const [isMonitoring, setIsMonitoring] = useState(false)
   const graceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -125,6 +127,11 @@ export function useProximityMonitor(
             toast.error('EMERGENCIA ACTIVADA — Dispositivo desconectado na zona de seguranca!', {
               duration: 10_000,
             })
+            notifyEmergency(
+              'EMERGENCIA — StatusAds',
+              `${deviceName} desconectado na zona de seguranca! GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              { latitude, longitude, deviceId, deviceName }
+            )
             setAlerts((prev) => [
               ...prev,
               { deviceId, deviceName, disconnectedAt: new Date().toISOString(), emergencyTriggered: true },
@@ -132,12 +139,25 @@ export function useProximityMonitor(
           } catch (err) {
             console.error('[PROXIMITY] Failed to trigger emergency:', err)
             toast.error('Alerta: Dispositivo desconectado. Nao foi possivel activar emergencia automatica.')
+            notify(
+              {
+                title: 'Alerta StatusAds',
+                body: `${deviceName} desconectado. Falha ao activar emergencia automatica.`,
+                tag: 'proximity-alert',
+                data: { latitude, longitude },
+              }
+            )
           }
         } else {
           // Outside zone — just log a warning
           toast.warning(`Dispositivo desconectado: ${deviceName}`, {
             description: 'Fora da zona de emergencia. Monitorize a situacao.',
             duration: 8_000,
+          })
+          notify({
+            title: 'Dispositivo Desconectado',
+            body: `${deviceName} fora da zona de emergencia. Verifique manualmente.`,
+            tag: `ble-disconnect-${deviceId}`,
           })
           setAlerts((prev) => [
             ...prev,
@@ -149,6 +169,11 @@ export function useProximityMonitor(
         toast.warning(`Dispositivo desconectado: ${deviceName}`, {
           description: 'GPS indisponivel. Verifique manualmente.',
           duration: 8_000,
+        })
+        notify({
+          title: 'BLE Desconectado',
+          body: `${deviceName} desconectado. GPS indisponivel — verifique manualmente.`,
+          tag: `ble-gps-fail-${deviceId}`,
         })
         setAlerts((prev) => [
           ...prev,

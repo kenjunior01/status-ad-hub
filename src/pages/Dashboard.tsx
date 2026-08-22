@@ -25,6 +25,8 @@ import { useBluetooth } from '@/hooks/useBluetooth'
 import { useProximityMonitor } from '@/hooks/useProximityMonitor'
 import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useNotifications } from '@/hooks/useNotifications'
+import { shareLocation } from '@/lib/share'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Device } from '@/lib/types'
@@ -117,6 +119,7 @@ export default function Dashboard() {
   const { isMonitoring, alerts } = useProximityMonitor()
   const { zone, zoneState } = useGeofenceMonitor()
   const { position: userPos } = useGeolocation()
+  const { permission: notifPermission, requestPermission: requestNotifPermission } = useNotifications()
 
   const [loading, setLoading] = useState(true)
   const [emergency, setEmergency] = useState(false)
@@ -124,6 +127,7 @@ export default function Dashboard() {
   const [safeMode, setSafeMode] = useState(true)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [showSearch, setShowSearch] = useState(false)
+  const [showNotifBanner, setShowNotifBanner] = useState(false)
 
   // Show shimmer until both the local delay and data hooks finish
   const dataReady = !devicesLoading && !statsLoading
@@ -132,6 +136,34 @@ export default function Dashboard() {
     return () => clearTimeout(t)
   }, [])
   const isReady = !loading && dataReady
+
+  // Show notification permission banner if not yet granted
+  useEffect(() => {
+    if (isReady && notifPermission === 'default') {
+      const shown = sessionStorage.getItem('notif-prompt-shown')
+      if (!shown) setShowNotifBanner(true)
+    }
+  }, [isReady, notifPermission])
+
+  const handleShareLocation = useCallback(() => {
+    if (userPos) {
+      shareLocation({
+        latitude: userPos.latitude,
+        longitude: userPos.longitude,
+        accuracy: userPos.accuracy,
+        deviceName: 'StatusAds Connect',
+      })
+    } else {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => shareLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        }),
+        () => toast.error('Localizacao GPS indisponivel')
+      )
+    }
+  }, [userPos])
 
   const handleEmergency = useCallback(() => {
     if (navigator.geolocation) {
@@ -278,6 +310,37 @@ export default function Dashboard() {
         {userPos && <UserMarker position={[userPos.latitude, userPos.longitude]} />}
       </MapContainer>
 
+      {/* NOTIFICATION PERMISSION BANNER */}
+      <AnimatePresence>
+        {showNotifBanner && isReady && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -60, opacity: 0 }}
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
+          >
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1F2937]/90 backdrop-blur-xl border border-white/[0.08]">
+              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/15 shrink-0">
+                <Bell className="h-4 w-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white/80">Activar notificacoes?</p>
+                <p className="text-[10px] text-white/30">Receba alertas de emergencia mesmo com a app em fundo.</p>
+              </div>
+              <Button
+                size="sm" onClick={async () => {
+                  await requestNotifPermission()
+                  sessionStorage.setItem('notif-prompt-shown', '1')
+                  setShowNotifBanner(false)
+                }}
+                className="h-8 text-[10px] bg-[#25D366] hover:bg-[#1fb855] text-white rounded-lg shrink-0"
+              >Activar</Button>
+              <button onClick={() => { setShowNotifBanner(false); sessionStorage.setItem('notif-prompt-shown', '1') }} className="text-white/20 hover:text-white/40 p-1">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* LEFT PANEL - Device List */}
       {isReady && (
       <motion.div
@@ -369,7 +432,7 @@ export default function Dashboard() {
       >
         {[
           { label: 'Modo Seguro', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#25D366] text-white shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)]' },
-          { label: 'Partilhar', icon: Share2, active: false, onClick: () => {} },
+          { label: 'Partilhar', icon: Share2, active: false, onClick: handleShareLocation },
           { label: 'Testar', icon: Zap, active: false, onClick: () => refetchDevices() },
           { label: 'EMERGENCIA', icon: ShieldAlert, active: false, onClick: handleEmergency, danger: true },
         ].map((btn) => (

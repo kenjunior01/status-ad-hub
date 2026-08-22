@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { BluetoothProvider } from '@/hooks/useBluetooth'
+import { NotificationProvider } from '@/hooks/useNotifications'
 import { PWAProvider } from '@/hooks/usePWA'
 import { lazy, Suspense } from 'react'
 import { Shield, Loader2 } from 'lucide-react'
@@ -79,6 +80,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BluetoothProvider>
+        <NotificationProvider>
         <PWAProvider>
         <BrowserRouter>
           <Suspense fallback={<LoadingScreen />}>
@@ -92,6 +94,7 @@ function App() {
           />
         </BrowserRouter>
         </PWAProvider>
+        </NotificationProvider>
         </BluetoothProvider>
       </AuthProvider>
     </QueryClientProvider>
