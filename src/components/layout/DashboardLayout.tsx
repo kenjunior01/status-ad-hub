@@ -157,8 +157,8 @@ export default function DashboardLayout() {
         <main className="flex-1 pb-20 lg:pb-0"><Outlet /></main>
       </div>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-2xl bg-[#0A0F1A]/90 border-t border-white/[0.04]">
+      {/* MOBILE BOTTOM NAV - hidden when Dashboard is active (it has its own bottom bar) */}
+      <nav className={cn('fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-2xl bg-[#0A0F1A]/90 border-t border-white/[0.04] transition-all duration-300', isActive('/dashboard') && 'translate-y-full opacity-0 pointer-events-none')}>
         <div className="flex items-center justify-around h-16 px-2">
           {mobileNavItems.map((item) => {
             const IconComp = item.icon

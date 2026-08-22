@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp, Camera, Trash2, ExternalLink, Smartphone, Headphones, Watch, Shield } from 'lucide-react'
+import { User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp, Camera, Trash2, ExternalLink, Smartphone, Headphones, Watch, Shield, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
+import { useDevices } from '@/hooks/useDevices'
 import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 
 type SectionId = 'perfil' | 'notificacoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sobre'
@@ -32,17 +34,55 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 
 export default function Settings() {
   const { user } = useAuth()
+  const { profile, loading: profileLoading, updateProfile, isUpdating } = useProfile()
+  const { devices } = useDevices()
+
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['perfil']))
-  const [profileName, setProfileName] = useState((user?.user_metadata as any)?.full_name || 'Utilizador')
-  const [profilePhone, setProfilePhone] = useState('+258 84 123 4567')
+  const [profileName, setProfileName] = useState('')
+  const [profilePhone, setProfilePhone] = useState('')
   const [notifToggles, setNotifToggles] = useState({ alerts: true, location: true, battery: true, tips: false })
   const [privToggles, setPrivToggles] = useState({ shareLocation: true, anonymous: false, dataRetention: true })
   const [autoActivate, setAutoActivate] = useState(true)
   const [loading, setLoading] = useState(true)
 
+  // Sync profile data when loaded
+  useEffect(() => {
+    if (profile) {
+      setProfileName(profile.full_name || '')
+      setProfilePhone(profile.phone || '')
+      setAutoActivate(profile.auto_activate_emergency ?? true)
+    }
+  }, [profile])
+
+  // Fallback to auth metadata if profile hasn't loaded
+  useEffect(() => {
+    if (!profile && !profileLoading) {
+      setProfileName((user?.user_metadata as any)?.full_name || 'Utilizador')
+    }
+  }, [profile, profileLoading, user])
+
   useEffect(() => { const t = setTimeout(() => setLoading(false), 500); return () => clearTimeout(t) }, [])
-  const toggleSection = (id: SectionId) => { setOpenSections((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next }) }
-  const pairedDevices = [{ name: 'iPhone 15 Pro', icon: Smartphone, color: '#25D366' }, { name: 'AirPods Pro 2', icon: Headphones, color: '#3B82F6' }, { name: 'Galaxy Watch 6', icon: Watch, color: '#F59E0B' }]
+
+  const toggleSection = (id: SectionId) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const handleSaveProfile = () => {
+    updateProfile({
+      full_name: profileName.trim(),
+      phone: profilePhone.trim(),
+      auto_activate_emergency: autoActivate,
+    })
+  }
+
+  const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch }
+  const pairedDevices = devices.length > 0
+    ? devices.map(d => ({ name: d.name, icon: deviceIconMap[d.type] || Bluetooth, color: d.color || '#25D366' }))
+    : []
 
   const notifItems = [
     { key: 'alerts' as const, label: 'Alertas de emergencia', desc: 'Receber notificacoes quando um alerta for activado' },
@@ -93,15 +133,22 @@ export default function Settings() {
                       {isOpen && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                           <div className="px-4 pb-5 border-t border-[#25D366]/10 pt-5">
-                            {section.id === 'plano' && (
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 rounded-xl bg-[#25D366]/[0.05] border border-[#25D366]/15">
-                                  <div><p className="font-display font-semibold text-[#25D366] text-sm">Plano Familia</p><p className="text-[11px] text-white/25 mt-0.5">Ate 5 dispositivos - Suporte prioritario</p></div>
-                                  <span className="text-sm font-display font-bold text-white">249 MT/mes</span>
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between p-4 rounded-xl bg-[#25D366]/[0.05] border border-[#25D366]/15">
+                                <div>
+                                  <p className="font-display font-semibold text-[#25D366] text-sm">Plano {profile?.plan === 'premium' ? 'Premium' : profile?.plan === 'familia' ? 'Familia' : 'Gratuito'}</p>
+                                  <p className="text-[11px] text-white/25 mt-0.5">
+                                    {profile?.plan === 'premium' ? 'Dispositivos ilimitados - Suporte 24/7' : profile?.plan === 'familia' ? 'Ate 5 dispositivos - Suporte prioritario' : 'Ate 2 dispositivos - Suporte basico'}
+                                  </p>
                                 </div>
-                                <Button className="bg-[#25D366] hover:bg-[#1fb855] text-white gap-2 rounded-xl"><Shield className="h-4 w-4" />Fazer Upgrade para Premium</Button>
+                                <span className="text-sm font-display font-bold text-white">
+                                  {profile?.plan === 'premium' ? '499 MT/mes' : profile?.plan === 'familia' ? '249 MT/mes' : 'Gratuito'}
+                                </span>
                               </div>
-                            )}
+                              {profile?.plan === 'free' && (
+                                <Button className="bg-[#25D366] hover:bg-[#1fb855] text-white gap-2 rounded-xl"><Shield className="h-4 w-4" />Fazer Upgrade para Premium</Button>
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -124,24 +171,64 @@ export default function Settings() {
                         {section.id === 'perfil' && (
                           <div className="space-y-5">
                             <div className="flex items-center gap-4">
-                              <div className="relative"><div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xl font-display font-bold text-white shadow-[0_0_30px_-5px_rgba(37,211,102,0.2)]">{profileName.charAt(0).toUpperCase()}</div><button className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/[0.08] transition"><Camera className="h-3 w-3 text-white/50" /></button></div>
+                              <div className="relative">
+                                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xl font-display font-bold text-white shadow-[0_0_30px_-5px_rgba(37,211,102,0.2)]">
+                                  {profileName.charAt(0).toUpperCase()}
+                                </div>
+                                <button className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/[0.08] transition"><Camera className="h-3 w-3 text-white/50" /></button>
+                              </div>
                               <div className="text-xs text-white/25">Foto de perfil</div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-1.5"><Label className="text-white/40 text-xs">Nome</Label><Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-white/[0.03] border-white/[0.08] text-white rounded-xl" /></div>
-                              <div className="space-y-1.5"><Label className="text-white/40 text-xs">Email</Label><Input value={user?.email || 'user@statusad.co.mz'} readOnly className="bg-white/[0.02] border-white/[0.06] text-white/30 cursor-not-allowed rounded-xl" /></div>
+                              <div className="space-y-1.5"><Label className="text-white/40 text-xs">Email</Label><Input value={user?.email || ''} readOnly className="bg-white/[0.02] border-white/[0.06] text-white/30 cursor-not-allowed rounded-xl" /></div>
                               <div className="space-y-1.5 md:col-span-2"><Label className="text-white/40 text-xs">Telefone</Label><Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="bg-white/[0.03] border-white/[0.08] text-white rounded-xl" /></div>
                             </div>
-                            <Button className="bg-[#25D366] hover:bg-[#1fb855] text-white hover:shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)] rounded-xl">Guardar Alteracoes</Button>
+                            <Button onClick={handleSaveProfile} disabled={isUpdating} className="bg-[#25D366] hover:bg-[#1fb855] text-white hover:shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)] rounded-xl gap-2">
+                              {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                              Guardar Alteracoes
+                            </Button>
                           </div>
                         )}
-                        {section.id === 'notificacoes' && <div className="space-y-4">{notifItems.map(item => (<div key={item.key} className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div><Toggle enabled={notifToggles[item.key]} onToggle={() => setNotifToggles(p => ({ ...p, [item.key]: !p[item.key] }))} /></div>))}</div>}
-                        {section.id === 'privacidade' && <div className="space-y-4">{privItems.map(item => (<div key={item.key} className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div><Toggle enabled={privToggles[item.key]} onToggle={() => setPrivToggles(p => ({ ...p, [item.key]: !p[item.key] }))} /></div>))}</div>}
-                        {section.id === 'dispositivos' && <div className="space-y-2">{pairedDevices.map(d => { const DIcon = d.icon; return (<div key={d.name} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition"><div className="p-2 rounded-lg border border-white/[0.06]" style={{ backgroundColor: d.color + '10' }}><DIcon className="h-4 w-4" style={{ color: d.color }} /></div><div><p className="text-sm font-medium text-white/80">{d.name}</p><p className="text-[10px] text-white/20">Pareado</p></div></div>) })}</div>}
+                        {section.id === 'notificacoes' && <div className="space-y-4">{notifItems.map(item => (
+                          <div key={item.key} className="flex items-center justify-between gap-4">
+                            <div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div>
+                            <Toggle enabled={notifToggles[item.key]} onToggle={() => setNotifToggles(p => ({ ...p, [item.key]: !p[item.key] }))} />
+                          </div>
+                        ))}</div>}
+                        {section.id === 'privacidade' && <div className="space-y-4">{privItems.map(item => (
+                          <div key={item.key} className="flex items-center justify-between gap-4">
+                            <div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div>
+                            <Toggle enabled={privToggles[item.key]} onToggle={() => setPrivToggles(p => ({ ...p, [item.key]: !p[item.key] }))} />
+                          </div>
+                        ))}</div>}
+                        {section.id === 'dispositivos' && (
+                          <div className="space-y-2">
+                            {pairedDevices.length === 0 ? (
+                              <p className="text-sm text-white/25 py-4 text-center">Nenhum dispositivo pareado</p>
+                            ) : pairedDevices.map(d => {
+                              const DIcon = d.icon
+                              return (
+                                <div key={d.name} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition">
+                                  <div className="p-2 rounded-lg border border-white/[0.06]" style={{ backgroundColor: d.color + '10' }}><DIcon className="h-4 w-4" style={{ color: d.color }} /></div>
+                                  <div><p className="text-sm font-medium text-white/80">{d.name}</p><p className="text-[10px] text-white/20">Pareado</p></div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                         {section.id === 'zona' && (
                           <div className="space-y-4">
-                            <div className="flex items-center justify-between"><div><p className="text-sm font-medium text-white/80">Activar automaticamente</p><p className="text-xs text-white/25 mt-0.5">Activar o modo de emergencia ao sair da zona</p></div><Toggle enabled={autoActivate} onToggle={() => setAutoActivate(!autoActivate)} /></div>
-                            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]"><div className="flex items-center gap-2 mb-2"><MapPin className="h-4 w-4 text-[#25D366]" /><span className="text-sm font-medium text-white/70">Zona Actual</span></div><p className="text-[11px] text-white/20 font-mono">Centro: -25.9692, 32.5732 | Raio: 500m</p></div>
+                            <div className="flex items-center justify-between">
+                              <div><p className="text-sm font-medium text-white/80">Activar automaticamente</p><p className="text-xs text-white/25 mt-0.5">Activar o modo de emergencia ao sair da zona</p></div>
+                              <Toggle enabled={autoActivate} onToggle={() => setAutoActivate(!autoActivate)} />
+                            </div>
+                            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                              <div className="flex items-center gap-2 mb-2"><MapPin className="h-4 w-4 text-[#25D366]" /><span className="text-sm font-medium text-white/70">Zona Actual</span></div>
+                              <p className="text-[11px] text-white/20 font-mono">
+                                Centro: {profile?.emergency_zone_lat?.toFixed(4) ?? '-25.9692'}, {profile?.emergency_zone_lng?.toFixed(4) ?? '32.5732'} | Raio: {profile?.emergency_zone_radius ?? 500}m
+                              </p>
+                            </div>
                           </div>
                         )}
                         {section.id === 'sobre' && (

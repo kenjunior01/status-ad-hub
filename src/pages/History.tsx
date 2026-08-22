@@ -1,65 +1,61 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, AlertTriangle, Shield, Bluetooth, Clock, Activity } from 'lucide-react'
+import { MapPin, AlertTriangle, Shield, Bluetooth, Clock, Activity, Inbox } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
+import { useHistory } from '@/hooks/useHistory'
 import { SpotlightCard, BeamBorder, CounterAnimated, Shimmer } from '@/components/effects'
+import type { HistoryPeriod } from '@/lib/types'
 
-type FilterPeriod = 'hoje' | '7dias' | '30dias' | 'tudo'
-type EventItem = { id: string; type: 'location' | 'alert' | 'shield' | 'bluetooth'; timestamp: string; description: string; coordinates?: string }
+type FilterPeriod = HistoryPeriod
 
-const events: EventItem[] = [
-  { id: '1', type: 'location', timestamp: '14:32 - Hoje', description: 'Localizacao actualizada - iPhone 15 Pro', coordinates: '-25.9660, 32.5700' },
-  { id: '2', type: 'shield', timestamp: '13:15 - Hoje', description: 'Modo seguro activado automaticamente ao entrar na zona de trabalho' },
-  { id: '3', type: 'bluetooth', timestamp: '12:48 - Hoje', description: 'AirPods Pro 2 conectados ao iPhone 15 Pro' },
-  { id: '4', type: 'alert', timestamp: '11:30 - Hoje', description: 'Alerta de bateria baixa - Galaxy Watch 6 (15%)', coordinates: '-25.9630, 32.5650' },
-  { id: '5', type: 'location', timestamp: '10:05 - Hoje', description: 'Localizacao partilhada com Maria Silva', coordinates: '-25.9680, 32.5745' },
-  { id: '6', type: 'bluetooth', timestamp: '09:20 - Hoje', description: 'Galaxy Watch 6 desconectado - fora do alcance' },
-  { id: '7', type: 'shield', timestamp: '08:00 - Hoje', description: 'Verificacao de seguranca diaria concluida com sucesso' },
-  { id: '8', type: 'location', timestamp: '07:45 - Hoje', description: 'Primeira localizacao do dia - iPhone 15 Pro', coordinates: '-25.9710, 32.5690' },
+const filters: { key: FilterPeriod; label: string }[] = [
+  { key: 'hoje', label: 'Hoje' },
+  { key: '7dias', label: '7 dias' },
+  { key: '30dias', label: '30 dias' },
+  { key: 'tudo', label: 'Tudo' },
 ]
 
-const eventConfig = {
+const eventConfig: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
   location: { icon: MapPin, color: 'text-[#25D366]', bg: 'bg-[#25D366]/10 border border-[#25D366]/15' },
   alert: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10 border border-red-500/15' },
   shield: { icon: Shield, color: 'text-blue-400', bg: 'bg-blue-500/10 border border-blue-500/15' },
   bluetooth: { icon: Bluetooth, color: 'text-purple-400', bg: 'bg-purple-500/10 border border-purple-500/15' },
+  emergency: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10 border border-red-500/15' },
+  geofence: { icon: MapPin, color: 'text-amber-400', bg: 'bg-amber-500/10 border border-amber-500/15' },
 }
 
-const allEvents: Record<FilterPeriod, EventItem[]> = {
-  hoje: events,
-  '7dias': [
-    { id: '9', type: 'location', timestamp: '18:00 - Ontem', description: 'Localizacao actualizada - AirPods Pro 2', coordinates: '-25.9700, 32.5750' },
-    { id: '10', type: 'alert', timestamp: '15:20 - Ontem', description: 'Dispositivo desconectado por mais de 30 minutos' },
-    ...events,
-  ],
-  '30dias': [
-    { id: '11', type: 'shield', timestamp: '10/08 - 09:00', description: 'Teste mensal de emergencia concluido' },
-    { id: '12', type: 'bluetooth', timestamp: '05/08 - 14:30', description: 'Novo dispositivo pareado - Galaxy Watch 6' },
-    { id: '13', type: 'location', timestamp: '01/08 - 08:15', description: 'Geofence activada - Zona de Trabalho' },
-    ...events,
-  ],
-  tudo: [
-    { id: '14', type: 'shield', timestamp: '15/07 - 16:00', description: 'Conta verificada com sucesso' },
-    { id: '15', type: 'location', timestamp: '01/07 - 07:00', description: 'Primeira localizacao registada no sistema' },
-    ...events,
-  ],
+function formatTimestamp(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday = d.toDateString() === yesterday.toDateString()
+  const time = d.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' })
+  if (isToday) return `${time} - Hoje`
+  if (isYesterday) return `${time} - Ontem`
+  return `${d.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit' })} - ${time}`
 }
 
 export default function History() {
-  const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState<FilterPeriod>('hoje')
-  const [loading, setLoading] = useState(true)
-  const filters: { key: FilterPeriod; label: string }[] = [{ key: 'hoje', label: 'Hoje' }, { key: '7dias', label: '7 dias' }, { key: '30dias', label: '30 dias' }, { key: 'tudo', label: 'Tudo' }]
+  const [shimmerLoading, setShimmerLoading] = useState(true)
+  const { data: events, isLoading } = useHistory(activeFilter)
 
-  const filteredEvents = useMemo(() => allEvents[activeFilter] || events, [activeFilter])
+  useEffect(() => {
+    setShimmerLoading(true)
+    const t = setTimeout(() => setShimmerLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [activeFilter])
+
+  const filteredEvents = events || []
   const stats = useMemo(() => [
     { label: 'Eventos', value: filteredEvents.length, icon: Activity, color: 'text-white' },
-    { label: 'Alertas', value: filteredEvents.filter(e => e.type === 'alert').length, icon: AlertTriangle, color: 'text-red-400' },
+    { label: 'Alertas', value: filteredEvents.filter(e => e.type === 'alert' || e.type === 'emergency').length, icon: AlertTriangle, color: 'text-red-400' },
     { label: 'Localizacoes', value: filteredEvents.filter(e => e.type === 'location').length, icon: MapPin, color: 'text-[#25D366]' },
   ], [filteredEvents])
 
-  useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 400); return () => clearTimeout(t) }, [activeFilter])
+  const showShimmer = shimmerLoading || isLoading
 
   return (
     <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
@@ -72,7 +68,9 @@ export default function History() {
         {filters.map(f => (
           <button key={f.key} onClick={() => setActiveFilter(f.key)} className={cn(
             'px-4 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 border',
-            activeFilter === f.key ? 'bg-[#25D366] text-white border-[#25D366]/30 shadow-[0_0_20px_-5px_rgba(37,211,102,0.2)]' : 'bg-white/[0.02] text-white/35 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/60'
+            activeFilter === f.key
+              ? 'bg-[#25D366] text-white border-[#25D366]/30 shadow-[0_0_20px_-5px_rgba(37,211,102,0.2)]'
+              : 'bg-white/[0.02] text-white/35 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/60'
           )}>{f.label}</button>
         ))}
       </div>
@@ -93,11 +91,11 @@ export default function History() {
         })}
       </div>
 
-      {loading ? (
+      {showShimmer ? (
         <div className="relative">
           <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.04]" />
           <div className="space-y-0">
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2, 3].map(i => (
               <div key={i} className="relative flex gap-4 pb-5">
                 <Shimmer className="h-12 w-12 rounded-xl shrink-0" />
                 <div className="flex-1 pt-1 space-y-2">
@@ -107,12 +105,18 @@ export default function History() {
             ))}
           </div>
         </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center py-16">
+          <Inbox className="h-12 w-12 text-white/10 mx-auto mb-3" />
+          <p className="text-sm text-white/30">Nenhum evento encontrado</p>
+          <p className="text-xs text-white/15 mt-1">Os eventos aparecerao aqui assim que os dispositivos reportarem actividade</p>
+        </div>
       ) : (
       <div className="relative">
         <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.04]" />
         <div className="space-y-0">
           {filteredEvents.map((event, i) => {
-            const config = eventConfig[event.type]
+            const config = eventConfig[event.type] || eventConfig.location
             const IconComp = config.icon
             return (
               <motion.div key={event.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06, type: 'spring', stiffness: 120 }} className="relative flex gap-4 pb-5 last:pb-0">
@@ -123,9 +127,11 @@ export default function History() {
                   <SpotlightCard className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm text-white/60 leading-relaxed">{event.description}</p>
-                      <span className="text-[10px] text-white/20 whitespace-nowrap flex items-center gap-1 shrink-0 font-mono"><Clock className="h-3 w-3" />{event.timestamp}</span>
+                      <span className="text-[10px] text-white/20 whitespace-nowrap flex items-center gap-1 shrink-0 font-mono"><Clock className="h-3 w-3" />{formatTimestamp(event.created_at)}</span>
                     </div>
-                    {event.coordinates && <p className="text-[10px] text-white/15 mt-2 font-mono flex items-center gap-1"><MapPin className="h-3 w-3" />{event.coordinates}</p>}
+                    {event.latitude && event.longitude && (
+                      <p className="text-[10px] text-white/15 mt-2 font-mono flex items-center gap-1"><MapPin className="h-3 w-3" />{event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}</p>
+                    )}
                   </SpotlightCard>
                 </div>
               </motion.div>
