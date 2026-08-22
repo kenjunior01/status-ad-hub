@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { NoiseTexture, Shimmer } from '@/components/effects'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
+import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
+import { useNavigate } from 'react-router-dom'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,8 +33,10 @@ const mobileNavItems = [
 export default function DashboardLayout() {
   const { user, signOut } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isActive = (path: string) => location.pathname === path
+  const { activeEmergency } = useEmergencyAlerts()
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>
@@ -155,7 +159,24 @@ export default function DashboardLayout() {
             <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">3</span>
           </button>
         </header>
-        <main className="flex-1 pb-20 lg:pb-0"><Outlet /></main>
+        <main className="flex-1 pb-20 lg:pb-0">
+          {/* Active Emergency Banner - shows on all dashboard pages except /emergency */}
+          {activeEmergency?.status === 'active' && location.pathname !== '/dashboard/emergency' && (
+            <div
+              onClick={() => navigate('/dashboard/emergency')}
+              className="flex items-center gap-3 px-4 md:px-6 py-2.5 bg-red-950/80 border-b border-red-500/15 cursor-pointer hover:bg-red-950/90 transition-colors"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-500/15 shrink-0">
+                <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+              </div>
+              <p className="text-xs font-medium text-red-300 flex-1">
+                Emergencia activa! Clique para ver detalhes e resolver.
+              </p>
+              <ChevronRight className="h-4 w-4 text-red-400/50" />
+            </div>
+          )}
+          <Outlet />
+        </main>
       </div>
 
       {/* MOBILE BOTTOM NAV - hidden when Dashboard is active (it has its own bottom bar) */}

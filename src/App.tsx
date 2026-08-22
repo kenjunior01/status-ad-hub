@@ -19,6 +19,7 @@ const EmergencyContacts = lazy(() => import('@/pages/EmergencyContacts'))
 const History = lazy(() => import('@/pages/History'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const Emergency = lazy(() => import('@/pages/Emergency'))
+const TrackEmergency = lazy(() => import('@/pages/TrackEmergency'))
 
 const queryClient = new QueryClient()
 
@@ -42,10 +43,12 @@ function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/track/:token" element={<TrackEmergency />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="devices" element={<Devices />} />
         <Route path="contacts" element={<EmergencyContacts />} />
+        <Route path="emergency-contacts" element={<EmergencyContacts />} />
         <Route path="history" element={<History />} />
         <Route path="settings" element={<Settings />} />
         <Route path="emergency" element={<Emergency />} />
