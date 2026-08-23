@@ -10,6 +10,8 @@ import { useProfile } from '@/hooks/useProfile'
 import { useDevices } from '@/hooks/useDevices'
 import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useNotifications } from '@/hooks/useNotifications'
+import { isPushSupported } from '@/lib/web-push'
 import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 
 type SectionId = 'perfil' | 'notificacoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sobre'
@@ -40,6 +42,7 @@ export default function Settings() {
   const { devices } = useDevices()
   const { zoneState, distance, zone: geoZone, setZoneFromCurrentPosition, isMonitoring: geoMonitoring } = useGeofenceMonitor()
   const { position: geoPosition, permissionState: geoPermission } = useGeolocation()
+  const { permission: notifPermission, isPushSubscribed, isPushSupported, requestPermission, subscribePush, unsubscribePush } = useNotifications()
 
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['perfil']))
   const [profileName, setProfileName] = useState('')
@@ -197,12 +200,54 @@ export default function Settings() {
                             </Button>
                           </div>
                         )}
-                        {section.id === 'notificacoes' && <div className="space-y-4">{notifItems.map(item => (
-                          <div key={item.key} className="flex items-center justify-between gap-4">
-                            <div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div>
-                            <Toggle enabled={notifToggles[item.key]} onToggle={() => setNotifToggles(p => ({ ...p, [item.key]: !p[item.key] }))} />
+                        {section.id === 'notificacoes' && (
+                          <div className="space-y-4">
+                            {/* Web Push status card */}
+                            <div className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-white/80">Notificacoes Push</p>
+                                  <p className="text-xs text-white/25 mt-0.5">Receba alertas mesmo com a app em fundo</p>
+                                </div>
+                                <div className={cn(
+                                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium border',
+                                  isPushSubscribed
+                                    ? 'bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366]'
+                                    : notifPermission === 'granted'
+                                      ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                                      : 'bg-white/[0.04] border-white/[0.06] text-white/30'
+                                )}>
+                                  <div className={cn('w-1.5 h-1.5 rounded-full', isPushSubscribed ? 'bg-[#25D366]' : 'bg-white/20')} />
+                                  {isPushSubscribed ? 'Activo' : notifPermission === 'granted' ? 'Nao inscrito' : 'Desactivado'}
+                                </div>
+                              </div>
+                              {isPushSupported ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={isPushSubscribed ? unsubscribePush : subscribePush}
+                                  className={cn(
+                                    'w-full rounded-xl text-xs gap-2 border',
+                                    isPushSubscribed
+                                      ? 'border-red-500/20 text-red-400 hover:bg-red-500/10'
+                                      : 'border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/10'
+                                  )}
+                                >
+                                  {isPushSubscribed ? 'Desactivar Push' : 'Activar Notificacoes Push'}
+                                </Button>
+                              ) : (
+                                <p className="text-[10px] text-white/20">Push nao disponivel neste navegador ou falta configuracao VAPID.</p>
+                              )}
+                            </div>
+
+                            {notifItems.map(item => (
+                              <div key={item.key} className="flex items-center justify-between gap-4">
+                                <div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div>
+                                <Toggle enabled={notifToggles[item.key]} onToggle={() => setNotifToggles(p => ({ ...p, [item.key]: !p[item.key] }))} />
+                              </div>
+                            ))}
                           </div>
-                        ))}</div>}
+                        )}
                         {section.id === 'privacidade' && <div className="space-y-4">{privItems.map(item => (
                           <div key={item.key} className="flex items-center justify-between gap-4">
                             <div><p className="text-sm font-medium text-white/80">{item.label}</p><p className="text-xs text-white/25 mt-0.5">{item.desc}</p></div>

@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { NoiseTexture, Shimmer } from '@/components/effects'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
+import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
 
 const navItems = [
@@ -37,6 +38,8 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isActive = (path: string) => location.pathname === path
   const { activeEmergency } = useEmergencyAlerts()
+  const { data: stats } = useDashboardStats()
+  const alertCount = (stats?.active_emergencies ?? 0) + (stats?.alerts_today ?? 0)
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>
@@ -154,9 +157,16 @@ export default function DashboardLayout() {
           </button>
           <h2 className="hidden sm:block text-sm font-medium text-white/50">Painel de Seguranca</h2>
           <div className="sm:hidden" />
-          <button className="relative p-2 rounded-xl hover:bg-white/5 transition">
+          <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/5 transition">
             <Bell className="h-[18px] w-[18px] text-white/50" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">3</span>
+            {alertCount > 0 && (
+              <span className={cn(
+                'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white',
+                stats?.active_emergencies
+                  ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
+                  : 'bg-amber-500/80'
+              )}>{alertCount}</span>
+            )}
           </button>
         </header>
         <main className="flex-1 pb-20 lg:pb-0">

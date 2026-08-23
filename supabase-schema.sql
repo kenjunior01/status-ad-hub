@@ -3,8 +3,8 @@
 -- ============================================
 -- Execute this in the Supabase SQL Editor
 -- 
--- Tables: profiles, devices, emergency_contacts, location_events, emergency_alerts
--- Features: RLS, PostGIS, triggers, realtime, emergency resolution, share tokens
+-- Tables: profiles, devices, emergency_contacts, location_events, emergency_alerts, push_subscriptions
+-- Features: RLS, PostGIS, triggers, realtime, emergency resolution, share tokens, web push
 -- ============================================
 
 -- Enable PostGIS for geospatial queries
@@ -186,7 +186,23 @@ CREATE TRIGGER alerts_set_location
   FOR EACH ROW EXECUTE FUNCTION public.set_alert_location();
 
 -- ============================================
--- 6. ROW LEVEL SECURITY
+-- 6. PUSH SUBSCRIPTIONS (Web Push)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  endpoint      TEXT NOT NULL,
+  keys_p256dh   TEXT NOT NULL,
+  keys_auth     TEXT NOT NULL,
+  user_agent    TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id)
+);
+
+CREATE INDEX idx_push_user ON public.push_subscriptions(user_id);
+
+-- ============================================
+-- 7. ROW LEVEL SECURITY
 -- ============================================
 
 -- Profiles
@@ -224,15 +240,25 @@ CREATE POLICY "Users can update own alerts" ON public.emergency_alerts FOR UPDAT
 CREATE POLICY "Public read via share token" ON public.emergency_alerts
   FOR SELECT USING (share_token IS NOT NULL);
 
+-- Push Subscriptions
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own push subs" ON public.push_subscriptions
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Edge function can read/write push subscriptions
+-- (for sending push to users from server-side triggers)
+CREATE POLICY "Service role full access push" ON public.push_subscriptions
+  FOR ALL USING (true);
+
 -- ============================================
--- 7. REALTIME SUBSCRIPTIONS
--- ============================================
+-- 8. REALTIME SUBSCRIPTIONS
+-- ====================================
 ALTER PUBLICATION supabase_realtime ADD TABLE public.devices;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.emergency_alerts;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.location_events;
 
 -- ============================================
--- 8. HELPER FUNCTIONS
+-- 9. HELPER FUNCTIONS
 -- ============================================
 
 -- Get dashboard stats for a user
