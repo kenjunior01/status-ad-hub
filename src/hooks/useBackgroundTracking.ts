@@ -174,16 +174,18 @@ export function useBackgroundTracking() {
   const startEmergencyTracking = useCallback(() => {
     if (watchIdRef.current !== null) return
 
-    const isLowBattery = checkBattery()
-    // In battery saver mode, use 30s interval instead of 15s
-    const interval = isLowBattery ? 30_000 : EMERGENCY_INTERVAL_MS
-
     setState(s => ({ ...s, isEmergencyTracking: true }))
+
+    // Use a ref to track battery state for the watchPosition callback
+    let useSlowInterval = false
+    checkBattery().then(isLow => { useSlowInterval = isLow })
+    const interval = EMERGENCY_INTERVAL_MS
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const now = Date.now()
-        if (now - lastLogRef.current < interval) return
+        const effectiveInterval = useSlowInterval ? 30_000 : interval
+        if (now - lastLogRef.current < effectiveInterval) return
         lastLogRef.current = now
         logPoint(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy)
       },
@@ -194,8 +196,7 @@ export function useBackgroundTracking() {
     // Battery monitoring
     batteryCheckRef.current = setInterval(() => {
       checkBattery().then(isLow => {
-        if (isLow) {
-        }
+        useSlowInterval = isLow
       })
     }, BATTERY_CHECK_INTERVAL)
   }, [logPoint, checkBattery])

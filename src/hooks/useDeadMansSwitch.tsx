@@ -113,7 +113,13 @@ export function DeadMansSwitchProvider({ children }: { children: React.ReactNode
     }
   }, [isEnabled, config])
 
-  // Main timer loop
+  // Refs to avoid infinite loop
+  const currentLevelRef = useRef(currentLevel)
+  const warningCountRef = useRef(warningCount)
+  useEffect(() => { currentLevelRef.current = currentLevel }, [currentLevel])
+  useEffect(() => { warningCountRef.current = warningCount }, [warningCount])
+
+  // Main timer loop - FIXED: no currentLevel/warningCount in deps
   useEffect(() => {
     if (!isEnabled || !config || !user) {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
@@ -137,37 +143,45 @@ export function DeadMansSwitchProvider({ children }: { children: React.ReactNode
     lastActivityRef.current = Date.now()
     setCurrentLevel('idle')
     setWarningCount(0)
+    currentLevelRef.current = 'idle'
+    warningCountRef.current = 0
 
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - lastActivityRef.current) / 1000
-      const timeoutSec = (config.timeout_minutes - (warningCount * config.warning_interval_minutes)) * 60
+      const wc = warningCountRef.current
+      const timeoutSec = (config.timeout_minutes - (wc * config.warning_interval_minutes)) * 60
       const remaining = Math.max(0, timeoutSec - elapsed)
 
       setSecondsRemaining(Math.round(remaining))
 
+      const cl = currentLevelRef.current
+
       // Level 1: Warning
-      if (remaining <= 0 && currentLevel === 'idle' && warningCount < config.warning_attempts) {
+      if (remaining <= 0 && cl === 'idle' && wc < config.warning_attempts) {
+        const newCount = wc + 1
         setCurrentLevel('warning')
-        setWarningCount(c => c + 1)
-        lastActivityRef.current = Date.now() // Reset after warning
+        setWarningCount(newCount)
+        currentLevelRef.current = 'warning'
+        warningCountRef.current = newCount
+        lastActivityRef.current = Date.now()
 
         toast.warning('Dead Man\'s Switch — Aviso!', {
-          description: `Sem actividade detectada. Responda em ${config.warning_interval_minutes} minutos ou o sistema escalonará. (${warningCount + 1}/${config.warning_attempts})`,
+          description: `Sem actividade detectada. Responda em ${config.warning_interval_minutes} minutos ou o sistema escalonará. (${newCount}/${config.warning_attempts})`,
           duration: 15000,
         })
 
-        // Push notification
         notifyEmergency(
           'StatusAds — Aviso de Inactividade',
-          `Responda em ${config.warning_interval_minutes} minutos. Aviso ${warningCount + 1} de ${config.warning_attempts}.`
+          `Responda em ${config.warning_interval_minutes} minutos. Aviso ${newCount} de ${config.warning_attempts}.`
         )
 
         logEvent('warning_sent')
       }
 
       // Level 2: Alert contacts
-      if (remaining <= 0 && warningCount >= config.warning_attempts && currentLevel === 'warning') {
+      if (remaining <= 0 && warningCountRef.current >= config.warning_attempts && cl === 'warning') {
         setCurrentLevel('contacts_alerted')
+        currentLevelRef.current = 'contacts_alerted'
         lastActivityRef.current = Date.now()
 
         toast.error('Dead Man\'s Switch — Contactos alertados!', {
@@ -175,7 +189,6 @@ export function DeadMansSwitchProvider({ children }: { children: React.ReactNode
           duration: 10000,
         })
 
-        // Send push to contacts
         sendEmergencyPush(user.id, 'dms-alert', 0, 0).catch(() => {})
         logEvent('escalated')
       }
@@ -183,8 +196,9 @@ export function DeadMansSwitchProvider({ children }: { children: React.ReactNode
       // Level 3: Full emergency
       const contactsTimeout = config.warning_interval_minutes * 60
       const contactsElapsed = (Date.now() - lastActivityRef.current) / 1000
-      if (currentLevel === 'contacts_alerted' && contactsElapsed >= contactsTimeout) {
+      if (currentLevelRef.current === 'contacts_alerted' && contactsElapsed >= contactsTimeout) {
         setCurrentLevel('emergency')
+        currentLevelRef.current = 'emergency'
 
         navigator.geolocation?.getCurrentPosition(
           (pos) => triggerEmergency({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
@@ -199,7 +213,7 @@ export function DeadMansSwitchProvider({ children }: { children: React.ReactNode
     return () => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     }
-  }, [isEnabled, config, user, currentLevel, warningCount])
+  }, [isEnabled, config, user])
 
   const logEvent = useCallback((type: DeadMansSwitchEvent['type']) => {
     if (!user) return

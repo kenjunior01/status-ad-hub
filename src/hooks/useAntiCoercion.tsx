@@ -124,9 +124,8 @@ const AntiCoercionContext = createContext<AntiCoercionContextType>({
 // ============================================
 
 export function AntiCoercionProvider({ children }: { children: ReactNode }) {
-  const { panicHash } = getStoredConfig()
-  const [isConfigured] = useState(() => !!panicHash)
-  const [storedHash, setStoredHash] = useState<string | null>(panicHash)
+  const [storedHash, setStoredHash] = useState<string | null>(() => getStoredConfig().panicHash)
+  const [isConfigured] = useState(() => !!getStoredConfig().panicHash)
   const [isCoercionMode, setIsCoercionMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem(COERCION_MODE_KEY) === 'true'

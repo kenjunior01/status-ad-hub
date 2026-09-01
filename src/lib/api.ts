@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isRateLimited, RATE_LIMITS, sanitizeFilterValue, isValidCoordinates, isValidUUID } from '@/lib/security'
 import type {
   Device, EmergencyContact, LocationEvent, UserProfile,
   CreateDeviceInput, UpdateDeviceInput,
@@ -216,6 +217,13 @@ export async function triggerEmergency(
   latitude: number,
   longitude: number
 ): Promise<{ alertId: string; contactsNotified: string[] }> {
+  // Rate limiting + input validation
+  if (!isValidUUID(userId)) throw new Error('Invalid user ID')
+  if (!isValidCoordinates(latitude, longitude)) throw new Error('Invalid coordinates')
+  if (isRateLimited(`emergency:${userId}`, RATE_LIMITS.emergency.maxRequests, RATE_LIMITS.emergency.windowMs)) {
+    throw new Error('Muitas tentativas de emergencia. Aguarde um momento.')
+  }
+
   const { data, error } = await supabase
     .rpc('trigger_emergency', {
       p_user_id: userId,
@@ -298,10 +306,11 @@ export function subscribeToDeviceChanges(
   userId: string,
   callback: (payload: { eventType: string; new: Device }) => void
 ) {
+  const safeUserId = sanitizeFilterValue(userId)
   return supabase
-    .channel('devices-changes')
+    .channel(`devices-${safeUserId}`)
     .on('postgres_changes',
-      { event: '*', schema: 'public', table: 'devices', filter: `user_id=eq.${userId}` },
+      { event: '*', schema: 'public', table: 'devices', filter: `user_id=eq.${safeUserId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new as Device })
     )
     .subscribe()
@@ -311,14 +320,15 @@ export function subscribeToAlerts(
   userId: string,
   callback: (payload: { eventType: string; new: any }) => void
 ) {
+  const safeUserId = sanitizeFilterValue(userId)
   return supabase
-    .channel('alerts-realtime')
+    .channel(`alerts-${safeUserId}`)
     .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${userId}` },
+      { event: 'INSERT', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${safeUserId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
     )
     .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${userId}` },
+      { event: 'UPDATE', schema: 'public', table: 'emergency_alerts', filter: `user_id=eq.${safeUserId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
     )
     .subscribe()
@@ -328,10 +338,11 @@ export function subscribeToEvents(
   userId: string,
   callback: (payload: { eventType: string; new: LocationEvent }) => void
 ) {
+  const safeUserId = sanitizeFilterValue(userId)
   return supabase
-    .channel('events-realtime')
+    .channel(`events-${safeUserId}`)
     .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'location_events', filter: `user_id=eq.${userId}` },
+      { event: 'INSERT', schema: 'public', table: 'location_events', filter: `user_id=eq.${safeUserId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new as LocationEvent })
     )
     .subscribe()
@@ -413,10 +424,11 @@ export function subscribeToCheckIns(
   userId: string,
   callback: (payload: { eventType: string; new: any }) => void
 ) {
+  const safeUserId = sanitizeFilterValue(userId)
   return supabase
-    .channel('checkins-realtime')
+    .channel(`checkins-${safeUserId}`)
     .on('postgres_changes',
-      { event: '*', schema: 'public', table: 'checkins', filter: `user_id=eq.${userId}` },
+      { event: '*', schema: 'public', table: 'checkins', filter: `user_id=eq.${safeUserId}` },
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
     )
     .subscribe()

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useRef, createContext, useContext, type ReactNode } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import * as push from '@/lib/web-push'
@@ -94,14 +94,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     push.hasPushSubscription(user.id).then(setIsPushSubscribed).catch(() => setIsPushSubscribed(false))
   }, [user?.id, isPushSupported, permission])
 
-  // Auto-subscribe to push when permission is granted
+  // Auto-subscribe to push when permission is granted (with guard)
+  const subscribingRef = useRef(false)
   useEffect(() => {
-    if (permission === 'granted' && user?.id && isPushSupported && !isPushSubscribed) {
+    if (permission === 'granted' && user?.id && isPushSupported && !isPushSubscribed && !subscribingRef.current) {
+      subscribingRef.current = true
       push.subscribeToPush(user.id).then((ok) => {
+        subscribingRef.current = false
         if (ok) {
           setIsPushSubscribed(true)
         }
-      }).catch(() => {})
+      }).catch(() => { subscribingRef.current = false })
     }
   }, [permission, user?.id, isPushSupported, isPushSubscribed])
 

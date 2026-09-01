@@ -183,11 +183,20 @@ export function OfflineQueueProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  // Auto-sync when coming back online
+  // Auto-sync when coming back online (one-shot)
+  const hasAutoSyncedRef = useRef(false)
   useEffect(() => {
-    if (isOnline && wasOffline && st.pendingCount > 0) {
+    if (isOnline && wasOffline && st.pendingCount > 0 && !hasAutoSyncedRef.current) {
+      hasAutoSyncedRef.current = true
       if (timer.current) clearTimeout(timer.current)
-      timer.current = setTimeout(syncQueue, 1000)
+      timer.current = setTimeout(() => {
+        syncQueue()
+        // Reset after sync completes so future offline→online transitions work
+        setTimeout(() => { hasAutoSyncedRef.current = false }, 5000)
+      }, 1000)
+    }
+    if (!isOnline) {
+      hasAutoSyncedRef.current = false
     }
     return () => { if (timer.current) clearTimeout(timer.current) }
   }, [isOnline, wasOffline, st.pendingCount, syncQueue])
