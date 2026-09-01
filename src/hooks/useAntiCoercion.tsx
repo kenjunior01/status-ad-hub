@@ -45,17 +45,17 @@ interface AntiCoercionState {
 
 interface AntiCoercionContextType extends AntiCoercionState {
   /** Set a new panic password (hashes it before storing) */
-  setPanicPassword: (plainPassword: string) => void
+  setPanicPassword: (plainPassword: string) => Promise<void>
   /** Remove the panic password */
   removePanicPassword: () => void
   /** Check if a given password matches the panic password */
-  isPanicPassword: (plainPassword: string) => boolean
+  isPanicPassword: (plainPassword: string) => Promise<boolean>
   /** Activate coercion mode (called after detecting panic password) */
   activateCoercionMode: () => void
   /** Deactivate coercion mode (e.g., when user logs out) */
   deactivateCoercionMode: () => void
   /** Verify current panic password (for settings validation) */
-  verifyPanicPassword: (plainPassword: string) => boolean
+  verifyPanicPassword: (plainPassword: string) => Promise<boolean>
 }
 
 // ============================================
@@ -111,12 +111,12 @@ const AntiCoercionContext = createContext<AntiCoercionContextType>({
   isConfigured: false,
   activatedAt: null,
   sosDispatched: false,
-  setPanicPassword: () => {},
+  setPanicPassword: async () => {},
   removePanicPassword: () => {},
-  isPanicPassword: () => false,
+  isPanicPassword: async () => false,
   activateCoercionMode: () => {},
   deactivateCoercionMode: () => {},
-  verifyPanicPassword: () => false,
+  verifyPanicPassword: async () => false,
 })
 
 // ============================================
