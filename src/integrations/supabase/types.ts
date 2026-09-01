@@ -65,6 +65,60 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_evidence: {
+        Row: {
+          audio_data_b64: string | null
+          audio_url: string | null
+          created_at: string
+          device_id: string | null
+          duration_seconds: number
+          emergency_alert_id: string | null
+          file_size_bytes: number
+          id: string
+          mime_type: string
+          user_id: string
+        }
+        Insert: {
+          audio_data_b64?: string | null
+          audio_url?: string | null
+          created_at?: string
+          device_id?: string | null
+          duration_seconds?: number
+          emergency_alert_id?: string | null
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          user_id: string
+        }
+        Update: {
+          audio_data_b64?: string | null
+          audio_url?: string | null
+          created_at?: string
+          device_id?: string | null
+          duration_seconds?: number
+          emergency_alert_id?: string | null
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_evidence_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_evidence_emergency_alert_id_fkey"
+            columns: ["emergency_alert_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_proofs: {
         Row: {
           campaign_id: string
@@ -341,6 +395,129 @@ export type Database = {
           },
         ]
       }
+      checkin_configs: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          id: string
+          interval_minutes: number
+          is_active: boolean
+          message_template: string | null
+          start_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          interval_minutes?: number
+          is_active?: boolean
+          message_template?: string | null
+          start_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          interval_minutes?: number
+          is_active?: boolean
+          message_template?: string | null
+          start_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      checkins: {
+        Row: {
+          checked_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          message: string | null
+          scheduled_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          checked_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          message?: string | null
+          scheduled_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          checked_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          message?: string | null
+          scheduled_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_alerts: {
+        Row: {
+          anonymous_id: string
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          is_verified: boolean
+          latitude: number
+          longitude: number
+          radius_meters: number
+          report_count: number
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          anonymous_id?: string
+          created_at?: string
+          description?: string
+          expires_at?: string
+          id?: string
+          is_verified?: boolean
+          latitude: number
+          longitude: number
+          radius_meters?: number
+          report_count?: number
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          anonymous_id?: string
+          created_at?: string
+          description?: string
+          expires_at?: string
+          id?: string
+          is_verified?: boolean
+          latitude?: number
+          longitude?: number
+          radius_meters?: number
+          report_count?: number
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           campaign_id: string | null
@@ -469,6 +646,87 @@ export type Database = {
         }
         Relationships: []
       }
+      device_activation_codes: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          code: string
+          created_at: string
+          device_type: string
+          id: string
+          product_id: string | null
+          used: boolean
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          code: string
+          created_at?: string
+          device_type?: string
+          id?: string
+          product_id?: string | null
+          used?: boolean
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          code?: string
+          created_at?: string
+          device_type?: string
+          id?: string
+          product_id?: string | null
+          used?: boolean
+        }
+        Relationships: []
+      }
+      devices: {
+        Row: {
+          battery: number
+          color: string
+          created_at: string
+          id: string
+          is_monitored: boolean
+          last_location: Json | null
+          last_seen: string | null
+          mac_address: string | null
+          name: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          battery?: number
+          color?: string
+          created_at?: string
+          id?: string
+          is_monitored?: boolean
+          last_location?: Json | null
+          last_seen?: string | null
+          mac_address?: string | null
+          name: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          battery?: number
+          color?: string
+          created_at?: string
+          id?: string
+          is_monitored?: boolean
+          last_location?: Json | null
+          last_seen?: string | null
+          mac_address?: string | null
+          name?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           campaign_id: string
@@ -516,6 +774,122 @@ export type Database = {
           },
         ]
       }
+      emergency_alerts: {
+        Row: {
+          contacts_notified: string[]
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          resolve_reason: string | null
+          resolved_at: string | null
+          share_token: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          contacts_notified?: string[]
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          resolve_reason?: string | null
+          resolved_at?: string | null
+          share_token?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          contacts_notified?: string[]
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          resolve_reason?: string | null
+          resolved_at?: string | null
+          share_token?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      emergency_contacts: {
+        Row: {
+          alert_enabled: boolean
+          created_at: string
+          email: string | null
+          group: string
+          id: string
+          is_primary: boolean
+          name: string
+          phone: string
+          relation: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_enabled?: boolean
+          created_at?: string
+          email?: string | null
+          group?: string
+          id?: string
+          is_primary?: boolean
+          name: string
+          phone: string
+          relation?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_enabled?: boolean
+          created_at?: string
+          email?: string | null
+          group?: string
+          id?: string
+          is_primary?: boolean
+          name?: string
+          phone?: string
+          relation?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      glasses_tap_events: {
+        Row: {
+          action_triggered: string
+          device_id: string | null
+          id: string
+          pattern: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          action_triggered?: string
+          device_id?: string | null
+          id?: string
+          pattern: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          action_triggered?: string
+          device_id?: string | null
+          id?: string
+          pattern?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glasses_tap_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_applications: {
         Row: {
           created_at: string
@@ -553,6 +927,50 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "ad_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_events: {
+        Row: {
+          created_at: string
+          description: string
+          device_id: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          device_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          device_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]
@@ -639,6 +1057,7 @@ export type Database = {
           account_status: string
           age_range: string | null
           ai_selected_niches: Json | null
+          auto_activate_emergency: boolean
           avatar_url: string | null
           badge_level: string | null
           bio: string | null
@@ -647,19 +1066,26 @@ export type Database = {
           cpv_rate: number | null
           created_at: string | null
           display_name: string | null
+          emergency_zone_lat: number | null
+          emergency_zone_lng: number | null
+          emergency_zone_radius: number
           engagement_rate: number | null
           follower_count: number | null
+          full_name: string
           gender: string | null
           habits: string | null
           id: string
           is_verified: boolean | null
           niche: string | null
+          phone: string | null
+          plan: string
           preferred_payment_methods: Json | null
           price_per_post: number | null
           price_range: string | null
           rating: number | null
           referral_code: string | null
           referral_points: number
+          safe_mode_enabled: boolean
           total_campaigns: number | null
           total_reviews: number | null
           updated_at: string | null
@@ -671,6 +1097,7 @@ export type Database = {
           account_status?: string
           age_range?: string | null
           ai_selected_niches?: Json | null
+          auto_activate_emergency?: boolean
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
@@ -679,19 +1106,26 @@ export type Database = {
           cpv_rate?: number | null
           created_at?: string | null
           display_name?: string | null
+          emergency_zone_lat?: number | null
+          emergency_zone_lng?: number | null
+          emergency_zone_radius?: number
           engagement_rate?: number | null
           follower_count?: number | null
+          full_name?: string
           gender?: string | null
           habits?: string | null
           id?: string
           is_verified?: boolean | null
           niche?: string | null
+          phone?: string | null
+          plan?: string
           preferred_payment_methods?: Json | null
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
           referral_code?: string | null
           referral_points?: number
+          safe_mode_enabled?: boolean
           total_campaigns?: number | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -703,6 +1137,7 @@ export type Database = {
           account_status?: string
           age_range?: string | null
           ai_selected_niches?: Json | null
+          auto_activate_emergency?: boolean
           avatar_url?: string | null
           badge_level?: string | null
           bio?: string | null
@@ -711,25 +1146,59 @@ export type Database = {
           cpv_rate?: number | null
           created_at?: string | null
           display_name?: string | null
+          emergency_zone_lat?: number | null
+          emergency_zone_lng?: number | null
+          emergency_zone_radius?: number
           engagement_rate?: number | null
           follower_count?: number | null
+          full_name?: string
           gender?: string | null
           habits?: string | null
           id?: string
           is_verified?: boolean | null
           niche?: string | null
+          phone?: string | null
+          plan?: string
           preferred_payment_methods?: Json | null
           price_per_post?: number | null
           price_range?: string | null
           rating?: number | null
           referral_code?: string | null
           referral_points?: number
+          safe_mode_enabled?: boolean
           total_campaigns?: number | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
           whatsapp_views_max?: number | null
           whatsapp_views_min?: number | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          keys_auth: string
+          keys_p256dh: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          keys_auth: string
+          keys_p256dh: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          keys_auth?: string
+          keys_p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -797,6 +1266,65 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_glasses_configs: {
+        Row: {
+          auto_record_audio: boolean
+          created_at: string
+          device_id: string | null
+          hid_key_code: number
+          id: string
+          max_record_duration: number
+          removal_alert_enabled: boolean
+          removal_grace_seconds: number
+          share_audio_evidence: boolean
+          sos_enabled: boolean
+          sos_tap_pattern: string
+          stealth_mode: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_record_audio?: boolean
+          created_at?: string
+          device_id?: string | null
+          hid_key_code?: number
+          id?: string
+          max_record_duration?: number
+          removal_alert_enabled?: boolean
+          removal_grace_seconds?: number
+          share_audio_evidence?: boolean
+          sos_enabled?: boolean
+          sos_tap_pattern?: string
+          stealth_mode?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_record_audio?: boolean
+          created_at?: string
+          device_id?: string | null
+          hid_key_code?: number
+          id?: string
+          max_record_duration?: number
+          removal_alert_enabled?: boolean
+          removal_grace_seconds?: number
+          share_audio_evidence?: boolean
+          sos_enabled?: boolean
+          sos_tap_pattern?: string
+          stealth_mode?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_glasses_configs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]
