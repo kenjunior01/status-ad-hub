@@ -77,17 +77,18 @@ export default function ActivateDevice() {
       if (authError) { toast.error('Erro ao criar conta', { description: authError.message }); setLoading(false); return }
       if (authData.user) {
         // Create profile
-        await supabase.from('profiles').insert({
+        const { error: profileError } = await supabase.from('profiles').insert({
           user_id: authData.user.id,
           full_name: formData.name,
           phone: formData.phone,
-        }).catch(console.error)
+        })
+        if (profileError) console.error(profileError)
         // Mark activation code as used
-        await supabase
+        const { error: codeError } = await supabase
           .from('device_activation_codes')
           .update({ used: true, activated_by: authData.user.id, activated_at: new Date().toISOString() })
           .eq('code', activationCode.trim().toUpperCase())
-          .catch(console.error)
+        if (codeError) console.error(codeError)
         setStep('success')
       }
     } catch {
