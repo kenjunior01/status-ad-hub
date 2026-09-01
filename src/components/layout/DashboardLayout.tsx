@@ -6,11 +6,12 @@ import {
   Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
+  MoreHorizontal, User, CircleDot,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { NoiseTexture, Shimmer } from '@/components/effects'
+import { NoiseTexture } from '@/components/effects'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 import { useBackgroundTracking } from '@/hooks/useBackgroundTracking'
 import { useNetworkStatus, formatOfflineDuration } from '@/hooks/useNetworkStatus'
@@ -20,31 +21,58 @@ import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
 
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/dashboard/accoes', label: 'Accoes Rapidas', icon: Zap },
-  { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/contacts', label: 'Contactos', icon: Users },
-  { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
-  { to: '/dashboard/checkin', label: 'Check-in', icon: ShieldCheck },
-  { to: '/dashboard/oculos', label: 'Oculos', icon: Glasses },
-  { to: '/dashboard/radar', label: 'Radar', icon: Radar },
-  { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
-  { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
-  { to: '/dashboard/viagens', label: 'Viagens', icon: Map },
-  { to: '/dashboard/timeline', label: 'Timeline', icon: Clock },
-  { to: '/dashboard/discreto', label: 'Config. Discreto', icon: Fingerprint },
-  { to: '/history', label: 'Historico', icon: History },
-  { to: '/settings', label: 'Configuracoes', icon: Settings },
-  { to: '/diagnostics', label: 'Diagnostico', icon: Activity },
+/* ── Navigation Config ── */
+const sidebarSections = [
+  {
+    title: 'Principal',
+    items: [
+      { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
+      { to: '/dashboard/accoes', label: 'Accoes Rapidas', icon: Zap },
+      { to: '/dashboard/emergency', label: 'Emergencia', icon: ShieldAlert, badge: true },
+    ],
+  },
+  {
+    title: 'Dispositivos',
+    items: [
+      { to: '/dashboard/devices', label: 'Meus Dispositivos', icon: Bluetooth },
+      { to: '/dashboard/oculos', label: 'Oculos Inteligentes', icon: Glasses },
+      { to: '/dashboard/checkin', label: 'Check-in', icon: ShieldCheck },
+    ],
+  },
+  {
+    title: 'Seguranca',
+    items: [
+      { to: '/dashboard/contacts', label: 'Contactos de Emergencia', icon: Users },
+      { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
+      { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
+      { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
+    ],
+  },
+  {
+    title: 'Privacidade',
+    items: [
+      { to: '/dashboard/discreto', label: 'Modo Discreto', icon: Fingerprint },
+      { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
+    ],
+  },
+  {
+    title: 'Sistema',
+    items: [
+      { to: '/dashboard/history', label: 'Historico', icon: History },
+      { to: '/dashboard/timeline', label: 'Timeline de Incidentes', icon: Clock },
+      { to: '/dashboard/diagnostics', label: 'Diagnostico', icon: Activity },
+      { to: '/dashboard/settings', label: 'Configuracoes', icon: Settings },
+    ],
+  },
 ]
 
-const mobileNavItems = [
+/* Bottom nav: 5 items for quick access on mobile */
+const bottomNav = [
   { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
-  { to: '/dashboard/accoes', label: 'Accoes', icon: Zap },
-  { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
-  { to: '/settings', label: 'Config.', icon: Settings },
+  { to: '/dashboard/devices', label: 'Dispositivos', icon: Bluetooth },
+  { to: '/dashboard/contacts', label: 'Contactos', icon: Users },
+  { to: '/dashboard/emergency', label: 'SOS', icon: ShieldAlert, isSOS: true },
+  { to: '/dashboard/settings', label: 'Mais', icon: MoreHorizontal },
 ]
 
 export default function DashboardLayout() {
@@ -54,140 +82,127 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isActive = (path: string) => location.pathname === path
   const { activeEmergency } = useEmergencyAlerts()
-  // Background tracking: intensifies GPS during emergencies
   useBackgroundTracking()
   const { data: stats } = useDashboardStats()
   const alertCount = (stats?.active_emergencies ?? 0) + (stats?.alerts_today ?? 0)
-  // Network + offline queue status
   const network = useNetworkStatus(true)
   const offlineQueue = useOfflineQueue()
-
-  const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
-    <>
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item, i) => {
-          const IconComp = item.icon
-          const active = isActive(item.to)
-          return (
-            <motion.div
-              key={item.to}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <NavLink
-                to={item.to}
-                onClick={() => mobile && setSidebarOpen(false)}
-                className={cn(
-                  'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
-                  active
-                    ? 'text-[#25D366] bg-[#25D366]/[0.08]'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
-                )}
-              >
-                {active && (
-                  <motion.div
-                    layoutId={mobile ? 'mobile-nav-indicator' : 'desktop-nav-indicator'}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#25D366]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                )}
-                <IconComp className="h-[18px] w-[18px]" strokeWidth={active ? 2 : 1.5} />
-                {item.label}
-                {active && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-50" />}
-              </NavLink>
-            </motion.div>
-          )
-        })}
-      </nav>
-      <div className="px-3 pb-4 border-t border-white/[0.04] pt-4">
-        <div className="flex items-center gap-3 px-3 mb-3">
-          <div className="relative">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(37,211,102,0.2)]">
-              {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#25D366] border-2 border-[#0D1321]" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{(user?.user_metadata as any)?.full_name || 'Utilizador'}</p>
-            <p className="text-[10px] text-white/25 truncate font-mono">{user?.email || 'user@email.com'}</p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={signOut}
-          className="w-full justify-start gap-2 text-white/30 hover:text-red-400 hover:bg-red-500/[0.06] px-3 rounded-xl transition-all"
-        >
-          <LogOut className="h-4 w-4" /> Sair
-        </Button>
-      </div>
-    </>
-  )
+  const hasAlerts = alertCount > 0
+  const hasActiveEmergency = activeEmergency?.status === 'active'
 
   return (
-    <div className="min-h-screen bg-[#0A0F1A] flex">
-      <NoiseTexture opacity={0.015} />
+    <div className="min-h-screen bg-[#0A0F1A] relative">
+      <NoiseTexture opacity={0.01} />
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-[260px] bg-[#0A0F1A]/95 border-r border-white/[0.04] z-40 backdrop-blur-xl relative overflow-hidden">
-        <div className="pointer-events-none absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#25D366]/[0.03] to-transparent" />
-        <NoiseTexture opacity={0.01} />
-        <div className="relative z-10 flex flex-col flex-1">
-        <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.04]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 animate-glow-pulse">
-            <Shield className="h-4 w-4 text-[#25D366]" />
-          </div>
-          <span className="font-display font-bold text-white text-base tracking-tight">Status<span className="text-[#25D366]">Ads</span></span>
-        </div>
-        <NavContent />
-        </div>
-      </aside>
-
-      {/* MOBILE SIDEBAR OVERLAY */}
+      {/* ── MOBILE SIDEBAR OVERLAY ── */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 lg:hidden" />
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
             <motion.aside
-              initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-[280px] bg-[#0A0F1A] border-r border-white/[0.06] z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-[300px] max-w-[85vw] bg-[#0D1321] border-r border-white/[0.06] z-50 flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between px-5 h-16 border-b border-white/[0.04]">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20">
-                    <Shield className="h-4 w-4 text-[#25D366]" />
+              {/* Sidebar Header with user info */}
+              <div className="relative px-5 pt-5 pb-4">
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#25D366]/[0.05] to-transparent" />
+                <div className="relative flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-[#25D366]" />
+                    </div>
+                    <span className="font-display font-bold text-white text-base">Status<span className="text-[#25D366]">Ads</span></span>
                   </div>
-                  <span className="font-display font-bold text-white text-base">Status<span className="text-[#25D366]">Ads</span></span>
+                  <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl hover:bg-white/10 transition">
+                    <X className="h-5 w-5 text-white/50" />
+                  </button>
                 </div>
-                <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 transition">
-                  <X className="h-5 w-5 text-white/50" />
+                <div className="relative flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
+                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                    {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white truncate">{(user?.user_metadata as any)?.full_name || 'Utilizador'}</p>
+                    <p className="text-[11px] text-white/25 truncate font-mono">{user?.email || ''}</p>
+                  </div>
+                  <div className="h-2 w-2 rounded-full bg-[#25D366] shrink-0" />
+                </div>
+              </div>
+
+              {/* Sidebar Navigation */}
+              <nav className="flex-1 overflow-y-auto px-3 pb-3">
+                {sidebarSections.map((section) => (
+                  <div key={section.title} className="mb-3">
+                    <p className="px-3 mb-1.5 text-[10px] font-semibold text-white/20 uppercase tracking-wider">{section.title}</p>
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const IconComp = item.icon
+                        const active = isActive(item.to)
+                        return (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            onClick={() => setSidebarOpen(false)}
+                            className={cn(
+                              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
+                              active
+                                ? 'text-[#25D366] bg-[#25D366]/[0.08]'
+                                : 'text-white/40 active:text-white/60 hover:text-white/60 hover:bg-white/[0.03]'
+                            )}
+                          >
+                            <IconComp className="h-[18px] w-[18px] shrink-0" strokeWidth={active ? 2 : 1.5} />
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge && hasAlerts && (
+                              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">{alertCount}</span>
+                            )}
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </nav>
+
+              {/* Sidebar Footer */}
+              <div className="px-3 pb-4 border-t border-white/[0.04] pt-3">
+                <button
+                  onClick={() => { signOut(); setSidebarOpen(false) }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-white/30 hover:text-red-400 hover:bg-red-500/[0.06] transition-all"
+                >
+                  <LogOut className="h-[18px] w-[18px]" />
+                  Sair da Conta
                 </button>
               </div>
-              <NavContent mobile />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* MAIN AREA */}
-      <div className="flex-1 lg:ml-[260px] flex flex-col min-h-screen">
-        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 md:px-6 backdrop-blur-2xl bg-[#0A0F1A]/60 border-b border-white/[0.04]">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-xl hover:bg-white/5 transition">
-            <Menu className="h-5 w-5 text-white/60" />
-          </button>
-          <h2 className="hidden sm:block text-sm font-medium text-white/50">Painel de Seguranca</h2>
-          <div className="sm:hidden" />
-          <div className="flex items-center gap-1">
-            {/* Network Status Indicator */}
+      {/* ── MAIN CONTENT AREA ── */}
+      <div className="flex flex-col min-h-screen">
+        {/* Top Header Bar - Mobile First */}
+        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 backdrop-blur-2xl bg-[#0A0F1A]/80 border-b border-white/[0.04]">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/5 active:bg-white/10 transition">
+              <Menu className="h-5 w-5 text-white/60" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[#25D366]" />
+              <span className="text-sm font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {/* Offline indicator */}
             <AnimatePresence>
               {!network.isOnline && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20"
-                  title={network.offlineDuration ? `Offline ha ${formatOfflineDuration(network.offlineDuration)}` : 'Sem conexao'}
+                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20"
                 >
                   <WifiOff className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
                   <span className="text-[10px] font-medium text-amber-400 hidden sm:inline">
@@ -197,93 +212,113 @@ export default function DashboardLayout() {
               )}
             </AnimatePresence>
 
-            {/* Offline Queue Indicator */}
+            {/* Queue indicator */}
             <AnimatePresence>
               {offlineQueue.pendingCount > 0 && network.isOnline && (
                 <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                   onClick={() => offlineQueue.syncQueue()}
                   className={cn(
-                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors',
-                    offlineQueue.emergencyPending > 0
-                      ? 'bg-red-500/10 border-red-500/20'
-                      : 'bg-blue-500/10 border-blue-500/20'
+                    'flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors',
+                    offlineQueue.emergencyPending > 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'
                   )}
-                  title={`${offlineQueue.pendingCount} item(s) na fila. Clique para sincronizar.`}
                 >
                   {offlineQueue.isSyncing ? (
                     <RefreshCw className="h-3.5 w-3.5 text-blue-400 animate-spin" />
-                  ) : offlineQueue.emergencyPending > 0 ? (
-                    <CloudOff className="h-3.5 w-3.5 text-red-400 animate-pulse" />
                   ) : (
                     <Database className="h-3.5 w-3.5 text-blue-400" />
                   )}
-                  <span className={cn(
-                    'text-[10px] font-medium hidden sm:inline',
-                    offlineQueue.emergencyPending > 0 ? 'text-red-400' : 'text-blue-400'
-                  )}>
-                    {offlineQueue.pendingCount} na fila
+                  <span className={cn('text-[10px] font-medium hidden sm:inline', offlineQueue.emergencyPending > 0 ? 'text-red-400' : 'text-blue-400')}>
+                    {offlineQueue.pendingCount}
                   </span>
                 </motion.button>
               )}
             </AnimatePresence>
 
-            <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/5 transition">
+            {/* Alerts bell */}
+            <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/5 active:bg-white/10 transition">
               <Bell className="h-[18px] w-[18px] text-white/50" />
-              {alertCount > 0 && (
+              {hasAlerts && (
                 <span className={cn(
-                  'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white',
-                  stats?.active_emergencies
+                  'absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white',
+                  hasActiveEmergency
                     ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
                     : 'bg-amber-500/80'
-                )}>{alertCount}</span>
+                )}>{alertCount > 9 ? '9+' : alertCount}</span>
               )}
             </button>
           </div>
         </header>
-        <main className="flex-1 pb-20 lg:pb-0">
-          {/* Active Emergency Banner - shows on all dashboard pages except /emergency */}
-          {activeEmergency?.status === 'active' && location.pathname !== '/dashboard/emergency' && (
-            <div
-              onClick={() => navigate('/dashboard/emergency')}
-              className="flex items-center gap-3 px-4 md:px-6 py-2.5 bg-red-950/80 border-b border-red-500/15 cursor-pointer hover:bg-red-950/90 transition-colors"
+
+        {/* Active Emergency Banner */}
+        <AnimatePresence>
+          {hasActiveEmergency && location.pathname !== '/dashboard/emergency' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-500/15 shrink-0">
-                <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
-              </div>
-              <p className="text-xs font-medium text-red-300 flex-1">
-                Emergencia activa! Clique para ver detalhes e resolver.
-              </p>
-              <ChevronRight className="h-4 w-4 text-red-400/50" />
-            </div>
+              <button
+                onClick={() => navigate('/dashboard/emergency')}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-red-950/80 border-b border-red-500/15 active:bg-red-950 transition-colors"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/15 shrink-0">
+                  <ShieldAlert className="h-4 w-4 text-red-400" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-xs font-semibold text-red-300">Emergencia Activa</p>
+                  <p className="text-[11px] text-red-400/60">Toque para ver detalhes</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-red-400/40" />
+              </button>
+            </motion.div>
           )}
+        </AnimatePresence>
+
+        {/* Page Content */}
+        <main className="flex-1 pb-24 lg:pb-6">
           <Outlet />
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAV - hidden when Dashboard is active (it has its own bottom bar) */}
-      <nav className={cn('fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-2xl bg-[#0A0F1A]/90 border-t border-white/[0.04] transition-all duration-300', isActive('/dashboard') && 'translate-y-full opacity-0 pointer-events-none')}>
-        <div className="flex items-center justify-around h-16 px-2">
-          {mobileNavItems.map((item) => {
-            const IconComp = item.icon
-            const active = isActive(item.to)
-            return (
-              <NavLink key={item.to} to={item.to} className={cn(
-                'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-200',
-                active ? 'text-[#25D366]' : 'text-white/30'
-              )}>
-                <div className={cn('relative', active && 'shadow-[0_0_12px_rgba(37,211,102,0.3)] rounded-lg')}>
-                  <IconComp className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
-                  {active && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-[2px] w-4 rounded-full bg-[#25D366]" />}
-                </div>
-                <span className="text-[9px] font-medium">{item.label}</span>
-              </NavLink>
-            )
-          })}
+      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+        {/* Safe area spacer for iOS */}
+        <div className="bg-[#0A0F1A]/95 backdrop-blur-2xl border-t border-white/[0.06]">
+          <div className="flex items-center justify-around h-[68px] px-1 pb-[env(safe-area-inset-bottom,0px)]">
+            {bottomNav.map((item) => {
+              const IconComp = item.icon
+              const active = isActive(item.to)
+              if (item.isSOS) {
+                return (
+                  <NavLink key={item.to} to={item.to} className="relative flex flex-col items-center gap-0.5 -mt-4">
+                    <div className={cn(
+                      'h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg',
+                      active
+                        ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
+                        : 'bg-red-500/15 border-2 border-red-500/30 active:bg-red-500/30'
+                    )}>
+                      <ShieldAlert className={cn('h-5 w-5', active ? 'text-white' : 'text-red-400')} strokeWidth={2} />
+                    </div>
+                    <span className={cn('text-[9px] font-semibold', active ? 'text-red-400' : 'text-white/25')}>SOS</span>
+                  </NavLink>
+                )
+              }
+              return (
+                <NavLink key={item.to} to={item.to} className="flex flex-col items-center gap-0.5 py-1.5 px-3 transition-all duration-150">
+                  <div className="relative">
+                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-[#25D366]' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
+                    {active && (
+                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-[#25D366]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+                    )}
+                  </div>
+                  <span className={cn('text-[10px] font-medium', active ? 'text-[#25D366]' : 'text-white/25')}>{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </div>
         </div>
       </nav>
+
       <OnboardingWizard />
       <PWAInstallPrompt />
     </div>

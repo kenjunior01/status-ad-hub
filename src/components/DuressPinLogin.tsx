@@ -569,10 +569,10 @@ export function DuressLoginOverlay({
           >
             Nao tem conta?{' '}
             <a
-              href="/register"
+              href="/ativar"
               className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]"
             >
-              Criar conta
+              Activar Dispositivo
             </a>
           </motion.p>
 

@@ -90,7 +90,7 @@ function Navbar() {
           <div className="ml-4">
             <MagneticButton strength={0.15}>
               <Button asChild className="bg-[#25D366] text-white hover:bg-[#1fb855] hover:shadow-[0_0_30px_-5px_rgba(37,211,102,0.4)] transition-all duration-300 rounded-xl">
-                <Link to="/register">Come\u00e7ar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+                <Link to="/ativar">Come\u00e7ar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
               </Button>
             </MagneticButton>
           </div>
@@ -108,7 +108,7 @@ function Navbar() {
               </a>
             ))}
             <Button asChild className="mt-2 w-full bg-[#25D366] text-white hover:bg-[#1fb855] rounded-xl">
-              <Link to="/register" onClick={() => setOpen(false)}>Come\u00e7ar Agora</Link>
+              <Link to="/ativar" onClick={() => setOpen(false)}>Come\u00e7ar Agora</Link>
             </Button>
           </div>
         </motion.div>
@@ -163,8 +163,8 @@ function Hero() {
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8 }} className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <MagneticButton strength={0.2}>
-            <RippleButton className="h-13 px-8 text-base font-semibold" onClick={() => window.location.href = '/register'}>
-              Criar Conta Gr\u00e1tis <ArrowRight className="ml-2 h-4 w-4" />
+            <RippleButton className="h-13 px-8 text-base font-semibold" onClick={() => window.location.href = '/ativar'}>
+              Activar Dispositivo <ArrowRight className="ml-2 h-4 w-4" />
             </RippleButton>
           </MagneticButton>
           <MagneticButton strength={0.15}>
@@ -468,12 +468,12 @@ function Pricing() {
                 <div className="mt-8">
                   {plan.popular ? (
                     <RippleButton className="w-full h-11">
-                      <Link to="/register">{plan.cta}</Link>
+                      <Link to="/ativar">{plan.cta}</Link>
                     </RippleButton>
                   ) : (
                     <Button asChild variant="outline" className={cn('w-full h-11 rounded-xl border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white transition-all')}
                       >
-                      <Link to="/register">{plan.cta}</Link>
+                      <Link to="/ativar">{plan.cta}</Link>
                     </Button>
                   )}
                 </div>
@@ -597,8 +597,8 @@ function FinalCta() {
                 className="h-12 w-full max-w-xs border-white/20 bg-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-xl backdrop-blur-sm"
               />
               <MagneticButton strength={0.15}>
-                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/register'}>
-                  Criar Conta <ArrowRight className="ml-2 h-4 w-4" />
+                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/ativar'}>
+                  Activar Dispositivo <ArrowRight className="ml-2 h-4 w-4" />
                 </RippleButton>
               </MagneticButton>
             </div>

@@ -229,7 +229,7 @@ export default function Dashboard() {
     }
     setEmergency(false)
     // Navigate to emergency page after triggering
-    setTimeout(() => navigate('/emergency'), 500)
+    setTimeout(() => navigate('/dashboard/emergency'), 500)
   }, [coords, triggerEmergency, navigate])
 
   // Merge device data with location points for map markers
@@ -327,7 +327,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <button onClick={() => navigate('/emergency')} className="relative p-2 rounded-xl hover:bg-white/[0.04] transition">
+          <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/[0.04] transition">
             <Bell className="h-[18px] w-[18px] text-white/40" />
             {alertCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">{alertCount}</span>

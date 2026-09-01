@@ -28,7 +28,7 @@ import { PanicModeOverlay } from '@/components/PanicModeOverlay'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
-const Register = lazy(() => import('@/pages/Register'))
+const ActivateDevice = lazy(() => import('@/pages/ActivateDevice'))
 const DashboardLayout = lazy(() => import('@/components/layout/DashboardLayout'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Devices = lazy(() => import('@/pages/Devices'))
@@ -77,7 +77,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<WithErrorBoundary context="landing"><Landing /></WithErrorBoundary>} />
       <Route path="/login" element={<PublicRoute><WithErrorBoundary context="login"><Login /></WithErrorBoundary></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><WithErrorBoundary context="register"><Register /></WithErrorBoundary></PublicRoute>} />
+      <Route path="/ativar" element={<PublicRoute><WithErrorBoundary context="activate"><ActivateDevice /></WithErrorBoundary></PublicRoute>} />
       <Route path="/track/:token" element={<WithErrorBoundary context="tracking"><TrackEmergency /></WithErrorBoundary>} />
       <Route path="/dashboard" element={<ProtectedRoute><CoercionShield><DashboardLayout /></CoercionShield></ProtectedRoute>}>
         <Route index element={<WithErrorBoundary context="dashboard"><Dashboard /></WithErrorBoundary>} />

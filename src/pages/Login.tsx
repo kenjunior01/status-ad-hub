@@ -202,7 +202,7 @@ export default function Login() {
             </div>
           </div>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-center text-sm text-white/30">
-            Nao tem conta? <Link to="/register" className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]">Criar conta</Link>
+            Nao tem conta? <Link to="/ativar" className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]">Activar Dispositivo</Link>
           </motion.p>
 
           {/* PASSWORD RESET MODAL */}
