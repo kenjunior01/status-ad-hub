@@ -103,7 +103,7 @@ function AppRoutes() {
   )
 }
 
-export default function LoadingScreen() {
+function LoadingScreen() {
   return (
     <div className="dark min-h-screen bg-[#0A0F1A] flex flex-col items-center justify-center relative overflow-hidden">
       <NoiseTexture opacity={0.02} />
@@ -172,7 +172,7 @@ function InnerApp() {
   )
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
