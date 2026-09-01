@@ -111,12 +111,12 @@ const AntiCoercionContext = createContext<AntiCoercionContextType>({
   isConfigured: false,
   activatedAt: null,
   sosDispatched: false,
-  setPanicPassword: () => {},
+  setPanicPassword: async () => {},
   removePanicPassword: () => {},
-  isPanicPassword: () => false,
+  isPanicPassword: async () => false,
   activateCoercionMode: () => {},
   deactivateCoercionMode: () => {},
-  verifyPanicPassword: () => false,
+  verifyPanicPassword: async () => false,
 })
 
 // ============================================
