@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,7 @@ import {
 } from '@/components/effects'
 import {
   Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,
-  BellOff, Crosshair, Wifi, Menu, X, ChevronRight, Check,
+  BellOff, Crosshair, Wifi, Menu, X, ChevronRight, ChevronDown, Check,
   ArrowRight, Play, Users, Activity, Zap, Lock, Eye, Globe,
   Fingerprint, Smartphone, Radar, Sparkles,
 } from 'lucide-react'
@@ -393,6 +393,33 @@ function EmergencyDemo() {
 }
 
 /* ════════════════════════════════════════════════ */
+/*  TRUST STATS                                   */
+/* ════════════════════════════════════════════════ */
+function TrustStats() {
+  const stats = [
+    { value: 10000, suffix: '', label: 'Utilizadores Protegidos', prefix: '+', decimals: 0 },
+    { value: 99.9, suffix: '%', label: 'Uptime', prefix: '', decimals: 1 },
+    { value: 4.8, suffix: 's', label: 'Tempo de Resposta', prefix: '', decimals: 1 },
+  ]
+  return (
+    <Section className="py-20 border-y border-white/[0.04] bg-white/[0.01]">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          {stats.map((s, i) => (
+            <motion.div key={s.label} custom={i} variants={fadeUp} className="text-center">
+              <p className="font-display text-4xl font-extrabold text-[#25D366] sm:text-5xl">
+                {s.prefix}<CounterAnimated target={s.value} suffix={s.suffix} decimals={s.decimals} />
+              </p>
+              <p className="mt-2 text-sm text-white/40 font-medium">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+/* ════════════════════════════════════════════════ */
 /*  PRICING                                       */
 /* ════════════════════════════════════════════════ */
 function Pricing() {
@@ -455,6 +482,83 @@ function Pricing() {
             return (
               <motion.div key={plan.name} custom={i} variants={scaleIn}>
                 {plan.popular ? <BeamBorder>{card}</BeamBorder> : card}
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+/* ════════════════════════════════════════════════ */
+/*  FAQ                                           */
+/* ════════════════════════════════════════════════ */
+function FAQ() {
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
+  const faqs = [
+    {
+      q: 'Como funciona o monitoramento BLE?',
+      a: 'Pareie o seu smartphone com dispositivos Bluetooth pr\u00f3ximos (fones, smartwatch). Se um dispositivo se desconectar inesperadamente, o sistema inicia um timer de 60 segundos e activa automaticamente a emerg\u00eancia com a sua localiza\u00e7\u00e3o GPS.',
+    },
+    {
+      q: 'Os meus dados est\u00e3o seguros?',
+      a: 'Todos os dados s\u00e3o encriptados em tr\u00e2nsito e em repouso. Utilizamos Supabase com Row-Level Security. As suas localiza\u00e7\u00f5es GPS s\u00f3 s\u00e3o partilhadas durante emerg\u00eancias activas.',
+    },
+    {
+      q: 'Preciso de internet para o sistema funcionar?',
+      a: 'O sistema funciona offline. Se perder conex\u00e3o durante uma emerg\u00eancia, o pedido \u00e9 guardado localmente e enviado automaticamente quando a conex\u00e3o \u00e9 restabelecida.',
+    },
+    {
+      q: 'Posso testar antes de subscrever?',
+      a: 'Sim. Pode criar uma conta gratuita e testar todas as funcionalidades. A versão gratuita suporta 1 dispositivo e 3 contactos de emergência.',
+    },
+  ]
+  return (
+    <Section className="py-28">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center mb-14">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">D\u00favidas Frequentes</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            Perguntas Frequentes
+          </h2>
+        </motion.div>
+        <div className="flex flex-col gap-3">
+          {faqs.map((faq, i) => {
+            const isOpen = openIdx === i
+            return (
+              <motion.div
+                key={i}
+                custom={i}
+                variants={fadeUp}
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm overflow-hidden transition-colors hover:border-white/[0.1]"
+              >
+                <button
+                  onClick={() => setOpenIdx(isOpen ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+                >
+                  <span className="text-sm font-medium text-white/80">{faq.q}</span>
+                  <motion.div
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="shrink-0"
+                  >
+                    <ChevronDown className="h-4 w-4 text-[#25D366]/60" />
+                  </motion.div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-6 pb-5 text-sm leading-relaxed text-white/40">{faq.a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )
           })}
@@ -541,8 +645,8 @@ function Footer() {
             </div>
           ))}
         </div>
-        <div className="mt-14 border-t border-white/[0.04] pt-6 text-center text-xs text-white/15">
-          \u00a9 {new Date().getFullYear()} StatusAds Connect \u2014 statusmonetize.com. Todos os direitos reservados.
+        <div className="mt-14 border-t border-white/[0.04] pt-6 text-center text-xs text-white/25">
+          StatusAds Connect v2.9.0 \u00b7 Direitos reservados
         </div>
       </div>
     </footer>
@@ -563,7 +667,9 @@ export default function Landing() {
       <FeaturesGrid />
       <SocialProof />
       <EmergencyDemo />
+      <TrustStats />
       <Pricing />
+      <FAQ />
       <FinalCta />
       <Footer />
     </div>

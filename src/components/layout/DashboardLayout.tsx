@@ -4,30 +4,46 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Bluetooth, Users, History, Settings,
   Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
+  WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
+  Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { NoiseTexture, Shimmer } from '@/components/effects'
-import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
+import { useBackgroundTracking } from '@/hooks/useBackgroundTracking'
+import { useNetworkStatus, formatOfflineDuration } from '@/hooks/useNetworkStatus'
+import { useOfflineQueue } from '@/hooks/useOfflineQueue'
+import { OnboardingWizard } from '@/components/OnboardingWizard'
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/dashboard/accoes', label: 'Accoes Rapidas', icon: Zap },
   { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/emergency-contacts', label: 'Contactos', icon: Users },
+  { to: '/contacts', label: 'Contactos', icon: Users },
   { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
+  { to: '/dashboard/checkin', label: 'Check-in', icon: ShieldCheck },
+  { to: '/dashboard/oculos', label: 'Oculos', icon: Glasses },
+  { to: '/dashboard/radar', label: 'Radar', icon: Radar },
+  { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
+  { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
+  { to: '/dashboard/viagens', label: 'Viagens', icon: Map },
+  { to: '/dashboard/timeline', label: 'Timeline', icon: Clock },
+  { to: '/dashboard/discreto', label: 'Config. Discreto', icon: Fingerprint },
   { to: '/history', label: 'Historico', icon: History },
   { to: '/settings', label: 'Configuracoes', icon: Settings },
+  { to: '/diagnostics', label: 'Diagnostico', icon: Activity },
 ]
 
 const mobileNavItems = [
   { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
+  { to: '/dashboard/accoes', label: 'Accoes', icon: Zap },
   { to: '/devices', label: 'Dispositivos', icon: Bluetooth },
   { to: '/emergency', label: 'Emergencia', icon: ShieldAlert },
-  { to: '/history', label: 'Historico', icon: History },
   { to: '/settings', label: 'Config.', icon: Settings },
 ]
 
@@ -38,8 +54,13 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isActive = (path: string) => location.pathname === path
   const { activeEmergency } = useEmergencyAlerts()
+  // Background tracking: intensifies GPS during emergencies
+  useBackgroundTracking()
   const { data: stats } = useDashboardStats()
   const alertCount = (stats?.active_emergencies ?? 0) + (stats?.alerts_today ?? 0)
+  // Network + offline queue status
+  const network = useNetworkStatus(true)
+  const offlineQueue = useOfflineQueue()
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>
@@ -157,17 +178,70 @@ export default function DashboardLayout() {
           </button>
           <h2 className="hidden sm:block text-sm font-medium text-white/50">Painel de Seguranca</h2>
           <div className="sm:hidden" />
-          <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/5 transition">
-            <Bell className="h-[18px] w-[18px] text-white/50" />
-            {alertCount > 0 && (
-              <span className={cn(
-                'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white',
-                stats?.active_emergencies
-                  ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
-                  : 'bg-amber-500/80'
-              )}>{alertCount}</span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Network Status Indicator */}
+            <AnimatePresence>
+              {!network.isOnline && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20"
+                  title={network.offlineDuration ? `Offline ha ${formatOfflineDuration(network.offlineDuration)}` : 'Sem conexao'}
+                >
+                  <WifiOff className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                  <span className="text-[10px] font-medium text-amber-400 hidden sm:inline">
+                    {network.offlineDuration ? formatOfflineDuration(network.offlineDuration) : 'Offline'}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Offline Queue Indicator */}
+            <AnimatePresence>
+              {offlineQueue.pendingCount > 0 && network.isOnline && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => offlineQueue.syncQueue()}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors',
+                    offlineQueue.emergencyPending > 0
+                      ? 'bg-red-500/10 border-red-500/20'
+                      : 'bg-blue-500/10 border-blue-500/20'
+                  )}
+                  title={`${offlineQueue.pendingCount} item(s) na fila. Clique para sincronizar.`}
+                >
+                  {offlineQueue.isSyncing ? (
+                    <RefreshCw className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+                  ) : offlineQueue.emergencyPending > 0 ? (
+                    <CloudOff className="h-3.5 w-3.5 text-red-400 animate-pulse" />
+                  ) : (
+                    <Database className="h-3.5 w-3.5 text-blue-400" />
+                  )}
+                  <span className={cn(
+                    'text-[10px] font-medium hidden sm:inline',
+                    offlineQueue.emergencyPending > 0 ? 'text-red-400' : 'text-blue-400'
+                  )}>
+                    {offlineQueue.pendingCount} na fila
+                  </span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            <button onClick={() => navigate('/dashboard/emergency')} className="relative p-2 rounded-xl hover:bg-white/5 transition">
+              <Bell className="h-[18px] w-[18px] text-white/50" />
+              {alertCount > 0 && (
+                <span className={cn(
+                  'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white',
+                  stats?.active_emergencies
+                    ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
+                    : 'bg-amber-500/80'
+                )}>{alertCount}</span>
+              )}
+            </button>
+          </div>
         </header>
         <main className="flex-1 pb-20 lg:pb-0">
           {/* Active Emergency Banner - shows on all dashboard pages except /emergency */}
@@ -210,6 +284,7 @@ export default function DashboardLayout() {
           })}
         </div>
       </nav>
+      <OnboardingWizard />
       <PWAInstallPrompt />
     </div>
   )

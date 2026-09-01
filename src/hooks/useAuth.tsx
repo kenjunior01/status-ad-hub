@@ -38,6 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = async () => {
+    // Clear coercion mode on logout
+    try {
+      localStorage.removeItem('statusads-coercion-active')
+      localStorage.removeItem('statusads-coercion-active-time')
+    } catch {
+      // localStorage unavailable
+    }
     await supabase.auth.signOut()
   }
 

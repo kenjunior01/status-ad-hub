@@ -3,6 +3,49 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
+/**
+ * Install global error handlers at the EARLIEST possible moment —
+ * before React mounts. These catch errors that occur during module
+ * initialization, lazy-loading, or outside any React component.
+ *
+ * The useGlobalErrorHandlers hook in App.tsx will take over once
+ * the React tree is ready (and remove these). But if an error
+ * fires before that, we still capture it.
+ */
+const _earlyHandler = (msg: string | Event, source?: string, lineno?: number, colno?: number, error?: Error) => {
+  // Will be properly logged once error-logger is imported
+  try {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      context: 'pre-mount',
+      source: 'early-handler',
+      message: typeof msg === 'string' ? msg : (msg instanceof ErrorEvent ? msg.message : 'Unknown error'),
+      stack: error?.stack?.slice(0, 500),
+      severity: 'error' as const,
+    }
+    // Try IndexedDB directly
+    const req = indexedDB.open('statusads-error-logs', 1)
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains('logs')) {
+        req.result.createObjectStore('logs', { keyPath: 'id', autoIncrement: true })
+      }
+    }
+    req.onsuccess = () => {
+      try {
+        const tx = req.result.transaction('logs', 'readwrite')
+        tx.objectStore('logs').add(entry)
+      } catch { /* noop */ }
+    }
+  } catch { /* noop */ }
+}
+
+window.addEventListener('error', _earlyHandler as EventListener)
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event?.reason
+  const msg = reason instanceof Error ? reason.message : typeof reason === 'string' ? reason : 'Unhandled rejection'
+  _earlyHandler(msg)
+})
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

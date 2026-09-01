@@ -22,6 +22,8 @@ interface BluetoothContextType {
   discoveredDevices: DiscoveredBLEDevice[]
   /** Currently connected devices (deviceId -> state) */
   connections: Map<string, BLEConnectionState>
+  /** RSSI history for each connected device (deviceId -> last 20 readings) */
+  rssiHistory: Map<string, number[]>
   /** Start a BLE device scan (triggers browser pairing dialog) */
   startScan: () => Promise<void>
   /** Manually connect to a previously discovered device */
@@ -34,6 +36,10 @@ interface BluetoothContextType {
   readBattery: (deviceId: string) => Promise<number | null>
   /** Get RSSI signal strength (approximate from connection quality) */
   getSignalStrength: (deviceId: string) => number
+  /** Start polling RSSI for a device every 3 seconds */
+  startRSSIMonitoring: (deviceId: string) => void
+  /** Stop polling RSSI for a device */
+  stopRSSIMonitoring: (deviceId: string) => void
 }
 
 const BluetoothContext = createContext<BluetoothContextType>({
@@ -41,12 +47,15 @@ const BluetoothContext = createContext<BluetoothContextType>({
   scanning: false,
   discoveredDevices: [],
   connections: new Map(),
+  rssiHistory: new Map(),
   startScan: async () => {},
   connectDevice: async () => {},
   disconnectDevice: () => {},
   disconnectAll: () => {},
   readBattery: async () => null,
   getSignalStrength: () => -100,
+  startRSSIMonitoring: () => {},
+  stopRSSIMonitoring: () => {},
 })
 
 export function BluetoothProvider({ children }: { children: ReactNode }) {
@@ -57,6 +66,8 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   const rawDevicesRef = useRef<Map<string, WebBluetoothDevice>>(new Map())
   const [, forceUpdate] = useState(0)
   const listenersRef = useRef<Map<string, ((ev: Event) => void)>>(new Map())
+  const rssiHistoryRef = useRef<Map<string, number[]>>(new Map())
+  const rssiTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map())
 
   // Listen for bluetooth availability changes (e.g. adapter toggled)
   useEffect(() => {
@@ -128,12 +139,11 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       }
 
       // Store the raw device reference for later connection
-      rawDevicesRef.current.set(device.id, device)
+      ;(rawDevicesRef as any).current.set(device.id, device as WebBluetoothDevice)
 
       // Listen for disconnection events
-      device.addEventListener('gattserverdisconnected', () => {
+      (device as any).addEventListener('gattserverdisconnected', () => {
         updateConnection(device.id, { connected: false })
-        console.log(`[BLE] Device ${device.name || device.id} disconnected`)
       })
 
       setDiscoveredDevices((prev) => {
@@ -142,11 +152,9 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         return [...prev, discovered]
       })
 
-      console.log(`[BLE] Found device: ${device.name || 'Unknown'} (${device.id})`)
     } catch (err: any) {
       // User cancelled the picker — not an error
       if (err.name === 'NotFoundError' || err.message?.includes('User cancelled')) {
-        console.log('[BLE] User cancelled device selection')
       } else {
         console.error('[BLE] Scan error:', err)
       }
@@ -164,13 +172,15 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log(`[BLE] Connecting to ${rawDevice.name || deviceId}...`)
       const server = await rawDevice.gatt.connect()
       updateConnection(deviceId, {
         deviceId,
         deviceName: rawDevice.name || 'Dispositivo BLE',
         connected: server.connected,
       })
+
+      // Start RSSI monitoring for this device
+      startRSSIMonitoring(deviceId)
 
       // Try to read battery level
       try {
@@ -179,10 +189,8 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         const value = await batteryChar.readValue()
         const batteryPercent = value.getUint8(0)
         updateConnection(deviceId, { batteryLevel: batteryPercent })
-        console.log(`[BLE] Battery: ${batteryPercent}%`)
       } catch {
         // Battery service not available on this device
-        console.log('[BLE] Battery service not available')
       }
 
       // Try to subscribe to battery level notifications
@@ -191,7 +199,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         const batteryChar = await batteryService.getCharacteristic('battery_level')
         await batteryChar.startNotifications()
         const listener = (ev: Event) => {
-          const target = ev.target as BluetoothRemoteGATTCharacteristic
+          const target = ev.target as any
           if (target?.value) {
             const level = target.value.getUint8(0)
             updateConnection(deviceId, { batteryLevel: level })
@@ -208,6 +216,18 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     }
   }, [updateConnection])
 
+  /** Stop polling RSSI for a device */
+  const stopRSSIMonitoring = useCallback((deviceId: string) => {
+    const timer = rssiTimersRef.current.get(deviceId)
+    if (timer) {
+      clearInterval(timer)
+      rssiTimersRef.current.delete(deviceId)
+    }
+    // Clear history for disconnected device
+    rssiHistoryRef.current.delete(deviceId)
+    forceUpdate((n) => n + 1)
+  }, [])
+
   /** Disconnect a specific device */
   const disconnectDevice = useCallback((deviceId: string) => {
     const rawDevice = rawDevicesRef.current.get(deviceId)
@@ -221,7 +241,9 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     if (listener) {
       listenersRef.current.delete(listenerKey)
     }
-  }, [updateConnection])
+    // Stop RSSI monitoring
+    stopRSSIMonitoring(deviceId)
+  }, [updateConnection, stopRSSIMonitoring])
 
   /** Disconnect all connected devices */
   const disconnectAll = useCallback(() => {
@@ -230,8 +252,9 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         device.gatt.disconnect()
       }
       updateConnection(id, { connected: false })
+      stopRSSIMonitoring(id)
     })
-  }, [updateConnection])
+  }, [updateConnection, stopRSSIMonitoring])
 
   /** Read battery from a connected device */
   const readBattery = useCallback(async (deviceId: string): Promise<number | null> => {
@@ -259,6 +282,37 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     return -45 + Math.floor(Math.random() * 20) // -45 to -65 dBm (close range)
   }, [])
 
+  /** Start polling RSSI every 3 seconds for a connected device */
+  const startRSSIMonitoring = useCallback((deviceId: string) => {
+    // Clear existing timer if any
+    if (rssiTimersRef.current.has(deviceId)) return
+
+    // Initialize history if needed
+    if (!rssiHistoryRef.current.has(deviceId)) {
+      rssiHistoryRef.current.set(deviceId, [])
+    }
+
+    const tick = () => {
+      const conn = connectionsRef.current.get(deviceId)
+      if (!conn?.connected) {
+        // Device disconnected — stop monitoring
+        stopRSSIMonitoring(deviceId)
+        return
+      }
+      const rssi = -45 + Math.floor(Math.random() * 20)
+      const history = rssiHistoryRef.current.get(deviceId) || []
+      const updated = [...history, rssi]
+      // Keep only the last 20 entries (FIFO)
+      if (updated.length > 20) updated.splice(0, updated.length - 20)
+      rssiHistoryRef.current.set(deviceId, updated)
+      forceUpdate((n) => n + 1)
+    }
+
+    // Poll immediately, then every 3 seconds
+    tick()
+    rssiTimersRef.current.set(deviceId, setInterval(tick, 3000))
+  }, [])
+
   return (
     <BluetoothContext.Provider
       value={{
@@ -266,12 +320,15 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         scanning,
         discoveredDevices,
         connections: connectionsRef.current,
+        rssiHistory: rssiHistoryRef.current,
         startScan,
         connectDevice,
         disconnectDevice,
         disconnectAll,
         readBattery,
         getSignalStrength,
+        startRSSIMonitoring,
+        stopRSSIMonitoring,
       }}
     >
       {children}

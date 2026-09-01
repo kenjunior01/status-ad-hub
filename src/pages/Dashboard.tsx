@@ -13,7 +13,10 @@ import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap } from 'react
 import {
   Smartphone, Headphones, Watch, Bell, Search, Shield, ShieldAlert,
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
+  MessageSquare, Volume2, Radio, CheckCircle2, AlertCircle, Navigation,
+  Mic, Skull, Radar, Timer, Activity,
 } from 'lucide-react'
+import { ProximityPanel } from '@/components/ProximityPanel'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,13 +31,21 @@ import { useProximityMonitor } from '@/hooks/useProximityMonitor'
 import { useGeofenceMonitor } from '@/hooks/useGeofenceMonitor'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useSessions } from '@/hooks/useSessions'
+import { useVoiceSOS } from '@/hooks/useVoiceSOS'
+import { usePanicMode } from '@/hooks/usePanicMode'
+import { useDiscreetMode } from '@/hooks/useDiscreetMode'
+import { useDeadMansSwitch } from '@/hooks/useDeadMansSwitch'
+import { useThreatDetection } from '@/hooks/useThreatDetection'
+import { useCommunityRadar } from '@/hooks/useCommunityRadar'
 import { shareLocation } from '@/lib/share'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { toast } from 'sonner'
 import type { Device } from '@/lib/types'
 
 type DisplayDevice = {
-  id: string; name: string; type: 'phone' | 'airpods' | 'smartwatch' | 'other'
+  id: string; name: string; type: 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'other'
   lat: number; lng: number; color: string; status: string
   battery: number; lastSeen: string
 }
@@ -120,10 +131,19 @@ export default function Dashboard() {
   const { activeEmergency } = useEmergencyAlerts()
   const navigate = useNavigate()
   const { connections } = useBluetooth()
-  const { isMonitoring, alerts } = useProximityMonitor()
-  const { zone, zoneState } = useGeofenceMonitor()
+  const { isMonitoring, alerts: proximityAlerts, deviceStatuses, dismissAlert: dismissProximityAlert } = useProximityMonitor()
+  const { zone, zoneState, distance: geofenceDistance } = useGeofenceMonitor()
   const { position: userPos } = useGeolocation()
-  const { permission: notifPermission, requestPermission: requestNotifPermission } = useNotifications()
+  const { permission: notifPermission, requestPermission: requestNotifPermission, isPushSubscribed, isPushSupported } = useNotifications()
+  // Session heartbeat — ensures active session tracking runs on the most-visited page
+  useSessions()
+  // New feature hooks — keep them alive on dashboard
+  const { isListening: voiceListening, isSupported: voiceSupported } = useVoiceSOS()
+  const { state: panicState } = usePanicMode()
+  const { isActive: discreetActive } = useDiscreetMode()
+  const { isEnabled: dmsEnabled, currentLevel: dmsLevel, secondsRemaining: dmsRemaining } = useDeadMansSwitch()
+  const { assessment, isMonitoring: threatMonitoring } = useThreatDetection()
+  const { dangerZoneCount } = useCommunityRadar()
 
   const [loading, setLoading] = useState(true)
   const [emergency, setEmergency] = useState(false)
@@ -132,6 +152,24 @@ export default function Dashboard() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [showSearch, setShowSearch] = useState(false)
   const [showNotifBanner, setShowNotifBanner] = useState(false)
+
+  // Readiness score calculation (0-100) — v3.0 with new features
+  const readinessScore = useMemo(() => {
+    let score = 0
+    if (userPos) score += 15
+    if (notifPermission === 'granted') score += 10
+    if (isPushSubscribed) score += 10
+    if (isMonitoring) score += 10
+    if (zoneState === 'inside') score += 10
+    if (voiceListening) score += 10
+    if (dmsEnabled) score += 10
+    if (threatMonitoring) score += 10
+    if (dangerZoneCount === 0 && dangerZoneCount !== undefined) score += 10
+    if (!panicState.isActive) score += 5
+    return Math.min(100, score)
+  }, [userPos, notifPermission, isPushSubscribed, isMonitoring, zoneState, voiceListening, dmsEnabled, threatMonitoring, dangerZoneCount, panicState.isActive])
+  const readinessLabel = readinessScore >= 80 ? 'Protegido' : readinessScore >= 50 ? 'Parcial' : 'Vulneravel'
+  const readinessColor = readinessScore >= 80 ? '#25D366' : readinessScore >= 50 ? 'amber-400' : 'red-400'
 
   // Show shimmer until both the local delay and data hooks finish
   const dataReady = !devicesLoading && !statsLoading
@@ -283,8 +321,8 @@ export default function Dashboard() {
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/[0.06] border border-blue-500/15">
               <BluetoothConnected className="h-3 w-3 text-blue-400" />
               <span className="text-[11px] font-medium text-blue-400">BLE Monitor</span>
-              {alerts.length > 0 && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{alerts.length}</span>
+              {proximityAlerts.length > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{proximityAlerts.length}</span>
               )}
             </div>
           )}
@@ -403,8 +441,35 @@ export default function Dashboard() {
         <SpotlightCard className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-sm font-semibold text-white">Estado de Seguranca</h3>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#25D366]/[0.08] border border-[#25D366]/20">
-              <Shield className="h-3 w-3 text-[#25D366]" /><span className="text-[10px] font-bold text-[#25D366] tracking-wider">PROTEGIDO</span>
+            <div className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-full border',
+              readinessScore >= 80
+                ? 'bg-[#25D366]/[0.08] border-[#25D366]/20'
+                : readinessScore >= 50
+                  ? 'bg-amber-400/[0.08] border-amber-400/20'
+                  : 'bg-red-400/[0.08] border-red-400/20'
+            )}>
+              <Shield className={cn('h-3 w-3', readinessScore >= 80 ? 'text-[#25D366]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
+              <span className={cn(
+                'text-[10px] font-bold tracking-wider',
+                readinessScore >= 80 ? 'text-[#25D366]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
+              )}>{readinessLabel.toUpperCase()}</span>
+              <span className={cn(
+                'text-[10px] font-mono ml-0.5',
+                readinessScore >= 80 ? 'text-[#25D366]/60' : readinessScore >= 50 ? 'text-amber-400/60' : 'text-red-400/60'
+              )}>{readinessScore}%</span>
+            </div>
+          </div>
+          {/* Readiness progress bar */}
+          <div className="mb-4">
+            <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: readinessScore >= 80 ? '#25D366' : readinessScore >= 50 ? '#f59e0b' : '#ef4444' }}
+                initial={{ width: 0 }}
+                animate={{ width: `${readinessScore}%` }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+              />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-4">
@@ -427,6 +492,72 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          {/* BLE Proximity Monitor */}
+          <div className="mt-4 pt-4 border-t border-white/[0.04]">
+            <p className="text-[10px] text-white/30 mb-3 font-medium">Monitoramento BLE</p>
+            <ProximityPanel
+              isMonitoring={isMonitoring}
+              deviceStatuses={deviceStatuses}
+              alerts={proximityAlerts}
+              onDismissAlert={dismissProximityAlert}
+            />
+          </div>
+          {/* System Readiness Indicators — v3.0 expanded */}
+          <div className="mt-4 pt-4 border-t border-white/[0.04]">
+            <p className="text-[10px] text-white/30 mb-2 font-medium">Prontidao do Sistema</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {[
+                { icon: Radio, label: 'GPS', ok: !!userPos, tip: userPos ? `Precisao: ${Math.round(userPos.accuracy)}m` : 'Sem GPS' },
+                { icon: Bell, label: 'Notif', ok: notifPermission === 'granted', tip: notifPermission === 'granted' ? 'Activado' : 'Desactivado' },
+                { icon: Volume2, label: 'Push', ok: isPushSubscribed, tip: isPushSubscribed ? 'Inscrito' : isPushSupported ? 'Nao inscrito' : 'Nao disp.' },
+                { icon: BluetoothConnected, label: 'BLE', ok: isMonitoring, tip: isMonitoring ? `${deviceStatuses.length} disp.` : 'Nao activo' },
+                { icon: Navigation, label: 'Zona', ok: zoneState === 'inside', tip: zone ? (zoneState === 'inside' ? 'Dentro' : zoneState === 'outside' ? 'FORA!' : 'Definir') : 'Nao definida' },
+                { icon: Mic, label: 'Voz', ok: voiceListening, tip: voiceListening ? 'A ouvir...' : voiceSupported ? 'Disponivel' : 'Nao suportado' },
+                { icon: Timer, label: 'DMS', ok: dmsEnabled, tip: dmsEnabled ? (dmsLevel === 'idle' ? 'Activo' : `Nivel: ${dmsLevel}`) : 'Desactivado' },
+                { icon: Activity, label: 'Ameacas', ok: threatMonitoring, tip: threatMonitoring ? `Score: ${assessment.score}` : 'Nao activo' },
+                { icon: Radar, label: 'Radar', ok: dangerZoneCount === 0, tip: dangerZoneCount > 0 ? `${dangerZoneCount} alerta(s)` : 'Area limpa' },
+                { icon: Skull, label: 'Panico', ok: !panicState.isActive, tip: panicState.isActive ? 'ACTIVO!' : 'Inactivo' },
+              ].map(item => (
+                <div
+                  key={item.label}
+                  className={cn(
+                    'flex flex-col items-center gap-1 py-2 rounded-xl border transition-colors',
+                    item.ok
+                      ? 'bg-[#25D366]/[0.04] border-[#25D366]/10'
+                      : 'bg-white/[0.02] border-white/[0.04]'
+                  )}
+                  title={item.tip}
+                >
+                  {item.ok
+                    ? <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366]" />
+                    : <AlertCircle className={cn('h-3.5 w-3.5', item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')} />
+                  }
+                  <span className={cn('text-[9px] font-medium', item.ok ? 'text-[#25D366]/80' : item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+            {/* Geofence distance */}
+            {zone && geofenceDistance !== null && (
+              <div className={cn(
+                'mt-3 flex items-center justify-between px-3 py-2 rounded-xl border',
+                zoneState === 'inside'
+                  ? 'bg-[#25D366]/[0.04] border-[#25D366]/10'
+                  : 'bg-red-500/[0.04] border-red-500/10'
+              )}>
+                <div className="flex items-center gap-2">
+                  <MapPin className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#25D366]' : 'text-red-400')} />
+                  <span className="text-[10px] text-white/50">Distancia ao centro</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    'text-xs font-mono font-bold',
+                    zoneState === 'inside' ? 'text-[#25D366]' : 'text-red-400'
+                  )}>{Math.round(geofenceDistance)}m</span>
+                  <span className="text-[9px] text-white/20">/ {zone.radius}m</span>
+                </div>
+              </div>
+            )}
+          </div>
         </SpotlightCard>
       </motion.div>
       )}
@@ -438,7 +569,7 @@ export default function Dashboard() {
         className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-2xl bg-[#0A0F1A]/70 border-t border-white/[0.04] md:bottom-0 lg:bottom-0"
       >
         {[
-          { label: 'Modo Seguro', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#25D366] text-white shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)]' },
+          { label: safeMode ? 'Seguro' : 'Inactivo', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#25D366] text-white shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)]' },
           { label: 'Partilhar', icon: Share2, active: false, onClick: handleShareLocation },
           { label: 'Testar', icon: Zap, active: false, onClick: () => refetchDevices() },
           { label: 'EMERGENCIA', icon: ShieldAlert, active: false, onClick: handleEmergency, danger: true },

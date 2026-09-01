@@ -100,7 +100,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       push.subscribeToPush(user.id).then((ok) => {
         if (ok) {
           setIsPushSubscribed(true)
-          console.log('[NOTIF] Auto-subscribed to Web Push')
         }
       }).catch(() => {})
     }
@@ -177,7 +176,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             { action: 'view', title: 'Ver no Mapa' },
             { action: 'dismiss', title: 'Dispensar' },
           ] : [],
-        })
+        } as NotificationOptions)
       }).catch(() => {
         showFallbackNotification(options)
       })

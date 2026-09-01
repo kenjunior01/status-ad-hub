@@ -7,21 +7,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Circle, useMap, Polyline } from 'react-leaflet'
 import {
   ShieldAlert, ShieldCheck, XCircle, Phone, Share2, Copy, Check,
   Clock, Users, MapPin, AlertTriangle, ChevronDown, ChevronUp,
-  Navigation, RefreshCw,
+  Navigation, RefreshCw, Volume2, VolumeX, Radio, WifiOff, CloudOff,
+  Battery, BatteryCharging, BatteryWarning, MessageCircle, Crosshair,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useEmergencyAlarm } from '@/hooks/useEmergencyAlarm'
 import { useAuth } from '@/hooks/useAuth'
 import { getEmergencyShareUrl } from '@/lib/api'
 import { SpotlightCard, Shimmer, BeamBorder } from '@/components/effects'
+import { useNetworkStatus, formatOfflineDuration } from '@/hooks/useNetworkStatus'
+import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
@@ -30,12 +34,37 @@ import { pt } from 'date-fns/locale'
 // Map helpers
 // ============================================
 
-function MapController({ center }: { center: [number, number] }) {
+function MapController({ center, followUser, userPosition }: { center: [number, number]; followUser: boolean; userPosition: [number, number] | null }) {
   const map = useMap()
   useEffect(() => {
-    map.setView(center, 16, { animate: true })
-  }, [map, center])
+    if (followUser && userPosition) {
+      map.setView(userPosition, 16, { animate: true })
+    } else {
+      map.setView(center, 16, { animate: true })
+    }
+  }, [map, center, followUser, userPosition])
   return null
+}
+
+// ============================================
+// Live GPS trail component
+// ============================================
+
+function GpsTrail({ positions }: { positions: [number, number][] }) {
+  if (positions.length < 2) return null
+  return (
+    <Polyline
+      positions={positions}
+      pathOptions={{
+        color: '#25D366',
+        weight: 3,
+        opacity: 0.6,
+        dashArray: '6, 8',
+        lineCap: 'round',
+        lineJoin: 'round',
+      }}
+    />
+  )
 }
 
 function EmergencyMarker({ position }: { position: [number, number] }) {
@@ -197,7 +226,8 @@ function ResolveDialog({
 
 export default function Emergency() {
   const { user } = useAuth()
-  const { position: userPos } = useGeolocation()
+  const { position: userPos, isTracking } = useGeolocation()
+  const { triggerAlarm, silenceAlarm, isSounding } = useEmergencyAlarm({ duration: 20_000 })
   const {
     activeEmergency,
     isLoading,
@@ -211,8 +241,56 @@ export default function Emergency() {
   const [isResolving, setIsResolving] = useState(false)
   const [copied, setCopied] = useState(false)
   const [expandedHistory, setExpandedHistory] = useState(false)
+  const [followUser, setFollowUser] = useState(false)
+  const network = useNetworkStatus(false)
+  const queue = useOfflineQueue()
+  const trailRef = useRef<[number, number][]>([])
+  const lastTrailPosRef = useRef<string>('')
 
+  // Battery level
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [batteryCharging, setBatteryCharging] = useState(false)
+  useEffect(() => {
+    if ('getBattery' in navigator) {
+      (navigator as any).getBattery().then((bat: any) => {
+        setBatteryLevel(Math.round(bat.level * 100))
+        setBatteryCharging(bat.charging)
+        bat.addEventListener('levelchange', () => setBatteryLevel(Math.round(bat.level * 100)))
+        bat.addEventListener('chargingchange', () => setBatteryCharging(bat.charging))
+      }).catch(() => {})
+    }
+  }, [])
+
+  // GPS last update
+  const [lastGpsUpdate, setLastGpsUpdate] = useState<string | null>(null)
+  useEffect(() => {
+    if (userPos) setLastGpsUpdate(new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+  }, [userPos])
+
+  // Record GPS trail during active emergency
   const hasActive = activeEmergency?.status === 'active'
+  useEffect(() => {
+    if (!hasActive || !userPos) {
+      if (!hasActive) trailRef.current = []
+      lastTrailPosRef.current = ''
+      return
+    }
+    const key = `${userPos.latitude.toFixed(5)},${userPos.longitude.toFixed(5)}`
+    if (key !== lastTrailPosRef.current) {
+      lastTrailPosRef.current = key
+      trailRef.current.push([userPos.latitude, userPos.longitude])
+      // Keep only last 100 positions
+      if (trailRef.current.length > 100) trailRef.current = trailRef.current.slice(-100)
+    }
+  }, [hasActive, userPos])
+
+  // Auto-follow user during active emergency
+  useEffect(() => {
+    if (hasActive) setFollowUser(true)
+  }, [hasActive])
+
+  const toggleFollow = useCallback(() => setFollowUser(f => !f), [])
+
   const elapsed = hasActive
     ? Math.floor((Date.now() - new Date(activeEmergency.created_at).getTime()) / 1000)
     : 0
@@ -336,8 +414,95 @@ export default function Emergency() {
               </div>
             </div>
 
+            {/* Offline / Queue indicator */}
+            {(!network.isOnline || queue.pendingCount > 0) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {!network.isOnline && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <WifiOff className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                    <span className="text-[11px] font-medium text-amber-400">
+                      Offline{network.offlineDuration ? ` ha ${formatOfflineDuration(network.offlineDuration)}` : ''}
+                    </span>
+                  </div>
+                )}
+                {queue.pendingCount > 0 && (
+                  <button
+                    onClick={() => queue.syncQueue()}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors',
+                      queue.emergencyPending > 0
+                        ? 'bg-red-500/10 border-red-500/20'
+                        : 'bg-blue-500/10 border-blue-500/20'
+                    )}
+                  >
+                    {queue.isSyncing
+                      ? <RefreshCw className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+                      : queue.emergencyPending > 0
+                        ? <CloudOff className="h-3.5 w-3.5 text-red-400 animate-pulse" />
+                        : <CloudOff className="h-3.5 w-3.5 text-blue-400" />
+                    }
+                    <span className={cn(
+                      'text-[11px] font-medium',
+                      queue.emergencyPending > 0 ? 'text-red-400' : 'text-blue-400'
+                    )}>
+                      {queue.emergencyPending > 0
+                        ? `${queue.emergencyPending} emergencia(s) na fila`
+                        : `${queue.eventPending} evento(s) na fila`
+                      }
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Quick stats row */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {batteryLevel !== null && (
+                <div className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border',
+                  batteryCharging
+                    ? 'bg-blue-500/10 border-blue-500/20'
+                    : batteryLevel <= 20
+                      ? 'bg-red-500/10 border-red-500/20'
+                      : 'bg-white/[0.04] border-white/[0.06]'
+                )}>
+                  {batteryCharging
+                    ? <BatteryCharging className="h-3.5 w-3.5 text-blue-400" />
+                    : batteryLevel <= 20
+                      ? <BatteryWarning className="h-3.5 w-3.5 text-red-400 animate-pulse" />
+                      : <Battery className="h-3.5 w-3.5 text-white/50" />
+                  }
+                  <span className={cn(
+                    'text-[11px] font-mono font-medium',
+                    batteryCharging ? 'text-blue-400' : batteryLevel <= 20 ? 'text-red-400' : 'text-white/50'
+                  )}>{batteryLevel}%</span>
+                </div>
+              )}
+              {lastGpsUpdate && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                  <Crosshair className="h-3.5 w-3.5 text-white/40" />
+                  <span className="text-[11px] font-mono text-white/40">GPS {lastGpsUpdate}</span>
+                </div>
+              )}
+              {userPos?.accuracy != null && (
+                <div className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border',
+                  userPos.accuracy < 20 ? 'bg-[#25D366]/10 border-[#25D366]/20' : userPos.accuracy < 50 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'
+                )}>
+                  <Radio className={cn(
+                    'h-3.5 w-3.5',
+                    userPos.accuracy < 20 ? 'text-[#25D366]' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
+                  )} />
+                  <span className={cn(
+                    'text-[11px] font-mono font-medium',
+                    userPos.accuracy < 20 ? 'text-[#25D366]' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
+                  )}>Precisao {Math.round(userPos.accuracy)}m</span>
+                </div>
+              )}
+            </div>
+
             {/* Action buttons */}
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-3">
               <Button
                 onClick={() => setShowResolve(true)}
                 className="bg-[#25D366] hover:bg-[#1fb855] text-white font-semibold rounded-xl gap-2 text-xs"
@@ -358,6 +523,40 @@ export default function Emergency() {
                 className="h-9 w-9 rounded-xl text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                onClick={isSounding ? silenceAlarm : triggerAlarm}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-9 w-9 rounded-xl transition-all',
+                  isSounding
+                    ? 'text-red-400 hover:text-red-300 hover:bg-red-500/[0.08] animate-pulse'
+                    : 'text-white/30 hover:text-white/60 hover:bg-white/[0.04]'
+                )}
+              >
+                {isSounding ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </Button>
+              <Button
+                onClick={() => {
+                  const coords = userPos
+                    ? `${userPos.latitude.toFixed(5)}, ${userPos.longitude.toFixed(5)}`
+                    : activeEmergency
+                      ? `${activeEmergency.latitude.toFixed(5)}, ${activeEmergency.longitude.toFixed(5)}`
+                      : ''
+                  if (coords) {
+                    navigator.clipboard.writeText(coords).then(
+                      () => toast.success('Coordenadas copiadas'),
+                      () => toast.error('Erro ao copiar')
+                    )
+                  }
+                }}
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-xl text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+                title="Copiar coordenadas"
+              >
+                <MapPin className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
@@ -481,15 +680,42 @@ export default function Emergency() {
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-2xl overflow-hidden border border-white/[0.04]"
+            className="rounded-2xl overflow-hidden border border-white/[0.04] relative"
           >
             <div className="h-[300px] md:h-[400px]">
               <MapContainer center={mapCenter} zoom={16} className="h-full w-full" zoomControl={false} attributionControl={false}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                <MapController center={mapCenter} />
+                <MapController center={mapCenter} followUser={followUser} userPosition={userPos ? [userPos.latitude, userPos.longitude] : null} />
                 {activeEmergency && <EmergencyMarker position={[activeEmergency.latitude, activeEmergency.longitude]} />}
                 {userPos && <UserPositionMarker position={[userPos.latitude, userPos.longitude]} />}
+                {/* GPS trail during active emergency */}
+                {hasActive && trailRef.current.length >= 2 && <GpsTrail positions={trailRef.current} />}
               </MapContainer>
+              {/* Map overlay controls */}
+              <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+                {/* Live GPS indicator */}
+                <div className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-medium border backdrop-blur-md',
+                  isTracking
+                    ? 'bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366]'
+                    : 'bg-white/[0.04] border-white/[0.06] text-white/30'
+                )}>
+                  <Radio className="h-3 w-3" />
+                  {isTracking ? `GPS ${userPos ? Math.round(userPos.accuracy) + 'm' : 'Activo'}` : 'GPS Inactivo'}
+                </div>
+                {/* Follow user toggle */}
+                <button
+                  onClick={toggleFollow}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-medium border backdrop-blur-md transition-all',
+                    followUser
+                      ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                      : 'bg-white/[0.04] border-white/[0.06] text-white/30 hover:text-white/50'
+                  )}>
+                  <Navigation className="h-3 w-3" />
+                  {followUser ? 'Centrar' : 'Seguir'}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

@@ -70,7 +70,6 @@ export async function subscribeToPush(userId: string): Promise<boolean> {
     if (subscription) {
       // Already subscribed — sync to DB in case it changed
       await saveSubscriptionToDb(userId, subscription)
-      console.log('[PUSH] Reusing existing subscription')
       return true
     }
 
@@ -81,7 +80,6 @@ export async function subscribeToPush(userId: string): Promise<boolean> {
     })
 
     await saveSubscriptionToDb(userId, subscription)
-    console.log('[PUSH] New push subscription created')
     return true
   } catch (err) {
     console.error('[PUSH] Failed to subscribe:', err)
@@ -99,7 +97,6 @@ export async function unsubscribeFromPush(userId: string): Promise<void> {
 
     if (subscription) {
       await subscription.unsubscribe()
-      console.log('[PUSH] Browser subscription removed')
     }
 
     // Remove from Supabase
@@ -108,7 +105,6 @@ export async function unsubscribeFromPush(userId: string): Promise<void> {
       .delete()
       .eq('user_id', userId)
 
-    console.log('[PUSH] Subscription removed from DB')
   } catch (err) {
     console.error('[PUSH] Failed to unsubscribe:', err)
   }

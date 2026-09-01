@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -8,12 +8,18 @@ import { toast } from "sonner";
 import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, MailWarning } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton } from "@/components/effects";
+import { useDuressLogin } from "@/components/DuressPinLogin";
+import { useAntiCoercion } from "@/hooks/useAntiCoercion";
+import * as api from "@/lib/api";
 
 const loginSchema = z.object({
   email: z.string().min(1, "O email e obrigatorio").email("Insira um email valido"),
   password: z.string().min(1, "A senha e obrigatoria").min(6, "A senha deve ter pelo menos 6 caracteres"),
 });
 type LoginValues = z.infer<typeof loginSchema>;
+
+const DURESS_TAPS = 5;
+const DURESS_TAP_WINDOW = 2000;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,12 +30,66 @@ export default function Login() {
   const [resetLoading, setResetLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
+  // Duress login mechanism
+  const { isDuressArmed, armDuress, disarmDuress } = useDuressLogin();
+  const { isPanicPassword, activateCoercionMode, isConfigured: isAntiCoercionConfigured } = useAntiCoercion();
+  const tapTimesRef = useRef<number[]>([]);
+  const [tapFlash, setTapFlash] = useState(false);
+
+  const handleShieldTap = useCallback(() => {
+    const now = Date.now();
+    tapTimesRef.current = tapTimesRef.current.filter(t => now - t < DURESS_TAP_WINDOW);
+    tapTimesRef.current.push(now);
+    if (tapTimesRef.current.length >= DURESS_TAPS) {
+      tapTimesRef.current = [];
+      if (isDuressArmed) disarmDuress(); else armDuress();
+      setTapFlash(true);
+      setTimeout(() => setTapFlash(false), 300);
+    }
+  }, [isDuressArmed, armDuress, disarmDuress]);
+
   const onSubmit = async (values: LoginValues) => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: values.email, password: values.password });
     setLoading(false);
-    if (error) { toast.error("Falha na autenticacao", { description: error.message }); return; }
+
+    // === ANTI-COERCION CHECK ===
+    // If Supabase login FAILS, check if the password is the panic password.
+    // This is the core mechanism: the panic password is NOT the real Supabase password.
+    // The login fails → we fake success → show fake dashboard.
+    if (error) {
+      const isPanic = await isPanicPassword(values.password);
+      if (isPanic) {
+        // Show FAKE success — identical to normal login toast
+        toast.success("Bem-vindo de volta!");
+        // Activate coercion mode (this triggers silent SOS internally)
+        activateCoercionMode();
+        // Navigate to dashboard — the App will show FakeDashboard instead
+        navigate("/dashboard");
+        return;
+      }
+      // Normal login error
+      toast.error("Falha na autenticacao", { description: error.message });
+      return;
+    }
+
     toast.success("Bem-vindo de volta!");
+
+    // Duress: if armed, silently trigger SOS in background
+    if (isDuressArmed) {
+      disarmDuress();
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (userId) {
+        // Fire silently — no await, no toast, no visual feedback
+        navigator.geolocation?.getCurrentPosition(
+          (pos) => api.triggerEmergency(userId, pos.coords.latitude, pos.coords.longitude).catch(() => {}),
+          () => api.triggerEmergency(userId, -25.9692, 32.5732).catch(() => {}),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      }
+    }
+
     navigate("/dashboard");
   };
 
@@ -56,9 +116,24 @@ export default function Login() {
         <MorphingBlob className="-left-20 top-1/3" color="rgba(37, 211, 102, 0.05)" size={350} />
         <MorphingBlob className="-bottom-20 right-1/3" color="rgba(59, 130, 246, 0.04)" size={300} />
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }} className="relative z-10 flex flex-col items-center px-8 text-center">
-          <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="mb-8 relative">
-            <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-[#25D366]/20 bg-[#25D366]/[0.06] backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)]">
-              <Shield className="h-14 w-14 text-[#25D366]" strokeWidth={1} />
+          {/* Duress armed indicator — tiny green dot */}
+          {isDuressArmed && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+              className="absolute top-4 right-4 z-50"
+              aria-hidden="true"
+            >
+              <div className="w-2 h-2 rounded-full bg-[#25D366] shadow-[0_0_6px_rgba(37,211,102,0.6)] animate-pulse" />
+            </motion.div>
+          )}
+          <motion.div
+            animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+            className="mb-8 relative cursor-pointer select-none"
+            onClick={handleShieldTap}
+            role="button" tabIndex={-1} aria-hidden="true"
+          >
+            <div className={`flex h-28 w-28 items-center justify-center rounded-3xl border backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)] transition-all duration-200 ${tapFlash ? 'border-[#25D366]/50 bg-[#25D366]/[0.12]' : 'border-[#25D366]/20 bg-[#25D366]/[0.06]'}`}>
+              <Shield className={`h-14 w-14 text-[#25D366] transition-transform duration-150 ${tapFlash ? 'scale-110' : ''}`} strokeWidth={1} />
             </div>
             <div className="absolute inset-0 rounded-3xl bg-[#25D366]/5 blur-2xl" />
           </motion.div>
@@ -72,7 +147,7 @@ export default function Login() {
         <NoiseTexture opacity={0.015} />
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }} className="relative z-10 w-full max-w-md">
           <motion.div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none ${tapFlash ? 'bg-[#25D366]/20 border-[#25D366]/40' : 'bg-[#25D366]/10 border-[#25D366]/20'}`} onClick={handleShieldTap} role="button" tabIndex={-1} aria-hidden="true">
               <Shield className="h-5 w-5 text-[#25D366]" />
             </div>
             <span className="font-display text-xl font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>

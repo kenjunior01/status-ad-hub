@@ -13,6 +13,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      srcDir: 'src',
+      filename: 'sw.ts',
+      strategies: 'injectManifest',
       manifest: {
         name: 'StatusAds Connect — Seguranca Pessoal',
         short_name: 'StatusAds',
@@ -29,6 +32,10 @@ export default defineConfig({
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+      },
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        injectionPoint: 'self.__WB_MANIFEST',
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

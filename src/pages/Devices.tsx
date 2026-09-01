@@ -4,7 +4,7 @@ import {
   Smartphone, Headphones, Watch, Plus, Settings2, Trash2,
   Battery, Wifi, WifiOff, Signal, Loader2, Bluetooth,
   BluetoothSearching, BluetoothConnected, BluetoothOff,
-  Radio, Check, AlertTriangle, RefreshCw,
+  Radio, Check, AlertTriangle, RefreshCw, Shield, Glasses,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,7 @@ import { SpotlightCard, BeamBorder, Shimmer, CounterAnimated } from '@/component
 type DeviceType = 'phone' | 'airpods' | 'smartwatch' | 'other'
 
 const deviceIconMap: Record<string, React.ElementType> = {
-  phone: Smartphone, airpods: Headphones, smartwatch: Watch, other: Radio,
+  phone: Smartphone, airpods: Headphones, smartwatch: Watch, smart_glasses: Glasses, other: Radio,
 }
 const statusLabels: Record<string, { label: string; className: string }> = {
   online: { label: 'Online', className: 'bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/20' },
@@ -30,7 +30,7 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.06]' },
 }
 const typeLabels: Record<string, string> = {
-  phone: 'Telemovel', airpods: 'Fones Bluetooth', smartwatch: 'Relogio Inteligente', other: 'Outro',
+  phone: 'Telemovel', airpods: 'Fones Bluetooth', smartwatch: 'Relogio Inteligente', smart_glasses: 'Oculos Inteligentes', other: 'Outro',
 }
 
 function timeAgo(dateStr: string): string {
@@ -43,6 +43,36 @@ function timeAgo(dateStr: string): string {
   return `ha ${Math.floor(hours / 24)}d`
 }
 
+function RSSISparkline({ readings, deviceId }: { readings: number[]; deviceId: string }) {
+  if (readings.length < 2) return null
+  const min = Math.min(...readings) - 5
+  const max = Math.max(...readings) + 5
+  const range = max - min || 1
+  const w = 120
+  const h = 24
+  const points = readings.map((r, i) => {
+    const x = (i / (readings.length - 1)) * w
+    const y = h - ((r - min) / range) * h
+    return `${x},${y}`
+  }).join(' ')
+  const fillPoints = `0,${h} ${points} ${w},${h}`
+  const latest = readings[readings.length - 1]
+  const color = latest > -50 ? '#25D366' : latest > -70 ? '#F59E0B' : '#EF4444'
+  const gradId = `rssi-grad-${deviceId.replace(/[^a-zA-Z0-9]/g, '')}`
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-6" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={fillPoints} fill={`url(#${gradId})`} />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function Devices() {
   const { devices, loading, addDevice, updateDevice, deleteDevice, isAdding } = useDevices()
   const {
@@ -50,9 +80,11 @@ export default function Devices() {
     scanning: bleScanning,
     discoveredDevices,
     connections,
+    rssiHistory,
     startScan,
     connectDevice,
     disconnectDevice,
+    getSignalStrength,
   } = useBluetooth()
   const { logEvent } = useEmergency()
 
@@ -388,15 +420,37 @@ export default function Devices() {
           ))}
         </div>
       ) : devicesWithBLE.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] inline-block mb-4">
-            <Bluetooth className="h-10 w-10 text-white/10" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <div className="p-4 rounded-2xl bg-[#25D366]/[0.06] border border-[#25D366]/15 inline-block mb-5">
+            <Shield className="h-12 w-12 text-[#25D366]/60" strokeWidth={1.5} />
           </div>
-          <p className="text-sm text-white/30">Nenhum dispositivo pareado</p>
-          <p className="text-xs text-white/15 mt-1 max-w-xs mx-auto">
-            Procure dispositivos Bluetooth proximos ou adicione manualmente para comecar a monitorizar
+          <h2 className="text-lg font-display font-semibold text-white mb-2">Pareie o seu primeiro dispositivo</h2>
+          <p className="text-sm text-white/40 max-w-md mx-auto leading-relaxed">
+            Ligue o Bluetooth e prima o botao acima para procurar dispositivos proximos. Fones, smartwatches e outros dispositivos Bluetooth sao suportados.
           </p>
-        </div>
+          <div className="mt-8 max-w-sm mx-auto text-left space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366]/10 text-[#25D366] text-xs font-bold shrink-0 mt-0.5">1</span>
+              <p className="text-sm text-white/50">Active o Bluetooth no seu dispositivo</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366]/10 text-[#25D366] text-xs font-bold shrink-0 mt-0.5">2</span>
+              <p className="text-sm text-white/50">Prima &ldquo;Procurar Dispositivos&rdquo;</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366]/10 text-[#25D366] text-xs font-bold shrink-0 mt-0.5">3</span>
+              <p className="text-sm text-white/50">Seleccione e pareie o dispositivo (ex: oculos inteligentes, fones, smartwatch)</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366]/10 text-[#25D366] text-xs font-bold shrink-0 mt-0.5">4</span>
+              <p className="text-sm text-white/50">Active o monitoramento</p>
+            </div>
+          </div>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {devicesWithBLE.map((d, i) => {
@@ -405,6 +459,11 @@ export default function Devices() {
             const batt = d.bleBattery ?? d.battery
             const battColor = batt > 50 ? 'bg-[#25D366]' : batt > 20 ? 'bg-amber-400' : 'bg-red-500'
             const lastSeen = timeAgo(d.last_seen)
+            // RSSI data
+            const rssiReadings = d.bleDeviceId ? (rssiHistory?.get(d.bleDeviceId) || []) : []
+            const currentRSSI = d.bleDeviceId && d.bleConnected ? getSignalStrength(d.bleDeviceId) : null
+            const rssiColor = currentRSSI === null ? 'bg-white/20' : currentRSSI > -50 ? 'bg-[#25D366]' : currentRSSI > -70 ? 'bg-amber-400' : 'bg-red-500'
+            const rssiBarWidth = currentRSSI === null ? 0 : Math.max(0, Math.min(100, ((currentRSSI + 100) / 55) * 100))
             return (
               <motion.div key={d.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <BeamBorder color={d.bleConnected ? '#25D366' : d.color}>
@@ -441,6 +500,27 @@ export default function Devices() {
                         <motion.div initial={{ width: 0 }} animate={{ width: `${batt}%` }} transition={{ delay: i * 0.1 + 0.3, duration: 0.8 }} className={cn('h-full rounded-full', battColor)} />
                       </div>
                     </div>
+
+                    {/* RSSI Signal Strength — only for connected BLE devices */}
+                    {d.bleConnected && d.bleDeviceId && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/30 flex items-center gap-1"><Signal className="h-3 w-3" />Sinal BLE</span>
+                          <span className="font-mono text-white/60">{currentRSSI} dBm</span>
+                        </div>
+                        <div className="w-full h-1 rounded-full bg-white/[0.06]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${rssiBarWidth}%` }}
+                            transition={{ delay: i * 0.1 + 0.4, duration: 0.8 }}
+                            className={cn('h-full rounded-full', rssiColor)}
+                          />
+                        </div>
+                        {rssiReadings.length >= 2 && (
+                          <RSSISparkline readings={rssiReadings.slice(-10)} deviceId={d.bleDeviceId} />
+                        )}
+                      </div>
+                    )}
 
                     {/* Monitoring Toggle */}
                     <div className="flex items-center justify-between">

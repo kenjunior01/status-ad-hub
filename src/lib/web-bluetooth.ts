@@ -108,12 +108,13 @@ export const SCAN_SERVICES: BluetoothServiceUUID[] = [
 export function classifyDevice(
   name: string | null,
   _services: string[]
-): 'phone' | 'airpods' | 'smartwatch' | 'other' {
+): 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'other' {
   if (!name) return 'other'
   const n = name.toLowerCase()
   if (/airpod|airpods|earbuds|buds|headphone|fones|ouvido/.test(n)) return 'airpods'
   if (/watch|relogio|galaxy watch|apple watch|huawei|band|mi band|fitbit|garmin/.test(n)) return 'smartwatch'
   if (/iphone|android|phone|telemovel|samsung|huawei|pixel|xiaomi|oneplus|oppo/.test(n)) return 'phone'
+  if (/glass|oculos|sg-?\d+|sg\d+|smart glass|eyewear|spectacle|brillen|lunettes/.test(n)) return 'smart_glasses'
   return 'other'
 }
 

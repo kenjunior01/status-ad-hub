@@ -203,6 +203,16 @@ export function useGeolocation(
     })
   }, [])
 
+  /** Request geolocation permission (prompts the user) */
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    try {
+      const pos = await getCurrentPosition()
+      return !!pos
+    } catch {
+      return false
+    }
+  }, [getCurrentPosition])
+
   return {
     ...state,
     paused,
@@ -210,5 +220,6 @@ export function useGeolocation(
     stopTracking,
     togglePause,
     getCurrentPosition,
+    requestPermission,
   }
 }

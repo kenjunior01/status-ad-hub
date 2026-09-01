@@ -1,6 +1,7 @@
 {
   "name": "StatusAds Connect — Seguranca Pessoal",
   "short_name": "StatusAds",
+  "version": "2.7.0",
   "description": "Plataforma de seguranca pessoal via BLE. Rastreamento de localizacao em tempo real, botao de panico invisivel e alertas instantaneos.",
   "start_url": "/",
   "display": "standalone",

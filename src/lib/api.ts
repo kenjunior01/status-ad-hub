@@ -6,6 +6,8 @@ import type {
   UpdateProfileInput,
   DashboardStats, LocationPoint, HistoryPeriod,
   EmergencyAlert, EmergencyHistoryItem,
+  CheckIn, CheckInConfig,
+  SmartGlassesConfig, TapPattern, AudioEvidence, GlassesTapEvent,
 } from '@/lib/types'
 import { getPeriodDateRange } from '@/lib/types'
 
@@ -333,4 +335,195 @@ export function subscribeToEvents(
       (payload: any) => callback({ eventType: payload.eventType, new: payload.new as LocationEvent })
     )
     .subscribe()
+}
+
+// ============================================
+// CHECK-IN API
+// ============================================
+
+export async function getCheckInConfig(userId: string): Promise<CheckInConfig | null> {
+  const { data, error } = await supabase
+    .from('checkin_configs')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
+  return data as CheckInConfig | null
+}
+
+export async function saveCheckInConfig(userId: string, input: {
+  interval_minutes: number
+  is_active: boolean
+  start_time: string | null
+  end_time: string | null
+  message_template: string | null
+}): Promise<CheckInConfig> {
+  const { data, error } = await supabase
+    .from('checkin_configs')
+    .upsert({ user_id: userId, ...input }, { onConflict: 'user_id' })
+    .select()
+    .single()
+  if (error) throw error
+  return data as CheckInConfig
+}
+
+export async function getCheckIns(userId: string, limit = 50): Promise<CheckIn[]> {
+  const { data, error } = await supabase
+    .from('checkins')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data || []) as CheckIn[]
+}
+
+export async function createCheckIn(userId: string, latitude: number | null, longitude: number | null, message?: string): Promise<CheckIn> {
+  const { data, error } = await supabase
+    .from('checkins')
+    .insert({
+      user_id: userId,
+      status: 'checked_in',
+      latitude,
+      longitude,
+      message: message || null,
+      checked_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data as CheckIn
+}
+
+export async function getPendingCheckIn(userId: string): Promise<CheckIn | null> {
+  const { data, error } = await supabase
+    .from('checkins')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'missed')
+    .is('checked_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data as CheckIn | null
+}
+
+export function subscribeToCheckIns(
+  userId: string,
+  callback: (payload: { eventType: string; new: any }) => void
+) {
+  return supabase
+    .channel('checkins-realtime')
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'checkins', filter: `user_id=eq.${userId}` },
+      (payload: any) => callback({ eventType: payload.eventType, new: payload.new })
+    )
+    .subscribe()
+}
+
+// ============================================
+// SMART GLASSES API
+// ============================================
+
+/** Busca configuração dos óculos inteligentes do usuário */
+export async function getSmartGlassesConfig(userId: string): Promise<SmartGlassesConfig | null> {
+  const { data, error } = await supabase
+    .from('smart_glasses_configs')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error // PGRST116 = sem registros
+  return data as SmartGlassesConfig | null
+}
+
+/** Salva (cria ou atualiza) configuração dos óculos inteligentes */
+export async function saveSmartGlassesConfig(userId: string, input: Partial<SmartGlassesConfig>): Promise<SmartGlassesConfig> {
+  const { data: existing } = await supabase
+    .from('smart_glasses_configs')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('smart_glasses_configs')
+      .update({ ...input, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .select()
+      .single()
+    if (error) throw error
+    return data as SmartGlassesConfig
+  } else {
+    const { data, error } = await supabase
+      .from('smart_glasses_configs')
+      .insert({ user_id: userId, ...input })
+      .select()
+      .single()
+    if (error) throw error
+    return data as SmartGlassesConfig
+  }
+}
+
+/** Salva evidência de áudio gravada durante emergência */
+export async function saveAudioEvidence(
+  userId: string,
+  input: {
+    emergency_alert_id?: string
+    device_id?: string
+    audio_url?: string
+    audio_data_b64?: string
+    duration_seconds: number
+    file_size_bytes: number
+    mime_type: string
+  }
+): Promise<AudioEvidence> {
+  const { data, error } = await supabase
+    .from('audio_evidence')
+    .insert({ user_id: userId, ...input })
+    .select()
+    .single()
+  if (error) throw error
+  return data as AudioEvidence
+}
+
+/** Busca evidências de áudio do usuário */
+export async function getAudioEvidence(userId: string, limit = 20): Promise<AudioEvidence[]> {
+  const { data, error } = await supabase
+    .from('audio_evidence')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data || []) as AudioEvidence[]
+}
+
+/** Busca histórico de toques nos óculos */
+export async function getGlassesTapHistory(userId: string, deviceId: string, limit = 50): Promise<GlassesTapEvent[]> {
+  const { data, error } = await supabase
+    .from('glasses_tap_events')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('device_id', deviceId)
+    .order('timestamp', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data || []) as GlassesTapEvent[]
+}
+
+/** Registra evento de toque nos óculos (para auditoria) */
+export async function logGlassesTapEvent(
+  userId: string,
+  deviceId: string,
+  pattern: TapPattern,
+  actionTriggered: 'sos' | 'checkin' | 'none'
+): Promise<void> {
+  await supabase.from('glasses_tap_events').insert({
+    user_id: userId,
+    device_id: deviceId,
+    pattern,
+    action_triggered: actionTriggered,
+    timestamp: new Date().toISOString(),
+  })
 }

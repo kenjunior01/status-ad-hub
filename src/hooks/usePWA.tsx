@@ -34,7 +34,6 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     updateServiceWorker,
   } = useRegisterSW({
     onOfflineReady() {
-      console.log('[PWA] App ready for offline use')
     },
     onRegisteredSW(_swUrl, swReg) {
       if (swReg) {

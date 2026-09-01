@@ -4,10 +4,27 @@ import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { BluetoothProvider } from '@/hooks/useBluetooth'
 import { NotificationProvider } from '@/hooks/useNotifications'
+import { OfflineQueueProvider } from '@/hooks/useOfflineQueue'
 import { PWAProvider } from '@/hooks/usePWA'
+import { useGlobalErrorHandlers, getReactQueryDefaults } from '@/hooks/useGlobalErrorHandlers'
 import { lazy, Suspense } from 'react'
 import { Shield, Loader2 } from 'lucide-react'
 import { NoiseTexture, MorphingBlob, Shimmer } from '@/components/effects'
+import { ErrorBoundary, WithErrorBoundary } from '@/components/ErrorBoundary'
+import { SOSButton } from '@/components/SOSButton'
+import { useSmartGlasses } from '@/hooks/useSmartGlasses'
+import { GlassesSOSOverlay } from '@/components/GlassesSOSOverlay'
+import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
+import { VoiceSOSProvider } from '@/hooks/useVoiceSOS'
+import { PanicModeProvider } from '@/hooks/usePanicMode'
+import { DiscreetModeProvider } from '@/hooks/useDiscreetMode'
+import { DeadMansSwitchProvider } from '@/hooks/useDeadMansSwitch'
+import { NightSafetyProvider } from '@/hooks/useNightSafety'
+import { TripTrackingProvider } from '@/hooks/useTripTracking'
+import { AntiCoercionProvider, useAntiCoercion } from '@/hooks/useAntiCoercion'
+import { FakeDashboard } from '@/components/FakeDashboard'
+import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
+import { PanicModeOverlay } from '@/components/PanicModeOverlay'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
@@ -20,13 +37,25 @@ const History = lazy(() => import('@/pages/History'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const Emergency = lazy(() => import('@/pages/Emergency'))
 const TrackEmergency = lazy(() => import('@/pages/TrackEmergency'))
+const Diagnostics = lazy(() => import('@/pages/Diagnostics'))
+const CheckIn = lazy(() => import('@/pages/CheckIn'))
+const SmartGlasses = lazy(() => import('@/pages/SmartGlasses'))
+const QuickActions = lazy(() => import('@/pages/QuickActions'))
+const CommunityRadar = lazy(() => import('@/pages/CommunityRadar'))
+const DiscreetModeSettings = lazy(() => import('@/pages/DiscreetModeSettings'))
+const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
+const SafeRoute = lazy(() => import('@/pages/SafeRoute'))
+const TripTracking = lazy(() => import('@/pages/TripTracking'))
+const IncidentTimeline = lazy(() => import('@/pages/IncidentTimeline'))
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({ defaultOptions: getReactQueryDefaults() })
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const { isCoercionMode } = useAntiCoercion()
   if (loading) return <LoadingScreen />
-  if (!user) return <Navigate to="/login" replace />
+  // In coercion mode, allow access even without auth (fake session)
+  if (!user && !isCoercionMode) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
@@ -37,21 +66,37 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function CoercionShield({ children }: { children: React.ReactNode }) {
+  const { isCoercionMode } = useAntiCoercion()
+  if (isCoercionMode) return <FakeDashboard />
+  return <>{children}</>
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-      <Route path="/track/:token" element={<TrackEmergency />} />
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
-        <Route path="devices" element={<Devices />} />
-        <Route path="contacts" element={<EmergencyContacts />} />
-        <Route path="emergency-contacts" element={<EmergencyContacts />} />
-        <Route path="history" element={<History />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="emergency" element={<Emergency />} />
+      <Route path="/" element={<WithErrorBoundary context="landing"><Landing /></WithErrorBoundary>} />
+      <Route path="/login" element={<PublicRoute><WithErrorBoundary context="login"><Login /></WithErrorBoundary></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><WithErrorBoundary context="register"><Register /></WithErrorBoundary></PublicRoute>} />
+      <Route path="/track/:token" element={<WithErrorBoundary context="tracking"><TrackEmergency /></WithErrorBoundary>} />
+      <Route path="/dashboard" element={<ProtectedRoute><CoercionShield><DashboardLayout /></CoercionShield></ProtectedRoute>}>
+        <Route index element={<WithErrorBoundary context="dashboard"><Dashboard /></WithErrorBoundary>} />
+        <Route path="devices" element={<WithErrorBoundary context="devices"><Devices /></WithErrorBoundary>} />
+        <Route path="contacts" element={<WithErrorBoundary context="contacts"><EmergencyContacts /></WithErrorBoundary>} />
+        <Route path="emergency-contacts" element={<Navigate to="/dashboard/contacts" replace />} />
+        <Route path="history" element={<WithErrorBoundary context="history"><History /></WithErrorBoundary>} />
+        <Route path="settings" element={<WithErrorBoundary context="settings"><Settings /></WithErrorBoundary>} />
+        <Route path="emergency" element={<WithErrorBoundary context="emergency" severity="fatal"><Emergency /></WithErrorBoundary>} />
+        <Route path="diagnostics" element={<WithErrorBoundary context="diagnostics"><Diagnostics /></WithErrorBoundary>} />
+        <Route path="checkin" element={<WithErrorBoundary context="checkin"><CheckIn /></WithErrorBoundary>} />
+        <Route path="oculos" element={<WithErrorBoundary context="smart-glasses"><SmartGlasses /></WithErrorBoundary>} />
+        <Route path="accoes" element={<WithErrorBoundary context="quick-actions"><QuickActions /></WithErrorBoundary>} />
+        <Route path="radar" element={<WithErrorBoundary context="community-radar"><CommunityRadar /></WithErrorBoundary>} />
+        <Route path="discreto" element={<WithErrorBoundary context="discreet-settings"><DiscreetModeSettings /></WithErrorBoundary>} />
+        <Route path="camuflar" element={<WithErrorBoundary context="disguise-selector"><DisguiseSelector /></WithErrorBoundary>} />
+        <Route path="rota" element={<WithErrorBoundary context="safe-route"><SafeRoute /></WithErrorBoundary>} />
+        <Route path="viagens" element={<WithErrorBoundary context="trip-tracking"><TripTracking /></WithErrorBoundary>} />
+        <Route path="timeline" element={<WithErrorBoundary context="incident-timeline"><IncidentTimeline /></WithErrorBoundary>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -80,25 +125,78 @@ export default function LoadingScreen() {
   )
 }
 
+function GlassesOverlayWrapper() {
+  const { state, config, audioRecorder, stopAndSaveEvidence } = useSmartGlasses()
+  const { activeEmergency } = useEmergencyAlerts()
+
+  const isActive = state.isHIDActive && config?.sos_enabled && !!activeEmergency
+
+  return (
+    <GlassesSOSOverlay
+      isActive={isActive}
+      isStealth={config?.stealth_mode ?? true}
+      isRecording={audioRecorder.isRecording}
+      recordingDuration={audioRecorder.duration}
+      onStop={stopAndSaveEvidence}
+    />
+  )
+}
+
+/**
+ * InnerApp — mounts inside providers, has access to auth context.
+ * Installs global error handlers and renders SOS button OUTSIDE the
+ * global ErrorBoundary so it survives page-level crashes.
+ */
+function InnerApp() {
+  useGlobalErrorHandlers()
+
+  return (
+    <BrowserRouter>
+      <ErrorBoundary context="global">
+        <Suspense fallback={<LoadingScreen />}>
+          <AppRoutes />
+        </Suspense>
+      </ErrorBoundary>
+      {/* Overlays render ABOVE the global ErrorBoundary — always accessible */}
+      <GlassesOverlayWrapper />
+      <PanicModeOverlay />
+      <DiscreetModeOverlay />
+      <SOSButton />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: 'dark:bg-[#1F2937] dark:text-white dark:border-white/10'
+        }}
+      />
+    </BrowserRouter>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BluetoothProvider>
         <NotificationProvider>
+        <OfflineQueueProvider>
         <PWAProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingScreen />}>
-            <AppRoutes />
-          </Suspense>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              className: 'dark:bg-[#1F2937] dark:text-white dark:border-white/10'
-            }}
-          />
-        </BrowserRouter>
+        <VoiceSOSProvider>
+        <PanicModeProvider>
+        <DiscreetModeProvider>
+        <DeadMansSwitchProvider>
+        <NightSafetyProvider>
+        <TripTrackingProvider>
+        <AntiCoercionProvider>
+          <InnerApp />
+        </AntiCoercionProvider>
+        </TripTrackingProvider>
+        </NightSafetyProvider>
+        </DeadMansSwitchProvider>
+        </DiscreetModeProvider>
+        </PanicModeProvider>
+        </VoiceSOSProvider>
         </PWAProvider>
+        </OfflineQueueProvider>
         </NotificationProvider>
         </BluetoothProvider>
       </AuthProvider>
