@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- StatusAds Connect — tema dourado/preto da marca -->
+    <color name="colorPrimary">#D4AF37</color>
+    <color name="colorPrimaryDark">#0C0B08</color>
+    <color name="colorAccent">#D4AF37</color>
+
+    <!-- Fundo do splash e da WebView (preto quente da marca) -->
+    <color name="splash_background">#0C0B08</color>
+    <color name="webview_background">#0C0B08</color>
+</resources>

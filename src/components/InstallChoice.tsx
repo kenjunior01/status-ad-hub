@@ -295,22 +295,22 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
 
               <SpotlightCard className="p-6 border-white/10 bg-white/[0.02] rounded-2xl space-y-4">
                 <h3 className="font-bold flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-[#D4AF37]" /> Projecto já preparado
+                  <Shield className="h-5 w-5 text-[#D4AF37]" /> APK v3.2.0 já compilada e assinada
                 </h3>
                 <p className="text-sm text-white/50">
-                  O repositório inclui <code className="text-[#D4AF37]">capacitor.config.ts</code> e o
-                  guia <code className="text-[#D4AF37]">BUILD-NATIVA.md</code>. Num computador com
-                  Android Studio, bastam 3 comandos:
+                  A versão Android nativa está pronta: <code className="text-[#D4AF37]">StatusAdsConnect-v3.2.0.apk</code>{' '}
+                  (6.7 MB, assinada, Android 7.0+). Instala activando "Fontes desconhecidas".
+                  Para recompilar com actualizações, o guia{' '}
+                  <code className="text-[#D4AF37]">BUILD-NATIVA.md</code> tem os comandos verificados:
                 </p>
                 <div className="rounded-xl bg-black/60 border border-white/10 p-4 font-mono text-[12px] leading-relaxed">
-                  <div><span className="text-white/30">$</span> npm install</div>
-                  <div><span className="text-white/30">$</span> npm run build && npx cap add android</div>
-                  <div><span className="text-white/30">$</span> npx cap open android</div>
+                  <div><span className="text-white/30">$</span> npm run build && npx cap sync</div>
+                  <div><span className="text-white/30">$</span> cd android && ./gradlew assembleRelease</div>
                 </div>
                 <ul className="space-y-2 text-[13px] text-white/60">
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> Gera APK/AAB para instalar ou publicar na Play Store</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> GPS nativo, haptics e status bar dourada via plugins Capacitor</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> Permissões incluídas: localização, câmara, microfone, sensores de queda, notificações</li>
                   <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> Suporta build camuflado (nome e ícone à escolha no momento de compilar)</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> O guia explica como ligar o plugin BLE nativo para monitorização 24/7</li>
                 </ul>
               </SpotlightCard>
             </motion.div>

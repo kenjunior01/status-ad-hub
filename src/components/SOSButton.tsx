@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEmergency } from '@/hooks/useEmergency'
+import { haptic } from '@/lib/native'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 import { useNavigate } from 'react-router-dom'
@@ -93,7 +94,7 @@ export function SOSButton() {
     if (tapTimesRef.current.length >= DOUBLE_TAP_COUNT) {
       tapTimesRef.current = []
       // Instant trigger — bypass hold, but still check GPS
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100])
+      void haptic('sos')
       trigger()
       return
     }
@@ -106,8 +107,8 @@ export function SOSButton() {
       const elapsed = Date.now() - holdStartRef.current
       const progress = Math.min(elapsed / HOLD_DURATION_MS, 1)
       setHoldProgress(progress)
-      if (progress >= 0.5 && progress < 0.55 && 'vibrate' in navigator) {
-        navigator.vibrate(50)
+      if (progress >= 0.5 && progress < 0.55) {
+        void haptic('light')
       }
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate)

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import * as api from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
+import { geoGetCurrent, isNative } from '@/lib/native'
+import { Geolocation as CapGeolocation } from '@capacitor/geolocation'
 
 /**
  * useGeolocation
@@ -180,9 +182,15 @@ export function useGeolocation(
     }
   }, [user?.id, paused, startTracking])
 
-  /** Get a single position reading (for one-shot use) */
+  /** Get a single position reading (one-shot — usa plugin nativo na APK) */
   const getCurrentPosition = useCallback((): Promise<GeoPosition> => {
     return new Promise((resolve, reject) => {
+      if (isNative()) {
+        geoGetCurrent(10_000)
+          .then((pos) => (pos ? resolve(pos) : reject(new Error('Localizacao indisponivel'))))
+          .catch(reject)
+        return
+      }
       if (!navigator.geolocation) {
         reject(new Error('Geolocalizacao nao suportada'))
         return
@@ -203,8 +211,16 @@ export function useGeolocation(
     })
   }, [])
 
-  /** Request geolocation permission (prompts the user) */
+  /** Request geolocation permission (plugin nativo na APK, prompt no browser) */
   const requestPermission = useCallback(async (): Promise<boolean> => {
+    if (isNative()) {
+      try {
+        const perm = await CapGeolocation.requestPermissions()
+        return perm.location === 'granted' || perm.coarseLocation === 'granted'
+      } catch {
+        return false
+      }
+    }
     try {
       const pos = await getCurrentPosition()
       return !!pos

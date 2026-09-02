@@ -17,7 +17,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  * abaixo ANTES de `npx cap sync` (ou use sabores/flavours do Gradle):
  *
  *   appName: 'Calculadora'          // nome visível no launcher
- *   // ícone: substitua android/app/src/main/res/*/ic_launcher.png
+ *   // ícone: substitua android/app/src/main/res/<dpi>/ic_launcher.png
  *   // (guia completo em BUILD-NATIVA.md, secção "Builds Camuflados")
  *
  * NOTA iOS: requer macOS com Xcode. `npx cap add ios` → `npx cap open ios`.

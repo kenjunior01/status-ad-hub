@@ -23,6 +23,7 @@ import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
 import { useIsAdmin } from '@/hooks/useAdmin'
 import { FallDetectionOverlay, useFallDetectionKeepAlive, registerFallSosHandler } from '@/hooks/useFallDetection'
+import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
 import { useEmergency } from '@/hooks/useEmergency'
 import { useEffect } from 'react'
@@ -105,18 +106,35 @@ export default function DashboardLayout() {
 
   // Liga a deteção de queda ao motor de emergência global.
   // A queda dispara SOS real (GPS + SMS + push) exactamente como o botão.
+  // Na APK usa o plugin nativo de GPS (mais fiável) + háptico SOS.
   const { triggerEmergency } = useEmergency()
   useEffect(() => {
     registerFallSosHandler((reason) => {
-      navigator.geolocation?.getCurrentPosition(
-        (pos) => triggerEmergency({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => triggerEmergency({ latitude: -25.9692, longitude: 32.5732 }),
-        { enableHighAccuracy: true, timeout: 6000 }
-      )
+      void haptic('sos')
+      geoGetCurrent(6000).then((pos) => {
+        if (pos) {
+          triggerEmergency({ latitude: pos.latitude, longitude: pos.longitude })
+        } else {
+          // fallback web ou Maputo
+          navigator.geolocation?.getCurrentPosition(
+            (p) => triggerEmergency({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
+            () => triggerEmergency({ latitude: -25.9692, longitude: 32.5732 }),
+            { enableHighAccuracy: true, timeout: 6000 }
+          )
+        }
+      })
       void reason
     })
     return () => registerFallSosHandler(null)
   }, [triggerEmergency])
+
+  // Chrome nativo dourado (status bar + splash) — no-op em web
+  useEffect(() => {
+    void initNativeChrome()
+    if (isNative()) {
+      document.addEventListener('deviceready', () => void initNativeChrome(), { once: true })
+    }
+  }, [])
 
   // Mantém o motor de queda activo se o utilizador o tiver ligado
   useFallDetectionKeepAlive()
