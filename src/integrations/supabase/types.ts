@@ -1541,6 +1541,56 @@ export type Database = {
         }
         Returns: number
       }
+      delete_user_account: { Args: { p_user_id: string }; Returns: undefined }
+      get_active_emergency: {
+        Args: { p_user_id: string }
+        Returns: {
+          contacts_notified: string[]
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          share_token: string
+          status: string
+        }[]
+      }
+      get_dashboard_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_emergencies: number
+          alerts_today: number
+          locations_today: number
+          low_battery_devices: number
+          online_devices: number
+          total_devices: number
+        }[]
+      }
+      get_emergency_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          contacts_notified: string[]
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          resolved_at: string
+          status: string
+        }[]
+      }
+      get_emergency_history: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          contacts_notified: string[]
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          resolve_reason: string
+          resolved_at: string
+          share_token: string
+          status: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1552,9 +1602,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_false_alarm: { Args: { p_alert_id: string }; Returns: undefined }
       process_referral: {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: boolean
+      }
+      resolve_emergency: {
+        Args: { p_alert_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      trigger_emergency: {
+        Args: { p_latitude: number; p_longitude: number; p_user_id: string }
+        Returns: {
+          alert_id: string
+          notified_phones: string[]
+        }[]
       }
     }
     Enums: {
