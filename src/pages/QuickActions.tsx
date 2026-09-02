@@ -16,7 +16,7 @@
  * Tudo num único ecrã com acesso imediato.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -46,6 +46,11 @@ import { SafetyScoreGauge, useSafetyScore } from '@/components/SafetyScoreGauge'
 import { EmergencyQuickDial } from '@/components/EmergencyQuickDial'
 import { LocationShareLink } from '@/components/LocationShareLink'
 import { SAFETY_TIPS } from '@/lib/safety-tips'
+import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { saveEvidenceRecording } from '@/lib/evidence'
+import { startFeatureTour } from '@/components/FeatureTour'
+import { GraduationCap, Square } from 'lucide-react'
+import { haptic } from '@/lib/native'
 
 interface QuickAction {
   id: string
@@ -80,6 +85,72 @@ export default function QuickActions() {
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false)
   const [showPanicConfirm, setShowPanicConfirm] = useState(false)
   const tipCount = SAFETY_TIPS.length
+
+  // ── Gravação Rápida (evidências) ──
+  const recorder = useAudioRecorder(300)
+  const [recSeconds, setRecSeconds] = useState(0)
+  const [recSaving, setRecSaving] = useState(false)
+  const [pendingSave, setPendingSave] = useState(false)
+  useEffect(() => {
+    if (!recorder.isRecording) return
+    const startedAt = Date.now()
+    setRecSeconds(0)
+    const t = setInterval(() => setRecSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000)
+    return () => clearInterval(t)
+  }, [recorder.isRecording])
+
+  const handleQuickRecord = useCallback(async () => {
+    if (recorder.isRecording) {
+      recorder.stopRecording()
+      setPendingSave(true) // o blob chega async → guardamos no effect abaixo
+      return
+    }
+    try {
+      const ok = await recorder.startRecording()
+      if (!ok) {
+        toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+        return
+      }
+      void haptic('light')
+      toast.info('A gravar — toque de novo para parar e guardar', { duration: 3500 })
+    } catch {
+      toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+    }
+  }, [recorder])
+
+  // Guarda no cofre quando o blob da gravação parada fica disponível
+  useEffect(() => {
+    if (!pendingSave || !recorder.blob) return
+    let cancelled = false
+    ;(async () => {
+      setPendingSave(false)
+      setRecSaving(true)
+      try {
+        const b64 = await recorder.getBase64()
+        if (b64 && !cancelled) {
+          const res = await saveEvidenceRecording(b64, recSeconds, 'audio/webm')
+          if (res.saved) {
+            toast.success(`Gravação guardada no Cofre (${recSeconds}s)`, {
+              description: res.location === 'local' ? 'Guardada neste dispositivo' : 'Sincronizada na sua conta',
+              action: { label: 'Abrir Cofre', onClick: () => navigate('/dashboard/evidencias') },
+            })
+          } else {
+            toast.error(res.error ?? 'Não foi possível guardar a gravação')
+          }
+        }
+      } catch {
+        if (!cancelled) toast.error('Erro ao guardar a gravação')
+      } finally {
+        if (!cancelled) {
+          setRecSaving(false)
+          recorder.reset()
+          setRecSeconds(0)
+        }
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSave, recorder.blob])
 
   // Format DMS timer
   const formatDMSTimer = useCallback((secs: number) => {
@@ -349,6 +420,19 @@ export default function QuickActions() {
       borderColor: 'border-[#D4AF37]/20',
       action: () => navigate('/dashboard/evidencias'),
     },
+    // GRAVAÇÃO RÁPIDA — grava ao vivo e guarda no cofre (o elo que faltava)
+    {
+      id: 'quick-record',
+      title: 'Gravação Rápida',
+      description: 'Gravar áudio agora e guardar no Cofre de Evidências com 1 toque',
+      icon: Mic,
+      color: recorder.isRecording ? 'text-red-400' : 'text-rose-300',
+      bgColor: recorder.isRecording ? 'bg-red-500/15' : 'bg-rose-500/10',
+      borderColor: recorder.isRecording ? 'border-red-500/40' : 'border-rose-500/20',
+      action: () => void handleQuickRecord(),
+      badge: recorder.isRecording ? `A GRAVAR ${recSeconds}s` : recSaving ? 'A GUARDAR…' : undefined,
+      isActive: recorder.isRecording,
+    },
     // FICHA MÉDICA
     {
       id: 'medical-profile',
@@ -371,6 +455,18 @@ export default function QuickActions() {
       borderColor: 'border-[#D4AF37]/20',
       action: () => navigate('/dashboard/dicas'),
       badge: 'DICA DIÁRIA',
+    },
+    // TUTORIAL DO APP — rever o tutorial de boas-vindas quando quiser
+    {
+      id: 'app-tour',
+      title: 'Tutorial do App',
+      description: 'Rever o guia rápido de como usar todas as funcionalidades',
+      icon: GraduationCap,
+      color: 'text-sky-300',
+      bgColor: 'bg-sky-500/10',
+      borderColor: 'border-sky-500/20',
+      action: () => startFeatureTour(),
+      badge: 'COMO USAR',
     },
   ]
 

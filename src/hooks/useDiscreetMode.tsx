@@ -301,6 +301,74 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
     localStorage.setItem(`discreet-mode-${user.id}`, JSON.stringify(fresh))
   }, [user])
 
+  // ── Realismo: título da aba, favicon e theme-color acompanham o disfarce ──
+  useEffect(() => {
+    const REAL_TITLE = 'StatusAds Connect'
+    const REAL_FAVICON = '/favicon.png'
+    const REAL_THEME = '#D4AF37'
+
+    // Nome visível da aba por disfarce (igual ao nome da app falsa)
+    const DISGUISE_META: Record<string, { title: string; letter: string; color: string }> = {
+      calculator: { title: 'Calculadora', letter: '=', color: '#6b7280' },
+      weather: { title: 'Meteorologia', letter: '☀', color: '#0ea5e9' },
+      notes: { title: 'Notas', letter: 'N', color: '#eab308' },
+      clock: { title: 'Relógio', letter: '⏱', color: '#111827' },
+      contacts: { title: 'Contactos', letter: 'C', color: '#22c55e' },
+      settings_app: { title: 'Definições', letter: '⚙', color: '#9ca3af' },
+      music_player: { title: 'Música', letter: '♫', color: '#ec4899' },
+      currency: { title: 'Câmbio', letter: 'MZN', color: '#0d9488' },
+      flashlight: { title: 'Lanterna', letter: '⚡', color: '#f97316' },
+      sms_chat: { title: 'Mensagens', letter: 'M', color: '#3b82f6' },
+      photo_gallery: { title: 'Galeria', letter: 'G', color: '#8b5cf6' },
+    }
+
+    const setFavicon = (letter: string, color: string) => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = 64
+        canvas.height = 64
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+        ctx.fillStyle = color
+        ctx.fillRect(0, 0, 64, 64)
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 34px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(letter.slice(0, 3), 32, 34)
+        let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']")
+        if (!link) {
+          link = document.createElement('link')
+          link.rel = 'icon'
+          document.head.appendChild(link)
+        }
+        link.href = canvas.toDataURL('image/png')
+      } catch { /* sem canvas — mantém favicon actual */ }
+    }
+
+    const setThemeColor = (color: string) => {
+      let meta = document.querySelector<HTMLMetaElement>("meta[name='theme-color']")
+      if (!meta) {
+        meta = document.createElement('meta')
+        meta.name = 'theme-color'
+        document.head.appendChild(meta)
+      }
+      meta.content = color
+    }
+
+    if (isActive) {
+      const meta = DISGUISE_META[disguiseType] ?? DISGUISE_META.calculator
+      document.title = meta.title
+      setFavicon(meta.letter, meta.color)
+      setThemeColor(meta.color)
+    } else {
+      document.title = REAL_TITLE
+      const link = document.querySelector<HTMLLinkElement>("link[rel~='icon']")
+      if (link) link.href = REAL_FAVICON
+      setThemeColor(REAL_THEME)
+    }
+  }, [isActive, disguiseType])
+
   const isSupported = 'DeviceMotionEvent' in window
 
   return (

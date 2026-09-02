@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Archive, Play, Pause, Download, Trash2, Mic, ArrowLeft,
-  Shield, Lock, Loader2, Sparkles, AlertTriangle,
+  Shield, Lock, Loader2, Sparkles, AlertTriangle, Square,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { usePlanState } from '@/hooks/useSubscription'
 import { formatDateTime } from '@/lib/payments'
+import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { saveEvidenceRecording } from '@/lib/evidence'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +46,22 @@ export default function EvidenceVault() {
   const [isLocal, setIsLocal] = useState(false)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  // ── Gravação directa no cofre ──
+  const recorder = useAudioRecorder(300)
+  const [recSeconds, setRecSeconds] = useState(0)
+  const [recSaving, setRecSaving] = useState(false)
+  const recSecondsRef = useRef(0)
+  recSecondsRef.current = recSeconds
+  const [pendingSave, setPendingSave] = useState(false)
+
+  useEffect(() => {
+    if (!recorder.isRecording) return
+    const startedAt = Date.now()
+    setRecSeconds(0)
+    const t = setInterval(() => setRecSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000)
+    return () => clearInterval(t)
+  }, [recorder.isRecording])
 
   const isPremium = (state?.plan.max_contacts ?? 0) >= 99
   const visible = isPremium ? items : items.slice(0, FREE_LIMIT)
@@ -78,6 +96,56 @@ export default function EvidenceVault() {
   }, [user])
 
   useEffect(() => { load() }, [load])
+
+  const toggleRecording = useCallback(async () => {
+    if (recorder.isRecording) {
+      recorder.stopRecording()
+      setPendingSave(true) // o blob chega async → guardamos no effect abaixo
+      return
+    }
+    try {
+      const ok = await recorder.startRecording()
+      if (!ok) {
+        toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+      }
+    } catch {
+      toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+    }
+  }, [recorder])
+
+  // Guarda no cofre quando o blob da gravação parada fica disponível
+  useEffect(() => {
+    if (!pendingSave || !recorder.blob) return
+    let cancelled = false
+    ;(async () => {
+      setPendingSave(false)
+      setRecSaving(true)
+      try {
+        const b64 = await recorder.getBase64()
+        if (b64 && !cancelled) {
+          const res = await saveEvidenceRecording(b64, recSecondsRef.current, 'audio/webm')
+          if (res.saved) {
+            toast.success(`Evidência guardada (${recSecondsRef.current}s)`, {
+              description: res.location === 'local' ? 'Guardada neste dispositivo' : 'Sincronizada na sua conta',
+            })
+          } else {
+            toast.error(res.error ?? 'Não foi possível guardar')
+          }
+        }
+      } catch {
+        if (!cancelled) toast.error('Erro ao guardar a gravação')
+      } finally {
+        if (!cancelled) {
+          setRecSaving(false)
+          recorder.reset()
+          setRecSeconds(0)
+          void load()
+        }
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSave, recorder.blob])
 
   async function handleDelete(id: string) {
     setDeleteId(null)
@@ -128,6 +196,52 @@ export default function EvidenceVault() {
               Áudio gravado automaticamente durante emergências, modo pânico e óculos inteligentes.
               Guardado com segurança e disponível como prova.
             </p>
+          </div>
+        </div>
+
+        {/* Painel de gravação directa */}
+        <div
+          className={cn(
+            'rounded-2xl border p-5 transition-colors',
+            recorder.isRecording
+              ? 'border-red-500/40 bg-red-500/[0.07]'
+              : 'border-white/[0.07] bg-white/[0.02]'
+          )}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => void toggleRecording()}
+                disabled={recSaving}
+                className={cn(
+                  'relative flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-95 disabled:opacity-50',
+                  recorder.isRecording
+                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                    : 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/25'
+                )}
+                aria-label={recorder.isRecording ? 'Parar gravação' : 'Começar a gravar'}
+              >
+                {recorder.isRecording && (
+                  <span className="absolute inset-0 rounded-full bg-red-500/40 animate-ping" />
+                )}
+                {recorder.isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </button>
+              <div>
+                <p className="text-sm font-semibold">
+                  {recSaving ? 'A guardar…' : recorder.isRecording ? 'A gravar…' : 'Gravar evidência agora'}
+                </p>
+                <p className="text-[11px] text-white/40">
+                  {recorder.isRecording
+                    ? `${recSeconds}s — toque para parar e guardar no cofre`
+                    : 'Toque no microfone. O áudio fica guardado como prova.'}
+                </p>
+              </div>
+            </div>
+            {recorder.isRecording && (
+              <Badge variant="outline" className="text-[10px] text-red-300 border-red-500/40 bg-red-500/10">
+                ● REC {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}
+              </Badge>
+            )}
           </div>
         </div>
 

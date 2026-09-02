@@ -25,6 +25,7 @@ import { useIsAdmin } from '@/hooks/useAdmin'
 import { FallDetectionOverlay, useFallDetectionKeepAlive, registerFallSosHandler } from '@/hooks/useFallDetection'
 import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
+import { FeatureTour } from '@/components/FeatureTour'
 import { useEmergency } from '@/hooks/useEmergency'
 import { useEffect } from 'react'
 
@@ -389,6 +390,7 @@ export default function DashboardLayout() {
       </nav>
 
       <OnboardingWizard />
+      <FeatureTour />
       <PWAInstallPrompt />
       <FallDetectionOverlay />
       <FakeCallOverlay />

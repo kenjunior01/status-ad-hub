@@ -117,7 +117,9 @@ export function useAudioRecorder(maxDuration: number = 120) {
           ? err.message
           : 'Microfone indisponível'
       setState((prev) => ({ ...prev, error: message }))
+      return false
     }
+    return true
   }, [])
 
   const stopRecording = useCallback(() => {
