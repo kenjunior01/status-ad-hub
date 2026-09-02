@@ -1,0 +1,391 @@
+// ============================================================
+// payments.ts — Tipos, planos e API de pagamentos/assinaturas.
+// Funciona em dois modos:
+//  • REAL: tabelas plans/payments/subscriptions no Supabase
+//    (executar supabase/migrations/009_payments_subscriptions.sql)
+//  • DEMO: fallback automático em localStorage quando as tabelas
+//    ainda não existem — todo o fluxo funciona de imediato.
+// ============================================================
+import { supabase } from '@/lib/supabase'
+
+// ── Tipos ──
+export type PlanSlug = 'free' | 'familia' | 'premium'
+export type PaymentMethod = 'mpesa' | 'emola' | 'mkesh' | 'paypal' | 'manual'
+export type PaymentStatus = 'pending' | 'processing' | 'confirmed' | 'failed' | 'cancelled' | 'refunded'
+
+export interface Plan {
+  id?: string
+  slug: PlanSlug
+  name: string
+  description?: string
+  price_mzn: number
+  price_usd: number
+  max_contacts: number
+  max_devices: number
+  features: string[]
+  is_active?: boolean
+  popular?: boolean
+}
+
+export interface Payment {
+  id: string
+  reference: string
+  amount: number
+  currency: string
+  method: PaymentMethod
+  phone?: string | null
+  status: PaymentStatus
+  plan_slug?: string | null
+  provider_ref?: string | null
+  note?: string | null
+  created_at: string
+  confirmed_at?: string | null
+}
+
+export interface Subscription {
+  id: string
+  status: 'trial' | 'active' | 'past_due' | 'cancelled' | 'expired'
+  plan_slug?: PlanSlug | null
+  plan_id?: string | null
+  provider?: string | null
+  starts_at: string
+  expires_at?: string | null
+  auto_renew: boolean
+}
+
+// ── Planos de fallback (espelham o seed da migration 009) ──
+export const FALLBACK_PLANS: Plan[] = [
+  {
+    slug: 'free',
+    name: 'Grátis',
+    description: 'O essencial para a sua segurança diária',
+    price_mzn: 0,
+    price_usd: 0,
+    max_contacts: 2,
+    max_devices: 1,
+    features: [
+      'Botão SOS instantâneo',
+      '2 contactos de emergência',
+      'Check-in programado',
+      'Histórico de 7 dias',
+      '1 dispositivo BLE',
+      'Notificações push',
+    ],
+  },
+  {
+    slug: 'familia',
+    name: 'Família',
+    description: 'Protecção completa para toda a família',
+    price_mzn: 249,
+    price_usd: 3.99,
+    max_contacts: 6,
+    max_devices: 3,
+    popular: true,
+    features: [
+      'Tudo do plano Grátis',
+      '6 contactos de emergência',
+      'Rastreamento de viagens',
+      'Modo discreto (3 disfarces)',
+      'Alertas por SMS aos contactos',
+      'Rota segura com GPS',
+      '3 dispositivos BLE',
+      'Suporte prioritário',
+    ],
+  },
+  {
+    slug: 'premium',
+    name: 'Premium',
+    description: 'Segurança máxima, sem limites',
+    price_mzn: 499,
+    price_usd: 7.99,
+    max_contacts: 99,
+    max_devices: 10,
+    features: [
+      'Tudo do plano Família',
+      'Contactos ilimitados',
+      '11 disfarces de camuflagem',
+      'Gravação automática de evidências',
+      'Óculos e anéis inteligentes',
+      'Radar comunitário',
+      'Anti-coerção com PIN falso',
+      '10 dispositivos BLE',
+      'Resposta 24/7',
+    ],
+  },
+]
+
+export const METHOD_LABELS: Record<PaymentMethod, string> = {
+  mpesa: 'M-Pesa',
+  emola: 'e-Mola',
+  mkesh: 'mKesh',
+  paypal: 'PayPal',
+  manual: 'Manual (admin)',
+}
+
+// ── Deteccão de modo demo (cache com promise) ──
+let demoCheck: Promise<boolean> | null = null
+
+export function isDemoMode(): Promise<boolean> {
+  if (!demoCheck) {
+    demoCheck = (async () => {
+      try {
+        const { error } = await supabase.from('plans').select('id').limit(1)
+        if (!error) return false
+        // 42P01 = tabela não existe; PGRST205 = ausente do schema cache;
+        // qualquer falha estrutural → opera em modo demo
+        const code = (error as any).code ?? ''
+        const msg = (error as any).message ?? ''
+        return (
+          code === '42P01' ||
+          code === 'PGRST205' ||
+          /does not exist|schema cache|Could not find the table/i.test(msg)
+        )
+      } catch {
+        return true
+      }
+    })()
+  }
+  return demoCheck
+}
+
+export function resetDemoCache() {
+  demoCheck = null
+}
+
+// ── Demo storage (localStorage) ──
+const LS_PAYMENTS = 'statusads-demo-payments'
+const LS_SUBS = 'statusads-demo-subscriptions'
+
+function lsGet<T>(key: string): T[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? '[]')
+  } catch {
+    return []
+  }
+}
+function lsSet(key: string, rows: unknown[]) {
+  localStorage.setItem(key, JSON.stringify(rows))
+}
+
+export function genDemoReference(): string {
+  const d = new Date()
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  return `SA-DEMO-${ymd}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+}
+
+function createDemoPayment(plan: Plan, method: PaymentMethod, phone: string | null): Payment {
+  return {
+    id: crypto.randomUUID(),
+    reference: genDemoReference(),
+    amount: method === 'paypal' ? plan.price_usd : plan.price_mzn,
+    currency: method === 'paypal' ? 'USD' : 'MZN',
+    method,
+    phone,
+    status: 'pending',
+    plan_slug: plan.slug,
+    note: 'demo',
+    created_at: new Date().toISOString(),
+    confirmed_at: null,
+  }
+}
+
+function activateDemoSubscription(plan: Plan) {
+  const subs = lsGet<Subscription>(LS_SUBS)
+  const now = new Date()
+  const expires = new Date(now.getTime() + 31 * 24 * 3600 * 1000)
+  const filtered = subs.filter((s) => s.status === 'active' || s.status === 'trial')
+  filtered.forEach((s) => (s.status = 'cancelled'))
+  subs.unshift({
+    id: crypto.randomUUID(),
+    status: 'active',
+    plan_slug: plan.slug,
+    provider: 'demo',
+    starts_at: now.toISOString(),
+    expires_at: expires.toISOString(),
+    auto_renew: true,
+  })
+  lsSet(LS_SUBS, subs)
+  // sincroniza plan no localStorage do perfil demo
+  localStorage.setItem('statusads-demo-plan', plan.slug)
+}
+
+export function getDemoPlanOverride(): PlanSlug | null {
+  return (localStorage.getItem('statusads-demo-plan') as PlanSlug) || null
+}
+
+export function resetDemoPayments() {
+  localStorage.removeItem(LS_PAYMENTS)
+  localStorage.removeItem(LS_SUBS)
+  localStorage.removeItem('statusads-demo-plan')
+}
+
+// ── API real ──
+export async function fetchPlans(): Promise<Plan[]> {
+  const { data, error } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error || !data?.length) return FALLBACK_PLANS
+  return data.map((p: any) => ({ ...p, popular: p.sort_order === 1 }))
+}
+
+export async function fetchMyPayments(): Promise<Payment[]> {
+  const demo = await isDemoMode()
+  if (demo) {
+    return lsGet<Payment>(LS_PAYMENTS).sort((a, b) => b.created_at.localeCompare(a.created_at))
+  }
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50)
+  if (error) throw error
+  return (data ?? []) as Payment[]
+}
+
+export async function fetchMySubscriptions(): Promise<Subscription[]> {
+  const demo = await isDemoMode()
+  if (demo) {
+    return lsGet<Subscription>(LS_SUBS).sort((a, b) => b.starts_at.localeCompare(a.starts_at))
+  }
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(10)
+  if (error) throw error
+  return (data ?? []) as Subscription[]
+}
+
+export interface CheckoutResult {
+  mode: 'demo' | 'real' | 'paypal'
+  payment?: Payment
+  message: string
+  approve_url?: string
+}
+
+export async function startCheckout(opts: {
+  plan: Plan
+  method: PaymentMethod
+  phone?: string
+}): Promise<CheckoutResult> {
+  const demo = await isDemoMode()
+
+  if (demo) {
+    // Simulação completa em localStorage
+    const payment = createDemoPayment(opts.plan, opts.method, opts.phone ?? null)
+    const payments = lsGet<Payment>(LS_PAYMENTS)
+    payments.unshift(payment)
+    lsSet(LS_PAYMENTS, payments)
+
+    // Confirma automaticamente após 8s (simulando o prompt no telefone)
+    setTimeout(() => {
+      const rows = lsGet<Payment>(LS_PAYMENTS)
+      const row = rows.find((p) => p.id === payment.id && p.status === 'pending')
+      if (row) {
+        row.status = 'confirmed'
+        row.confirmed_at = new Date().toISOString()
+        row.provider_ref = `DEMO-${Math.random().toString(36).slice(2, 10).toUpperCase()}`
+        lsSet(LS_PAYMENTS, rows)
+        activateDemoSubscription(opts.plan)
+        window.dispatchEvent(new CustomEvent('statusads-demo-payment-confirmed', { detail: payment.id }))
+      }
+    }, 8000)
+
+    return {
+      mode: 'demo',
+      payment,
+      message: `Modo demonstração: prompt ${opts.method.toUpperCase()} simulado para ${opts.phone ?? '—'}. A confirmação chegará em ~8 segundos.`,
+    }
+  }
+
+  // Real: chama a edge function (o JWT é anexado automaticamente)
+  const { data, error } = await supabase.functions.invoke('create-payment', {
+    body: {
+      planSlug: opts.plan.slug,
+      method: opts.method,
+      phone: opts.phone ?? '',
+      origin: window.location.origin,
+    },
+  })
+  if (error) throw new Error(error.message)
+  if ((data as any)?.error) throw new Error((data as any).error)
+  return data as CheckoutResult
+}
+
+export async function confirmDemoPayment(reference: string): Promise<void> {
+  // No modo demo a confirmação é local (evita chamadas desnecessárias)
+  const demo = await isDemoMode()
+  if (demo) return
+  await supabase.functions.invoke('payments-webhook', {
+    body: { reference, status: 'confirmed', demo: true, provider_ref: `DEMO-${Date.now()}` },
+  })
+}
+
+export async function capturePaypal(reference: string, providerRef: string): Promise<void> {
+  const demo = await isDemoMode()
+  if (demo) return
+  await supabase.functions.invoke('create-payment', {
+    body: { action: 'capture', reference, provider_ref: providerRef },
+  })
+}
+
+export async function cancelSubscription(subscriptionId: string): Promise<void> {
+  const demo = await isDemoMode()
+  if (demo) {
+    const subs = lsGet<Subscription>(LS_SUBS)
+    const sub = subs.find((s) => s.id === subscriptionId)
+    if (sub) {
+      sub.auto_renew = false
+      sub.status = 'cancelled'
+      lsSet(LS_SUBS, subs)
+    }
+    localStorage.setItem('statusads-demo-plan', 'free')
+    return
+  }
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({ auto_renew: false, status: 'cancelled' })
+    .eq('id', subscriptionId)
+  if (error) throw error
+  // Rebaixa o perfil para free imediatamente
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    await supabase.from('profiles').update({ plan: 'free' }).eq('user_id', user.id)
+  }
+}
+
+// ── Helpers de formato ──
+export function formatMzn(v: number): string {
+  return `${Number(v).toLocaleString('pt-MZ', { maximumFractionDigits: 0 })} MT`
+}
+
+export function formatDate(iso?: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+export function formatDateTime(iso?: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('pt-PT', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
+
+export function daysLeft(expiresAt?: string | null): number {
+  if (!expiresAt) return 0
+  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
+}
+
+// ── Validador de telefone Moçambique ──
+export function isValidMzPhone(input: string): boolean {
+  const digits = input.replace(/\D/g, '')
+  const local = digits.startsWith('258') ? digits.slice(3) : digits
+  return /^8[2-7]\d{7}$/.test(local)
+}
+
+export function normalizeMzPhone(input: string): string {
+  const digits = input.replace(/\D/g, '')
+  return digits.startsWith('258') ? digits.slice(3) : digits
+}

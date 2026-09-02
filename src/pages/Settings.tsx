@@ -885,8 +885,10 @@ export default function Settings() {
                                   {profile?.plan === 'premium' ? '499 MT/mes' : profile?.plan === 'familia' ? '249 MT/mes' : 'Gratuito'}
                                 </span>
                               </div>
-                              {profile?.plan === 'free' && (
-                                <Button className="bg-[#D4AF37] hover:bg-[#B8962E] text-white gap-2 rounded-xl"><Shield className="h-4 w-4" />Fazer Upgrade para Premium</Button>
+                              {profile?.plan === 'free' ? (
+                                <Button onClick={() => navigate('/dashboard/assinatura')} className="bg-[#D4AF37] hover:bg-[#B8962E] text-black gap-2 rounded-xl font-semibold"><Shield className="h-4 w-4" />Ver planos e fazer upgrade</Button>
+                              ) : (
+                                <Button variant="outline" onClick={() => navigate('/dashboard/assinatura')} className="border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20 gap-2 rounded-xl"><Shield className="h-4 w-4" />Gerir assinatura e pagamentos</Button>
                               )}
                             </div>
                           </div>

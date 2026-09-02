@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useContacts } from '@/hooks/useContacts'
+import { usePlanState, usePlans } from '@/hooks/useSubscription'
+import { CheckoutDialog } from '@/components/CheckoutDialog'
 import { SpotlightCard, BeamBorder, Shimmer } from '@/components/effects'
 import type { ContactRelation } from '@/lib/types'
+import { toast } from 'sonner'
 
 const relationLabels: Record<string, string> = {
   parente: 'Parente', conjuge: 'Conjuge', amigo: 'Amigo', colega: 'Colega', outro: 'Outro',
@@ -38,6 +41,9 @@ const groupOptions: { value: string; label: string }[] = [
 export default function EmergencyContacts() {
   const { user } = useAuth()
   const { contacts, loading, addContact, updateContact, toggleAlert, deleteContact, isAdding } = useContacts()
+  const { state } = usePlanState()
+  const { data: plans = [] } = usePlans()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [copied, setCopied] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -58,6 +64,15 @@ export default function EmergencyContacts() {
 
   const handleAdd = () => {
     if (!form.name.trim() || !form.phone.trim()) return
+    // Gating por plano: limite de contactos
+    const max = state?.plan.max_contacts ?? 2
+    if (contacts.length >= max) {
+      toast.error(`Limite do plano ${state?.plan.name} atingido`, {
+        description: `O plano ${state?.plan.name} permite ${max >= 99 ? 'contactos ilimitados' : `${max} contactos`}. Faz upgrade para adicionar mais.`,
+        action: { label: 'Ver planos', onClick: () => setUpgradeOpen(true) },
+      })
+      return
+    }
     addContact({
       name: form.name.trim(),
       phone: form.phone.trim(),
@@ -283,6 +298,7 @@ export default function EmergencyContacts() {
         </BeamBorder>
       </motion.div>
       )}
+      <CheckoutDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} plan={plans.find((p) => p.slug === 'familia') ?? null} />
     </div>
   )
 }

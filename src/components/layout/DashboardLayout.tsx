@@ -6,7 +6,7 @@ import {
   Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
-  MoreHorizontal, User, CircleDot,
+  MoreHorizontal, User, CircleDot, CreditCard, Crown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -20,6 +20,7 @@ import { OnboardingWizard } from '@/components/OnboardingWizard'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
+import { useIsAdmin } from '@/hooks/useAdmin'
 
 /* ── Navigation Config ── */
 const sidebarSections = [
@@ -58,6 +59,7 @@ const sidebarSections = [
   {
     title: 'Sistema',
     items: [
+      { to: '/dashboard/assinatura', label: 'Assinatura e Pagamentos', icon: CreditCard },
       { to: '/dashboard/history', label: 'Historico', icon: History },
       { to: '/dashboard/timeline', label: 'Timeline de Incidentes', icon: Clock },
       { to: '/dashboard/diagnostics', label: 'Diagnostico', icon: Activity },
@@ -80,6 +82,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { isAdmin } = useIsAdmin()
   const isActive = (path: string) => location.pathname === path
   const { activeEmergency } = useEmergencyAlerts()
   useBackgroundTracking()
@@ -106,7 +109,7 @@ export default function DashboardLayout() {
             <motion.aside
               initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-[300px] max-w-[85vw] bg-[#0D1321] border-r border-white/[0.06] z-50 flex flex-col overflow-hidden"
+              className="fixed left-0 top-0 bottom-0 w-[300px] max-w-[85vw] bg-[#14120D] border-r border-white/[0.06] z-50 flex flex-col overflow-hidden"
             >
               {/* Sidebar Header with user info */}
               <div className="relative px-5 pt-5 pb-4">
@@ -166,6 +169,26 @@ export default function DashboardLayout() {
                     </div>
                   </div>
                 ))}
+                {isAdmin && (
+                  <div className="mb-3">
+                    <p className="px-3 mb-1.5 text-[10px] font-semibold text-[#D4AF37]/50 uppercase tracking-wider">Administração</p>
+                    <div className="space-y-0.5">
+                      <NavLink
+                        to="/dashboard/admin"
+                        onClick={() => setSidebarOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
+                          location.pathname.startsWith('/dashboard/admin')
+                            ? 'text-[#D4AF37] bg-[#D4AF37]/[0.08]'
+                            : 'text-white/40 active:text-white/60 hover:text-white/60 hover:bg-white/[0.03]'
+                        )}
+                      >
+                        <Crown className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
+                        <span className="flex-1">Painel Admin</span>
+                      </NavLink>
+                    </div>
+                  </div>
+                )}
               </nav>
 
               {/* Sidebar Footer */}

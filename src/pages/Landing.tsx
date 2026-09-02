@@ -434,9 +434,9 @@ function TrustStats() {
 /* ════════════════════════════════════════════════ */
 function Pricing() {
   const plans = [
-    { name: 'Pessoal', price: 'Grátis', period: '', features: ['1 dispositivo BLE', '3 contactos de emergência', '7 dias de histórico', 'Alertas básicos'], cta: 'Começar Grátis', popular: false },
-    { name: 'Família', price: '$7.99', period: '/mês', features: ['5 dispositivos BLE', 'Geofences ilimitados', '90 dias de histórico', 'Gravação de áudio', 'Suporte prioritário', 'Partilha familiar'], cta: 'Assinar Agora', popular: true },
-    { name: 'Empresa', price: '$19.99', period: '/mês', features: ['Dispositivos ilimitados', 'Acesso à API', 'Painel administrativo', 'Relatórios avançados', 'SLA garantido', 'Suporte 24/7'], cta: 'Falar com Vendas', popular: false },
+    { name: 'Grátis', price: '0 MT', period: '', usd: null as string | null, features: ['Botão SOS instantâneo', '2 contactos de emergência', 'Check-in programado', 'Histórico de 7 dias'], cta: 'Começar Grátis', popular: false },
+    { name: 'Família', price: '249 MT', period: '/mês', usd: '≈ $3.99 via PayPal', features: ['6 contactos de emergência', 'Rastreamento de viagens', 'Modo discreto (3 disfarces)', 'Alertas por SMS', 'Rota segura com GPS', '3 dispositivos BLE'], cta: 'Assinar Agora', popular: true },
+    { name: 'Premium', price: '499 MT', period: '/mês', usd: '≈ $7.99 via PayPal', features: ['Contactos ilimitados', '11 disfarces de camuflagem', 'Gravação automática de evidências', 'Óculos e anéis inteligentes', 'Radar comunitário', 'Resposta 24/7'], cta: 'Assinar Premium', popular: false },
   ]
   return (
     <Section id="precos" className="py-28">
@@ -446,7 +446,7 @@ function Pricing() {
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Escolha o Plano Ideal
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem você ama ao preço certo.</p>
+          <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem você ama ao preço certo — pague com M-Pesa, e-Mola, mKesh ou PayPal.</p>
         </motion.div>
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan, i) => {
@@ -465,6 +465,7 @@ function Pricing() {
                   <span className="font-display text-4xl font-extrabold text-white">{plan.price}</span>
                   {plan.period && <span className="text-white/40">{plan.period}</span>}
                 </div>
+                {plan.usd && <p className="mt-1 text-[11px] text-white/25">{plan.usd}</p>}
                 <ul className="mt-8 flex flex-1 flex-col gap-3.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
@@ -478,12 +479,12 @@ function Pricing() {
                 <div className="mt-8">
                   {plan.popular ? (
                     <RippleButton className="w-full h-11">
-                      <Link to="/ativar">{plan.cta}</Link>
+                      <Link to="/planos">{plan.cta}</Link>
                     </RippleButton>
                   ) : (
                     <Button asChild variant="outline" className={cn('w-full h-11 rounded-xl border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white transition-all')}
                       >
-                      <Link to="/ativar">{plan.cta}</Link>
+                      <Link to="/planos">{plan.cta}</Link>
                     </Button>
                   )}
                 </div>

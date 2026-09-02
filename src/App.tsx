@@ -48,6 +48,15 @@ const SafeRoute = lazy(() => import('@/pages/SafeRoute'))
 const TripTracking = lazy(() => import('@/pages/TripTracking'))
 const IncidentTimeline = lazy(() => import('@/pages/IncidentTimeline'))
 const InstallChoice = lazy(() => import('@/components/InstallChoice'))
+const Pricing = lazy(() => import('@/pages/Pricing'))
+const Subscription = lazy(() => import('@/pages/Subscription'))
+const AdminShell = lazy(() => import('@/components/admin/AdminShell'))
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'))
+const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'))
+const AdminSubscriptions = lazy(() => import('@/pages/admin/AdminSubscriptions'))
+const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'))
+const AdminPlans = lazy(() => import('@/pages/admin/AdminPlans'))
 
 const queryClient = new QueryClient({ defaultOptions: getReactQueryDefaults() })
 
@@ -81,6 +90,7 @@ function AppRoutes() {
       <Route path="/ativar" element={<PublicRoute><WithErrorBoundary context="activate"><ActivateDevice /></WithErrorBoundary></PublicRoute>} />
       <Route path="/track/:token" element={<WithErrorBoundary context="tracking"><TrackEmergency /></WithErrorBoundary>} />
       <Route path="/instalar" element={<WithErrorBoundary context="install"><InstallChoice /></WithErrorBoundary>} />
+      <Route path="/planos" element={<WithErrorBoundary context="pricing"><Pricing /></WithErrorBoundary>} />
       <Route path="/dashboard" element={<ProtectedRoute><CoercionShield><DashboardLayout /></CoercionShield></ProtectedRoute>}>
         <Route index element={<WithErrorBoundary context="dashboard"><Dashboard /></WithErrorBoundary>} />
         <Route path="devices" element={<WithErrorBoundary context="devices"><Devices /></WithErrorBoundary>} />
@@ -99,6 +109,15 @@ function AppRoutes() {
         <Route path="rota" element={<WithErrorBoundary context="safe-route"><SafeRoute /></WithErrorBoundary>} />
         <Route path="viagens" element={<WithErrorBoundary context="trip-tracking"><TripTracking /></WithErrorBoundary>} />
         <Route path="timeline" element={<WithErrorBoundary context="incident-timeline"><IncidentTimeline /></WithErrorBoundary>} />
+        <Route path="assinatura" element={<WithErrorBoundary context="subscription"><Subscription /></WithErrorBoundary>} />
+        <Route path="admin" element={<WithErrorBoundary context="admin"><AdminShell /></WithErrorBoundary>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="utilizadores" element={<AdminUsers />} />
+          <Route path="pagamentos" element={<AdminPayments />} />
+          <Route path="assinaturas" element={<AdminSubscriptions />} />
+          <Route path="eventos" element={<AdminEvents />} />
+          <Route path="planos" element={<AdminPlans />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
