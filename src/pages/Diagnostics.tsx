@@ -4,6 +4,7 @@ import {
   Radio, Bell, Volume2, MessageSquare, Bluetooth, Shield,
   MapPin, Smartphone, CheckCircle2, XCircle, AlertCircle,
   Loader2, RefreshCw, ExternalLink, Wifi, WifiOff, Database, Trash2,
+  Globe2, Gauge, BatteryCharging,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -17,6 +18,7 @@ import { isPushSupported } from '@/lib/web-push'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { getErrorLogs, clearErrorLogs } from '@/components/ErrorBoundary'
+import { reverseGeocode, shortAddress, getIpInfo, getBatteryInfo, getConnectionInfo } from '@/lib/free-apis'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 
@@ -64,13 +66,18 @@ export default function Diagnostics() {
       icon: Shield,
     })
 
-    // 2. GPS / Geolocation
+    // 2. GPS / Geolocation + morada via OpenStreetMap (grátis, sem chave)
+    let addrText = ''
+    if (userPos) {
+      const addr = await reverseGeocode(userPos.latitude, userPos.longitude)
+      addrText = shortAddress(addr)
+    }
     results.push({
       id: 'gps', label: 'GPS / Localizacao',
-      description: 'Geolocalizacao do navegador',
+      description: 'Geolocalizacao do navegador + morada (OpenStreetMap)',
       status: userPos ? (userPos.accuracy && userPos.accuracy < 50 ? 'pass' : 'warn') : (geoPerm === 'denied' ? 'fail' : 'warn'),
       detail: userPos
-        ? `Lat: ${userPos.latitude.toFixed(5)}, Lng: ${userPos.longitude.toFixed(5)} (${Math.round(userPos.accuracy || 0)}m)`
+        ? `Lat: ${userPos.latitude.toFixed(5)}, Lng: ${userPos.longitude.toFixed(5)} (${Math.round(userPos.accuracy || 0)}m)${addrText ? ` · ${addrText}` : ''}`
         : geoPerm === 'denied' ? 'Permissao negada' : 'A aguardar GPS...',
       icon: Radio,
       action: geoPerm !== 'granted' && geoPerm !== 'denied' ? { label: 'Pedir GPS', onClick: () => {} } : undefined,
@@ -143,6 +150,54 @@ export default function Diagnostics() {
       status: navigator.onLine ? 'pass' : 'fail',
       detail: navigator.onLine ? 'Online' : 'Offline — emergencias serao guardadas localmente',
       icon: Wifi,
+    })
+
+    // 9b. IP externo + ISP (ipapi.co → ipwho.is → GeoJS, grátis sem chave)
+    try {
+      const ip = await getIpInfo()
+      results.push({
+        id: 'ip', label: 'IP Externo & Operador',
+        description: 'Geolocalizacao por IP (API gratuita)',
+        status: ip ? 'pass' : 'warn',
+        detail: ip
+          ? `${ip.ip} · ${[ip.city, ip.country].filter(Boolean).join(', ') || 'localizacao desconhecida'} · ${ip.isp ?? 'ISP desconhecido'}`
+          : 'Nao foi possivel obter (offline ou bloqueado)',
+        icon: Globe2,
+      })
+    } catch {
+      results.push({
+        id: 'ip', label: 'IP Externo & Operador',
+        description: 'Geolocalizacao por IP (API gratuita)',
+        status: 'warn', detail: 'Nao disponivel', icon: Globe2,
+      })
+    }
+
+    // 9c. Velocidade de rede (Network Information API, built-in)
+    const conn = getConnectionInfo()
+    results.push({
+      id: 'conn', label: 'Velocidade de Rede',
+      description: 'Qualidade da conexao (Network Information API)',
+      status: !conn.supported ? 'warn' : conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g' ? 'warn' : 'pass',
+      detail: !conn.supported
+        ? 'Nao suportada neste navegador (a app funciona na mesma)'
+        : `${conn.effectiveType ?? '—'} · ${conn.downlinkMbps != null ? `${conn.downlinkMbps} Mbps` : 'velocidade n/d'}${conn.saveData ? ' · poupanca de dados activa' : ''}`,
+      icon: Gauge,
+    })
+
+    // 9d. Bateria (Battery Status API, built-in)
+    const bat = await getBatteryInfo()
+    results.push({
+      id: 'battery', label: 'Bateria',
+      description: 'Nivel de bateria para modo de emergencia',
+      status: !bat.supported
+        ? 'warn'
+        : bat.charging || (bat.level ?? 1) > 0.3
+          ? 'pass'
+          : (bat.level ?? 0) <= 0.15 ? 'fail' : 'warn',
+      detail: !bat.supported
+        ? 'Nao suportada neste navegador (iOS) — carrega o telefone antes de viagens'
+        : `${Math.round((bat.level ?? 0) * 100)}% ${bat.charging ? '· a carregar' : '· em uso'}`,
+      icon: BatteryCharging,
     })
 
     // 10. Offline Queue
@@ -235,6 +290,7 @@ export default function Diagnostics() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="font-display text-2xl font-bold text-white">Diagnostico do Sistema</h1>
         <p className="text-sm text-white/30 mt-1">Verifique se o StatusAds Connect esta pronto para proteger voce.</p>
+        <p className="text-[11px] text-white/20 mt-1">APIs gratuitas activas: OpenStreetMap · ipapi.co · Network/Battery APIs — sem chave nem registo.</p>
       </motion.div>
 
       {/* Overall status banner */}

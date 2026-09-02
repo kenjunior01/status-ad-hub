@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   LayoutDashboard, Users, CreditCard, CalendarClock, ShieldAlert,
-  Settings2, Lock, ArrowLeft, Loader2, FlaskConical,
+  Settings2, Lock, ArrowLeft, Loader2, FlaskConical, SlidersHorizontal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +18,7 @@ const tabs = [
   { to: '/dashboard/admin/assinaturas', label: 'Assinaturas', icon: CalendarClock },
   { to: '/dashboard/admin/eventos', label: 'Eventos SOS', icon: ShieldAlert },
   { to: '/dashboard/admin/planos', label: 'Planos', icon: Settings2 },
+  { to: '/dashboard/admin/configuracoes', label: 'Configurações', icon: SlidersHorizontal },
 ]
 
 export default function AdminShell() {

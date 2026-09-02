@@ -6,7 +6,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useDemoMode } from '@/hooks/useSubscription'
-import type { Payment, Subscription, PlanSlug, PaymentMethod } from '@/lib/payments'
+import {
+  getLocalDemoPayments,
+  patchLocalDemoPayment,
+  confirmLocalDemoPayment,
+  type Payment,
+  type Subscription,
+  type PlanSlug,
+  type PaymentMethod,
+} from '@/lib/payments'
 
 export interface AdminUser {
   id: string
@@ -262,7 +270,9 @@ export function useAdminPayments(filter?: { status?: string; method?: string }) 
     queryFn: async () => {
       if (demo.data) {
         const { payments } = seedDemo()
-        return payments.filter((p) =>
+        // inclui pagamentos manuais submetidos no modo demo
+        const all = [...getLocalDemoPayments(), ...payments]
+        return all.filter((p) =>
           (!filter?.status || p.status === filter.status) &&
           (!filter?.method || p.method === filter.method))
       }
@@ -282,11 +292,36 @@ export function useAdminPayments(filter?: { status?: string; method?: string }) 
 
 export function useUpdatePaymentStatus() {
   const qc = useQueryClient()
+  const demo = useDemoMode()
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Payment['status'] }) => {
+      const confirmedAt = status === 'confirmed' ? new Date().toISOString() : null
+      if (demo.data) {
+        // demo: actualiza em LS_SEED e em LS_PAYMENTS (pagamentos manuais locais)
+        const SEED = 'statusads-demo-admin-seed-v1'
+        try {
+          const raw = localStorage.getItem(SEED)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed.payments)) {
+              parsed.payments = parsed.payments.map((p: Payment) =>
+                p.id === id ? { ...p, status, confirmed_at: confirmedAt } : p)
+              localStorage.setItem(SEED, JSON.stringify(parsed))
+            }
+          }
+        } catch { /* ignore */ }
+        // confirmação de pagamento local do utilizador actual:
+        // activa a subscrição demo (espelha o trigger SQL do real)
+        const confirmedLocal = status === 'confirmed' ? confirmLocalDemoPayment(id) : null
+        // para os restantes casos (ou pagamento semeado), patch directo
+        if (!confirmedLocal) {
+          patchLocalDemoPayment(id, { status, confirmed_at: confirmedAt })
+        }
+        return
+      }
       const { error } = await supabase.from('payments').update({
         status,
-        confirmed_at: status === 'confirmed' ? new Date().toISOString() : null,
+        confirmed_at: confirmedAt,
       }).eq('id', id)
       if (error) throw error
     },
@@ -294,6 +329,8 @@ export function useUpdatePaymentStatus() {
       logAdminAction(`payment_${vars.status}`, 'payment', vars.id, {})
       qc.invalidateQueries({ queryKey: ['admin-payments'] })
       qc.invalidateQueries({ queryKey: ['admin-stats'] })
+      qc.invalidateQueries({ queryKey: ['my-payments'] })
+      qc.invalidateQueries({ queryKey: ['subscription'] })
     },
   })
 }

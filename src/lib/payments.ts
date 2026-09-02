@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 
 // ── Tipos ──
 export type PlanSlug = 'free' | 'familia' | 'premium'
-export type PaymentMethod = 'mpesa' | 'emola' | 'mkesh' | 'paypal' | 'manual'
+export type PaymentMethod = 'mpesa' | 'emola' | 'mkesh' | 'paypal' | 'manual' | 'bank'
 export type PaymentStatus = 'pending' | 'processing' | 'confirmed' | 'failed' | 'cancelled' | 'refunded'
 
 export interface Plan {
@@ -38,6 +38,7 @@ export interface Payment {
   plan_slug?: string | null
   provider_ref?: string | null
   note?: string | null
+  payer_name?: string | null
   created_at: string
   confirmed_at?: string | null
 }
@@ -120,6 +121,7 @@ export const METHOD_LABELS: Record<PaymentMethod, string> = {
   mkesh: 'mKesh',
   paypal: 'PayPal',
   manual: 'Manual (admin)',
+  bank: 'Transferência Bancária',
 }
 
 // ── Deteccão de modo demo (cache com promise) ──
@@ -171,6 +173,117 @@ export function genDemoReference(): string {
   const d = new Date()
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
   return `SA-DEMO-${ymd}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+}
+
+export function genManualReference(): string {
+  const d = new Date()
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  return `SA-MAN-${ymd}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+}
+
+// Pagamentos manuais guardados localmente (modo demo) — visíveis
+// no painel admin demo via getLocalDemoPayments()
+export function getLocalDemoPayments(): Payment[] {
+  return lsGet<Payment>(LS_PAYMENTS)
+}
+
+// Actualiza um pagamento do modo demo (ex: admin confirma/rejeita)
+export function patchLocalDemoPayment(id: string, patch: Partial<Payment>): void {
+  const rows = lsGet<Payment>(LS_PAYMENTS)
+  const idx = rows.findIndex((p) => p.id === id)
+  if (idx >= 0) {
+    rows[idx] = { ...rows[idx], ...patch }
+    lsSet(LS_PAYMENTS, rows)
+  }
+}
+
+/**
+ * Confirma um pagamento manual local (modo demo) e activa a
+ * subscrição do utilizador actual — espelha o trigger SQL do
+ * modo real (activate_or_extend_subscription).
+ * Devolve o pagamento confirmado, ou null se o id não for
+ * um pagamento local do utilizador actual.
+ */
+export function confirmLocalDemoPayment(id: string): Payment | null {
+  const rows = lsGet<Payment>(LS_PAYMENTS)
+  const row = rows.find((p) => p.id === id && p.status !== 'confirmed')
+  if (!row) return null
+  row.status = 'confirmed'
+  row.confirmed_at = new Date().toISOString()
+  lsSet(LS_PAYMENTS, rows)
+  const plan = FALLBACK_PLANS.find((p) => p.slug === (row.plan_slug ?? 'free'))
+  if (plan && plan.slug !== 'free') activateDemoSubscription(plan)
+  return row
+}
+
+export interface ManualPaymentOpts {
+  plan: Plan
+  method: PaymentMethod
+  txnRef: string      // ID da transacção que o utilizador copiou do SMS/app
+  phone?: string
+  payerName?: string
+}
+
+/**
+ * Pagamento 100% MANUAL — sem nenhuma API externa.
+ * O utilizador pagou para o número do dono e submete o ID da
+ * transacção. Fica 'pending' até o admin confirmar em
+ * Admin → Pagamentos, o que activa a assinatura automaticamente
+ * (trigger trg_payment_confirmed, migration 009).
+ */
+export async function submitManualPayment(opts: ManualPaymentOpts): Promise<Payment> {
+  const amount = opts.method === 'paypal' ? opts.plan.price_usd : opts.plan.price_mzn
+  const currency = opts.method === 'paypal' ? 'USD' : 'MZN'
+  const demo = await isDemoMode()
+
+  if (demo) {
+    const payment: Payment = {
+      id: crypto.randomUUID(),
+      reference: genManualReference(),
+      amount,
+      currency,
+      method: opts.method,
+      phone: opts.phone ?? null,
+      status: 'pending',
+      plan_slug: opts.plan.slug,
+      provider_ref: opts.txnRef,
+      note: 'manual',
+      payer_name: opts.payerName ?? null,
+      created_at: new Date().toISOString(),
+      confirmed_at: null,
+    }
+    const rows = lsGet<Payment>(LS_PAYMENTS)
+    rows.unshift(payment)
+    lsSet(LS_PAYMENTS, rows)
+    return payment
+  }
+
+  // Real: resolve plan_id (necessário para o trigger activar a assinatura)
+  const { data: planRow } = await supabase
+    .from('plans').select('id').eq('slug', opts.plan.slug).single()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Sessão expirada — entra novamente.')
+
+  const { data, error } = await supabase
+    .from('payments')
+    .insert({
+      user_id: user.id,
+      plan_id: planRow?.id ?? null,
+      plan_slug: opts.plan.slug,
+      amount,
+      currency,
+      method: opts.method,
+      phone: opts.phone ?? null,
+      reference: genManualReference(),
+      provider_ref: opts.txnRef,
+      status: 'pending',
+      note: 'manual',
+      payer_name: opts.payerName ?? null,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as Payment
 }
 
 function createDemoPayment(plan: Plan, method: PaymentMethod, phone: string | null): Payment {

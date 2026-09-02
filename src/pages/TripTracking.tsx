@@ -9,12 +9,13 @@
  * - Finalizar ou cancelar viagens activas
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Map, MapPin, Play, Square, X, Clock, Share2, Plus, CheckCircle2, AlertCircle, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTripTracking } from '@/hooks/useTripTracking'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { getWeather, reverseGeocode, shortAddress, weatherLabel } from '@/lib/free-apis'
 import { toast } from 'sonner'
 
 export default function TripTracking() {
@@ -72,6 +73,9 @@ export default function TripTracking() {
           <Plus className='w-5 h-5' />
         </button>
       </div>
+
+      {/* Condições da viagem — OpenStreetMap + Open-Meteo (grátis, sem chave) */}
+      {position && <ConditionsCard lat={position.latitude} lng={position.longitude} />}
 
       {/* Active Trip Banner */}
       <AnimatePresence>
@@ -192,6 +196,53 @@ export default function TripTracking() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// ============================================================
+// ConditionsCard — morada actual (OpenStreetMap) + meteorologia
+// (Open-Meteo). APIs 100% gratuitas, sem chave de registo.
+// ============================================================
+function ConditionsCard({ lat, lng }: { lat: number; lng: number }) {
+  const [address, setAddress] = useState('')
+  const [weather, setWeather] = useState<{ temp: number; wind: number; code: number; day: boolean } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    reverseGeocode(lat, lng).then((a) => { if (!cancelled) setAddress(shortAddress(a)) })
+    getWeather(lat, lng).then((w) => {
+      if (!cancelled && w) setWeather({ temp: w.temperature, wind: w.windspeed, code: w.weathercode, day: w.isDay })
+    })
+    return () => { cancelled = true }
+  }, [lat, lng])
+
+  if (!address && !weather) return null
+
+  return (
+    <div className='flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex-wrap'>
+      {address && (
+        <div className='flex items-center gap-2 min-w-0 flex-1'>
+          <MapPin className='w-4 h-4 text-cyan-400/70 shrink-0' />
+          <div className='min-w-0'>
+            <p className='text-[10px] text-white/25'>Localização actual</p>
+            <p className='text-xs text-white/70 truncate'>{address}</p>
+          </div>
+        </div>
+      )}
+      {weather && (
+        <div className='flex items-center gap-2'>
+          <div className='text-right'>
+            <p className='text-[10px] text-white/25'>Condições</p>
+            <p className='text-xs text-white/70'>
+              {weatherLabel(weather.code)} · {Math.round(weather.temp)}°C
+            </p>
+          </div>
+          <div className='text-[10px] text-white/30 leading-tight'>
+            {weather.day ? 'dia' : 'noite'}<br />{Math.round(weather.wind)} km/h
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -35,7 +35,12 @@ export default function AdminPayments() {
   const filtered = payments.filter((p) => {
     if (!search.trim()) return true
     const s = search.toLowerCase()
-    return p.reference.toLowerCase().includes(s) || (p.phone ?? '').includes(s)
+    return (
+      p.reference.toLowerCase().includes(s) ||
+      (p.phone ?? '').includes(s) ||
+      (p.provider_ref ?? '').toLowerCase().includes(s) ||
+      (p.plan_slug ?? '').toLowerCase().includes(s)
+    )
   })
 
   const confirmed = payments.filter((p) => p.status === 'confirmed')
@@ -87,7 +92,7 @@ export default function AdminPayments() {
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
           <Input
-            placeholder="Referência ou telefone…"
+            placeholder="Referência, ID da transacção ou telefone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-9 rounded-xl"
@@ -156,12 +161,19 @@ function PaymentRow({ payment: p, busy, onConfirm, onFail, onRefund }: {
             {STATUS_LABEL[p.status] ?? p.status}
           </Badge>
           {p.note === 'demo' && <Badge variant="outline" className="text-[8px] text-amber-400/70 border-amber-500/20">demo</Badge>}
+          {p.note === 'manual' && <Badge variant="outline" className="text-[8px] text-[#D4AF37]/80 border-[#D4AF37]/30 bg-[#D4AF37]/5">manual</Badge>}
         </div>
         <p className="text-[10px] text-white/25 mt-0.5">
           {METHOD_LABELS[p.method] ?? p.method}
           {p.phone ? ` · ${p.phone}` : ''} · {formatDateTime(p.created_at)}
           {p.plan_slug ? ` · plano ${p.plan_slug}` : ''}
         </p>
+        {p.provider_ref && (
+          <p className="text-[10px] text-white/40 mt-0.5 font-mono">
+            <span className="text-white/25">ID transacção:</span> {p.provider_ref}
+            {p.payer_name ? <span className="text-white/25"> · {p.payer_name}</span> : null}
+          </p>
+        )}
       </div>
       <p className="text-[13px] font-bold text-white">
         {p.currency === 'USD' ? `$${Number(p.amount).toFixed(2)}` : formatMzn(Number(p.amount))}

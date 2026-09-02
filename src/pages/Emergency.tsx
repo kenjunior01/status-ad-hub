@@ -29,6 +29,7 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useMedicalProfile, isMedicalEmpty } from '@/hooks/useMedicalProfile'
+import { reverseGeocode, shortAddress } from '@/lib/free-apis'
 import { pt } from 'date-fns/locale'
 
 // ============================================
@@ -267,6 +268,19 @@ export default function Emergency() {
   useEffect(() => {
     if (userPos) setLastGpsUpdate(new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
   }, [userPos])
+
+  // Morada aproximada via OpenStreetMap Nominatim (grátis, sem chave)
+  const [address, setAddress] = useState<string>('')
+  useEffect(() => {
+    const lat = activeEmergency?.latitude ?? userPos?.latitude
+    const lng = activeEmergency?.longitude ?? userPos?.longitude
+    if (lat == null || lng == null) return
+    let cancelled = false
+    reverseGeocode(lat, lng).then((a) => {
+      if (!cancelled) setAddress(shortAddress(a))
+    })
+    return () => { cancelled = true }
+  }, [activeEmergency?.latitude, activeEmergency?.longitude, userPos?.latitude, userPos?.longitude])
 
   // Record GPS trail during active emergency
   const hasActive = activeEmergency?.status === 'active'
@@ -624,9 +638,10 @@ export default function Emergency() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
                   <MapPin className="h-4 w-4 text-red-400/70" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[10px] text-white/25">Localizacao</p>
                     <p className="text-xs font-mono text-white/70">{activeEmergency.latitude.toFixed(5)}, {activeEmergency.longitude.toFixed(5)}</p>
+                    {address && <p className="text-[10px] text-[#D4AF37]/80 truncate" title={address}>{address}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
