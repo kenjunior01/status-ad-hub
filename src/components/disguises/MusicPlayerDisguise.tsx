@@ -33,7 +33,7 @@ export function MusicPlayerDisguise({ onSOS }: { onSOS: () => void }) {
   }
 
   const track = fakeTracks[currentTrack]
-  const colors = ['from-purple-500 to-pink-500', 'from-blue-500 to-cyan-500', 'from-green-500 to-teal-500', 'from-amber-500 to-orange-500', 'from-red-500 to-rose-500']
+  const colors = ['from-purple-500 to-pink-500', 'from-blue-500 to-cyan-500', 'from-amber-400 to-teal-500', 'from-amber-500 to-orange-500', 'from-red-500 to-rose-500']
 
   return (
     <div className={`min-h-screen bg-gradient-to-b ${colors[currentTrack]} flex flex-col`}>

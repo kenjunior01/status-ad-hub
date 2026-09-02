@@ -52,7 +52,7 @@ export function PanicModeOverlay() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[9998] bg-[#0A0F1A] flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[9998] bg-[#0C0B08] flex flex-col items-center justify-center"
     >
       {/* Top status bar */}
       <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
@@ -90,7 +90,7 @@ export function PanicModeOverlay() {
           <div className="text-white/60 text-xs">{state.photosCaptured.length} Fotos</div>
         </div>
         <div className="bg-white/5 rounded-xl p-3 text-center">
-          <MapPin className="w-5 h-5 mx-auto mb-1 text-green-400" />
+          <MapPin className="w-5 h-5 mx-auto mb-1 text-amber-300" />
           <div className="text-white/60 text-xs">GPS Activo</div>
         </div>
       </div>
@@ -110,7 +110,7 @@ export function PanicModeOverlay() {
           animate={{ opacity: 1 }}
           className="absolute inset-0 bg-black/80 flex items-center justify-center p-6"
         >
-          <div className="bg-[#1F2937] rounded-2xl p-6 w-72">
+          <div className="bg-[#221E16] rounded-2xl p-6 w-72">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Lock className="w-5 h-5 text-white/60" />
               <span className="text-white font-medium">Desactivar Pânico</span>

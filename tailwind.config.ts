@@ -44,9 +44,9 @@ const config: Config = {
         },
         // Custom safety colors
         safe: {
-          DEFAULT: '#25D366',
-          light: '#25D36620',
-          dark: '#128C3E',
+          DEFAULT: '#D4AF37',
+          light: '#D4AF3720',
+          dark: '#8C6D1F',
         },
         danger: {
           DEFAULT: '#EF4444',
@@ -58,11 +58,11 @@ const config: Config = {
           light: '#F59E0B20',
         },
         navy: {
-          950: '#030712',
-          900: '#0A0F1A',
-          800: '#111827',
-          700: '#1F2937',
-          600: '#374151',
+          950: '#060504',
+          900: '#0C0B08',
+          800: '#14120D',
+          700: '#221E16',
+          600: '#322D22',
         },
       },
       borderRadius: {
@@ -88,8 +88,8 @@ const config: Config = {
           '50%': { transform: 'translateY(-10px)' },
         },
         'glow': {
-          '0%, 100%': { boxShadow: '0 0 5px rgba(37, 211, 102, 0.3)' },
-          '50%': { boxShadow: '0 0 20px rgba(37, 211, 102, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 5px rgba(212, 175, 55, 0.3)' },
+          '50%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.6)' },
         },
         'slide-up': {
           '0%': { transform: 'translateY(20px)', opacity: '0' },
@@ -115,7 +115,7 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-glow': 'radial-gradient(ellipse at center, rgba(37,211,102,0.15) 0%, transparent 70%)',
+        'hero-glow': 'radial-gradient(ellipse at center, rgba(212,175,55,0.18) 0%, transparent 70%)',
         'danger-glow': 'radial-gradient(ellipse at center, rgba(239,68,68,0.15) 0%, transparent 70%)',
       },
     },

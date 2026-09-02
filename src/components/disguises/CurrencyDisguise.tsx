@@ -31,22 +31,22 @@ export function CurrencyDisguise({ onSOS }: { onSOS: () => void }) {
               <span className="text-xs text-gray-500 dark:text-gray-400">De</span>
               <div className="flex gap-1">{currencies.filter(c => c !== to).map(c => (
                 <button key={c} onClick={() => setFrom(c)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${from === c ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>{flags[c]} {c}</button>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${from === c ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>{flags[c]} {c}</button>
               ))}</div>
             </div>
             <input ref={inputRef} value={amount} onChange={e => handleChange(e.target.value)} inputMode="decimal" placeholder="0.00"
               className="w-full text-3xl font-bold text-gray-900 dark:text-white bg-transparent focus:outline-none text-right" />
           </div>
-          <div className="flex justify-center text-emerald-500">⇅</div>
+          <div className="flex justify-center text-amber-400">⇅</div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-gray-500 dark:text-gray-400">Para</span>
               <div className="flex gap-1">{currencies.filter(c => c !== from).map(c => (
                 <button key={c} onClick={() => setTo(c)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${to === c ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>{flags[c]} {c}</button>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${to === c ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>{flags[c]} {c}</button>
               ))}</div>
             </div>
-            <div className="text-3xl font-bold text-emerald-500 text-right">{flags[to]} {result}</div>
+            <div className="text-3xl font-bold text-amber-400 text-right">{flags[to]} {result}</div>
             <div className="text-xs text-gray-400 text-right mt-1">1 {from} = {(rates[to] / rates[from]).toFixed(4)} {to}</div>
           </div>
         </div>

@@ -51,7 +51,7 @@ export function AnimatedGrid({ className, opacity = 1 }: { className?: string; o
           ctx.beginPath()
           ctx.arc(x, y, radius, 0, Math.PI * 2)
           ctx.fillStyle = glow > 0.01
-            ? `rgba(37, 211, 102, ${alpha})`
+            ? `rgba(212, 175, 55, ${alpha})`
             : `rgba(255, 255, 255, ${alpha})`
           ctx.fill()
         }

@@ -224,7 +224,7 @@ export function OnboardingWizard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#0A0F1A]/90 backdrop-blur-xl"
+            className="absolute inset-0 bg-[#0C0B08]/90 backdrop-blur-xl"
           />
 
           <motion.div
@@ -250,9 +250,9 @@ export function OnboardingWizard() {
                   className={cn(
                     'h-1 flex-1 rounded-full transition-all duration-500',
                     i < currentStep
-                      ? 'bg-[#25D366]'
+                      ? 'bg-[#D4AF37]'
                       : i === currentStep
-                        ? 'bg-[#25D366]/40'
+                        ? 'bg-[#D4AF37]/40'
                         : 'bg-white/[0.06]'
                   )}
                 />
@@ -261,22 +261,22 @@ export function OnboardingWizard() {
 
             {/* Card */}
             {isLastStep ? (
-              <BeamBorder color="#25D366">
+              <BeamBorder color="#D4AF37">
                 <SpotlightCard className="p-8 text-center">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.2 }}
-                    className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-[#25D366]/[0.08] border border-[#25D366]/20 flex items-center justify-center"
+                    className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-[#D4AF37]/[0.08] border border-[#D4AF37]/20 flex items-center justify-center"
                   >
-                    <Check className="h-10 w-10 text-[#25D366]" />
+                    <Check className="h-10 w-10 text-[#D4AF37]" />
                   </motion.div>
                   <h2 className="text-xl font-display font-bold text-white mb-3">{step.title}</h2>
                   <p className="text-sm text-white/40 leading-relaxed mb-8 max-w-sm mx-auto">{step.description}</p>
                   <Button
                     onClick={handleAction}
                     disabled={isCompleting}
-                    className="bg-[#25D366] hover:bg-[#1fb855] text-white rounded-xl px-8 h-12 gap-2 text-sm font-semibold shadow-[0_0_30px_-5px_rgba(37,211,102,0.3)]"
+                    className="bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl px-8 h-12 gap-2 text-sm font-semibold shadow-[0_0_30px_-5px_rgba(212,175,55,0.3)]"
                   >
                     {isCompleting ? 'A configurar...' : 'Comecar a Usar'}
                     <ChevronRight className="h-4 w-4" />
@@ -289,19 +289,19 @@ export function OnboardingWizard() {
                   <div className={cn(
                     'p-3 rounded-2xl shrink-0 transition-colors',
                     completedSteps[currentStep]
-                      ? 'bg-[#25D366]/[0.08] border border-[#25D366]/15'
+                      ? 'bg-[#D4AF37]/[0.08] border border-[#D4AF37]/15'
                       : 'bg-white/[0.04] border border-white/[0.08]'
                   )}>
                     <StepIcon className={cn(
                       'h-6 w-6',
-                      completedSteps[currentStep] ? 'text-[#25D366]' : 'text-white/40'
+                      completedSteps[currentStep] ? 'text-[#D4AF37]' : 'text-white/40'
                     )} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h2 className="text-base font-display font-bold text-white">{step.title}</h2>
                       {completedSteps[currentStep] && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#25D366]/10 text-[10px] font-medium text-[#25D366]">
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#D4AF37]/10 text-[10px] font-medium text-[#D4AF37]">
                           <Check className="h-2.5 w-2.5" /> Configurado
                         </div>
                       )}
@@ -315,7 +315,7 @@ export function OnboardingWizard() {
                           'rounded-xl gap-2 text-sm',
                           completedSteps[currentStep]
                             ? 'bg-white/[0.04] border border-white/[0.08] text-white/50 hover:bg-white/[0.06]'
-                            : 'bg-[#25D366] hover:bg-[#1fb855] text-white'
+                            : 'bg-[#D4AF37] hover:bg-[#B8962E] text-white'
                         )}
                       >
                         {completedSteps[currentStep] ? 'Continuar' : step.action}
@@ -341,9 +341,9 @@ export function OnboardingWizard() {
                       className={cn(
                         'w-2 h-2 rounded-full transition-all duration-300',
                         i === currentStep
-                          ? 'bg-[#25D366] w-6'
+                          ? 'bg-[#D4AF37] w-6'
                           : completedSteps[i]
-                            ? 'bg-[#25D366]/40'
+                            ? 'bg-[#D4AF37]/40'
                             : 'bg-white/[0.08]'
                       )}
                     />

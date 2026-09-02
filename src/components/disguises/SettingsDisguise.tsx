@@ -4,7 +4,7 @@ import { Wifi, Bluetooth, Battery, Bell, Moon, Lock, Info, ChevronRight } from '
 const settingsItems = [
   { icon: Wifi, label: 'Wi-Fi', value: 'Casa_5G', color: 'text-blue-500' },
   { icon: Bluetooth, label: 'Bluetooth', value: 'Activo', color: 'text-blue-400' },
-  { icon: Battery, label: 'Bateria', value: '67%', color: 'text-green-500' },
+  { icon: Battery, label: 'Bateria', value: '67%', color: 'text-amber-400' },
   { icon: Bell, label: 'Notificações', value: 'Activadas', color: 'text-red-500' },
   { icon: Moon, label: 'Não Perturbar', value: 'Desactivado', color: 'text-purple-500' },
   { icon: Lock, label: 'Segurança', value: 'PIN', color: 'text-amber-500' },

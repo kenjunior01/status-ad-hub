@@ -48,7 +48,7 @@ export function ContactsDisguise({ onSOS }: { onSOS: () => void }) {
               <div className="text-xs text-gray-500 dark:text-gray-400">{c.phone}</div>
             </div>
             <div className="flex gap-2">
-              <button className="p-2 rounded-full bg-green-100 dark:bg-green-900/30"><Phone className="w-3.5 h-3.5 text-green-600" /></button>
+              <button className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30"><Phone className="w-3.5 h-3.5 text-amber-500" /></button>
               <button className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30"><MessageSquare className="w-3.5 h-3.5 text-blue-600" /></button>
             </div>
           </div>

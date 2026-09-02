@@ -285,12 +285,12 @@ export function DuressLoginOverlay({
     `h-11 w-full rounded-xl border ${
       hasError
         ? 'border-red-500/40 focus-visible:ring-red-500/30'
-        : 'border-white/[0.08] focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30'
+        : 'border-white/[0.08] focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30'
     } bg-white/[0.03] pl-10 pr-4 text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm`
 
   // ---- RENDER ----
   return (
-    <div className="dark flex min-h-screen bg-[#0A0F1A]">
+    <div className="dark flex min-h-screen bg-[#0C0B08]">
       {/* Duress armed indicator — tiny green dot, top-right corner */}
       <AnimatePresence>
         {isDuressArmed && (
@@ -302,7 +302,7 @@ export function DuressLoginOverlay({
             className="fixed top-3 right-3 z-50"
             aria-hidden="true"
           >
-            <div className="w-2 h-2 rounded-full bg-[#25D366] shadow-[0_0_6px_rgba(37,211,102,0.6)] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.6)] animate-pulse" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -315,12 +315,12 @@ export function DuressLoginOverlay({
           <NoiseTexture opacity={0.02} />
           <MorphingBlob
             className="-left-20 top-1/3"
-            color="rgba(37, 211, 102, 0.05)"
+            color="rgba(212, 175, 55, 0.05)"
             size={350}
           />
           <MorphingBlob
             className="-bottom-20 right-1/3"
-            color="rgba(59, 130, 246, 0.04)"
+            color="rgba(212, 175, 55, 0.04)"
             size={300}
           />
 
@@ -346,25 +346,25 @@ export function DuressLoginOverlay({
               aria-hidden="true"
             >
               <div
-                className={`flex h-28 w-28 items-center justify-center rounded-3xl border backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)] transition-all duration-200 ${
+                className={`flex h-28 w-28 items-center justify-center rounded-3xl border backdrop-blur-md shadow-[0_0_60px_-15px_rgba(212,175,55,0.15)] transition-all duration-200 ${
                   tapFeedback
-                    ? 'border-[#25D366]/50 bg-[#25D366]/[0.12]'
-                    : 'border-[#25D366]/20 bg-[#25D366]/[0.06]'
+                    ? 'border-[#D4AF37]/50 bg-[#D4AF37]/[0.12]'
+                    : 'border-[#D4AF37]/20 bg-[#D4AF37]/[0.06]'
                 }`}
               >
                 <Shield
-                  className={`h-14 w-14 text-[#25D366] transition-transform duration-150 ${
+                  className={`h-14 w-14 text-[#D4AF37] transition-transform duration-150 ${
                     tapFeedback ? 'scale-110' : ''
                   }`}
                   strokeWidth={1}
                 />
               </div>
-              <div className="absolute inset-0 rounded-3xl bg-[#25D366]/5 blur-2xl" />
+              <div className="absolute inset-0 rounded-3xl bg-[#D4AF37]/5 blur-2xl" />
             </motion.div>
 
             <h2 className="font-display text-3xl font-bold text-white">
               A Sua{' '}
-              <span className="bg-gradient-to-r from-[#25D366] to-emerald-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#D4AF37] to-amber-300 bg-clip-text text-transparent">
                 Seguranca
               </span>{' '}
               Comeca Aqui
@@ -392,18 +392,18 @@ export function DuressLoginOverlay({
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none ${
                 tapFeedback
-                  ? 'bg-[#25D366]/20 border-[#25D366]/40'
-                  : 'bg-[#25D366]/10 border-[#25D366]/20'
+                  ? 'bg-[#D4AF37]/20 border-[#D4AF37]/40'
+                  : 'bg-[#D4AF37]/10 border-[#D4AF37]/20'
               }`}
               onClick={handleShieldTap}
               role="button"
               tabIndex={-1}
               aria-hidden="true"
             >
-              <Shield className="h-5 w-5 text-[#25D366]" />
+              <Shield className="h-5 w-5 text-[#D4AF37]" />
             </div>
             <span className="font-display text-xl font-bold text-white">
-              Status<span className="text-[#25D366]">Ads</span>
+              Status<span className="text-[#D4AF37]">Ads</span>
             </span>
           </motion.div>
 
@@ -480,7 +480,7 @@ export function DuressLoginOverlay({
                 <button
                   type="button"
                   onClick={() => setResetMode(true)}
-                  className="text-xs text-[#25D366]/70 transition hover:text-[#25D366]"
+                  className="text-xs text-[#D4AF37]/70 transition hover:text-[#D4AF37]"
                 >
                   Esqueceu a senha?
                 </button>
@@ -570,7 +570,7 @@ export function DuressLoginOverlay({
             Nao tem conta?{' '}
             <a
               href="/ativar"
-              className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]"
+              className="font-medium text-[#D4AF37]/70 transition hover:text-[#D4AF37]"
             >
               Activar Dispositivo
             </a>
@@ -595,8 +595,8 @@ export function DuressLoginOverlay({
                   className="w-full max-w-sm mx-4 rounded-2xl border border-white/[0.08] bg-[#0D1321] p-8"
                 >
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/15">
-                      <MailWarning className="h-5 w-5 text-[#25D366]" />
+                    <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15">
+                      <MailWarning className="h-5 w-5 text-[#D4AF37]" />
                     </div>
                     <div>
                       <h3 className="font-display text-base font-semibold text-white">
@@ -614,7 +614,7 @@ export function DuressLoginOverlay({
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
-                    className="w-full h-11 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-4 pr-4 text-white text-sm placeholder:text-white/20 outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30 transition-all duration-200 mb-4"
+                    className="w-full h-11 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-4 pr-4 text-white text-sm placeholder:text-white/20 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30 transition-all duration-200 mb-4"
                   />
 
                   <div className="flex gap-3">
@@ -627,7 +627,7 @@ export function DuressLoginOverlay({
                     <button
                       onClick={handleResetPassword}
                       disabled={resetLoading}
-                      className="flex-1 h-11 rounded-xl bg-[#25D366] hover:bg-[#1fb855] text-white text-sm font-semibold disabled:opacity-50 transition gap-2 flex items-center justify-center"
+                      className="flex-1 h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-white text-sm font-semibold disabled:opacity-50 transition gap-2 flex items-center justify-center"
                     >
                       {resetLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

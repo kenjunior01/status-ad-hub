@@ -52,7 +52,7 @@ type DisplayDevice = {
 
 const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch, other: Wifi }
 const statusLabels: Record<string, { label: string; className: string }> = {
-  online: { label: 'Online', className: 'bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/20' },
+  online: { label: 'Online', className: 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20' },
   connected: { label: 'Conectado', className: 'bg-blue-500/15 text-blue-400 border border-blue-500/20' },
   low_battery: { label: 'Bateria Baixa', className: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' },
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.08]' },
@@ -72,8 +72,8 @@ function MapController() {
 
 /** Emergency zone circle on the map */
 function ZoneCircle({ center, radius, inside }: { center: [number, number]; radius: number; inside: boolean }) {
-  const color = inside ? '#25D366' : '#EF4444'
-  const fillColor = inside ? '#25D366' : '#EF4444'
+  const color = inside ? '#D4AF37' : '#EF4444'
+  const fillColor = inside ? '#D4AF37' : '#EF4444'
   return (
     <Circle
       center={center}
@@ -93,8 +93,8 @@ function ZoneCircle({ center, radius, inside }: { center: [number, number]; radi
 /** User's live GPS position marker */
 function UserMarker({ position }: { position: [number, number] }) {
   const html = '<div style="position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">' +
-    '<div style="position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(37,211,102,0.15);animation:pulse-ring 2.5s infinite;"></div>' +
-    '<div style="width:10px;height:10px;border-radius:50%;background:#25D366;border:2.5px solid rgba(10,15,26,0.9);box-shadow:0 0 12px rgba(37,211,102,0.5);z-index:2;position:relative;"></div>' +
+    '<div style="position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(212,175,55,0.15);animation:pulse-ring 2.5s infinite;"></div>' +
+    '<div style="width:10px;height:10px;border-radius:50%;background:#D4AF37;border:2.5px solid rgba(10,15,26,0.9);box-shadow:0 0 12px rgba(212,175,55,0.5);z-index:2;position:relative;"></div>' +
     '</div>' +
     '<style>@keyframes pulse-ring{0%{transform:scale(1);opacity:0.8}100%{transform:scale(3);opacity:0}}</style>'
   const icon = L.divIcon({ html, className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
@@ -169,7 +169,7 @@ export default function Dashboard() {
     return Math.min(100, score)
   }, [userPos, notifPermission, isPushSubscribed, isMonitoring, zoneState, voiceListening, dmsEnabled, threatMonitoring, dangerZoneCount, panicState.isActive])
   const readinessLabel = readinessScore >= 80 ? 'Protegido' : readinessScore >= 50 ? 'Parcial' : 'Vulneravel'
-  const readinessColor = readinessScore >= 80 ? '#25D366' : readinessScore >= 50 ? 'amber-400' : 'red-400'
+  const readinessColor = readinessScore >= 80 ? '#D4AF37' : readinessScore >= 50 ? 'amber-400' : 'red-400'
 
   // Show shimmer until both the local delay and data hooks finish
   const dataReady = !devicesLoading && !statsLoading
@@ -244,7 +244,7 @@ export default function Dashboard() {
           type: d.type,
           lat: loc?.lat ?? -25.9692,
           lng: loc?.lng ?? 32.5732,
-          color: d.color || '#25D366',
+          color: d.color || '#D4AF37',
           status: d.status,
           battery: d.battery,
           lastSeen: timeAgo(d.last_seen),
@@ -271,7 +271,7 @@ export default function Dashboard() {
   const totalDevices = stats?.total_devices ?? displayDevices.length
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#0A0F1A]">
+    <div className="relative h-screen w-full overflow-hidden bg-[#0C0B08]">
       {(loading || !dataReady) && (
         <>
           <div className="absolute top-4 left-4 z-50 w-80 space-y-3">
@@ -292,11 +292,11 @@ export default function Dashboard() {
       {/* TOP BAR */}
       <motion.header
         initial={{ y: -60 }} animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-4 md:px-6 py-3 backdrop-blur-2xl bg-[#0A0F1A]/60 border-b border-white/[0.04]"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-4 md:px-6 py-3 backdrop-blur-2xl bg-[#0C0B08]/60 border-b border-white/[0.04]"
       >
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20">
-            <Shield className="h-4 w-4 text-[#25D366]" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+            <Shield className="h-4 w-4 text-[#D4AF37]" />
           </div>
           <span className="font-display font-bold text-white text-base tracking-tight">StatusAD</span>
         </div>
@@ -306,15 +306,15 @@ export default function Dashboard() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
             <Input
               placeholder="Pesquisar dispositivos..."
-              className="pl-9 h-9 bg-white/[0.03] border-white/[0.08] text-white text-sm placeholder:text-white/15 rounded-xl focus-visible:ring-[#25D366]/20 focus-visible:border-[#25D366]/20"
+              className="pl-9 h-9 bg-white/[0.03] border-white/[0.08] text-white text-sm placeholder:text-white/15 rounded-xl focus-visible:ring-[#D4AF37]/20 focus-visible:border-[#D4AF37]/20"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#25D366]/[0.06] border border-[#25D366]/15">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]" />
-            <span className="text-[11px] font-medium text-[#25D366]">{safeMode ? 'Seguro' : 'Inactivo'}</span>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
+            <span className="text-[11px] font-medium text-[#D4AF37]">{safeMode ? 'Seguro' : 'Inactivo'}</span>
           </div>
 
           {isMonitoring && (
@@ -334,7 +334,7 @@ export default function Dashboard() {
             )}
           </button>
 
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(37,211,102,0.2)]">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(212,175,55,0.2)]">
             {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
         </div>
@@ -347,7 +347,7 @@ export default function Dashboard() {
         {/* Device markers */}
         {markers.map(d => <Marker key={d.id} position={[d.lat, d.lng]} icon={d.icon} />)}
         {markers.length >= 2 && (
-          <Polyline positions={markers.map(m => [m.lat, m.lng] as [number, number])} pathOptions={{ color: '#25D366', weight: 2, dashArray: '8 6', opacity: 0.5 }} />
+          <Polyline positions={markers.map(m => [m.lat, m.lng] as [number, number])} pathOptions={{ color: '#D4AF37', weight: 2, dashArray: '8 6', opacity: 0.5 }} />
         )}
         {/* Emergency zone circle */}
         {zone && <ZoneCircle center={[zone.lat, zone.lng]} radius={zone.radius} inside={zoneState === 'inside'} />}
@@ -362,7 +362,7 @@ export default function Dashboard() {
             initial={{ y: -60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -60, opacity: 0 }}
             className="absolute top-16 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
           >
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1F2937]/90 backdrop-blur-xl border border-white/[0.08]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#221E16]/90 backdrop-blur-xl border border-white/[0.08]">
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/15 shrink-0">
                 <Bell className="h-4 w-4 text-amber-400" />
               </div>
@@ -376,7 +376,7 @@ export default function Dashboard() {
                   sessionStorage.setItem('notif-prompt-shown', '1')
                   setShowNotifBanner(false)
                 }}
-                className="h-8 text-[10px] bg-[#25D366] hover:bg-[#1fb855] text-white rounded-lg shrink-0"
+                className="h-8 text-[10px] bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-lg shrink-0"
               >Activar</Button>
               <button onClick={() => { setShowNotifBanner(false); sessionStorage.setItem('notif-prompt-shown', '1') }} className="text-white/20 hover:text-white/40 p-1">
                 <X className="h-3.5 w-3.5" />
@@ -396,7 +396,7 @@ export default function Dashboard() {
         <SpotlightCard className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-sm font-semibold text-white">Dispositivos</h3>
-            <span className="px-2 py-0.5 text-[10px] rounded-lg bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 font-medium">{activeDevices} activos</span>
+            <span className="px-2 py-0.5 text-[10px] rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-medium">{activeDevices} activos</span>
           </div>
           {displayDevices.length === 0 ? (
             <div className="text-center py-6">
@@ -444,19 +444,19 @@ export default function Dashboard() {
             <div className={cn(
               'flex items-center gap-1.5 px-2.5 py-1 rounded-full border',
               readinessScore >= 80
-                ? 'bg-[#25D366]/[0.08] border-[#25D366]/20'
+                ? 'bg-[#D4AF37]/[0.08] border-[#D4AF37]/20'
                 : readinessScore >= 50
                   ? 'bg-amber-400/[0.08] border-amber-400/20'
                   : 'bg-red-400/[0.08] border-red-400/20'
             )}>
-              <Shield className={cn('h-3 w-3', readinessScore >= 80 ? 'text-[#25D366]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
+              <Shield className={cn('h-3 w-3', readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
               <span className={cn(
                 'text-[10px] font-bold tracking-wider',
-                readinessScore >= 80 ? 'text-[#25D366]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
+                readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
               )}>{readinessLabel.toUpperCase()}</span>
               <span className={cn(
                 'text-[10px] font-mono ml-0.5',
-                readinessScore >= 80 ? 'text-[#25D366]/60' : readinessScore >= 50 ? 'text-amber-400/60' : 'text-red-400/60'
+                readinessScore >= 80 ? 'text-[#D4AF37]/60' : readinessScore >= 50 ? 'text-amber-400/60' : 'text-red-400/60'
               )}>{readinessScore}%</span>
             </div>
           </div>
@@ -465,7 +465,7 @@ export default function Dashboard() {
             <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: readinessScore >= 80 ? '#25D366' : readinessScore >= 50 ? '#f59e0b' : '#ef4444' }}
+                style={{ background: readinessScore >= 80 ? '#D4AF37' : readinessScore >= 50 ? '#f59e0b' : '#ef4444' }}
                 initial={{ width: 0 }}
                 animate={{ width: `${readinessScore}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
@@ -484,11 +484,11 @@ export default function Dashboard() {
             <p className="text-[10px] text-white/30 mb-2 font-medium">Localizacoes Hoje</p>
             <ResponsiveContainer width="100%" height={90}>
               <AreaChart data={hourlyData}>
-                <defs><linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#25D366" stopOpacity={0.3} /><stop offset="100%" stopColor="#25D366" stopOpacity={0} /></linearGradient></defs>
+                <defs><linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#D4AF37" stopOpacity={0.3} /><stop offset="100%" stopColor="#D4AF37" stopOpacity={0} /></linearGradient></defs>
                 <XAxis dataKey="hora" tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }} axisLine={false} tickLine={false} interval={5} />
                 <YAxis hide />
                 <Tooltip contentStyle={{ background: '#0D1321', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, fontSize: 11, color: '#fff', backdropFilter: 'blur(12px)' }} labelStyle={{ color: 'rgba(255,255,255,0.5)' }} />
-                <Area type="monotone" dataKey="localizacoes" stroke="#25D366" strokeWidth={2} fill="url(#greenGrad)" />
+                <Area type="monotone" dataKey="localizacoes" stroke="#D4AF37" strokeWidth={2} fill="url(#greenGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -523,16 +523,16 @@ export default function Dashboard() {
                   className={cn(
                     'flex flex-col items-center gap-1 py-2 rounded-xl border transition-colors',
                     item.ok
-                      ? 'bg-[#25D366]/[0.04] border-[#25D366]/10'
+                      ? 'bg-[#D4AF37]/[0.04] border-[#D4AF37]/10'
                       : 'bg-white/[0.02] border-white/[0.04]'
                   )}
                   title={item.tip}
                 >
                   {item.ok
-                    ? <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366]" />
+                    ? <CheckCircle2 className="h-3.5 w-3.5 text-[#D4AF37]" />
                     : <AlertCircle className={cn('h-3.5 w-3.5', item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')} />
                   }
-                  <span className={cn('text-[9px] font-medium', item.ok ? 'text-[#25D366]/80' : item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')}>{item.label}</span>
+                  <span className={cn('text-[9px] font-medium', item.ok ? 'text-[#D4AF37]/80' : item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')}>{item.label}</span>
                 </div>
               ))}
             </div>
@@ -541,17 +541,17 @@ export default function Dashboard() {
               <div className={cn(
                 'mt-3 flex items-center justify-between px-3 py-2 rounded-xl border',
                 zoneState === 'inside'
-                  ? 'bg-[#25D366]/[0.04] border-[#25D366]/10'
+                  ? 'bg-[#D4AF37]/[0.04] border-[#D4AF37]/10'
                   : 'bg-red-500/[0.04] border-red-500/10'
               )}>
                 <div className="flex items-center gap-2">
-                  <MapPin className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#25D366]' : 'text-red-400')} />
+                  <MapPin className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400')} />
                   <span className="text-[10px] text-white/50">Distancia ao centro</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     'text-xs font-mono font-bold',
-                    zoneState === 'inside' ? 'text-[#25D366]' : 'text-red-400'
+                    zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400'
                   )}>{Math.round(geofenceDistance)}m</span>
                   <span className="text-[9px] text-white/20">/ {zone.radius}m</span>
                 </div>
@@ -566,10 +566,10 @@ export default function Dashboard() {
       <motion.div
         initial={{ y: 80 }} animate={{ y: 0 }}
         transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-2xl bg-[#0A0F1A]/70 border-t border-white/[0.04] md:bottom-0 lg:bottom-0"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-2xl bg-[#0C0B08]/70 border-t border-white/[0.04] md:bottom-0 lg:bottom-0"
       >
         {[
-          { label: safeMode ? 'Seguro' : 'Inactivo', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#25D366] text-white shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)]' },
+          { label: safeMode ? 'Seguro' : 'Inactivo', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#D4AF37] text-white shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)]' },
           { label: 'Partilhar', icon: Share2, active: false, onClick: handleShareLocation },
           { label: 'Testar', icon: Zap, active: false, onClick: () => refetchDevices() },
           { label: 'EMERGENCIA', icon: ShieldAlert, active: false, onClick: handleEmergency, danger: true },
@@ -581,7 +581,7 @@ export default function Dashboard() {
               btn.danger
                 ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse hover:shadow-[0_0_30px_-5px_rgba(239,68,68,0.4)]'
                 : btn.active
-                  ? btn.activeClass || 'bg-[#25D366] text-white'
+                  ? btn.activeClass || 'bg-[#D4AF37] text-white'
                   : 'border border-white/[0.08] bg-white/[0.03] text-white/40 hover:text-white/70 hover:bg-white/[0.06]'
             )}
           >
@@ -594,7 +594,7 @@ export default function Dashboard() {
           <div className={cn(
             'hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-medium border',
             zoneState === 'inside'
-              ? 'bg-[#25D366]/[0.08] border-[#25D366]/20 text-[#25D366]'
+              ? 'bg-[#D4AF37]/[0.08] border-[#D4AF37]/20 text-[#D4AF37]'
               : 'bg-red-500/[0.08] border-red-500/20 text-red-400'
           )}>
             <MapPin className="h-3 w-3" />

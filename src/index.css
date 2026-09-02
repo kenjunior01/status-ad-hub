@@ -66,7 +66,7 @@
 
   /* Selection color */
   ::selection {
-    background: rgba(37, 211, 102, 0.3);
+    background: rgba(212, 175, 55, 0.3);
     color: white;
   }
 }
@@ -81,11 +81,11 @@
   }
 
   .gradient-safe {
-    @apply bg-gradient-to-r from-safe to-emerald-400;
+    @apply bg-gradient-to-r from-safe to-amber-300;
   }
 
   .text-gradient-safe {
-    @apply bg-gradient-to-r from-safe to-emerald-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-safe to-amber-300 bg-clip-text text-transparent;
   }
 
   .container-safe {
@@ -161,8 +161,8 @@
 
 /* Glow pulse for icons */
 @keyframes glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 211, 102, 0.3)); }
-  50% { filter: drop-shadow(0 0 16px rgba(37, 211, 102, 0.6)); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.6)); }
 }
 
 .animate-glow-pulse {
@@ -258,8 +258,8 @@
 
 /* Border glow pulse */
 @keyframes border-glow {
-  0%, 100% { border-color: rgba(37, 211, 102, 0.15); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
-  50% { border-color: rgba(37, 211, 102, 0.3); box-shadow: 0 0 20px -5px rgba(37, 211, 102, 0.15); }
+  0%, 100% { border-color: rgba(212, 175, 55, 0.15); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+  50% { border-color: rgba(212, 175, 55, 0.3); box-shadow: 0 0 20px -5px rgba(212, 175, 55, 0.15); }
 }
 
 .animate-border-glow {
@@ -314,7 +314,7 @@
 input:focus,
 textarea:focus,
 select:focus {
-  box-shadow: 0 0 0 1px rgba(37, 211, 102, 0.15), 0 0 20px -8px rgba(37, 211, 102, 0.1);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 0 20px -8px rgba(212, 175, 55, 0.1);
 }
 
 /* Smooth card hover lift */
@@ -331,7 +331,7 @@ select:focus {
   transition: box-shadow 0.3s ease;
 }
 .glow-hover:hover {
-  box-shadow: 0 0 30px -8px rgba(37, 211, 102, 0.25);
+  box-shadow: 0 0 30px -8px rgba(212, 175, 55, 0.25);
 }
 
 /* Text balance for headings */
@@ -351,7 +351,7 @@ select:focus {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.3), transparent 40%, transparent 60%, rgba(59, 130, 246, 0.2));
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), transparent 40%, transparent 60%, rgba(212, 175, 55, 0.2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

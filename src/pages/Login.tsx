@@ -104,17 +104,17 @@ export default function Login() {
   };
 
   const inputCls = (hasError: boolean) =>
-    `h-11 w-full rounded-xl border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30'} bg-white/[0.03] pl-10 pr-4 text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm`
+    `h-11 w-full rounded-xl border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30'} bg-white/[0.03] pl-10 pr-4 text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm`
 
   return (
-    <div className="dark flex min-h-screen bg-[#0A0F1A]">
+    <div className="dark flex min-h-screen bg-[#0C0B08]">
       {/* LEFT SIDE */}
       <div className="relative hidden flex-1 items-center justify-center overflow-hidden lg:flex">
         <AnimatedGrid opacity={0.3} />
         <FloatingOrbs />
         <NoiseTexture opacity={0.02} />
-        <MorphingBlob className="-left-20 top-1/3" color="rgba(37, 211, 102, 0.05)" size={350} />
-        <MorphingBlob className="-bottom-20 right-1/3" color="rgba(59, 130, 246, 0.04)" size={300} />
+        <MorphingBlob className="-left-20 top-1/3" color="rgba(212, 175, 55, 0.05)" size={350} />
+        <MorphingBlob className="-bottom-20 right-1/3" color="rgba(212, 175, 55, 0.04)" size={300} />
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }} className="relative z-10 flex flex-col items-center px-8 text-center">
           {/* Duress armed indicator — tiny green dot */}
           {isDuressArmed && (
@@ -123,7 +123,7 @@ export default function Login() {
               className="absolute top-4 right-4 z-50"
               aria-hidden="true"
             >
-              <div className="w-2 h-2 rounded-full bg-[#25D366] shadow-[0_0_6px_rgba(37,211,102,0.6)] animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.6)] animate-pulse" />
             </motion.div>
           )}
           <motion.div
@@ -132,12 +132,12 @@ export default function Login() {
             onClick={handleShieldTap}
             role="button" tabIndex={-1} aria-hidden="true"
           >
-            <div className={`flex h-28 w-28 items-center justify-center rounded-3xl border backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)] transition-all duration-200 ${tapFlash ? 'border-[#25D366]/50 bg-[#25D366]/[0.12]' : 'border-[#25D366]/20 bg-[#25D366]/[0.06]'}`}>
-              <Shield className={`h-14 w-14 text-[#25D366] transition-transform duration-150 ${tapFlash ? 'scale-110' : ''}`} strokeWidth={1} />
+            <div className={`flex h-28 w-28 items-center justify-center rounded-3xl border backdrop-blur-md shadow-[0_0_60px_-15px_rgba(212,175,55,0.15)] transition-all duration-200 ${tapFlash ? 'border-[#D4AF37]/50 bg-[#D4AF37]/[0.12]' : 'border-[#D4AF37]/20 bg-[#D4AF37]/[0.06]'}`}>
+              <Shield className={`h-14 w-14 text-[#D4AF37] transition-transform duration-150 ${tapFlash ? 'scale-110' : ''}`} strokeWidth={1} />
             </div>
-            <div className="absolute inset-0 rounded-3xl bg-[#25D366]/5 blur-2xl" />
+            <div className="absolute inset-0 rounded-3xl bg-[#D4AF37]/5 blur-2xl" />
           </motion.div>
-          <h2 className="font-display text-3xl font-bold text-white">A Sua <span className="bg-gradient-to-r from-[#25D366] to-emerald-400 bg-clip-text text-transparent">Seguranca</span> Comeca Aqui</h2>
+          <h2 className="font-display text-3xl font-bold text-white">A Sua <span className="bg-gradient-to-r from-[#D4AF37] to-amber-300 bg-clip-text text-transparent">Seguranca</span> Comeca Aqui</h2>
           <p className="mt-4 max-w-sm text-sm text-white/35 leading-relaxed">Entre na sua conta para aceder ao painel de monitorizacao, gerir dispositivos e configurar alertas.</p>
         </motion.div>
       </div>
@@ -147,10 +147,10 @@ export default function Login() {
         <NoiseTexture opacity={0.015} />
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }} className="relative z-10 w-full max-w-md">
           <motion.div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none ${tapFlash ? 'bg-[#25D366]/20 border-[#25D366]/40' : 'bg-[#25D366]/10 border-[#25D366]/20'}`} onClick={handleShieldTap} role="button" tabIndex={-1} aria-hidden="true">
-              <Shield className="h-5 w-5 text-[#25D366]" />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none ${tapFlash ? 'bg-[#D4AF37]/20 border-[#D4AF37]/40' : 'bg-[#D4AF37]/10 border-[#D4AF37]/20'}`} onClick={handleShieldTap} role="button" tabIndex={-1} aria-hidden="true">
+              <Shield className="h-5 w-5 text-[#D4AF37]" />
             </div>
-            <span className="font-display text-xl font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+            <span className="font-display text-xl font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
           </motion.div>
 
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-2xl shadow-2xl shadow-black/20">
@@ -177,7 +177,7 @@ export default function Login() {
                 {errors.password && <p className="text-xs text-red-400/80">{errors.password.message}</p>}
               </div>
               <div className="flex justify-end">
-                <button type="button" onClick={() => setResetMode(true)} className="text-xs text-[#25D366]/70 transition hover:text-[#25D366]">Esqueceu a senha?</button>
+                <button type="button" onClick={() => setResetMode(true)} className="text-xs text-[#D4AF37]/70 transition hover:text-[#D4AF37]">Esqueceu a senha?</button>
               </div>
               <MagneticButton strength={0.15}>
                 <RippleButton disabled={loading} className={`h-11 w-full text-sm font-semibold ${loading ? 'opacity-60' : ''}`}>
@@ -202,7 +202,7 @@ export default function Login() {
             </div>
           </div>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-center text-sm text-white/30">
-            Nao tem conta? <Link to="/ativar" className="font-medium text-[#25D366]/70 transition hover:text-[#25D366]">Activar Dispositivo</Link>
+            Nao tem conta? <Link to="/ativar" className="font-medium text-[#D4AF37]/70 transition hover:text-[#D4AF37]">Activar Dispositivo</Link>
           </motion.p>
 
           {/* PASSWORD RESET MODAL */}
@@ -217,8 +217,8 @@ export default function Login() {
                 className="w-full max-w-sm mx-4 rounded-2xl border border-white/[0.08] bg-[#0D1321] p-8"
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/15">
-                    <MailWarning className="h-5 w-5 text-[#25D366]" />
+                  <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15">
+                    <MailWarning className="h-5 w-5 text-[#D4AF37]" />
                   </div>
                   <div>
                     <h3 className="font-display text-base font-semibold text-white">Redefinir Senha</h3>
@@ -231,14 +231,14 @@ export default function Login() {
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
-                  className="w-full h-11 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-4 pr-4 text-white text-sm placeholder:text-white/20 outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30 transition-all duration-200 mb-4"
+                  className="w-full h-11 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-4 pr-4 text-white text-sm placeholder:text-white/20 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30 transition-all duration-200 mb-4"
                 />
                 <div className="flex gap-3">
                   <button onClick={() => setResetMode(false)} className="flex-1 h-11 rounded-xl border border-white/[0.08] text-sm text-white/50 hover:text-white hover:bg-white/[0.04] transition">Cancelar</button>
                   <button
                     onClick={handleResetPassword}
                     disabled={resetLoading}
-                    className="flex-1 h-11 rounded-xl bg-[#25D366] hover:bg-[#1fb855] text-white text-sm font-semibold disabled:opacity-50 transition gap-2 flex items-center justify-center"
+                    className="flex-1 h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-white text-sm font-semibold disabled:opacity-50 transition gap-2 flex items-center justify-center"
                   >
                     {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar Link'}
                   </button>

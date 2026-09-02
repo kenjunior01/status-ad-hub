@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-export function BeamBorder({ children, className, color = '#25D366' }: {
+export function BeamBorder({ children, className, color = '#D4AF37' }: {
   children: React.ReactNode; className?: string; color?: string
 }) {
   return (

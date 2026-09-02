@@ -91,7 +91,7 @@ export default function DashboardLayout() {
   const hasActiveEmergency = activeEmergency?.status === 'active'
 
   return (
-    <div className="min-h-screen bg-[#0A0F1A] relative">
+    <div className="min-h-screen bg-[#0C0B08] relative">
       <NoiseTexture opacity={0.01} />
 
       {/* ── MOBILE SIDEBAR OVERLAY ── */}
@@ -110,27 +110,27 @@ export default function DashboardLayout() {
             >
               {/* Sidebar Header with user info */}
               <div className="relative px-5 pt-5 pb-4">
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#25D366]/[0.05] to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#D4AF37]/[0.05] to-transparent" />
                 <div className="relative flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center">
-                      <Shield className="h-4 w-4 text-[#25D366]" />
+                    <div className="h-8 w-8 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-[#D4AF37]" />
                     </div>
-                    <span className="font-display font-bold text-white text-base">Status<span className="text-[#25D366]">Ads</span></span>
+                    <span className="font-display font-bold text-white text-base">Status<span className="text-[#D4AF37]">Ads</span></span>
                   </div>
                   <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl hover:bg-white/10 transition">
                     <X className="h-5 w-5 text-white/50" />
                   </button>
                 </div>
                 <div className="relative flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#25D366] to-emerald-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
                     {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-white truncate">{(user?.user_metadata as any)?.full_name || 'Utilizador'}</p>
                     <p className="text-[11px] text-white/25 truncate font-mono">{user?.email || ''}</p>
                   </div>
-                  <div className="h-2 w-2 rounded-full bg-[#25D366] shrink-0" />
+                  <div className="h-2 w-2 rounded-full bg-[#D4AF37] shrink-0" />
                 </div>
               </div>
 
@@ -151,7 +151,7 @@ export default function DashboardLayout() {
                             className={cn(
                               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
                               active
-                                ? 'text-[#25D366] bg-[#25D366]/[0.08]'
+                                ? 'text-[#D4AF37] bg-[#D4AF37]/[0.08]'
                                 : 'text-white/40 active:text-white/60 hover:text-white/60 hover:bg-white/[0.03]'
                             )}
                           >
@@ -186,14 +186,14 @@ export default function DashboardLayout() {
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex flex-col min-h-screen">
         {/* Top Header Bar - Mobile First */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 backdrop-blur-2xl bg-[#0A0F1A]/80 border-b border-white/[0.04]">
+        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 backdrop-blur-2xl bg-[#0C0B08]/80 border-b border-white/[0.04]">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/5 active:bg-white/10 transition">
               <Menu className="h-5 w-5 text-white/60" />
             </button>
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-[#25D366]" />
-              <span className="text-sm font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+              <Shield className="h-4 w-4 text-[#D4AF37]" />
+              <span className="text-sm font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -283,7 +283,7 @@ export default function DashboardLayout() {
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
         {/* Safe area spacer for iOS */}
-        <div className="bg-[#0A0F1A]/95 backdrop-blur-2xl border-t border-white/[0.06]">
+        <div className="bg-[#0C0B08]/95 backdrop-blur-2xl border-t border-white/[0.06]">
           <div className="flex items-center justify-around h-[68px] px-1 pb-[env(safe-area-inset-bottom,0px)]">
             {bottomNav.map((item) => {
               const IconComp = item.icon
@@ -306,12 +306,12 @@ export default function DashboardLayout() {
               return (
                 <NavLink key={item.to} to={item.to} className="flex flex-col items-center gap-0.5 py-1.5 px-3 transition-all duration-150">
                   <div className="relative">
-                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-[#25D366]' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
+                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-[#D4AF37]' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
                     {active && (
-                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-[#25D366]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-[#D4AF37]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
                     )}
                   </div>
-                  <span className={cn('text-[10px] font-medium', active ? 'text-[#25D366]' : 'text-white/25')}>{item.label}</span>
+                  <span className={cn('text-[10px] font-medium', active ? 'text-[#D4AF37]' : 'text-white/25')}>{item.label}</span>
                 </NavLink>
               )
             })}

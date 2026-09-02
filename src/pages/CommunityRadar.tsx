@@ -33,13 +33,13 @@ function createAlertIcon(type: CommunityAlert['type'], isVerified: boolean): L.D
     danger_zone: isVerified ? '#EF4444' : '#F97316',
     suspicious_activity: '#F59E0B',
     verified_incident: '#EF4444',
-    safe_route_tip: '#25D366',
+    safe_route_tip: '#D4AF37',
   }
   const color = colors[type] || '#6B7280'
 
   const html = `<div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">` +
     `<div style="position:absolute;width:28px;height:28px;border-radius:50%;background:${color}33;animation:pulse-ring 2s infinite;"></div>` +
-    (isVerified ? `<div style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#25D366;border:2px solid #0A0F1A;"></div>` : '') +
+    (isVerified ? `<div style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#D4AF37;border:2px solid #0C0B08;"></div>` : '') +
     `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:3px solid rgba(10,15,26,0.8);box-shadow:0 0 12px ${color}66;z-index:2;position:relative;"></div></div>` +
     `<style>@keyframes pulse-ring{0%{transform:scale(1);opacity:0.8}100%{transform:scale(2.5);opacity:0}}</style>`
 
@@ -50,7 +50,7 @@ const typeConfig: Record<CommunityAlert['type'], { label: string; icon: typeof A
   danger_zone: { label: 'Zona de Perigo', icon: ShieldX, color: 'text-red-400', bgColor: 'bg-red-500/10' },
   suspicious_activity: { label: 'Actividade Suspeita', icon: Eye, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
   verified_incident: { label: 'Incidente Verificado', icon: AlertTriangle, color: 'text-red-500', bgColor: 'bg-red-500/10' },
-  safe_route_tip: { label: 'Dica de Rota Segura', icon: ShieldCheck, color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  safe_route_tip: { label: 'Dica de Rota Segura', icon: ShieldCheck, color: 'text-amber-300', bgColor: 'bg-amber-400/10' },
 }
 
 export default function CommunityRadar() {
@@ -144,7 +144,7 @@ export default function CommunityRadar() {
           <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
           <MapController />
           {/* User position */}
-          <Circle center={userPos} radius={radiusKm * 1000} pathOptions={{ color: '#25D366', fillColor: '#25D366', fillOpacity: 0.03, weight: 1, dashArray: '4 4' }} />
+          <Circle center={userPos} radius={radiusKm * 1000} pathOptions={{ color: '#D4AF37', fillColor: '#D4AF37', fillOpacity: 0.03, weight: 1, dashArray: '4 4' }} />
           {/* Alert markers */}
           {alerts.map(alert => (
             <div key={alert.id}>
@@ -153,7 +153,7 @@ export default function CommunityRadar() {
                 radius={alert.radius_meters}
                 pathOptions={{
                   color: typeConfig[alert.type]?.color === 'text-red-400' || typeConfig[alert.type]?.color === 'text-red-500'
-                    ? '#EF4444' : alert.type === 'safe_route_tip' ? '#25D366' : '#F59E0B',
+                    ? '#EF4444' : alert.type === 'safe_route_tip' ? '#D4AF37' : '#F59E0B',
                   fillColor: alert.type === 'danger_zone' || alert.type === 'verified_incident' ? '#EF4444' : '#F59E0B',
                   fillOpacity: 0.08,
                   weight: 1,
@@ -179,8 +179,8 @@ export default function CommunityRadar() {
           <div className="text-2xl font-bold text-red-400">{dangerZoneCount}</div>
           <div className="text-white/40 text-xs mt-0.5">Zonas de perigo</div>
         </div>
-        <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-green-400">{alerts.filter(a => a.is_verified).length}</div>
+        <div className="bg-amber-400/5 border border-amber-400/10 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-amber-300">{alerts.filter(a => a.is_verified).length}</div>
           <div className="text-white/40 text-xs mt-0.5">Verificados</div>
         </div>
       </div>
@@ -211,7 +211,7 @@ export default function CommunityRadar() {
                     <div className="flex items-center gap-2">
                       <span className="text-white text-sm font-medium truncate">{alert.title}</span>
                       {alert.is_verified && (
-                        <span className="text-[9px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full font-bold">VERIFICADO</span>
+                        <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full font-bold">VERIFICADO</span>
                       )}
                     </div>
                     <div className="text-white/40 text-xs mt-0.5 truncate">{alert.description}</div>
@@ -242,7 +242,7 @@ export default function CommunityRadar() {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="bg-[#1F2937] rounded-2xl p-5 w-full max-w-sm"
+              className="bg-[#221E16] rounded-2xl p-5 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -314,7 +314,7 @@ export default function CommunityRadar() {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="bg-[#1F2937] rounded-2xl p-5 w-full max-w-sm"
+              className="bg-[#221E16] rounded-2xl p-5 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">

@@ -21,7 +21,7 @@ export function ParticleField({ className, count = 45 }: { className?: string; c
     resize()
     window.addEventListener('resize', resize)
 
-    const colors = ['37,211,102', '59,130,246', '139,92,246']
+    const colors = ['212,175,55', '212,175,55', '139,92,246']
     type P = { x: number; y: number; vx: number; vy: number; size: number; alpha: number; life: number; maxLife: number; c: string }
 
     const mkP = (): P => {
@@ -54,7 +54,7 @@ export function ParticleField({ className, count = 45 }: { className?: string; c
           const d = Math.sqrt(dx * dx + dy * dy)
           if (d < CONN) {
             ctx.beginPath(); ctx.moveTo(ps[i].x, ps[i].y); ctx.lineTo(ps[j].x, ps[j].y)
-            ctx.strokeStyle = `rgba(37,211,102,${(1 - d / CONN) * 0.1})`; ctx.lineWidth = 0.5; ctx.stroke()
+            ctx.strokeStyle = `rgba(212,175,55,${(1 - d / CONN) * 0.1})`; ctx.lineWidth = 0.5; ctx.stroke()
           }
         }
       }

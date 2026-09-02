@@ -47,6 +47,7 @@ const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
 const SafeRoute = lazy(() => import('@/pages/SafeRoute'))
 const TripTracking = lazy(() => import('@/pages/TripTracking'))
 const IncidentTimeline = lazy(() => import('@/pages/IncidentTimeline'))
+const InstallChoice = lazy(() => import('@/components/InstallChoice'))
 
 const queryClient = new QueryClient({ defaultOptions: getReactQueryDefaults() })
 
@@ -79,6 +80,7 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><WithErrorBoundary context="login"><Login /></WithErrorBoundary></PublicRoute>} />
       <Route path="/ativar" element={<PublicRoute><WithErrorBoundary context="activate"><ActivateDevice /></WithErrorBoundary></PublicRoute>} />
       <Route path="/track/:token" element={<WithErrorBoundary context="tracking"><TrackEmergency /></WithErrorBoundary>} />
+      <Route path="/instalar" element={<WithErrorBoundary context="install"><InstallChoice /></WithErrorBoundary>} />
       <Route path="/dashboard" element={<ProtectedRoute><CoercionShield><DashboardLayout /></CoercionShield></ProtectedRoute>}>
         <Route index element={<WithErrorBoundary context="dashboard"><Dashboard /></WithErrorBoundary>} />
         <Route path="devices" element={<WithErrorBoundary context="devices"><Devices /></WithErrorBoundary>} />
@@ -105,16 +107,16 @@ function AppRoutes() {
 
 function LoadingScreen() {
   return (
-    <div className="dark min-h-screen bg-[#0A0F1A] flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="dark min-h-screen bg-[#0C0B08] flex flex-col items-center justify-center relative overflow-hidden">
       <NoiseTexture opacity={0.02} />
-      <MorphingBlob className="-left-32 top-1/3" color="rgba(37, 211, 102, 0.04)" size={350} />
-      <MorphingBlob className="-right-32 bottom-1/3" color="rgba(59, 130, 246, 0.03)" size={300} />
+      <MorphingBlob className="-left-32 top-1/3" color="rgba(212, 175, 55, 0.04)" size={350} />
+      <MorphingBlob className="-right-32 bottom-1/3" color="rgba(212, 175, 55, 0.03)" size={300} />
       <div className="relative z-10 flex flex-col items-center gap-5">
         <div className="relative">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 animate-breathe">
-            <Shield className="h-7 w-7 text-[#25D366]" strokeWidth={1.5} />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 animate-breathe">
+            <Shield className="h-7 w-7 text-[#D4AF37]" strokeWidth={1.5} />
           </div>
-          <div className="absolute inset-0 rounded-2xl bg-[#25D366]/5 blur-xl" />
+          <div className="absolute inset-0 rounded-2xl bg-[#D4AF37]/5 blur-xl" />
         </div>
         <div className="flex flex-col items-center gap-2.5 w-48">
           <Shimmer className="h-3 w-32 rounded-lg" />
@@ -165,7 +167,7 @@ function InnerApp() {
       <Toaster
         position="top-right"
         toastOptions={{
-          className: 'dark:bg-[#1F2937] dark:text-white dark:border-white/10'
+          className: 'dark:bg-[#221E16] dark:text-white dark:border-white/10'
         }}
       />
     </BrowserRouter>

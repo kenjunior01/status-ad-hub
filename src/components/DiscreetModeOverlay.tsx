@@ -168,7 +168,7 @@ export function DiscreetModeOverlay() {
                   <input type="password" inputMode="numeric" maxLength={6} value={pinInput}
                     onChange={e=>setPinInput(e.target.value.replace(/\D/g,''))}
                     onKeyDown={e=>e.key==='Enter'&&handlePinSubmit()}
-                    className="w-full bg-gray-700 text-white text-center text-2xl tracking-[0.5em] rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#25D366]" autoFocus placeholder="• • • •" />
+                    className="w-full bg-gray-700 text-white text-center text-2xl tracking-[0.5em] rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" autoFocus placeholder="• • • •" />
                   <button onClick={()=>{setShowPinEntry(false);setPinInput('')}} className="w-full text-gray-400 text-sm py-2">Cancelar</button>
                 </div>
               </motion.div>
@@ -181,7 +181,7 @@ export function DiscreetModeOverlay() {
           {/* Stealth status indicators (very subtle) */}
           {stealthIndicators && (
             <div className="absolute top-1 right-2 z-30 flex gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400/40" title="Sistema activo" />
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-300/40" title="Sistema activo" />
             </div>
           )}
 

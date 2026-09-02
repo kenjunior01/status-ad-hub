@@ -51,22 +51,22 @@ export default function Register() {
   }
 
   const inputCls = (hasError: boolean) =>
-    `h-11 border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-[#25D366]/30 focus-visible:border-[#25D366]/30'} bg-white/[0.03] text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm rounded-xl pl-10 pr-4 w-full`
+    `h-11 border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30'} bg-white/[0.03] text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm rounded-xl pl-10 pr-4 w-full`
 
   return (
-    <div className="dark flex min-h-screen bg-[#0A0F1A]">
+    <div className="dark flex min-h-screen bg-[#0C0B08]">
       <div className="relative hidden flex-1 items-center justify-center overflow-hidden lg:flex">
         <AnimatedGrid opacity={0.3} />
         <FloatingOrbs />
         <NoiseTexture opacity={0.02} />
-        <MorphingBlob className="-left-20 top-1/3" color="rgba(37, 211, 102, 0.05)" size={350} />
+        <MorphingBlob className="-left-20 top-1/3" color="rgba(212, 175, 55, 0.05)" size={350} />
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="relative z-10 flex flex-col items-center text-center px-8">
           <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="mb-8 relative">
-            <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-[#25D366]/20 bg-[#25D366]/[0.06] backdrop-blur-md shadow-[0_0_60px_-15px_rgba(37,211,102,0.15)]">
-              <Shield className="h-14 w-14 text-[#25D366]" strokeWidth={1} />
+            <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.06] backdrop-blur-md shadow-[0_0_60px_-15px_rgba(212,175,55,0.15)]">
+              <Shield className="h-14 w-14 text-[#D4AF37]" strokeWidth={1} />
             </div>
           </motion.div>
-          <h2 className="font-display text-3xl font-bold text-white">Junte-se a <span className="bg-gradient-to-r from-[#25D366] to-emerald-400 bg-clip-text text-transparent">2 Milhoes</span> de Pessoas</h2>
+          <h2 className="font-display text-3xl font-bold text-white">Junte-se a <span className="bg-gradient-to-r from-[#D4AF37] to-amber-300 bg-clip-text text-transparent">2 Milhoes</span> de Pessoas</h2>
           <p className="mt-4 max-w-sm text-sm text-white/35 leading-relaxed">Crie a sua conta em segundos e comece a proteger quem mais importa.</p>
         </motion.div>
       </div>
@@ -74,10 +74,10 @@ export default function Register() {
         <NoiseTexture opacity={0.015} />
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-10 w-full max-w-md">
           <motion.div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
-              <Shield className="h-5 w-5 text-[#25D366]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+              <Shield className="h-5 w-5 text-[#D4AF37]" />
             </div>
-            <span className="font-display text-xl font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+            <span className="font-display text-xl font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
           </motion.div>
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-2xl shadow-2xl shadow-black/20">
             <h1 className="font-display text-2xl font-bold text-white">Criar Conta</h1>
@@ -126,10 +126,10 @@ export default function Register() {
                   {[{ val: 'pessoal', Icon: User, label: 'Pessoal' }, { val: 'familia', Icon: Users, label: 'Familia' }].map(r => (
                     <button key={r.val} type="button" onClick={() => setValue("role", r.val as any)} className={cn(
                       'relative flex flex-col items-center gap-2 rounded-xl border p-4 transition-all duration-300',
-                      selectedRole === r.val ? 'border-[#25D366]/40 bg-[#25D366]/[0.06] shadow-[0_0_20px_-5px_rgba(37,211,102,0.1)]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/15'
+                      selectedRole === r.val ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.06] shadow-[0_0_20px_-5px_rgba(212,175,55,0.1)]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/15'
                     )}>
-                      {selectedRole === r.val && <motion.div layoutId="role-ind" className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#25D366] shadow-[0_0_10px_rgba(37,211,102,0.4)]"><Check className="h-3 w-3 text-white" /></motion.div>}
-                      <r.Icon className={cn('h-5 w-5', selectedRole === r.val ? 'text-[#25D366]' : 'text-white/25')} strokeWidth={1.5} />
+                      {selectedRole === r.val && <motion.div layoutId="role-ind" className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.4)]"><Check className="h-3 w-3 text-white" /></motion.div>}
+                      <r.Icon className={cn('h-5 w-5', selectedRole === r.val ? 'text-[#D4AF37]' : 'text-white/25')} strokeWidth={1.5} />
                       <span className={cn('text-xs font-medium', selectedRole === r.val ? 'text-white' : 'text-white/35')}>{r.label}</span>
                     </button>
                   ))}
@@ -137,8 +137,8 @@ export default function Register() {
                 {errors.role && <p className="text-xs text-red-400/80">{errors.role.message}</p>}
               </div>
               <label className="flex items-start gap-3 cursor-pointer pt-1">
-                <input id="terms" type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/15 bg-white/5 accent-[#25D366]" {...register("terms")} />
-                <Label htmlFor="terms" className="text-[11px] leading-relaxed text-white/30">Aceito os <a href="#" className="text-[#25D366]/70 hover:text-[#25D366] hover:underline">Termos de Uso</a> e a <a href="#" className="text-[#25D366]/70 hover:text-[#25D366] hover:underline">Politica de Privacidade</a>, incluindo o processamento dos meus dados conforme a LGPD.</Label>
+                <input id="terms" type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/15 bg-white/5 accent-[#D4AF37]" {...register("terms")} />
+                <Label htmlFor="terms" className="text-[11px] leading-relaxed text-white/30">Aceito os <a href="#" className="text-[#D4AF37]/70 hover:text-[#D4AF37] hover:underline">Termos de Uso</a> e a <a href="#" className="text-[#D4AF37]/70 hover:text-[#D4AF37] hover:underline">Politica de Privacidade</a>, incluindo o processamento dos meus dados conforme a LGPD.</Label>
               </label>
               {errors.terms && <p className="text-xs text-red-400/80">{errors.terms.message}</p>}
               <MagneticButton strength={0.15}>
@@ -149,7 +149,7 @@ export default function Register() {
             </form>
           </div>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-center text-sm text-white/30">
-            Ja tem conta? <Link to="/login" className="font-medium text-[#25D366]/70 hover:text-[#25D366]">Entrar</Link>
+            Ja tem conta? <Link to="/login" className="font-medium text-[#D4AF37]/70 hover:text-[#D4AF37]">Entrar</Link>
           </motion.p>
         </motion.div>
       </div>

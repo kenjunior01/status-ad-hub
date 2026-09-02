@@ -14,7 +14,7 @@ import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string; label: string }> = {
   emergency_start: { icon: ShieldAlert, color: 'bg-red-500/20 text-red-400 border-red-500/20', label: 'Emergência' },
-  location: { icon: MapPin, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20', label: 'GPS' },
+  location: { icon: MapPin, color: 'bg-amber-400/20 text-amber-300 border-amber-400/20', label: 'GPS' },
   alert: { icon: AlertTriangle, color: 'bg-amber-500/20 text-amber-400 border-amber-500/20', label: 'Alerta' },
   bluetooth: { icon: Radio, color: 'bg-blue-500/20 text-blue-400 border-blue-500/20', label: 'BLE' },
   geofence: { icon: MapPin, color: 'bg-purple-500/20 text-purple-400 border-purple-500/20', label: 'Geofence' },
@@ -25,9 +25,9 @@ const typeConfig: Record<string, { icon: React.ElementType; color: string; label
   glasses_sos: { icon: Camera, color: 'bg-pink-500/20 text-pink-400 border-pink-500/20', label: 'Óculos' },
   audio_evidence: { icon: Mic, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/20', label: 'Áudio' },
   photo_evidence: { icon: Camera, color: 'bg-teal-500/20 text-teal-400 border-teal-500/20', label: 'Foto' },
-  checkin: { icon: Clock, color: 'bg-green-500/20 text-green-400 border-green-500/20', label: 'Check-in' },
+  checkin: { icon: Clock, color: 'bg-amber-400/20 text-amber-300 border-amber-400/20', label: 'Check-in' },
   glasses_removal: { icon: AlertTriangle, color: 'bg-rose-500/20 text-rose-400 border-rose-500/20', label: 'Remoção' },
-  resolved: { icon: ShieldAlert, color: 'bg-green-500/20 text-green-400 border-green-500/20', label: 'Resolvida' },
+  resolved: { icon: ShieldAlert, color: 'bg-amber-400/20 text-amber-300 border-amber-400/20', label: 'Resolvida' },
 }
 
 export default function IncidentTimeline() {
@@ -90,7 +90,7 @@ export default function IncidentTimeline() {
                   selectedId === em.id ? 'border-amber-500/30 bg-amber-500/[0.06]' : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]')}>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <div className={cn('w-2 h-2 rounded-full', em.status === 'active' ? 'bg-red-400 animate-pulse' : em.status === 'resolved' ? 'bg-green-400' : 'bg-gray-400')} />
+                    <div className={cn('w-2 h-2 rounded-full', em.status === 'active' ? 'bg-red-400 animate-pulse' : em.status === 'resolved' ? 'bg-amber-300' : 'bg-gray-400')} />
                     <span className='text-white text-sm font-medium'>
                       {em.status === 'active' ? 'Emergência Activa' : em.status === 'resolved' ? 'Resolvida' : 'Falso Alarme'}
                     </span>

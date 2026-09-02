@@ -63,7 +63,7 @@ const MIN_STROKE = 10
 const COLORS = {
   red: '#EF4444',
   amber: '#F59E0B',
-  green: '#25D366',
+  green: '#D4AF37',
   brightGreen: '#34D399',
   bg: '#1A2235',
   bgTrack: '#0F172A',
@@ -77,7 +77,7 @@ const LEVEL_CONFIG: Record<number, { label: string; color: string; icon: LucideI
   1: { label: 'Vulneravel', color: COLORS.amber, icon: ShieldAlert },
   2: { label: 'Moderado', color: '#EAB308', icon: Shield },
   3: { label: 'Seguro', color: COLORS.green, icon: ShieldCheck },
-  4: { label: 'Muito Seguro', color: COLORS.brightGreen, icon: ShieldCheck, glow: '0 0 40px rgba(37,211,102,0.5)' },
+  4: { label: 'Muito Seguro', color: COLORS.brightGreen, icon: ShieldCheck, glow: '0 0 40px rgba(212,175,55,0.5)' },
 }
 
 /** Maximum points each factor can contribute at full activation */

@@ -50,8 +50,8 @@ export default function TripTracking() {
 
   const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
     planned: { label: 'Planeada', color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Clock },
-    active: { label: 'Em Curso', color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play },
-    completed: { label: 'Concluída', color: 'text-green-400', bg: 'bg-green-500/10', icon: CheckCircle2 },
+    active: { label: 'Em Curso', color: 'text-amber-300', bg: 'bg-amber-400/10', icon: Play },
+    completed: { label: 'Concluída', color: 'text-amber-300', bg: 'bg-amber-400/10', icon: CheckCircle2 },
     cancelled: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/10', icon: X },
   }
 
@@ -77,13 +77,13 @@ export default function TripTracking() {
       <AnimatePresence>
         {activeTrip && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className='bg-emerald-500/[0.08] border border-emerald-500/20 rounded-xl p-4'>
+            className='bg-amber-400/[0.08] border border-amber-400/20 rounded-xl p-4'>
             <div className='flex items-center justify-between mb-2'>
               <div className='flex items-center gap-2'>
-                <div className='w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse' />
-                <span className='text-emerald-300 text-sm font-medium'>Viagem em Curso</span>
+                <div className='w-2.5 h-2.5 rounded-full bg-amber-300 animate-pulse' />
+                <span className='text-amber-200 text-sm font-medium'>Viagem em Curso</span>
               </div>
-              <span className='text-emerald-400/40 text-[10px]'>{activeTrip.share_tokens[0]}</span>
+              <span className='text-amber-300/40 text-[10px]'>{activeTrip.share_tokens[0]}</span>
             </div>
             <div className='text-white font-medium'>{activeTrip.trip_name}</div>
             <div className='text-white/40 text-xs mt-0.5 flex items-center gap-1'>
@@ -98,7 +98,7 @@ export default function TripTracking() {
               <button onClick={() => handleShare(activeTrip.share_tokens[0])} className='flex-1 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-medium hover:bg-cyan-500/30 transition flex items-center justify-center gap-1.5'>
                 <Share2 className='w-3.5 h-3.5' /> Partilhar
               </button>
-              <button onClick={() => completeTrip(activeTrip.id)} className='flex-1 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium hover:bg-emerald-500/30 transition flex items-center justify-center gap-1.5'>
+              <button onClick={() => completeTrip(activeTrip.id)} className='flex-1 py-2 rounded-lg bg-amber-400/20 text-amber-200 text-xs font-medium hover:bg-amber-400/30 transition flex items-center justify-center gap-1.5'>
                 <CheckCircle2 className='w-3.5 h-3.5' /> Cheguei
               </button>
               <button onClick={() => cancelTrip(activeTrip.id)} className='py-2 px-3 rounded-lg bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition'>
@@ -127,7 +127,7 @@ export default function TripTracking() {
               const Icon = cfg.icon
               return (
                 <div key={trip.id} className={cn('rounded-xl border p-3 transition',
-                  trip.status === 'active' ? 'border-emerald-500/20 bg-emerald-500/[0.04]' : 'border-white/[0.06] bg-white/[0.02]')}>
+                  trip.status === 'active' ? 'border-amber-400/20 bg-amber-400/[0.04]' : 'border-white/[0.06] bg-white/[0.02]')}>
                   <div className='flex items-center gap-3'>
                     <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center', cfg.bg)}>
                       <Icon className={cn('w-4 h-4', cfg.color)} />
@@ -144,7 +144,7 @@ export default function TripTracking() {
                     <div className='flex flex-col items-end gap-1'>
                       <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium', cfg.bg, cfg.color)}>{cfg.label}</span>
                       {trip.status === 'planned' && (
-                        <button onClick={() => startTrip(trip.id)} className='text-emerald-400 text-[10px] hover:underline flex items-center gap-0.5'>
+                        <button onClick={() => startTrip(trip.id)} className='text-amber-300 text-[10px] hover:underline flex items-center gap-0.5'>
                           <Play className='w-2.5 h-2.5' /> Iniciar
                         </button>
                       )}
@@ -168,7 +168,7 @@ export default function TripTracking() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6' onClick={() => setShowCreate(false)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className='bg-[#1F2937] rounded-2xl p-6 w-full max-w-sm' onClick={e => e.stopPropagation()}>
+              className='bg-[#221E16] rounded-2xl p-6 w-full max-w-sm' onClick={e => e.stopPropagation()}>
               <h3 className='text-white text-center text-lg font-semibold mb-1'>Nova Viagem</h3>
               <p className='text-white/40 text-center text-xs mb-4'>Crie uma viagem para partilhar a sua localização</p>
               <div className='space-y-3'>

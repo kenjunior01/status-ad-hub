@@ -4,7 +4,7 @@ import { Heart, Share2, Download, Grid3X3, X } from 'lucide-react'
 const fakePhotos = [
   { id: 1, color: 'from-amber-400 to-orange-500', likes: 42, label: 'Por do sol' },
   { id: 2, color: 'from-blue-400 to-cyan-500', likes: 87, label: 'Praia' },
-  { id: 3, color: 'from-green-400 to-emerald-500', likes: 23, label: 'Jardim' },
+  { id: 3, color: 'from-amber-300 to-amber-400', likes: 23, label: 'Jardim' },
   { id: 4, color: 'from-purple-400 to-pink-500', likes: 156, label: 'Festa' },
   { id: 5, color: 'from-red-400 to-rose-500', likes: 31, label: 'Comida' },
   { id: 6, color: 'from-sky-400 to-blue-500', likes: 64, label: 'Ceu' },

@@ -33,10 +33,10 @@ const borderColorMap: Record<string, string> = {
   blue: 'border-blue-300 dark:border-blue-700',
   yellow: 'border-yellow-300 dark:border-yellow-700',
   neutral: 'border-neutral-300 dark:border-neutral-600',
-  green: 'border-green-300 dark:border-green-700',
+  green: 'border-amber-200 dark:border-amber-600',
   slate: 'border-slate-300 dark:border-slate-600',
   purple: 'border-purple-300 dark:border-purple-700',
-  emerald: 'border-emerald-300 dark:border-emerald-700',
+  emerald: 'border-amber-200 dark:border-amber-600',
   amber: 'border-amber-300 dark:border-amber-700',
   teal: 'border-teal-300 dark:border-teal-700',
   sky: 'border-sky-300 dark:border-sky-700',
@@ -122,10 +122,10 @@ function MiniPreview({ type }: { type: DiscreetModeType }) {
       )
     case 'currency':
       return (
-        <div className={cn(base, 'bg-emerald-50 dark:bg-emerald-950 p-1.5')}>
-          <div className='text-[7px] text-emerald-600 dark:text-emerald-400 mb-1'>Conversor</div>
-          <div className='bg-white dark:bg-emerald-900/50 rounded p-1 mb-0.5'><div className='text-[8px] text-gray-800 dark:text-white'>1,000 MZN</div></div>
-          <div className='bg-white dark:bg-emerald-900/50 rounded p-1'><div className='text-[8px] text-gray-800 dark:text-white'>15.63 USD</div></div>
+        <div className={cn(base, 'bg-amber-50 dark:bg-amber-950 p-1.5')}>
+          <div className='text-[7px] text-amber-500 dark:text-amber-300 mb-1'>Conversor</div>
+          <div className='bg-white dark:bg-amber-900/50 rounded p-1 mb-0.5'><div className='text-[8px] text-gray-800 dark:text-white'>1,000 MZN</div></div>
+          <div className='bg-white dark:bg-amber-900/50 rounded p-1'><div className='text-[8px] text-gray-800 dark:text-white'>15.63 USD</div></div>
         </div>
       )
     case 'flashlight':
@@ -140,7 +140,7 @@ function MiniPreview({ type }: { type: DiscreetModeType }) {
           <div className='text-[7px] font-semibold text-gray-900 dark:text-white mb-1'>Maria</div>
           <div className='space-y-0.5'>
             <div className='bg-white dark:bg-gray-800 rounded p-0.5 max-w-[70%]'><div className='h-0.5 bg-gray-300 dark:bg-gray-600 rounded w-8' /></div>
-            <div className='bg-green-500 rounded p-0.5 max-w-[50%] ml-auto'><div className='h-0.5 bg-green-400 rounded w-5' /></div>
+            <div className='bg-amber-400 rounded p-0.5 max-w-[50%] ml-auto'><div className='h-0.5 bg-amber-300 rounded w-5' /></div>
           </div>
         </div>
       )
@@ -149,7 +149,7 @@ function MiniPreview({ type }: { type: DiscreetModeType }) {
         <div className={cn(base, 'bg-white dark:bg-gray-800 p-1')}>
           <div className='text-[6px] font-semibold text-gray-900 dark:text-white mb-0.5'>Galeria</div>
           <div className='grid grid-cols-3 gap-0.5'>
-            {['from-amber-400 to-orange-500', 'from-blue-400 to-cyan-500', 'from-green-400 to-emerald-500', 'from-purple-400 to-pink-500', 'from-red-400 to-rose-500', 'from-sky-400 to-blue-500'].map((c, i) => (
+            {['from-amber-400 to-orange-500', 'from-blue-400 to-cyan-500', 'from-amber-300 to-amber-400', 'from-purple-400 to-pink-500', 'from-red-400 to-rose-500', 'from-sky-400 to-blue-500'].map((c, i) => (
               <div key={i} className={cn('aspect-square rounded-sm bg-gradient-to-br', c)} />
             ))}
           </div>
@@ -246,8 +246,8 @@ function LivePreview({ type, onClose, onSelect, isSelected, onSOS }: {
             className={cn(
               'flex-1 py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2',
               isSelected
-                ? 'bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30'
-                : 'bg-[#25D366] text-white hover:bg-[#25D366]/90'
+                ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
+                : 'bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90'
             )}
           >
             {isSelected ? <><Check className='w-4 h-4' /> Activo</> : <><Eye className='w-4 h-4' /> Usar Este</>}
@@ -315,14 +315,14 @@ export function DisguisePicker({ mode = 'inline', onSelect, autoPreview = false 
               className={cn(
                 'relative rounded-2xl border-2 p-2 text-left transition-all overflow-hidden group',
                 isSelected
-                  ? 'border-[#25D366]/60 bg-[#25D366]/[0.06]'
+                  ? 'border-[#D4AF37]/60 bg-[#D4AF37]/[0.06]'
                   : isPreview
                     ? 'border-purple-500/60 bg-purple-500/[0.06]'
                     : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]'
               )}
             >
               {isSelected && (
-                <div className='absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg shadow-[#25D366]/30'>
+                <div className='absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-lg shadow-[#D4AF37]/30'>
                   <Check className='w-3 h-3 text-white' strokeWidth={3} />
                 </div>
               )}
@@ -428,7 +428,7 @@ export function QuickDisguiseSelector() {
                     className={cn(
                       'relative rounded-xl border overflow-hidden transition-all',
                       isSel
-                        ? 'border-[#25D366]/60 ring-1 ring-[#25D366]/20'
+                        ? 'border-[#D4AF37]/60 ring-1 ring-[#D4AF37]/20'
                         : 'border-white/[0.06] hover:border-white/[0.15]'
                     )}
                   >
@@ -436,7 +436,7 @@ export function QuickDisguiseSelector() {
                       <MiniPreview type={disguise.type} />
                     </div>
                     {isSel && (
-                      <div className='absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#25D366] flex items-center justify-center'>
+                      <div className='absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#D4AF37] flex items-center justify-center'>
                         <Check className='w-2 h-2 text-white' strokeWidth={3} />
                       </div>
                     )}

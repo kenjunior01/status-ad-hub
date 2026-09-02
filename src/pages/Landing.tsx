@@ -13,7 +13,7 @@ import {
   Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,
   BellOff, Crosshair, Wifi, Menu, X, ChevronRight, ChevronDown, Check,
   ArrowRight, Play, Users, Activity, Zap, Lock, Eye, Globe,
-  Fingerprint, Smartphone, Radar, Sparkles,
+  Fingerprint, Smartphone, Radar, Sparkles, Download,
 } from 'lucide-react'
 
 /* ── Animation Presets ── */
@@ -55,8 +55,8 @@ function Navbar() {
   const links = [
     { label: 'Funcionalidades', href: '#funcionalidades' },
     { label: 'Como Funciona', href: '#como-funciona' },
-    { label: 'Pre\u00e7os', href: '#precos' },
-    { label: 'Emerg\u00eancia', href: '#emergencia' },
+    { label: 'Preços', href: '#precos' },
+    { label: 'Emergência', href: '#emergencia' },
   ]
 
   useEffect(() => {
@@ -69,16 +69,16 @@ function Navbar() {
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
       scrolled
-        ? 'bg-[#0A0F1A]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20'
+        ? 'bg-[#0C0B08]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20'
         : 'bg-transparent'
     )}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         <Link to="/" className="group flex items-center gap-2.5">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 transition-all group-hover:bg-[#25D366]/20 group-hover:border-[#25D366]/40 group-hover:shadow-[0_0_20px_rgba(37,211,102,0.15)]">
-            <Shield className="h-4.5 w-4.5 text-[#25D366] transition-transform group-hover:scale-110" />
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 transition-all group-hover:bg-[#D4AF37]/20 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+            <Shield className="h-4.5 w-4.5 text-[#D4AF37] transition-transform group-hover:scale-110" />
           </div>
           <span className="font-display text-lg font-bold text-white tracking-tight">
-            Status<span className="text-[#25D366]">Ads</span>
+            Status<span className="text-[#D4AF37]">Ads</span>
           </span>
         </Link>
         <div className="hidden items-center gap-1 md:flex">
@@ -89,8 +89,8 @@ function Navbar() {
           ))}
           <div className="ml-4">
             <MagneticButton strength={0.15}>
-              <Button asChild className="bg-[#25D366] text-white hover:bg-[#1fb855] hover:shadow-[0_0_30px_-5px_rgba(37,211,102,0.4)] transition-all duration-300 rounded-xl">
-                <Link to="/ativar">Come\u00e7ar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+              <Button asChild className="bg-[#D4AF37] text-white hover:bg-[#B8962E] hover:shadow-[0_0_30px_-5px_rgba(212,175,55,0.4)] transition-all duration-300 rounded-xl">
+                <Link to="/ativar">Começar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
               </Button>
             </MagneticButton>
           </div>
@@ -100,15 +100,15 @@ function Navbar() {
         </button>
       </div>
       {open && (
-        <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }} className="border-t border-white/[0.06] bg-[#0A0F1A]/95 backdrop-blur-2xl md:hidden overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }} className="border-t border-white/[0.06] bg-[#0C0B08]/95 backdrop-blur-2xl md:hidden overflow-hidden">
           <div className="flex flex-col gap-1 px-4 py-3">
             {links.map((l) => (
               <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-3 py-2.5 text-sm text-white/60 transition hover:text-white hover:bg-white/5 rounded-xl">
                 {l.label}
               </a>
             ))}
-            <Button asChild className="mt-2 w-full bg-[#25D366] text-white hover:bg-[#1fb855] rounded-xl">
-              <Link to="/ativar" onClick={() => setOpen(false)}>Come\u00e7ar Agora</Link>
+            <Button asChild className="mt-2 w-full bg-[#D4AF37] text-white hover:bg-[#B8962E] rounded-xl">
+              <Link to="/ativar" onClick={() => setOpen(false)}>Começar Agora</Link>
             </Button>
           </div>
         </motion.div>
@@ -136,30 +136,30 @@ function Hero() {
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="relative h-[600px] w-[600px]">
           <div className="absolute inset-0 rounded-full border border-white/[0.03] animate-slow-rotate" />
-          <div className="absolute inset-8 rounded-full border border-[#25D366]/[0.06] animate-slow-rotate" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
+          <div className="absolute inset-8 rounded-full border border-[#D4AF37]/[0.06] animate-slow-rotate" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
           <div className="absolute inset-16 rounded-full border border-white/[0.02] animate-slow-rotate" style={{ animationDuration: '35s' }} />
         </div>
       </div>
 
-      <MorphingBlob className="-left-32 top-1/4" color="rgba(37, 211, 102, 0.06)" size={400} />
-      <MorphingBlob className="-right-32 bottom-1/4" color="rgba(59, 130, 246, 0.05)" size={350} />
+      <MorphingBlob className="-left-32 top-1/4" color="rgba(212, 175, 55, 0.06)" size={400} />
+      <MorphingBlob className="-right-32 bottom-1/4" color="rgba(212, 175, 55, 0.05)" size={350} />
 
       <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-5xl text-center">
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#25D366]/20 bg-[#25D366]/5 px-4 py-1.5 text-xs font-medium text-[#25D366] backdrop-blur-sm">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 px-4 py-1.5 text-xs font-medium text-[#D4AF37] backdrop-blur-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            Protec\u00e7\u00e3o Pessoal Inteligente via BLE
+            Protecção Pessoal Inteligente via BLE
           </div>
           <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-            A Sua Seguran\u00e7a.{' '}
-            <span className="bg-gradient-to-r from-[#25D366] via-emerald-400 to-[#25D366] bg-clip-text text-transparent bg-[length:200%_auto] animate-[text-shimmer_4s_linear_infinite]">
-              Um Bot\u00e3o de Dist\u00e2ncia.
+            A Sua Segurança.{' '}
+            <span className="bg-gradient-to-r from-[#D4AF37] via-amber-300 to-[#D4AF37] bg-clip-text text-transparent bg-[length:200%_auto] animate-[text-shimmer_4s_linear_infinite]">
+              Um Botão de Distância.
             </span>
           </h1>
         </motion.div>
         <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="mx-auto mt-6 max-w-2xl text-base text-white/50 leading-relaxed sm:text-lg md:text-xl">
-          Monitoriza\u00e7\u00e3o por Bluetooth em tempo real para protec\u00e7\u00e3o pessoal.
-          Pareie qualquer dispositivo BLE e active a seguran\u00e7a com um \u00fanico toque.
+          Monitorização por Bluetooth em tempo real para protecção pessoal.
+          Pareie qualquer dispositivo BLE e active a segurança com um único toque.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8 }} className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <MagneticButton strength={0.2}>
@@ -174,15 +174,25 @@ function Hero() {
           </MagneticButton>
         </motion.div>
 
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55, duration: 0.8 }} className="mt-6">
+          <button
+            onClick={() => window.location.href = '/instalar'}
+            className="inline-flex items-center gap-1.5 text-sm text-[#D4AF37]/80 hover:text-[#D4AF37] transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            PWA, App Nativa ou Camuflada? Escolha como instalar
+          </button>
+        </motion.div>
+
         <div className="mt-20 grid grid-cols-3 gap-4 sm:gap-8">
           {[
-            { value: 2, suffix: 'M+', label: 'Utilizadores Activos' },
-            { value: 99.9, suffix: '%', label: 'Uptime Garantido', decimals: 1 },
-            { value: 0, suffix: '<3s', label: 'Tempo de Resposta', isText: true },
+            { value: 24, suffix: '/7', label: 'Protecção Contínua' },
+            { value: 3, suffix: '', label: 'Canais de Alerta: SMS · Push · Sirene' },
+            { value: 0, suffix: '100%', label: 'Offline-First', isText: true },
           ].map((s, i) => (
             <motion.div key={s.label} custom={i} variants={scaleIn} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }} className="group">
-              <div className="mx-auto w-full max-w-[200px] rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all duration-500 group-hover:border-[#25D366]/20 group-hover:bg-[#25D366]/[0.03] group-hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.1)]">
-                <p className="text-3xl font-display font-extrabold text-[#25D366]">
+              <div className="mx-auto w-full max-w-[200px] rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all duration-500 group-hover:border-[#D4AF37]/20 group-hover:bg-[#D4AF37]/[0.03] group-hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.1)]">
+                <p className="text-3xl font-display font-extrabold text-[#D4AF37]">
                   {s.isText ? s.suffix : <CounterAnimated target={s.value} suffix={s.suffix} decimals={(s as any).decimals || 0} />}
                 </p>
                 <p className="mt-1.5 text-xs text-white/40 font-medium">{s.label}</p>
@@ -204,7 +214,7 @@ function TrustMarquee() {
   return (
     <Section className="border-y border-white/[0.04] bg-white/[0.01] py-8">
       <motion.p variants={fadeUp} custom={0} className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-        Parceiros de Confian\u00e7a
+        Parceiros de Confiança
       </motion.p>
       <Marquee speed={30} className="mask-edges">
         {items.map((name, i) => (
@@ -222,31 +232,31 @@ function TrustMarquee() {
 /* ════════════════════════════════════════════════ */
 function HowItWorks() {
   const steps = [
-    { num: '01', title: 'Pareie o Dispositivo', desc: 'Conecte qualquer dispositivo BLE \u2014 fones, pulseira ou tracker \u2014 ao seu smartphone em segundos.', Icon: Headphones },
-    { num: '02', title: 'Active a Protec\u00e7\u00e3o', desc: 'Com um toque, active o modo de seguran\u00e7a que monitora a dist\u00e2ncia e o sinal do dispositivo pareado.', Icon: ShieldCheck },
-    { num: '03', title: 'Um Bot\u00e3o Salva Vidas', desc: 'Se o sinal for perdido ou o bot\u00e3o de emerg\u00eancia pressionado, contactos e autoridades s\u00e3o notificados.', Icon: AlertTriangle },
+    { num: '01', title: 'Pareie o Dispositivo', desc: 'Conecte qualquer dispositivo BLE — fones, pulseira ou tracker — ao seu smartphone em segundos.', Icon: Headphones },
+    { num: '02', title: 'Active a Protecção', desc: 'Com um toque, active o modo de segurança que monitora a distância e o sinal do dispositivo pareado.', Icon: ShieldCheck },
+    { num: '03', title: 'Um Botão Salva Vidas', desc: 'Se o sinal for perdido ou o botão de emergência pressionado, contactos e autoridades são notificados.', Icon: AlertTriangle },
   ]
   return (
     <Section id="como-funciona" className="py-28">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Processo Simples</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Processo Simples</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Como <span className="text-gradient-safe">Funciona</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-white/40">
-            Tr\u00eas passos simples entre voc\u00ea e a tranquilidade.
+            Três passos simples entre você e a tranquilidade.
           </p>
         </motion.div>
         <div className="relative mt-20 grid grid-cols-1 gap-12 md:grid-cols-3">
-          <div className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-16 hidden h-px bg-gradient-to-r from-transparent via-[#25D366]/30 to-transparent md:block" />
+          <div className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-16 hidden h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent md:block" />
           {steps.map((step, i) => (
             <motion.div key={step.num} custom={i} variants={fadeUp} className="relative flex flex-col items-center text-center">
               <div className="relative">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#25D366]/20 bg-[#25D366]/[0.06] backdrop-blur-sm transition-all duration-500 hover:border-[#25D366]/40 hover:bg-[#25D366]/10 hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.15)]">
-                  <step.Icon className="h-8 w-8 text-[#25D366]" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.06] backdrop-blur-sm transition-all duration-500 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.15)]">
+                  <step.Icon className="h-8 w-8 text-[#D4AF37]" />
                 </div>
-                <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-[#0A0F1A] border border-[#25D366]/30 text-[10px] font-bold text-[#25D366] font-mono">
+                <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-[#0C0B08] border border-[#D4AF37]/30 text-[10px] font-bold text-[#D4AF37] font-mono">
                   {step.num}
                 </span>
               </div>
@@ -265,31 +275,31 @@ function HowItWorks() {
 /* ════════════════════════════════════════════════ */
 function FeaturesGrid() {
   const features = [
-    { title: 'Rastreamento Tempo Real', desc: 'Veja a localiza\u00e7\u00e3o exacta do seu dispositivo BLE a cada segundo no mapa interactivo.', Icon: MapPin },
-    { title: 'Grava\u00e7\u00e3o de \u00c1udio', desc: 'Grava automaticamente o ambiente quando o alerta \u00e9 activado, para uso como prova forense.', Icon: Mic },
-    { title: 'Alerta Silencioso', desc: 'Notifique contactos de emerg\u00eancia sem que o agressor perceba \u2014 zero som, zero vibra\u00e7\u00e3o.', Icon: BellOff },
-    { title: 'Geofencing Inteligente', desc: 'Crie zonas seguras e receba alertas instant\u00e2neos ao entrar ou sair dessas \u00e1reas.', Icon: Crosshair },
-    { title: 'Rede de Dispositivos', desc: 'Aproveite outros dispositivos pr\u00f3ximos para ampliar o alcance do sinal BLE.', Icon: Wifi },
-    { title: 'Partilha com Autoridades', desc: 'Envie dados de localiza\u00e7\u00e3o e \u00e1udio directamente para a Pol\u00edcia com um toque.', Icon: ShieldCheck },
+    { title: 'Rastreamento Tempo Real', desc: 'Veja a localização exacta do seu dispositivo BLE a cada segundo no mapa interactivo.', Icon: MapPin },
+    { title: 'Gravação de Áudio', desc: 'Grava automaticamente o ambiente quando o alerta é activado, para uso como prova forense.', Icon: Mic },
+    { title: 'Alerta Silencioso', desc: 'Notifique contactos de emergência sem que o agressor perceba — zero som, zero vibração.', Icon: BellOff },
+    { title: 'Geofencing Inteligente', desc: 'Crie zonas seguras e receba alertas instantâneos ao entrar ou sair dessas áreas.', Icon: Crosshair },
+    { title: 'Rede de Dispositivos', desc: 'Aproveite outros dispositivos próximos para ampliar o alcance do sinal BLE.', Icon: Wifi },
+    { title: 'Partilha com Autoridades', desc: 'Envie dados de localização e áudio directamente para a Polícia com um toque.', Icon: ShieldCheck },
   ]
   return (
     <Section id="funcionalidades" className="relative py-28 overflow-hidden">
       <ParticleField count={20} className="opacity-30" />
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Tecnologia Avan\u00e7ada</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Tecnologia Avançada</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Funcionalidades
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-white/40">
-            Ao servi\u00e7o da sua seguran\u00e7a pessoal.
+            Ao serviço da sua segurança pessoal.
           </p>
         </motion.div>
         <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
             <motion.div key={f.title} custom={i} variants={fadeUp}>
               <SpotlightCard className="p-7 h-full">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366]/[0.08] text-[#25D366] border border-[#25D366]/10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4AF37]/[0.08] text-[#D4AF37] border border-[#D4AF37]/10">
                   <f.Icon className="h-5 w-5" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-display mt-5 text-base font-semibold text-white">{f.title}</h3>
@@ -308,24 +318,24 @@ function FeaturesGrid() {
 /* ════════════════════════════════════════════════ */
 function SocialProof() {
   const testimonials = [
-    { name: 'Ana Costa', role: 'Empres\u00e1ria, Maputo', text: 'O StatusAds deu-me a tranquilidade que precisava. Agora sei que a minha fam\u00edlia est\u00e1 sempre protegida.' },
-    { name: 'Carlos Mondlane', role: 'Motorista, Beira', text: 'J\u00e1 usei o bot\u00e3o de emerg\u00eancia duas vezes. A resposta foi imediata. Recomendo a todos.' },
-    { name: 'Fernanda Nhaca', role: 'Estudante, Nampula', text: 'A interface \u00e9 incr\u00edvel e f\u00e1cil de usar. Sinto-me muito mais segura a andar na cidade.' },
-    { name: 'Roberto Silva', role: 'Pai de fam\u00edlia, Matola', text: 'O geofencing avisa-me quando os meus filhos chegam \u00e0 escola e quando saem. Perfeito.' },
+    { name: 'Ana Costa', role: 'Empresária, Maputo', text: 'O StatusAds deu-me a tranquilidade que precisava. Agora sei que a minha família está sempre protegida.' },
+    { name: 'Carlos Mondlane', role: 'Motorista, Beira', text: 'Já usei o botão de emergência duas vezes. A resposta foi imediata. Recomendo a todos.' },
+    { name: 'Fernanda Nhaca', role: 'Estudante, Nampula', text: 'A interface é incrível e fácil de usar. Sinto-me muito mais segura a andar na cidade.' },
+    { name: 'Roberto Silva', role: 'Pai de família, Matola', text: 'O geofencing avisa-me quando os meus filhos chegam à escola e quando saem. Perfeito.' },
   ]
   return (
     <Section className="py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Depoimentos</span>
-          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">Quem Confia em N\u00f3s</h2>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Depoimentos</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">Quem Confia em Nós</h2>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {testimonials.map((t, i) => (
             <motion.div key={t.name} custom={i} variants={fadeUp}>
               <SpotlightCard className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#25D366]/20 to-emerald-600/20 border border-[#25D366]/20 flex items-center justify-center text-sm font-bold text-[#25D366]">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-amber-500/20 border border-[#D4AF37]/20 flex items-center justify-center text-sm font-bold text-[#D4AF37]">
                     {t.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
@@ -333,7 +343,7 @@ function SocialProof() {
                     <p className="text-xs text-white/30">{t.role}</p>
                   </div>
                 </div>
-                <p className="text-sm leading-relaxed text-white/50 italic">\u201c{t.text}\u201d</p>
+                <p className="text-sm leading-relaxed text-white/50 italic">“{t.text}”</p>
               </SpotlightCard>
             </motion.div>
           ))}
@@ -348,9 +358,9 @@ function SocialProof() {
 /* ════════════════════════════════════════════════ */
 function EmergencyDemo() {
   const flow = [
-    { step: 'Bot\u00e3o Pressionado', icon: AlertTriangle, time: '0s' },
+    { step: 'Botão Pressionado', icon: AlertTriangle, time: '0s' },
     { step: 'GPS Capturado', icon: MapPin, time: '0.5s' },
-    { step: '\u00c1udio Gravado', icon: Mic, time: '1.5s' },
+    { step: 'Áudio Gravado', icon: Mic, time: '1.5s' },
     { step: 'Contactos Notificados', icon: Users, time: '2.5s' },
   ]
   return (
@@ -363,12 +373,12 @@ function EmergencyDemo() {
           <motion.div variants={scaleIn} custom={0} className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/[0.06]">
             <AlertTriangle className="h-8 w-8 text-red-400" />
           </motion.div>
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400/60">Protocolo de Emerg\u00eancia</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400/60">Protocolo de Emergência</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Cada Segundo <span className="text-red-400">Conta</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-white/40">
-            O sistema actua em menos de 3 segundos \u2014 do alerta \u00e0 notifica\u00e7\u00e3o completa.
+            O sistema actua em menos de 3 segundos — do alerta à notificação completa.
           </p>
         </motion.div>
         <div className="relative mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -397,9 +407,9 @@ function EmergencyDemo() {
 /* ════════════════════════════════════════════════ */
 function TrustStats() {
   const stats = [
-    { value: 10000, suffix: '', label: 'Utilizadores Protegidos', prefix: '+', decimals: 0 },
-    { value: 99.9, suffix: '%', label: 'Uptime', prefix: '', decimals: 1 },
-    { value: 4.8, suffix: 's', label: 'Tempo de Resposta', prefix: '', decimals: 1 },
+    { value: 11, suffix: '', label: 'Modos de Camuflagem', prefix: '', decimals: 0 },
+    { value: 3, suffix: '', label: 'Canais de Alerta', prefix: '', decimals: 0 },
+    { value: 100, suffix: '%', label: 'Offline-First', prefix: '', decimals: 0 },
   ]
   return (
     <Section className="py-20 border-y border-white/[0.04] bg-white/[0.01]">
@@ -407,7 +417,7 @@ function TrustStats() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           {stats.map((s, i) => (
             <motion.div key={s.label} custom={i} variants={fadeUp} className="text-center">
-              <p className="font-display text-4xl font-extrabold text-[#25D366] sm:text-5xl">
+              <p className="font-display text-4xl font-extrabold text-[#D4AF37] sm:text-5xl">
                 {s.prefix}<CounterAnimated target={s.value} suffix={s.suffix} decimals={s.decimals} />
               </p>
               <p className="mt-2 text-sm text-white/40 font-medium">{s.label}</p>
@@ -424,29 +434,29 @@ function TrustStats() {
 /* ════════════════════════════════════════════════ */
 function Pricing() {
   const plans = [
-    { name: 'Pessoal', price: 'Gr\u00e1tis', period: '', features: ['1 dispositivo BLE', '3 contactos de emerg\u00eancia', '7 dias de hist\u00f3rico', 'Alertas b\u00e1sicos'], cta: 'Come\u00e7ar Gr\u00e1tis', popular: false },
-    { name: 'Fam\u00edlia', price: '$7.99', period: '/m\u00eas', features: ['5 dispositivos BLE', 'Geofences ilimitados', '90 dias de hist\u00f3rico', 'Grava\u00e7\u00e3o de \u00e1udio', 'Suporte priorit\u00e1rio', 'Partilha familiar'], cta: 'Assinar Agora', popular: true },
-    { name: 'Empresa', price: '$19.99', period: '/m\u00eas', features: ['Dispositivos ilimitados', 'Acesso \u00e0 API', 'Painel administrativo', 'Relat\u00f3rios avan\u00e7ados', 'SLA garantido', 'Suporte 24/7'], cta: 'Falar com Vendas', popular: false },
+    { name: 'Pessoal', price: 'Grátis', period: '', features: ['1 dispositivo BLE', '3 contactos de emergência', '7 dias de histórico', 'Alertas básicos'], cta: 'Começar Grátis', popular: false },
+    { name: 'Família', price: '$7.99', period: '/mês', features: ['5 dispositivos BLE', 'Geofences ilimitados', '90 dias de histórico', 'Gravação de áudio', 'Suporte prioritário', 'Partilha familiar'], cta: 'Assinar Agora', popular: true },
+    { name: 'Empresa', price: '$19.99', period: '/mês', features: ['Dispositivos ilimitados', 'Acesso à API', 'Painel administrativo', 'Relatórios avançados', 'SLA garantido', 'Suporte 24/7'], cta: 'Falar com Vendas', popular: false },
   ]
   return (
     <Section id="precos" className="py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">Planos</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Planos</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Escolha o Plano Ideal
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem voc\u00ea ama ao pre\u00e7o certo.</p>
+          <p className="mx-auto mt-4 max-w-lg text-white/40">Proteja quem você ama ao preço certo.</p>
         </motion.div>
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan, i) => {
             const card = (
               <GlowCard className={cn(
                 'p-8 flex flex-col h-full',
-                plan.popular && 'border-[#25D366]/30'
+                plan.popular && 'border-[#D4AF37]/30'
               )}>
                 {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#25D366] to-emerald-400 px-4 py-1 text-[11px] font-semibold text-white shadow-[0_0_20px_rgba(37,211,102,0.3)]">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-300 px-4 py-1 text-[11px] font-semibold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                     Mais Popular
                   </span>
                 )}
@@ -458,8 +468,8 @@ function Pricing() {
                 <ul className="mt-8 flex flex-1 flex-col gap-3.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
-                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#25D366]/10">
-                        <Check className="h-2.5 w-2.5 text-[#25D366]" />
+                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10">
+                        <Check className="h-2.5 w-2.5 text-[#D4AF37]" />
                       </div>
                       {f}
                     </li>
@@ -499,15 +509,15 @@ function FAQ() {
   const faqs = [
     {
       q: 'Como funciona o monitoramento BLE?',
-      a: 'Pareie o seu smartphone com dispositivos Bluetooth pr\u00f3ximos (fones, smartwatch). Se um dispositivo se desconectar inesperadamente, o sistema inicia um timer de 60 segundos e activa automaticamente a emerg\u00eancia com a sua localiza\u00e7\u00e3o GPS.',
+      a: 'Pareie o seu smartphone com dispositivos Bluetooth próximos (fones, smartwatch). Se um dispositivo se desconectar inesperadamente, o sistema inicia um timer de 60 segundos e activa automaticamente a emergência com a sua localização GPS.',
     },
     {
-      q: 'Os meus dados est\u00e3o seguros?',
-      a: 'Todos os dados s\u00e3o encriptados em tr\u00e2nsito e em repouso. Utilizamos Supabase com Row-Level Security. As suas localiza\u00e7\u00f5es GPS s\u00f3 s\u00e3o partilhadas durante emerg\u00eancias activas.',
+      q: 'Os meus dados estão seguros?',
+      a: 'Todos os dados são encriptados em trânsito e em repouso. Utilizamos Supabase com Row-Level Security. As suas localizações GPS só são partilhadas durante emergências activas.',
     },
     {
       q: 'Preciso de internet para o sistema funcionar?',
-      a: 'O sistema funciona offline. Se perder conex\u00e3o durante uma emerg\u00eancia, o pedido \u00e9 guardado localmente e enviado automaticamente quando a conex\u00e3o \u00e9 restabelecida.',
+      a: 'O sistema funciona offline. Se perder conexão durante uma emergência, o pedido é guardado localmente e enviado automaticamente quando a conexão é restabelecida.',
     },
     {
       q: 'Posso testar antes de subscrever?',
@@ -518,7 +528,7 @@ function FAQ() {
     <Section className="py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center mb-14">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]/70">D\u00favidas Frequentes</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Dúvidas Frequentes</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Perguntas Frequentes
           </h2>
@@ -543,7 +553,7 @@ function FAQ() {
                     transition={{ duration: 0.3 }}
                     className="shrink-0"
                   >
-                    <ChevronDown className="h-4 w-4 text-[#25D366]/60" />
+                    <ChevronDown className="h-4 w-4 text-[#D4AF37]/60" />
                   </motion.div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -576,16 +586,16 @@ function FinalCta() {
   return (
     <Section className="py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <motion.div variants={scaleIn} custom={0} className="relative overflow-hidden rounded-3xl border border-[#25D366]/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#25D366] to-emerald-600" />
+        <motion.div variants={scaleIn} custom={0} className="relative overflow-hidden rounded-3xl border border-[#D4AF37]/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37] to-amber-500" />
           <div className="pointer-events-none absolute -left-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
           <FloatingOrbs className="opacity-30" />
           <div className="relative z-10 p-10 text-center sm:p-14">
             <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
-              Proteja Quem Voc\u00ea Ama
+              Proteja Quem Você Ama
             </h2>
-            <p className="mx-auto mt-4 max-w-md text-emerald-100/80">
+            <p className="mx-auto mt-4 max-w-md text-amber-100/80">
               Crie a sua conta gratuita em menos de 30 segundos e comece a monitorizar agora.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -597,7 +607,7 @@ function FinalCta() {
                 className="h-12 w-full max-w-xs border-white/20 bg-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-xl backdrop-blur-sm"
               />
               <MagneticButton strength={0.15}>
-                <RippleButton variant="outline" className="h-12 bg-white text-[#0A0F1A] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/ativar'}>
+                <RippleButton variant="outline" className="h-12 bg-white text-[#0C0B08] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/ativar'}>
                   Activar Dispositivo <ArrowRight className="ml-2 h-4 w-4" />
                 </RippleButton>
               </MagneticButton>
@@ -614,24 +624,24 @@ function FinalCta() {
 /* ════════════════════════════════════════════════ */
 function Footer() {
   const columns = [
-    { title: 'Produto', links: ['Funcionalidades', 'Pre\u00e7os', 'Integra\u00e7\u00f5es', 'API', 'Changelog'] },
-    { title: 'Empresa', links: ['Sobre N\u00f3s', 'Blog', 'Carreiras', 'Imprensa', 'Parceiros'] },
+    { title: 'Produto', links: ['Funcionalidades', 'Preços', 'Integrações', 'API', 'Changelog'] },
+    { title: 'Empresa', links: ['Sobre Nós', 'Blog', 'Carreiras', 'Imprensa', 'Parceiros'] },
     { title: 'Legal', links: ['Termos de Uso', 'Privacidade', 'Cookies', 'LGPD', 'SLA'] },
     { title: 'Suporte', links: ['Central de Ajuda', 'Contacto', 'Status', 'Comunidade', 'FAQ'] },
   ]
   return (
-    <footer className="border-t border-white/[0.04] bg-[#0A0F1A]">
+    <footer className="border-t border-white/[0.04] bg-[#0C0B08]">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366]/10 border border-[#25D366]/20">
-                <Shield className="h-4 w-4 text-[#25D366]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+                <Shield className="h-4 w-4 text-[#D4AF37]" />
               </div>
-              <span className="font-display text-base font-bold text-white">Status<span className="text-[#25D366]">Ads</span></span>
+              <span className="font-display text-base font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
             </Link>
             <p className="mt-3 text-xs leading-relaxed text-white/25">
-              Seguran\u00e7a pessoal atrav\u00e9s de tecnologia BLE. Protegendo pessoas em Mo\u00e7ambique e no mundo.
+              Segurança pessoal através de tecnologia BLE. Protegendo pessoas em Moçambique e no mundo.
             </p>
           </div>
           {columns.map((col) => (
@@ -646,7 +656,7 @@ function Footer() {
           ))}
         </div>
         <div className="mt-14 border-t border-white/[0.04] pt-6 text-center text-xs text-white/25">
-          StatusAds Connect v2.9.0 \u00b7 Direitos reservados
+          StatusAds Connect v2.9.0 · Direitos reservados
         </div>
       </div>
     </footer>
@@ -658,7 +668,7 @@ function Footer() {
 /* ════════════════════════════════════════════════ */
 export default function Landing() {
   return (
-    <div className="dark min-h-screen bg-[#0A0F1A] text-white overflow-x-hidden">
+    <div className="dark min-h-screen bg-[#0C0B08] text-white overflow-x-hidden">
       <ScrollProgress />
       <Navbar />
       <Hero />

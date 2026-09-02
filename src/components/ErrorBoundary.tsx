@@ -89,7 +89,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const iconColor = isEmergency ? 'text-red-400' : 'text-amber-400'
 
     return (
-      <div className="min-h-screen bg-[#0A0F1A] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="min-h-screen bg-[#0C0B08] flex flex-col items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-red-500/[0.02] to-transparent pointer-events-none" />
 
         <motion.div
@@ -149,7 +149,7 @@ export class ErrorBoundary extends Component<Props, State> {
           transition={{ delay: 0.2, duration: 0.3 }}
           className="flex flex-col sm:flex-row gap-3 w-full max-w-sm"
         >
-          <button onClick={this.handleReset} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#25D366] hover:bg-[#1fb855] text-white font-semibold text-sm transition-colors">
+          <button onClick={this.handleReset} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-white font-semibold text-sm transition-colors">
             <RefreshCw className="h-4 w-4" /> Tentar Novamente
           </button>
           <button onClick={this.handleGoHome} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-white/70 text-sm transition-colors">
@@ -165,7 +165,7 @@ export class ErrorBoundary extends Component<Props, State> {
         >
           <button onClick={this.handleCopy} className="flex items-center gap-1.5 text-[11px] text-white/20 hover:text-white/40 transition-colors">
             {this.state.copied
-              ? <><Check className="h-3 w-3 text-[#25D366]" /> Copiado</>
+              ? <><Check className="h-3 w-3 text-[#D4AF37]" /> Copiado</>
               : <><Copy className="h-3 w-3" /> Copiar erro</>}
           </button>
           <button onClick={this.handleReload} className="text-[11px] text-white/20 hover:text-white/40 transition-colors">

@@ -94,10 +94,10 @@ function FakeHomePage() {
         <p className="mt-1 text-3xl font-bold tracking-tight">{formatMeticais(fakeBalance)}</p>
         <div className="mt-4 flex gap-4">
           <div className="flex items-center gap-1.5">
-            <ArrowDownLeft className="h-3.5 w-3.5 text-green-300" />
+            <ArrowDownLeft className="h-3.5 w-3.5 text-amber-200" />
             <div>
               <p className="text-[10px] text-blue-100/60">Receitas</p>
-              <p className="text-xs font-semibold text-green-300">{formatMeticais(fakeIncome)}</p>
+              <p className="text-xs font-semibold text-amber-200">{formatMeticais(fakeIncome)}</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -114,7 +114,7 @@ function FakeHomePage() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { icon: ArrowUpRight, label: 'Enviar', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-          { icon: ArrowDownLeft, label: 'Receber', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+          { icon: ArrowDownLeft, label: 'Receber', color: 'bg-amber-400/10 text-amber-300 border-amber-400/20' },
           { icon: PiggyBank, label: 'Poupar', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
           { icon: CreditCard, label: 'Pagar', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
         ].map((item) => (
@@ -175,7 +175,7 @@ function FakeHomePage() {
                 <p className="text-xs font-medium text-white/70 truncate">{tx.name}</p>
                 <p className="text-[10px] text-white/25">{tx.category} · {tx.date}</p>
               </div>
-              <span className={`text-xs font-semibold ${tx.amount >= 0 ? 'text-green-400' : 'text-white/50'}`}>
+              <span className={`text-xs font-semibold ${tx.amount >= 0 ? 'text-amber-300' : 'text-white/50'}`}>
                 {tx.amount >= 0 ? '+' : ''}{formatMeticais(tx.amount)}
               </span>
             </div>
@@ -215,7 +215,7 @@ function FakeTransactionsPage() {
               <p className="text-xs font-medium text-white/70 truncate">{tx.name}</p>
               <p className="text-[10px] text-white/25">{tx.category} · {tx.date}</p>
             </div>
-            <span className={`text-xs font-semibold ${tx.amount >= 0 ? 'text-green-400' : 'text-white/50'}`}>
+            <span className={`text-xs font-semibold ${tx.amount >= 0 ? 'text-amber-300' : 'text-white/50'}`}>
               {tx.amount >= 0 ? '+' : ''}{formatMeticais(tx.amount)}
             </span>
           </motion.div>
@@ -270,7 +270,7 @@ function FakeStatsPage() {
       <h2 className="text-lg font-semibold text-white">Estatisticas</h2>
       <div className="grid grid-cols-2 gap-3">
         <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-          <TrendingUp className="h-5 w-5 text-green-400 mb-2" />
+          <TrendingUp className="h-5 w-5 text-amber-300 mb-2" />
           <p className="text-[10px] text-white/30 uppercase">Media Receitas</p>
           <p className="text-lg font-bold text-white/80">{formatMeticais(fakeMonthlyData.reduce((s, d) => s + d.income, 0) / fakeMonthlyData.length)}</p>
         </div>

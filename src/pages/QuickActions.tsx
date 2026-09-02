@@ -147,9 +147,9 @@ export default function QuickActions() {
           : 'Activar detecção de voz mãos-livres')
         : 'Não suportado neste navegador',
       icon: Mic,
-      color: voiceListening ? 'text-green-400' : 'text-blue-300',
-      bgColor: voiceListening ? 'bg-green-500/10' : 'bg-blue-500/10',
-      borderColor: voiceListening ? 'border-green-500/20' : 'border-blue-500/20',
+      color: voiceListening ? 'text-amber-300' : 'text-blue-300',
+      bgColor: voiceListening ? 'bg-amber-400/10' : 'bg-blue-500/10',
+      borderColor: voiceListening ? 'border-amber-400/20' : 'border-blue-500/20',
       action: voiceListening ? stopListening : startListening,
       isActive: voiceListening,
       activeLabel: voiceListening ? 'A OUVIR' : undefined,
@@ -210,9 +210,9 @@ export default function QuickActions() {
       title: 'Rota Segura',
       description: 'Calcular rota mais segura até ao destino',
       icon: Navigation,
-      color: 'text-emerald-300',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/20',
+      color: 'text-amber-200',
+      bgColor: 'bg-amber-400/10',
+      borderColor: 'border-amber-400/20',
       action: () => navigate('/dashboard/rota'),
     },
 
@@ -236,9 +236,9 @@ export default function QuickActions() {
       title: 'Check-in Seguro',
       description: 'Verificação de segurança com prova de vida',
       icon: ShieldCheck,
-      color: 'text-green-300',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
+      color: 'text-amber-200',
+      bgColor: 'bg-amber-400/10',
+      borderColor: 'border-amber-400/20',
       action: () => navigate('/dashboard/checkin'),
     },
     // DISGUISE CONFIGURATION — redirect to visual picker
@@ -307,7 +307,7 @@ export default function QuickActions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Zap className="w-6 h-6 text-[#25D366]" />
+            <Zap className="w-6 h-6 text-[#D4AF37]" />
             Acções Rápidas
           </h1>
           <p className="text-white/40 text-sm mt-1">Acesso instantâneo a todas as funcionalidades de segurança</p>
@@ -322,23 +322,23 @@ export default function QuickActions() {
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors',
               s.active
-                ? 'bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20'
+                ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20'
                 : 'bg-white/[0.03] text-white/20 border border-white/[0.05]'
             )}
           >
             <s.icon className="w-3 h-3" />
             <span>{s.label}</span>
-            {s.active && <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />}
+            {s.active && <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />}
           </div>
         ))}
       </div>
 
             {/* Safety Score Gauge + Quick Emergency Dial */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <BeamBorder color={safetyScore >= 80 ? '#25D366' : safetyScore >= 50 ? '#F59E0B' : '#EF4444'}>
+        <BeamBorder color={safetyScore >= 80 ? '#D4AF37' : safetyScore >= 50 ? '#F59E0B' : '#EF4444'}>
           <SpotlightCard className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-4 w-4 text-[#25D366]" />
+              <Shield className="h-4 w-4 text-[#D4AF37]" />
               <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Pontuacao de Seguranca</h2>
             </div>
             <SafetyScoreGauge score={safetyScore} factors={safetyFactors} size={180} showDetails={true} />
@@ -347,7 +347,7 @@ export default function QuickActions() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-[#25D366]" />
+            <Phone className="h-4 w-4 text-[#D4AF37]" />
             <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Discagem Rapida</h2>
           </div>
           <EmergencyQuickDial compact={false} maxContacts={5} />
@@ -357,7 +357,7 @@ export default function QuickActions() {
       {/* Location Share Link */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Share2 className="h-4 w-4 text-[#25D366]" />
+          <Share2 className="h-4 w-4 text-[#D4AF37]" />
           <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Partilha de Localizacao</h2>
         </div>
         <LocationShareLink />
@@ -443,13 +443,13 @@ export default function QuickActions() {
                     {action.badge && (
                       <span className={cn(
                         'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
-                        action.isActive ? 'bg-[#25D366]/20 text-[#25D366]' : 'bg-white/10 text-white/40'
+                        action.isActive ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-white/10 text-white/40'
                       )}>
                         {action.badge}
                       </span>
                     )}
                     {action.isActive && action.activeLabel && (
-                      <span className="text-[10px] text-[#25D366] font-medium">{action.activeLabel}</span>
+                      <span className="text-[10px] text-[#D4AF37] font-medium">{action.activeLabel}</span>
                     )}
                     <ChevronRight className="w-4 h-4 text-white/20" />
                   </div>
@@ -474,7 +474,7 @@ export default function QuickActions() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#1F2937] rounded-2xl p-6 w-full max-w-sm"
+              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-center mb-4">
@@ -520,7 +520,7 @@ export default function QuickActions() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#1F2937] rounded-2xl p-6 w-full max-w-sm"
+              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-center mb-4">

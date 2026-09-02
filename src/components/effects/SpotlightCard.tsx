@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode, type MouseEvent } from 'react'
 import { cn } from '@/lib/utils'
 
 export function SpotlightCard({
-  children, className, spotlightColor = 'rgba(37, 211, 102, 0.08)',
+  children, className, spotlightColor = 'rgba(212, 175, 55, 0.08)',
 }: {
   children: ReactNode; className?: string; spotlightColor?: string
 }) {

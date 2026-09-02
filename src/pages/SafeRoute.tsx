@@ -50,8 +50,8 @@ export default function SafeRoute() {
     <div className='min-h-screen space-y-5 pb-8'>
       {/* Header */}
       <div className='flex items-center gap-3'>
-        <div className='p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20'>
-          <Navigation className='w-5 h-5 text-emerald-400' />
+        <div className='p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20'>
+          <Navigation className='w-5 h-5 text-amber-300' />
         </div>
         <div>
           <h1 className='text-2xl font-bold text-white'>Rota Segura</h1>
@@ -60,9 +60,9 @@ export default function SafeRoute() {
       </div>
 
       {/* Origin info */}
-      <div className='bg-[#25D366]/[0.06] border border-[#25D366]/15 rounded-xl p-3 flex items-center gap-3'>
-        <div className='w-8 h-8 rounded-full bg-[#25D366]/20 flex items-center justify-center'>
-      <div className='w-3 h-3 rounded-full bg-[#25D366] shadow-[0_0_8px_rgba(37,211,102,0.5)]' />
+      <div className='bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15 rounded-xl p-3 flex items-center gap-3'>
+        <div className='w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center'>
+      <div className='w-3 h-3 rounded-full bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.5)]' />
     </div>
     <div className='flex-1'>
       <div className='text-white text-sm font-medium'>Sua Localização</div>
@@ -79,18 +79,18 @@ export default function SafeRoute() {
         </div>
         <div>
           <input value={destName} onChange={e => setDestName(e.target.value)} placeholder='Nome do destino (opcional)'
-            className='w-full bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 mb-2' />
+            className='w-full bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-amber-400/40 mb-2' />
           <div className='grid grid-cols-2 gap-2'>
             <input value={destLat} onChange={e => setDestLat(e.target.value)} placeholder='Latitude' type='number' step='any'
-              className='bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40' />
+              className='bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-amber-400/40' />
             <input value={destLng} onChange={e => setDestLng(e.target.value)} placeholder='Longitude' type='number' step='any'
-              className='bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40' />
+              className='bg-white/5 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-amber-400/40' />
           </div>
         </div>
         <div className='flex gap-2'>
           <button onClick={handleCalculate} disabled={isCalculating || !destLat || !destLng}
             className={cn('flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2',
-              isCalculating || !destLat || !destLng ? 'bg-white/5 text-white/20' : 'bg-emerald-500 text-white hover:bg-emerald-600')}>
+              isCalculating || !destLat || !destLng ? 'bg-white/5 text-white/20' : 'bg-amber-400 text-white hover:bg-amber-500')}>
             {isCalculating ? <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> A calcular...</> : <><Route className='w-4 h-4' /> Calcular Rota</>}
           </button>
           {result && <button onClick={clearRoute} className='p-2.5 rounded-xl bg-white/5 text-white/40 hover:bg-white/10 transition'><X className='w-4 h-4' /></button>}
@@ -128,7 +128,7 @@ export default function SafeRoute() {
             <div className='flex items-center justify-between mb-3'>
               <div className='text-white/60 text-xs uppercase tracking-wider font-medium'>Pontos da Rota</div>
               <div className='flex items-center gap-3 text-[10px]'>
-                <span className='flex items-center gap-1'><span className='w-2 h-2 rounded-full bg-emerald-400' /> Seguro</span>
+                <span className='flex items-center gap-1'><span className='w-2 h-2 rounded-full bg-amber-300' /> Seguro</span>
                 <span className='flex items-center gap-1'><span className='w-2 h-2 rounded-full bg-amber-400' /> Cautela</span>
                 <span className='flex items-center gap-1'><span className='w-2 h-2 rounded-full bg-red-400' /> Perigo</span>
               </div>
@@ -138,7 +138,7 @@ export default function SafeRoute() {
                 <div key={i} className='flex items-center gap-2.5'>
                   <div className='flex flex-col items-center'>
                     <div className={cn('w-2.5 h-2.5 rounded-full shrink-0',
-                      wp.dangerLevel === 'safe' ? 'bg-emerald-400' : wp.dangerLevel === 'caution' ? 'bg-amber-400' : 'bg-red-400')} />
+                      wp.dangerLevel === 'safe' ? 'bg-amber-300' : wp.dangerLevel === 'caution' ? 'bg-amber-400' : 'bg-red-400')} />
                     {i < result.waypoints.length - 1 && <div className='w-0.5 h-3 bg-white/10' />}
                   </div>
                   <div className='flex-1 min-w-0'>
@@ -176,7 +176,7 @@ export default function SafeRoute() {
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string; color: string }) {
   const colors: Record<string, string> = {
-    emerald: 'bg-emerald-500/10 text-emerald-400',
+    emerald: 'bg-amber-400/10 text-amber-300',
     blue: 'bg-blue-500/10 text-blue-400',
     amber: 'bg-amber-500/10 text-amber-400',
   }

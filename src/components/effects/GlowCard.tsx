@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils'
 
 export function GlowCard({
   children, className,
-  glowColor = 'rgba(37, 211, 102, 0.12)',
-  borderGlow = 'rgba(37, 211, 102, 0.25)',
+  glowColor = 'rgba(212, 175, 55, 0.12)',
+  borderGlow = 'rgba(212, 175, 55, 0.25)',
 }: {
   children: ReactNode; className?: string
   glowColor?: string; borderGlow?: string
@@ -38,7 +38,7 @@ export function GlowCard({
       style={{ perspective: 800, transformStyle: 'preserve-3d' }}
       className={cn(
         'relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0D1321]/70 backdrop-blur-xl transition-shadow duration-500',
-        hover && 'shadow-[0_0_60px_-15px_rgba(37,211,102,0.12)]',
+        hover && 'shadow-[0_0_60px_-15px_rgba(212,175,55,0.12)]',
         className
       )}
     >

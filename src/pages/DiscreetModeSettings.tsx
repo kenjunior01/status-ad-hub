@@ -10,7 +10,7 @@
  * - Activar volume button SOS
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Eye, EyeOff, Shield, Volume2, Hand, Lock, AlertTriangle,
@@ -30,6 +30,18 @@ export default function DiscreetModeSettings() {
   const [showPinSetup, setShowPinSetup] = useState<'normal' | 'duress' | null>(null)
   const [newPin, setNewPin] = useState('')
 
+  // Consome disfarce escolhido no ecrã de instalação (/instalar → modo camuflado)
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem('statusads-pending-disguise')
+      if (pending) {
+        localStorage.removeItem('statusads-pending-disguise')
+        changeDisguise(pending as typeof disguiseType)
+        toast.success('Camuflagem aplicada a partir da instalação')
+      }
+    } catch { /* storage indisponível */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSavePin = () => {
     if (newPin.length < 4) { toast.error('PIN deve ter pelo menos 4 dígitos'); return }
@@ -81,7 +93,7 @@ export default function DiscreetModeSettings() {
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/15"><Lock className="w-4 h-4 text-green-400" /></div>
+                <div className="p-2 rounded-lg bg-amber-400/10 border border-amber-400/15"><Lock className="w-4 h-4 text-amber-300" /></div>
                 <div>
                   <div className="text-white text-sm font-medium">PIN Normal</div>
                   <div className="text-white/40 text-xs">Abre a app real</div>
@@ -138,7 +150,7 @@ export default function DiscreetModeSettings() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6" onClick={() => setShowPinSetup(null)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-[#1F2937] rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <h3 className="text-white text-center text-lg font-semibold mb-1">
                 {showPinSetup === 'normal' ? 'Definir PIN Normal' : 'Definir Duress PIN'}
               </h3>
@@ -158,7 +170,7 @@ export default function DiscreetModeSettings() {
                   className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm">Cancelar</button>
                 <button onClick={handleSavePin}
                   className={cn('flex-1 py-2.5 rounded-xl text-white text-sm font-medium',
-                    showPinSetup === 'normal' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600')}>
+                    showPinSetup === 'normal' ? 'bg-amber-400 hover:bg-amber-500' : 'bg-red-500 hover:bg-red-600')}>
                 Guardar
                 </button>
               </div>
@@ -176,15 +188,15 @@ function ToggleRow({ icon: Icon, label, description, checked, onChange }: {
   return (
     <button onClick={() => onChange(!checked)}
       className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition text-left">
-      <div className={cn('p-2 rounded-lg', checked ? 'bg-[#25D366]/10' : 'bg-white/5')}>
-        <Icon className={cn('w-4 h-4', checked ? 'text-[#25D366]' : 'text-white/30')} />
+      <div className={cn('p-2 rounded-lg', checked ? 'bg-[#D4AF37]/10' : 'bg-white/5')}>
+        <Icon className={cn('w-4 h-4', checked ? 'text-[#D4AF37]' : 'text-white/30')} />
       </div>
       <div className="flex-1">
         <div className="text-white text-sm">{label}</div>
         <div className="text-white/30 text-[11px]">{description}</div>
       </div>
-      <div className={cn('w-10 h-6 rounded-full transition-colors relative', checked ? 'bg-[#25D366]/30' : 'bg-white/10')}>
-        <div className={cn('absolute top-1 w-4 h-4 rounded-full transition-all', checked ? 'left-5 bg-[#25D366]' : 'left-1 bg-white/30')} />
+      <div className={cn('w-10 h-6 rounded-full transition-colors relative', checked ? 'bg-[#D4AF37]/30' : 'bg-white/10')}>
+        <div className={cn('absolute top-1 w-4 h-4 rounded-full transition-all', checked ? 'left-5 bg-[#D4AF37]' : 'left-1 bg-white/30')} />
       </div>
     </button>
   )

@@ -166,7 +166,7 @@ export default function SmartGlasses() {
     : null
   const signalColor = glassesSignal != null
     ? glassesSignal > -50
-      ? 'text-[#25D366]'
+      ? 'text-[#D4AF37]'
       : glassesSignal > -65
         ? 'text-amber-400'
         : 'text-red-400'
@@ -213,8 +213,8 @@ export default function SmartGlasses() {
         {/* ---- Header ---- */}
         <motion.div {...fadeInUp}>
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
-              <Settings2 className="h-5 w-5 text-[#25D366]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+              <Settings2 className="h-5 w-5 text-[#D4AF37]" />
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
               Oculos Inteligentes
@@ -229,17 +229,17 @@ export default function SmartGlasses() {
         <motion.div {...fadeInUp} transition={{ duration: 0.5, delay: 0.1 }}>
           <SpotlightCard className={cn(
             'p-5 transition-all duration-500',
-            isConnected && 'border-[#25D366]/20'
+            isConnected && 'border-[#D4AF37]/20'
           )}>
             {isConnected ? (
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366]/10">
-                      <Bluetooth className="h-6 w-6 text-[#25D366]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4AF37]/10">
+                      <Bluetooth className="h-6 w-6 text-[#D4AF37]" />
                     </div>
                     <motion.div
-                      className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#25D366] border-2 border-[#0D1321]"
+                      className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#D4AF37] border-2 border-[#0D1321]"
                       animate={{ scale: [1, 1.3, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
@@ -247,8 +247,8 @@ export default function SmartGlasses() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-white font-semibold text-sm">{glassesName || 'Oculos'}</span>
-                      <Badge className="bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/20 text-[10px]">
-                        <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#25D366]" />
+                      <Badge className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 text-[10px]">
+                        <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
                         Conectado
                       </Badge>
                     </div>
@@ -266,7 +266,7 @@ export default function SmartGlasses() {
                         </span>
                       )}
                       {glassesState.isHIDActive && (
-                        <span className="flex items-center gap-1 text-[#25D366]">
+                        <span className="flex items-center gap-1 text-[#D4AF37]">
                           <Radio className="h-3 w-3" />
                           HID Activo
                         </span>
@@ -280,7 +280,7 @@ export default function SmartGlasses() {
                     className={cn(
                       'text-[10px] font-medium px-2.5 py-0.5',
                       glassesState.tapCount > 0
-                        ? 'border-[#25D366]/30 text-[#25D366]'
+                        ? 'border-[#D4AF37]/30 text-[#D4AF37]'
                         : 'border-white/10 text-white/30'
                     )}
                   >
@@ -334,7 +334,7 @@ export default function SmartGlasses() {
                     <SpotlightCard className="p-5 h-full">
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
-                          <Badge className="h-7 w-7 rounded-full bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 flex items-center justify-center text-xs font-bold shrink-0">
+                          <Badge className="h-7 w-7 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 flex items-center justify-center text-xs font-bold shrink-0">
                             {i + 1}
                           </Badge>
                           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04]">
@@ -375,7 +375,7 @@ export default function SmartGlasses() {
                       >
                         <Shield className={cn(
                           'h-10 w-10 transition-colors duration-500',
-                          localConfig.sos_enabled ? 'text-[#25D366]' : 'text-white/20'
+                          localConfig.sos_enabled ? 'text-[#D4AF37]' : 'text-white/20'
                         )} />
                       </motion.div>
                       <div>
@@ -383,7 +383,7 @@ export default function SmartGlasses() {
                           <Badge className={cn(
                             'text-xs font-bold px-3 py-1',
                             localConfig.sos_enabled
-                              ? 'bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30'
+                              ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30'
                               : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                           )}>
                             {localConfig.sos_enabled ? 'SOS ACTIVO' : 'SOS DESACTIVADO'}
@@ -423,14 +423,14 @@ export default function SmartGlasses() {
                         className={cn(
                           'relative text-left rounded-2xl border p-4 transition-all duration-300',
                           isActive
-                            ? 'border-[#25D366]/40 bg-[#25D366]/5 shadow-lg shadow-[#25D366]/5'
+                            ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5 shadow-lg shadow-[#D4AF37]/5'
                             : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]'
                         )}
                       >
                         {isActive && (
                           <motion.div
                             layoutId="tap-pattern-active"
-                            className="absolute inset-0 rounded-2xl border-2 border-[#25D366]/50"
+                            className="absolute inset-0 rounded-2xl border-2 border-[#D4AF37]/50"
                             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                           />
                         )}
@@ -443,7 +443,7 @@ export default function SmartGlasses() {
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="flex h-5 w-5 items-center justify-center rounded-full bg-[#25D366]"
+                                className="flex h-5 w-5 items-center justify-center rounded-full bg-[#D4AF37]"
                               >
                                 <Check className="h-3 w-3 text-white" />
                               </motion.div>
@@ -517,7 +517,7 @@ export default function SmartGlasses() {
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04]">
                           {localConfig.stealth_mode ? (
-                            <EyeOff className="h-4 w-4 text-[#25D366]" />
+                            <EyeOff className="h-4 w-4 text-[#D4AF37]" />
                           ) : (
                             <Eye className="h-4 w-4 text-white/50" />
                           )}
@@ -562,7 +562,7 @@ export default function SmartGlasses() {
                             <Clock className="h-3.5 w-3.5 text-white/40" />
                             Tempo maximo de gravacao
                           </Label>
-                          <span className="text-[#25D366] text-xs font-mono font-semibold">
+                          <span className="text-[#D4AF37] text-xs font-mono font-semibold">
                             {localConfig.max_record_duration}s
                           </span>
                         </div>
@@ -572,7 +572,7 @@ export default function SmartGlasses() {
                           min={30}
                           max={300}
                           step={10}
-                          className="[&_[role=slider]]:bg-[#25D366] [&_[role=slider]]:border-[#25D366] [&>span>span]:bg-[#25D366]"
+                          className="[&_[role=slider]]:bg-[#D4AF37] [&_[role=slider]]:border-[#D4AF37] [&>span>span]:bg-[#D4AF37]"
                         />
                         <div className="flex justify-between text-[10px] text-white/20">
                           <span>30s</span>
@@ -608,7 +608,7 @@ export default function SmartGlasses() {
                       <Button
                         onClick={handleSave}
                         disabled={isSavingConfig}
-                        className="w-full sm:w-auto bg-[#25D366] hover:bg-[#25D366]/90 text-black font-semibold"
+                        className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-black font-semibold"
                       >
                         {isSavingConfig ? (
                           <>

@@ -68,7 +68,7 @@ export function useIncidentTimeline(emergencyAlertId: string | null) {
       // Add location events
       for (const evt of (events || [])) {
         const typeLabels: Record<string, { title: string; color: string }> = {
-          location: { title: 'Localização GPS', color: '#25D366' },
+          location: { title: 'Localização GPS', color: '#D4AF37' },
           alert: { title: 'Alerta', color: '#F59E0B' },
           bluetooth: { title: 'Bluetooth', color: '#3B82F6' },
           geofence: { title: 'Geofence', color: '#8B5CF6' },

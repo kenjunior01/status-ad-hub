@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, RefreshCw, X, WifiOff, Shield } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { usePWA } from '@/hooks/usePWA'
 import { SpotlightCard } from '@/components/effects'
@@ -8,6 +9,7 @@ import { SpotlightCard } from '@/components/effects'
 export function PWAInstallPrompt() {
   const { isInstallable, isInstalled, isOffline, isUpdateAvailable, installApp, updateApp } = usePWA()
   const [dismissed, setDismissed] = useState(false)
+  const navigate = useNavigate()
 
   if (dismissed) return null
 
@@ -42,18 +44,18 @@ export function PWAInstallPrompt() {
           exit={{ y: 60, opacity: 0 }}
           className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md"
         >
-          <SpotlightCard className="p-4 flex items-center gap-3 border-[#25D366]/20">
-            <div className="p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/15 shrink-0 animate-glow-pulse">
-              <RefreshCw className="h-5 w-5 text-[#25D366]" strokeWidth={1.5} />
+          <SpotlightCard className="p-4 flex items-center gap-3 border-[#D4AF37]/20">
+            <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15 shrink-0 animate-glow-pulse">
+              <RefreshCw className="h-5 w-5 text-[#D4AF37]" strokeWidth={1.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[#25D366]">Actualizacao Disponivel</p>
+              <p className="text-sm font-medium text-[#D4AF37]">Actualizacao Disponivel</p>
               <p className="text-[11px] text-white/30 mt-0.5">Nova versao do app pronta para instalar.</p>
             </div>
             <Button
               onClick={updateApp}
               size="sm"
-              className="shrink-0 bg-[#25D366] hover:bg-[#1fb855] text-white rounded-xl text-xs gap-1.5"
+              className="shrink-0 bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl text-xs gap-1.5"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Actualizar
             </Button>
@@ -71,20 +73,20 @@ export function PWAInstallPrompt() {
           exit={{ y: 60, opacity: 0 }}
           className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md"
         >
-          <SpotlightCard className="p-4 flex items-center gap-3 border-[#25D366]/20">
-            <div className="p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/15 shrink-0">
-              <Shield className="h-5 w-5 text-[#25D366]" strokeWidth={1.5} />
+          <SpotlightCard className="p-4 flex items-center gap-3 border-[#D4AF37]/20">
+            <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15 shrink-0">
+              <Shield className="h-5 w-5 text-[#D4AF37]" strokeWidth={1.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white">Instalar StatusAds</p>
               <p className="text-[11px] text-white/30 mt-0.5">Acesso rapido, modo offline e alertas em segundo plano.</p>
             </div>
             <Button
-              onClick={installApp}
+              onClick={() => navigate('/instalar')}
               size="sm"
-              className="shrink-0 bg-[#25D366] hover:bg-[#1fb855] text-white rounded-xl text-xs gap-1.5 hover:shadow-[0_0_20px_-5px_rgba(37,211,102,0.3)] transition-all"
+              className="shrink-0 bg-[#D4AF37] hover:bg-[#B8962E] text-black rounded-xl text-xs gap-1.5 hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)] transition-all"
             >
-              <Download className="h-3.5 w-3.5" /> Instalar
+              <Download className="h-3.5 w-3.5" /> Escolher forma
             </Button>
             <button onClick={() => setDismissed(true)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition shrink-0">
               <X className="h-4 w-4 text-white/30" />

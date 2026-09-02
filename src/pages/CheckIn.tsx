@@ -51,7 +51,7 @@ function CountdownTimer({ seconds, totalSeconds, isOverdue }: { seconds: number;
   const color = isOverdue
     ? '#EF4444'
     : fraction > 0.6
-      ? '#25D366'
+      ? '#D4AF37'
       : fraction > 0.3
         ? '#F59E0B'
         : '#EF4444'
@@ -152,7 +152,7 @@ export default function CheckIn() {
   const recentCheckIns = checkIns.slice(0, 10)
 
   const stats = [
-    { label: 'Total de Check-ins', value: totalCheckIns, icon: CheckCircle, color: 'text-[#25D366]' },
+    { label: 'Total de Check-ins', value: totalCheckIns, icon: CheckCircle, color: 'text-[#D4AF37]' },
     { label: 'Check-ins Falhados', value: missedCheckIns, icon: XCircle, color: 'text-red-400' },
     { label: 'Sequencia Actual', value: streak, icon: Flame, color: 'text-amber-400' },
   ]
@@ -169,7 +169,7 @@ export default function CheckIn() {
 
   if (configLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
+      <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
         <div className="space-y-6">
           <Shimmer className="h-8 w-64 rounded-xl" />
           <div className="flex justify-center py-12">
@@ -186,11 +186,11 @@ export default function CheckIn() {
   // Empty state when no config
   if (!config) {
     return (
-      <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
+      <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
-              <ShieldCheck className="h-5 w-5 text-[#25D366]" />
+            <div className="p-2 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+              <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
             </div>
             <h1 className="font-display text-2xl font-bold text-white">Check-in de Seguranca</h1>
           </div>
@@ -206,10 +206,10 @@ export default function CheckIn() {
           className="max-w-lg mx-auto text-center py-16"
         >
           <div className="relative inline-flex items-center justify-center mb-8">
-            <div className="h-28 w-28 rounded-full bg-[#25D366]/[0.06] border border-[#25D366]/10 flex items-center justify-center">
-              <ShieldCheck className="h-12 w-12 text-[#25D366]/40" strokeWidth={1} />
+            <div className="h-28 w-28 rounded-full bg-[#D4AF37]/[0.06] border border-[#D4AF37]/10 flex items-center justify-center">
+              <ShieldCheck className="h-12 w-12 text-[#D4AF37]/40" strokeWidth={1} />
             </div>
-            <div className="absolute -inset-4 rounded-full bg-[#25D366]/[0.03] blur-2xl" />
+            <div className="absolute -inset-4 rounded-full bg-[#D4AF37]/[0.03] blur-2xl" />
           </div>
           <h2 className="font-display text-xl font-bold text-white mb-3">
             Comece a usar o Check-in
@@ -221,14 +221,14 @@ export default function CheckIn() {
           </p>
           <div className="space-y-3 text-left max-w-xs mx-auto mb-8">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 p-1 rounded-md bg-[#25D366]/10">
-                <Timer className="h-3.5 w-3.5 text-[#25D366]" />
+              <div className="mt-0.5 p-1 rounded-md bg-[#D4AF37]/10">
+                <Timer className="h-3.5 w-3.5 text-[#D4AF37]" />
               </div>
               <p className="text-xs text-white/40">Escolha intervalos de 15 min a 8 horas</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 p-1 rounded-md bg-[#25D366]/10">
-                <Clock className="h-3.5 w-3.5 text-[#25D366]" />
+              <div className="mt-0.5 p-1 rounded-md bg-[#D4AF37]/10">
+                <Clock className="h-3.5 w-3.5 text-[#D4AF37]" />
               </div>
               <p className="text-xs text-white/40">Defina horas activas (ex: 08:00 - 22:00)</p>
             </div>
@@ -241,7 +241,7 @@ export default function CheckIn() {
           </div>
           <Button
             onClick={() => setIsActive(true)}
-            className="bg-[#25D366] hover:bg-[#25D366]/90 text-white rounded-xl px-8 py-3 shadow-[0_0_25px_-5px_rgba(37,211,102,0.3)]"
+            className="bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-white rounded-xl px-8 py-3 shadow-[0_0_25px_-5px_rgba(212,175,55,0.3)]"
           >
             <Settings className="h-4 w-4 mr-2" />
             Configurar Agora
@@ -279,12 +279,12 @@ export default function CheckIn() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0F1A] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20">
-            <ShieldCheck className="h-5 w-5 text-[#25D366]" />
+          <div className="p-2 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+            <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
           </div>
           <h1 className="font-display text-2xl font-bold text-white">Check-in de Seguranca</h1>
         </div>
@@ -314,7 +314,7 @@ export default function CheckIn() {
           className={cn(
             'rounded-2xl px-10 py-4 text-base font-semibold gap-3 transition-all duration-300',
             config?.is_active
-              ? 'bg-[#25D366] hover:bg-[#25D366]/90 text-white shadow-[0_0_35px_-5px_rgba(37,211,102,0.4)]'
+              ? 'bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-white shadow-[0_0_35px_-5px_rgba(212,175,55,0.4)]'
               : 'bg-white/[0.04] text-white/20 cursor-not-allowed border border-white/[0.06]'
           )}
         >
@@ -336,7 +336,7 @@ export default function CheckIn() {
           const IconComp = s.icon
           return (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.08 }}>
-              <BeamBorder color={s.color === 'text-red-400' ? '#EF4444' : s.color === 'text-amber-400' ? '#F59E0B' : '#25D366'}>
+              <BeamBorder color={s.color === 'text-red-400' ? '#EF4444' : s.color === 'text-amber-400' ? '#F59E0B' : '#D4AF37'}>
                 <SpotlightCard className="p-5 flex items-center gap-4">
                   <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}>
                     <IconComp className="h-5 w-5" />
@@ -413,11 +413,11 @@ export default function CheckIn() {
                     <div className={cn(
                       'relative z-10 h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border',
                       isSuccess
-                        ? 'bg-[#25D366]/10 border-[#25D366]/15'
+                        ? 'bg-[#D4AF37]/10 border-[#D4AF37]/15'
                         : 'bg-red-500/10 border-red-500/15'
                     )}>
                       {isSuccess
-                        ? <CheckCircle className="h-4 w-4 text-[#25D366]" strokeWidth={1.5} />
+                        ? <CheckCircle className="h-4 w-4 text-[#D4AF37]" strokeWidth={1.5} />
                         : <XCircle className="h-4 w-4 text-red-400" strokeWidth={1.5} />
                       }
                     </div>
@@ -428,7 +428,7 @@ export default function CheckIn() {
                             <span className={cn(
                               'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border',
                               isSuccess
-                                ? 'bg-[#25D366]/10 text-[#25D366] border-[#25D366]/15'
+                                ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/15'
                                 : 'bg-red-500/10 text-red-400 border-red-500/15'
                             )}>
                               {isSuccess ? 'Confirmado' : 'Falhado'}
@@ -495,7 +495,7 @@ function ConfigSection({
   onSave: () => void
 }) {
   return (
-    <BeamBorder color="#25D366">
+    <BeamBorder color="#D4AF37">
       <SpotlightCard className="p-6">
         <div className="flex items-center gap-2 mb-6">
           <Settings className="h-4 w-4 text-white/40" />
@@ -512,7 +512,7 @@ function ConfigSection({
             onClick={() => setIsActive(!isActive)}
             className={cn(
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-              isActive ? 'bg-[#25D366]' : 'bg-white/10'
+              isActive ? 'bg-[#D4AF37]' : 'bg-white/10'
             )}
           >
             <motion.span
@@ -534,7 +534,7 @@ function ConfigSection({
                 className={cn(
                   'px-4 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 border',
                   intervalMinutes === opt.minutes
-                    ? 'bg-[#25D366] text-white border-[#25D366]/30 shadow-[0_0_20px_-5px_rgba(37,211,102,0.2)]'
+                    ? 'bg-[#D4AF37] text-white border-[#D4AF37]/30 shadow-[0_0_20px_-5px_rgba(212,175,55,0.2)]'
                     : 'bg-white/[0.02] text-white/35 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/60'
                 )}
               >
@@ -552,7 +552,7 @@ function ConfigSection({
               type="time"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-[#25D366]/40 transition-colors"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-[#D4AF37]/40 transition-colors"
             />
           </div>
           <div>
@@ -561,7 +561,7 @@ function ConfigSection({
               type="time"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-[#25D366]/40 transition-colors"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-[#D4AF37]/40 transition-colors"
             />
           </div>
         </div>
@@ -574,7 +574,7 @@ function ConfigSection({
             onChange={e => setMessageTemplate(e.target.value)}
             placeholder="Ex: Estou bem, a caminho de casa..."
             rows={2}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white/70 placeholder:text-white/15 focus:outline-none focus:border-[#25D366]/40 transition-colors resize-none"
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white/70 placeholder:text-white/15 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none"
           />
         </div>
 
@@ -582,7 +582,7 @@ function ConfigSection({
         <Button
           onClick={onSave}
           disabled={isSavingConfig}
-          className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/15 rounded-xl py-2.5 text-sm font-medium transition-all"
+          className="w-full bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/15 rounded-xl py-2.5 text-sm font-medium transition-all"
         >
           {isSavingConfig ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

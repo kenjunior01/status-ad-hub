@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
-export function MorphingBlob({ className, color = 'rgba(37, 211, 102, 0.08)', size = 400 }: {
+export function MorphingBlob({ className, color = 'rgba(212, 175, 55, 0.08)', size = 400 }: {
   className?: string; color?: string; size?: number
 }) {
   return (
