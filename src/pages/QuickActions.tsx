@@ -24,7 +24,7 @@ import {
   Route, Glasses, ShieldCheck, Timer, Shield, AlertTriangle,
   Camera, Radio, Volume2, Lock, Fingerprint, Users, MapPin,
   Zap, ChevronRight, Activity, Moon, Map, Phone, Share2, Clock, MessageCircle, Archive, HeartPulse,
-  PersonStanding, PhoneIncoming,
+  PersonStanding, PhoneIncoming, Lightbulb,
   type LucideIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -45,6 +45,7 @@ import { QuickDisguiseSelector } from '@/components/DisguisePicker'
 import { SafetyScoreGauge, useSafetyScore } from '@/components/SafetyScoreGauge'
 import { EmergencyQuickDial } from '@/components/EmergencyQuickDial'
 import { LocationShareLink } from '@/components/LocationShareLink'
+import { SAFETY_TIPS } from '@/lib/safety-tips'
 
 interface QuickAction {
   id: string
@@ -78,6 +79,7 @@ export default function QuickActions() {
 
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false)
   const [showPanicConfirm, setShowPanicConfirm] = useState(false)
+  const tipCount = SAFETY_TIPS.length
 
   // Format DMS timer
   const formatDMSTimer = useCallback((secs: number) => {
@@ -357,6 +359,18 @@ export default function QuickActions() {
       bgColor: 'bg-red-500/[0.07]',
       borderColor: 'border-red-500/15',
       action: () => navigate('/dashboard/ficha-medica'),
+    },
+    // DICAS DE SEGURANÇA
+    {
+      id: 'safety-tips',
+      title: 'Dicas de Segurança',
+      description: `${tipCount} dicas práticas — casa, rua, táxis, online e mais`,
+      icon: Lightbulb,
+      color: 'text-[#D4AF37]',
+      bgColor: 'bg-[#D4AF37]/[0.08]',
+      borderColor: 'border-[#D4AF37]/20',
+      action: () => navigate('/dashboard/dicas'),
+      badge: 'DICA DIÁRIA',
     },
   ]
 

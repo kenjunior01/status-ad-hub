@@ -185,7 +185,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </motion.div>
         ) : null}
 
-        <p className="mt-8 text-[10px] text-white/10 font-mono">StatusAds Connect v2.9.0</p>
+        <p className="mt-8 text-[10px] text-white/10 font-mono">StatusAds Connect v3.2.0</p>
       </div>
     )
   }

@@ -7,7 +7,7 @@ import {
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
   MoreHorizontal, User, CircleDot, CreditCard, Crown, Archive, HeartPulse,
-  PersonStanding, PhoneIncoming,
+  PersonStanding, PhoneIncoming, Lightbulb,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -55,6 +55,7 @@ const sidebarSections = [
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
       { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
       { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
+      { to: '/dashboard/dicas', label: 'Dicas de Seguranca', icon: Lightbulb },
     ],
   },
   {

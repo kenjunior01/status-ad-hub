@@ -1,73 +1,106 @@
-# Welcome to your Lovable project
+# 🛡️ StatusAds Connect v3.2.0
 
-## Project info
+**App de segurança pessoal anti-rapto com SOS offline-first, camuflagem e
+monetização 100% manual (zero API).** Feito para Moçambique 🇲🇿 — funciona
+na rede de qualquer operadora, sem depender de gateways de pagamento ou SMS.
 
-**URL**: https://lovable.dev/projects/9206cfeb-53c4-4b91-bf56-4426693e4661
+> 📦 **Publicar o teu projecto?** Segue o guia passo-a-passo: **[PUBLICAR.md](./PUBLICAR.md)**
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ✨ Funcionalidades
 
-**Use Lovable**
+### Emergência (o núcleo)
+- **SOS multi-canal** — botão long-press, voz ("socorro"), anéis/óculos BLE, queda, Dead Man's Switch
+- **Deteção de queda com auto-SOS** — acelerómetro detecta queda livre + impacto; se não responderes em 15s, o SOS parte sozinho
+- **Alerta aos contactos** — SMS (edge function opcional), WhatsApp deep-link (funciona sempre, sem API) e Web Push
+- **Partilha pública de emergência** — página `/track/:token` para socorristas com ficha médica
+- **Offline-first** — fila IndexedDB: a emergência é guardada e enviada quando a rede volta
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9206cfeb-53c4-4b91-bf56-4426693e4661) and start prompting.
+### Discrição & escapatória
+- **11 camuflagens** — o app disfarça-se de calculadora, clima, rádio, notas…
+- **Chamada Falsa** — telefonema realista (nome, operadora, toque sintetizado, vibração) agendável para saíres com elegância
+- **Anti-coerção** — PIN duress abre um dashboard falso; perigo real continua monitorizado
+- **Modo Pânico** — bloqueio + gravação de áudio + fotos + SOS
 
-Changes made via Lovable will be committed automatically to this repo.
+### Protecção activa
+- **Deteção de ameaças** — sensores analisam padrões anómalos (movimento, isolamento, sinal)
+- **Rastreamento de viagem** — partilha a localização em tempo real durante trajetos
+- **Check-in seguro** — prova de vida programada
+- **Radar comunitário** — alertas de segurança de outros utilizadores na zona
+- **Rota segura** — caminhos com mais luz e movimento
+- **Cofre de evidências** — gravações protegidas com hora e local
+- **Ficha médica** — tipo sanguíneo, alergias e medicação visíveis a socorristas
+- **Dicas de segurança** — 45+ dicas práticas localizadas + dica do dia
 
-**Use your preferred IDE**
+### Monetização (zero API)
+- **Planos** — Grátis / Família 249 MT / Premium 499 MT (configuráveis no admin)
+- **Checkout manual** — utilizador paga nos TEUS números (M-Pesa, e-Mola, mKesh, banco, PayPal) e submete o ID da transacção
+- **Aprovação no painel admin** — confirmas o pagamento, a subscrição activa +31 dias automaticamente (trigger SQL)
+- **Painel Admin completo** — 7 páginas: métricas, utilizadores, pagamentos, assinaturas, eventos, planos e configurações de pagamento
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🧱 Stack
 
-Follow these steps:
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | React 18 + Vite + TypeScript + Tailwind + shadcn/ui |
+| Estado | TanStack Query + hooks singleton (`useSyncExternalStore`) |
+| Backend | Supabase (Postgres + RLS + Auth + Realtime + Edge Functions opcionais) |
+| PWA | vite-plugin-pwa (150 entradas precache) |
+| Nativo | Capacitor 8 (ver [BUILD-NATIVA.md](./BUILD-NATIVA.md)) |
+| APIs gratuitas | Geolocation, Nominatim (moradas), geo-IP (ipapi/ipwho/GeoJS), Open-Meteo (clima), WebAudio (toques/sirenes) — **nenhuma requer chave** |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🚀 Arranque rápido
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+npm run dev          # desenvolvimento (http://localhost:8080)
+npm run build        # produção (dist/)
 ```
 
-**Edit a file directly in GitHub**
+### Configuração mínima
+1. Copia `.env.example` → `.env` e preenche `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+2. Corre `supabase/APLICAR-TUDO.sql` no SQL Editor do Supabase (todas as tabelas + RLS + planos)
+3. Torna-te admin: `update profiles set role='admin' where user_id = (select id from auth.users where email='teu@email');`
+4. Publica seguindo o [PUBLICAR.md](./PUBLICAR.md)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 📚 Documentação
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Ficheiro | Conteúdo |
+|----------|----------|
+| **[PUBLICAR.md](./PUBLICAR.md)** | ⭐ Guia de publicação em 6 passos (30 min) |
+| [APIS-GRATUITAS.md](./APIS-GRATUITAS.md) | APIs free integradas e os seus limites |
+| [PAYMENTS.md](./PAYMENTS.md) | Fluxo de pagamento manual + gateway automático (opcional) |
+| [BUILD-NATIVA.md](./BUILD-NATIVA.md) | APK Android / iOS com Capacitor + BLE em fundo |
+| [DEPLOY.md](./DEPLOY.md) | Referência técnica completa (v2.7) |
+| `supabase/APLICAR-TUDO.sql` | Todas as migrations consolidadas num ficheiro |
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 🔒 Segurança por design
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **RLS em todas as tabelas** — cada utilizador só acede aos seus dados
+- **Aprovação manual de pagamentos** — nenhum gateway, nenhum segredo no frontend
+- **CSP estrito** + anon key apenas (service_role nunca no cliente)
+- **Emergência à prova de falha** — retries com backoff, fila offline, alarme local independente de rede
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/9206cfeb-53c4-4b91-bf56-4426693e4661) and click on Share -> Publish.
+## 🗺️ Roadmap
 
-## Can I connect a custom domain to my Lovable project?
+- [x] v3.0 — Rebrand dourado + escolha de instalação (PWA/Nativa/Camuflada)
+- [x] v3.1 — Pagamentos manuais zero API + painéis completos + APIs gratuitas
+- [x] v3.2 — Deteção de queda + Chamada Falsa + 45 dicas de segurança
+- [ ] APK publicado na Play Store
+- [ ] Notificações SMS ilimitadas (edge functions activas)
+- [ ] Radar comunitário colaborativo entre operadoras
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+**Licença**: proprietária — © StatusAds Connect. Uso e modificação autorizados ao dono do projecto.

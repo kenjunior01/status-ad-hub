@@ -13,8 +13,9 @@ import {
   Shield, Headphones, ShieldCheck, AlertTriangle, MapPin, Mic,
   BellOff, Crosshair, Wifi, Menu, X, ChevronRight, ChevronDown, Check,
   ArrowRight, Play, Users, Activity, Zap, Lock, Eye, Globe,
-  Fingerprint, Smartphone, Radar, Sparkles, Download,
+  Fingerprint, Smartphone, Radar, Sparkles, Download, Lightbulb,
 } from 'lucide-react'
+import { SAFETY_TIPS } from '@/lib/safety-tips'
 
 /* ── Animation Presets ── */
 const fadeUp = {
@@ -503,6 +504,56 @@ function Pricing() {
 }
 
 /* ════════════════════════════════════════════════ */
+/*  SAFETY TIPS PREVIEW                            */
+/* ════════════════════════════════════════════════ */
+function SafetyTipsPreview() {
+  const essentials = SAFETY_TIPS.filter(t => t.essential).slice(0, 4)
+  return (
+    <Section className="py-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} custom={0} className="text-center mb-12">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Conteúdo gratuito</span>
+          <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">
+            Dicas de Segurança que Salvam Vidas
+          </h2>
+          <p className="mt-4 text-white/40 max-w-2xl mx-auto text-sm sm:text-base">
+            Prevenção é a melhor protecção. Começa por estas 4 regras de ouro — e desbloqueia
+            as 45+ dicas completas dentro do app (casa, rua, chapas, online e mais).
+          </p>
+        </motion.div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {essentials.map((tip, i) => (
+            <motion.div
+              key={tip.id}
+              variants={fadeUp}
+              custom={i}
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-[#D4AF37]/25"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-sm font-bold text-[#D4AF37]">
+                  {i + 1}
+                </div>
+                <h3 className="text-sm font-semibold text-white">{tip.title}</h3>
+              </div>
+              <p className="text-sm leading-relaxed text-white/40">{tip.text}</p>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div variants={fadeUp} custom={4} className="text-center mt-10">
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 px-6 py-3 text-sm font-semibold text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20"
+          >
+            <Lightbulb className="h-4 w-4" />
+            Criar conta e ver todas as {SAFETY_TIPS.length}+ dicas
+          </a>
+        </motion.div>
+      </div>
+    </Section>
+  )
+}
+
+/* ════════════════════════════════════════════════ */
 /*  FAQ                                           */
 /* ════════════════════════════════════════════════ */
 function FAQ() {
@@ -657,7 +708,7 @@ function Footer() {
           ))}
         </div>
         <div className="mt-14 border-t border-white/[0.04] pt-6 text-center text-xs text-white/25">
-          StatusAds Connect v2.9.0 · Direitos reservados
+          StatusAds Connect v3.2.0 · Direitos reservados
         </div>
       </div>
     </footer>
@@ -680,6 +731,7 @@ export default function Landing() {
       <EmergencyDemo />
       <TrustStats />
       <Pricing />
+      <SafetyTipsPreview />
       <FAQ />
       <FinalCta />
       <Footer />

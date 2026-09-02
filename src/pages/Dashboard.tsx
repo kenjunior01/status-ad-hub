@@ -14,7 +14,7 @@ import {
   Smartphone, Headphones, Watch, Bell, Search, Shield, ShieldAlert,
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
   MessageSquare, Volume2, Radio, CheckCircle2, AlertCircle, Navigation,
-  Mic, Skull, Radar, Timer, Activity,
+  Mic, Skull, Radar, Timer, Activity, Lightbulb, ArrowRight,
 } from 'lucide-react'
 import { ProximityPanel } from '@/components/ProximityPanel'
 import { useNavigate } from 'react-router-dom'
@@ -39,6 +39,7 @@ import { useDeadMansSwitch } from '@/hooks/useDeadMansSwitch'
 import { useThreatDetection } from '@/hooks/useThreatDetection'
 import { useCommunityRadar } from '@/hooks/useCommunityRadar'
 import { shareLocation } from '@/lib/share'
+import { getDailyTip, TIP_CATEGORIES } from '@/lib/safety-tips'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { toast } from 'sonner'
@@ -428,6 +429,29 @@ export default function Dashboard() {
           </div>
           )}
         </SpotlightCard>
+
+        {/* DICA DO DIA — rotação diária */}
+        {(() => {
+          const tip = getDailyTip()
+          const cat = TIP_CATEGORIES.find(c => c.id === tip.category)
+          return (
+            <SpotlightCard className="p-4 mt-3">
+              <button onClick={() => navigate('/dashboard/dicas')} className="w-full text-left group">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] text-white/30 font-medium flex items-center gap-1.5">
+                    <Lightbulb className="h-3 w-3 text-[#D4AF37]" /> Dica de Hoje
+                  </p>
+                  <span className="text-[9px] text-white/25">{cat?.emoji} {cat?.label}</span>
+                </div>
+                <p className="text-xs font-semibold text-white/85 leading-snug">{tip.title}</p>
+                <p className="text-[10px] text-white/35 leading-relaxed mt-1.5 line-clamp-2">{tip.text}</p>
+                <span className="inline-flex items-center gap-1 mt-2.5 text-[10px] font-semibold text-[#D4AF37] group-hover:gap-2 transition-all">
+                  Ver todas as dicas <ArrowRight className="h-3 w-3" />
+                </span>
+              </button>
+            </SpotlightCard>
+          )
+        })()}
       </motion.div>
       )}
 
