@@ -13,7 +13,7 @@ import { motion } from 'framer-motion'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import {
   ShieldAlert, ShieldCheck, XCircle, Phone, Clock, MapPin,
-  RefreshCw, ExternalLink, AlertTriangle, Shield,
+  RefreshCw, ExternalLink, AlertTriangle, Shield, HeartPulse,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -34,6 +34,11 @@ interface PublicEmergencyData {
   created_at: string
   resolved_at: string | null
   status: 'active' | 'resolved' | 'false_alarm'
+  full_name?: string | null
+  blood_type?: string | null
+  allergies?: string | null
+  medications?: string | null
+  medical_notes?: string | null
 }
 
 // ============================================
@@ -192,6 +197,11 @@ export default function TrackEmergency() {
           created_at: row.created_at,
           resolved_at: row.resolved_at,
           status: row.status,
+          full_name: (row as any).full_name ?? null,
+          blood_type: (row as any).blood_type ?? null,
+          allergies: (row as any).allergies ?? null,
+          medications: (row as any).medications ?? null,
+          medical_notes: (row as any).medical_notes ?? null,
         })
         setError(false)
       }
@@ -383,6 +393,47 @@ export default function TrackEmergency() {
               )}
             </div>
           </div>
+
+          {/* Ficha médica — para socorristas */}
+          {(data.blood_type || data.allergies || data.medications || data.medical_notes) && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <HeartPulse className="h-4 w-4 text-red-400 shrink-0" />
+                <span className="text-[10px] font-semibold text-red-300/80 uppercase tracking-wider">
+                  Ficha médica {data.full_name ? `— ${data.full_name}` : ''}
+                </span>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                {data.blood_type && (
+                  <div className="rounded-xl bg-black/25 border border-white/[0.04] px-3 py-2">
+                    <p className="text-[9px] text-white/25 uppercase">Tipo sanguíneo</p>
+                    <p className="text-sm font-bold text-white">{data.blood_type}</p>
+                  </div>
+                )}
+                {data.allergies && (
+                  <div className="rounded-xl bg-black/25 border border-white/[0.04] px-3 py-2">
+                    <p className="text-[9px] text-white/25 uppercase">Alergias</p>
+                    <p className="text-xs text-white/80">{data.allergies}</p>
+                  </div>
+                )}
+                {data.medications && (
+                  <div className="rounded-xl bg-black/25 border border-white/[0.04] px-3 py-2">
+                    <p className="text-[9px] text-white/25 uppercase">Medicação</p>
+                    <p className="text-xs text-white/80">{data.medications}</p>
+                  </div>
+                )}
+                {data.medical_notes && (
+                  <div className="rounded-xl bg-black/25 border border-white/[0.04] px-3 py-2 sm:col-span-2">
+                    <p className="text-[9px] text-white/25 uppercase">Notas médicas</p>
+                    <p className="text-xs text-white/80">{data.medical_notes}</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 

@@ -26,7 +26,48 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["security", "lifestyle"],
+  "categories": [
+    "security",
+    "lifestyle"
+  ],
   "lang": "pt-BR",
-  "dir": "ltr"
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "SOS de Emergência",
+      "short_name": "SOS",
+      "description": "Activar alerta de emergência imediato",
+      "url": "/dashboard/emergency?shortcut=sos",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Check-in Seguro",
+      "short_name": "Check-in",
+      "description": "Fazer check-in e confirmar que estou bem",
+      "url": "/dashboard/checkin",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Alerta por WhatsApp",
+      "short_name": "WhatsApp",
+      "description": "Enviar localização por WhatsApp",
+      "url": "/dashboard/accoes",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

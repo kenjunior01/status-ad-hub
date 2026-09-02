@@ -57,6 +57,8 @@ const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'))
 const AdminSubscriptions = lazy(() => import('@/pages/admin/AdminSubscriptions'))
 const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'))
 const AdminPlans = lazy(() => import('@/pages/admin/AdminPlans'))
+const EvidenceVault = lazy(() => import('@/pages/EvidenceVault'))
+const MedicalProfile = lazy(() => import('@/pages/MedicalProfile'))
 
 const queryClient = new QueryClient({ defaultOptions: getReactQueryDefaults() })
 
@@ -110,6 +112,8 @@ function AppRoutes() {
         <Route path="viagens" element={<WithErrorBoundary context="trip-tracking"><TripTracking /></WithErrorBoundary>} />
         <Route path="timeline" element={<WithErrorBoundary context="incident-timeline"><IncidentTimeline /></WithErrorBoundary>} />
         <Route path="assinatura" element={<WithErrorBoundary context="subscription"><Subscription /></WithErrorBoundary>} />
+        <Route path="evidencias" element={<WithErrorBoundary context="evidence-vault"><EvidenceVault /></WithErrorBoundary>} />
+        <Route path="ficha-medica" element={<WithErrorBoundary context="medical-profile"><MedicalProfile /></WithErrorBoundary>} />
         <Route path="admin" element={<WithErrorBoundary context="admin"><AdminShell /></WithErrorBoundary>}>
           <Route index element={<AdminDashboard />} />
           <Route path="utilizadores" element={<AdminUsers />} />

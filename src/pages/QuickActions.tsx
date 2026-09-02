@@ -23,7 +23,7 @@ import {
   ShieldAlert, Mic, Eye, EyeOff, Skull, Radar, Navigation,
   Route, Glasses, ShieldCheck, Timer, Shield, AlertTriangle,
   Camera, Radio, Volume2, Lock, Fingerprint, Users, MapPin,
-  Zap, ChevronRight, Activity, Moon, Map, Phone, Share2, Clock,
+  Zap, ChevronRight, Activity, Moon, Map, Phone, Share2, Clock, MessageCircle, Archive, HeartPulse,
   type LucideIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -288,6 +288,50 @@ export default function QuickActions() {
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/20',
       action: () => navigate('/dashboard/timeline'),
+    },
+    // WHATSAPP ALERT — sem API, deep-link wa.me
+    {
+      id: 'whatsapp-alert',
+      title: 'Alerta por WhatsApp',
+      description: 'Enviar localização e pedido de ajuda pelo WhatsApp — funciona sem SMS',
+      icon: MessageCircle,
+      color: 'text-emerald-300',
+      bgColor: 'bg-emerald-500/10',
+      borderColor: 'border-emerald-500/20',
+      action: () => {
+        const lat = position?.latitude
+        const lng = position?.longitude
+        const maps = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : ''
+        const msg =
+          `ALERTA - StatusAds Connect\n` +
+          `Estou a usar o botão de alerta e partilho a minha localização.\n` +
+          (maps ? `Localização: ${maps}\n` : '') +
+          `Por favor verifique se estou bem.`
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+      },
+      badge: 'SEM API',
+    },
+    // COFRE DE EVIDÊNCIAS
+    {
+      id: 'evidence-vault',
+      title: 'Cofre de Evidências',
+      description: 'Gravações de áudio guardadas como prova segura',
+      icon: Archive,
+      color: 'text-[#D4AF37]',
+      bgColor: 'bg-[#D4AF37]/10',
+      borderColor: 'border-[#D4AF37]/20',
+      action: () => navigate('/dashboard/evidencias'),
+    },
+    // FICHA MÉDICA
+    {
+      id: 'medical-profile',
+      title: 'Ficha Médica',
+      description: 'Tipo sanguíneo, alergias e medicação para socorristas',
+      icon: HeartPulse,
+      color: 'text-red-300',
+      bgColor: 'bg-red-500/[0.07]',
+      borderColor: 'border-red-500/15',
+      action: () => navigate('/dashboard/ficha-medica'),
     },
   ]
 

@@ -12,9 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapContainer, TileLayer, Marker, Circle, useMap, Polyline } from 'react-leaflet'
 import {
   ShieldAlert, ShieldCheck, XCircle, Phone, Share2, Copy, Check,
-  Clock, Users, MapPin, AlertTriangle, ChevronDown, ChevronUp,
+  Clock, Users, MapPin, AlertTriangle, ChevronDown, ChevronUp, ChevronRight,
   Navigation, RefreshCw, Volume2, VolumeX, Radio, WifiOff, CloudOff,
-  Battery, BatteryCharging, BatteryWarning, MessageCircle, Crosshair,
+  Battery, BatteryCharging, BatteryWarning, MessageCircle, Crosshair, HeartPulse,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -28,6 +28,7 @@ import { useNetworkStatus, formatOfflineDuration } from '@/hooks/useNetworkStatu
 import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
+import { useMedicalProfile, isMedicalEmpty } from '@/hooks/useMedicalProfile'
 import { pt } from 'date-fns/locale'
 
 // ============================================
@@ -358,6 +359,20 @@ export default function Emergency() {
     }
   }
 
+  // Alerta por WhatsApp — funciona sem nenhuma API (deep-link wa.me)
+  const handleWhatsApp = () => {
+    const pos = activeEmergency ?? userPos
+    const lat = pos?.latitude
+    const lng = pos?.longitude
+    const maps = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : ''
+    const msg =
+      `EMERGENCIA - StatusAds Connect\n` +
+      `Preciso de ajuda!\n` +
+      (maps ? `Localizacao: ${maps}\n` : '') +
+      (shareUrl ? `Acompanhe em tempo real: ${shareUrl}` : '')
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
   // Map center: emergency location or user position or fallback
   const mapCenter: [number, number] = useMemo(() => {
     if (activeEmergency) return [activeEmergency.latitude, activeEmergency.longitude]
@@ -650,6 +665,22 @@ export default function Emergency() {
                 </div>
               )}
 
+              {/* Alerta WhatsApp — sem API, abre o WhatsApp com a mensagem pronta */}
+              <button
+                onClick={handleWhatsApp}
+                className="w-full mt-2 flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] hover:bg-emerald-500/[0.1] transition text-left"
+              >
+                <MessageCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-emerald-300">Avisar contactos por WhatsApp</p>
+                  <p className="text-[10px] text-white/30">Abre o WhatsApp com a mensagem e localização prontas a enviar</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-emerald-400/40" />
+              </button>
+
+              {/* Ficha médica para socorristas */}
+              <MedicalCard />
+
               {/* Contacted phones list */}
               {activeEmergency.contacts_notified?.length > 0 && (
                 <div className="mt-3">
@@ -820,6 +851,36 @@ export default function Emergency() {
           />
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// ============================================
+// FICHA MÉDICA — visível na emergência p/ socorristas
+// ============================================
+function MedicalCard() {
+  const { profile } = useMedicalProfile()
+  if (isMedicalEmpty(profile)) return null
+  const rows: [string, string | null][] = [
+    ['Tipo sanguíneo', profile?.blood_type ?? null],
+    ['Alergias', profile?.allergies ?? null],
+    ['Medicação', profile?.medications ?? null],
+    ['Notas', profile?.medical_notes ?? null],
+  ]
+  return (
+    <div className="mt-2 p-3 rounded-xl border border-red-500/15 bg-red-500/[0.04]">
+      <div className="flex items-center gap-2 mb-2">
+        <HeartPulse className="h-3.5 w-3.5 text-red-400 shrink-0" />
+        <p className="text-[10px] font-semibold text-red-300/80 uppercase tracking-wider">Ficha médica — informação para socorristas</p>
+      </div>
+      <div className="space-y-1">
+        {rows.filter(([, v]) => v).map(([label, value]) => (
+          <p key={label} className="text-[11px] text-white/60">
+            <span className="text-white/30">{label}: </span>
+            <span className="text-white/85">{value}</span>
+          </p>
+        ))}
+      </div>
     </div>
   )
 }

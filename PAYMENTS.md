@@ -2,6 +2,12 @@
 
 Assinaturas mensais com **M-Pesa** (Vodacom), **e-Mola** (Movitel), **mKesh** (Tmcel) e **PayPal**, com painel admin completo.
 
+> **✅ Funciona sem configurar NADA.** Nenhuma API é necessária para testar ou demonstrar o produto:
+> os pagamentos correm em **modo sandbox automático** (prompt simulado, confirmação em ~8 s) enquanto
+> não houver chaves reais, os SMS são opcionais (fallback: Web Push + alerta por WhatsApp integrado)
+> e todo o resto (GPS, mapas, check-in, evidências, painéis) usa apenas o Supabase e serviços gratuitos.
+> As chaves dos providers só são precisas quando quiseres receber dinheiro a sério.
+
 ## Planos
 
 | Plano | Preço | PayPal | Contactos | Dispositivos |

@@ -6,7 +6,7 @@ import {
   Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
-  MoreHorizontal, User, CircleDot, CreditCard, Crown,
+  MoreHorizontal, User, CircleDot, CreditCard, Crown, Archive, HeartPulse,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -44,6 +44,8 @@ const sidebarSections = [
     title: 'Seguranca',
     items: [
       { to: '/dashboard/contacts', label: 'Contactos de Emergencia', icon: Users },
+      { to: '/dashboard/evidencias', label: 'Cofre de Evidencias', icon: Archive },
+      { to: '/dashboard/ficha-medica', label: 'Ficha Medica', icon: HeartPulse },
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
       { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
       { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
