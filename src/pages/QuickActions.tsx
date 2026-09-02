@@ -24,6 +24,7 @@ import {
   Route, Glasses, ShieldCheck, Timer, Shield, AlertTriangle,
   Camera, Radio, Volume2, Lock, Fingerprint, Users, MapPin,
   Zap, ChevronRight, Activity, Moon, Map, Phone, Share2, Clock, MessageCircle, Archive, HeartPulse,
+  PersonStanding, PhoneIncoming,
   type LucideIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -241,6 +242,18 @@ export default function QuickActions() {
       borderColor: 'border-amber-400/20',
       action: () => navigate('/dashboard/checkin'),
     },
+    // FALL DETECTION
+    {
+      id: 'fall-detection',
+      title: 'Deteccao de Queda',
+      description: 'SOS automático se detectar queda violenta sem resposta',
+      icon: PersonStanding,
+      color: 'text-lime-300',
+      bgColor: 'bg-lime-500/10',
+      borderColor: 'border-lime-500/20',
+      action: () => navigate('/dashboard/queda'),
+      badge: 'AUTO-SOS',
+    },
     // DISGUISE CONFIGURATION — redirect to visual picker
     {
       id: 'disguise-config',
@@ -252,6 +265,18 @@ export default function QuickActions() {
       borderColor: 'border-purple-500/20',
       action: () => navigate('/dashboard/camuflar'),
       badge: '11 DISFARCES',
+    },
+    // FAKE CALL — escapatório realista, zero API
+    {
+      id: 'fake-call',
+      title: 'Chamada Falsa',
+      description: 'Recebe um telefonema realista para sair com elegância',
+      icon: PhoneIncoming,
+      color: 'text-violet-300',
+      bgColor: 'bg-violet-500/10',
+      borderColor: 'border-violet-500/20',
+      action: () => navigate('/dashboard/chamada-falsa'),
+      badge: 'SEM API',
     },
     // NIGHT SAFETY
     {

@@ -7,6 +7,7 @@ import {
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
   MoreHorizontal, User, CircleDot, CreditCard, Crown, Archive, HeartPulse,
+  PersonStanding, PhoneIncoming,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,10 @@ import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useDashboardStats } from '@/hooks/useHistory'
 import { useNavigate } from 'react-router-dom'
 import { useIsAdmin } from '@/hooks/useAdmin'
+import { FallDetectionOverlay, useFallDetectionKeepAlive, registerFallSosHandler } from '@/hooks/useFallDetection'
+import { FakeCallOverlay } from '@/hooks/useFakeCall'
+import { useEmergency } from '@/hooks/useEmergency'
+import { useEffect } from 'react'
 
 /* ── Navigation Config ── */
 const sidebarSections = [
@@ -44,6 +49,7 @@ const sidebarSections = [
     title: 'Seguranca',
     items: [
       { to: '/dashboard/contacts', label: 'Contactos de Emergencia', icon: Users },
+      { to: '/dashboard/queda', label: 'Deteccao de Queda', icon: PersonStanding },
       { to: '/dashboard/evidencias', label: 'Cofre de Evidencias', icon: Archive },
       { to: '/dashboard/ficha-medica', label: 'Ficha Medica', icon: HeartPulse },
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
@@ -56,6 +62,7 @@ const sidebarSections = [
     items: [
       { to: '/dashboard/discreto', label: 'Modo Discreto', icon: Fingerprint },
       { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
+      { to: '/dashboard/chamada-falsa', label: 'Chamada Falsa', icon: PhoneIncoming },
     ],
   },
   {
@@ -94,6 +101,24 @@ export default function DashboardLayout() {
   const offlineQueue = useOfflineQueue()
   const hasAlerts = alertCount > 0
   const hasActiveEmergency = activeEmergency?.status === 'active'
+
+  // Liga a deteção de queda ao motor de emergência global.
+  // A queda dispara SOS real (GPS + SMS + push) exactamente como o botão.
+  const { triggerEmergency } = useEmergency()
+  useEffect(() => {
+    registerFallSosHandler((reason) => {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => triggerEmergency({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => triggerEmergency({ latitude: -25.9692, longitude: 32.5732 }),
+        { enableHighAccuracy: true, timeout: 6000 }
+      )
+      void reason
+    })
+    return () => registerFallSosHandler(null)
+  }, [triggerEmergency])
+
+  // Mantém o motor de queda activo se o utilizador o tiver ligado
+  useFallDetectionKeepAlive()
 
   return (
     <div className="min-h-screen bg-[#0C0B08] relative">
@@ -346,6 +371,8 @@ export default function DashboardLayout() {
 
       <OnboardingWizard />
       <PWAInstallPrompt />
+      <FallDetectionOverlay />
+      <FakeCallOverlay />
     </div>
   )
 }

@@ -60,6 +60,8 @@ const AdminPlans = lazy(() => import('@/pages/admin/AdminPlans'))
 const AdminConfiguracoes = lazy(() => import('@/pages/admin/AdminConfiguracoes'))
 const EvidenceVault = lazy(() => import('@/pages/EvidenceVault'))
 const MedicalProfile = lazy(() => import('@/pages/MedicalProfile'))
+const FallDetection = lazy(() => import('@/pages/FallDetection'))
+const FakeCall = lazy(() => import('@/pages/FakeCall'))
 
 const queryClient = new QueryClient({ defaultOptions: getReactQueryDefaults() })
 
@@ -115,6 +117,8 @@ function AppRoutes() {
         <Route path="assinatura" element={<WithErrorBoundary context="subscription"><Subscription /></WithErrorBoundary>} />
         <Route path="evidencias" element={<WithErrorBoundary context="evidence-vault"><EvidenceVault /></WithErrorBoundary>} />
         <Route path="ficha-medica" element={<WithErrorBoundary context="medical-profile"><MedicalProfile /></WithErrorBoundary>} />
+        <Route path="queda" element={<WithErrorBoundary context="fall-detection"><FallDetection /></WithErrorBoundary>} />
+        <Route path="chamada-falsa" element={<WithErrorBoundary context="fake-call"><FakeCall /></WithErrorBoundary>} />
         <Route path="admin" element={<WithErrorBoundary context="admin"><AdminShell /></WithErrorBoundary>}>
           <Route index element={<AdminDashboard />} />
           <Route path="utilizadores" element={<AdminUsers />} />
