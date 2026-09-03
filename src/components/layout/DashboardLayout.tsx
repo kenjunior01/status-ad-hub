@@ -7,7 +7,7 @@ import {
   WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
   Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
   MoreHorizontal, User, CircleDot, CreditCard, Crown, Archive, HeartPulse,
-  PersonStanding, PhoneIncoming, Lightbulb,
+  PersonStanding, PhoneIncoming, Lightbulb, Package, BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -43,6 +43,7 @@ const sidebarSections = [
     title: 'Dispositivos',
     items: [
       { to: '/dashboard/devices', label: 'Meus Dispositivos', icon: Bluetooth },
+      { to: '/dashboard/bellvion', label: 'Dispositivos BELLVION', icon: Package },
       { to: '/dashboard/oculos', label: 'Oculos Inteligentes', icon: Glasses },
       { to: '/dashboard/checkin', label: 'Check-in', icon: ShieldCheck },
     ],
@@ -65,6 +66,7 @@ const sidebarSections = [
     items: [
       { to: '/dashboard/discreto', label: 'Modo Discreto', icon: Fingerprint },
       { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
+      { to: '/dashboard/camuflagem-pwa', label: 'Camuflagem na PWA', icon: BookOpen },
       { to: '/dashboard/chamada-falsa', label: 'Chamada Falsa', icon: PhoneIncoming },
     ],
   },

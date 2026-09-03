@@ -44,6 +44,8 @@ const QuickActions = lazy(() => import('@/pages/QuickActions'))
 const CommunityRadar = lazy(() => import('@/pages/CommunityRadar'))
 const DiscreetModeSettings = lazy(() => import('@/pages/DiscreetModeSettings'))
 const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
+const BellvionDevices = lazy(() => import('@/pages/BellvionDevices'))
+const CamuflagemPWA = lazy(() => import('@/pages/CamuflagemPWA'))
 const SafeRoute = lazy(() => import('@/pages/SafeRoute'))
 const TripTracking = lazy(() => import('@/pages/TripTracking'))
 const IncidentTimeline = lazy(() => import('@/pages/IncidentTimeline'))
@@ -112,6 +114,8 @@ function AppRoutes() {
         <Route path="radar" element={<WithErrorBoundary context="community-radar"><CommunityRadar /></WithErrorBoundary>} />
         <Route path="discreto" element={<WithErrorBoundary context="discreet-settings"><DiscreetModeSettings /></WithErrorBoundary>} />
         <Route path="camuflar" element={<WithErrorBoundary context="disguise-selector"><DisguiseSelector /></WithErrorBoundary>} />
+        <Route path="camuflagem-pwa" element={<WithErrorBoundary context="camuflagem-pwa"><CamuflagemPWA /></WithErrorBoundary>} />
+        <Route path="bellvion" element={<WithErrorBoundary context="bellvion-devices"><BellvionDevices /></WithErrorBoundary>} />
         <Route path="rota" element={<WithErrorBoundary context="safe-route"><SafeRoute /></WithErrorBoundary>} />
         <Route path="viagens" element={<WithErrorBoundary context="trip-tracking"><TripTracking /></WithErrorBoundary>} />
         <Route path="timeline" element={<WithErrorBoundary context="incident-timeline"><IncidentTimeline /></WithErrorBoundary>} />
