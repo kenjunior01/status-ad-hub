@@ -1,22 +1,27 @@
 /**
  * guardian.ts — MODO GUARDIÃO: um único interruptor que arma o telemóvel todo.
  *
- * Filosofia do produto (v3.7.0): SEM encher de funcionalidades.
+ * Filosofia do produto (v3.8.0): SEM encher de funcionalidades.
  *  1. Arma-se uma vez (cartão Guardião no Dashboard) — o telemóvel fica
  *     "de sentinela" à espera de um gatilho de pânico.
  *  2. Em perigo, UM gesto de 1 segundo dispara TODA a cadeia automática
  *     (gravação + fotos + SOS + SMS aos contactos + GPS em alta frequência),
  *     reutilizando o usePanicMode existente.
+ *  3. A sentinela vive 24/7 num serviço foreground nativo (GuardianService):
+ *     funciona MESMO COM A APP FECHADA e religa-se sozinha após reiniciar
+ *     o telemóvel ou actualizar a app (BootReceiver).
  *
  * Gatilhos (todos armados só quando o Guardião está activo):
  *  · Agitação forte ×3 (agarraram-lhe o braço / luta)  → contagem 5s
  *  · Atalho "SOS" no ícone da app (long-press)          → contagem 2s
  *  · Tile "SOS" nos atalhos rápidos do Android          → contagem 2s
- *  · Botão Power ×4 com o ecrã apagado (no bolso)       → contagem 3s (nativo)
+ *  · Botão Power ×4 com o ecrã apagado (no bolso)       → contagem 3s (sentinela nativa)
  *
- * Estado persistido em localStorage (sobrevive a fechos da app).
- * Eventos via CustomEvent — sem dependências externas.
+ * Estado persistido em localStorage (WebView) + espelhado em SharedPreferences
+ * nativas para os gatilhos funcionarem sem JS. Eventos via CustomEvent.
  */
+
+import { Capacitor, registerPlugin } from '@capacitor/core'
 
 export interface GuardianConfig {
   armed: boolean
@@ -78,6 +83,7 @@ export function saveGuardian(cfg: GuardianConfig): void {
     // storage cheio/bloqueado — modo não persistente
   }
   window.dispatchEvent(new CustomEvent('guardian-change', { detail: cfg }))
+  syncNative(cfg)
 }
 
 export function armGuardian(opts?: Partial<Pick<GuardianConfig, 'autoRecord' | 'silent' | 'shakeEnabled'>>): GuardianConfig {
@@ -161,4 +167,43 @@ export function setPanicExecutor(fn: PanicExecutor): void {
 export function firePanicNow(source: PanicSource): void {
   const cfg = loadGuardian()
   if (panicExecutor) panicExecutor(source, cfg.silent)
+}
+
+// ── Ponte nativa (Android): sentinela 24/7 em GuardianService ────────────────
+
+interface PanicNativeInterface {
+  /** Espelha o estado no lado nativo e liga/desliga o serviço foreground. */
+  setGuardian(cfg: { armed: boolean; shakeEnabled: boolean; silent: boolean }): Promise<void>
+  /** true se a app já está isenta de optimizações de bateria. */
+  batteryStatus(): Promise<{ exempt: boolean }>
+  /** Abre o diálogo do sistema "Permitir sem optimizações de bateria". */
+  requestBatteryExemption(): Promise<void>
+}
+
+let nativePanic: PanicNativeInterface | null = null
+
+/** Plugin nativo só existe no Android; no web devolve null (sem erros). */
+export function getNativePanic(): PanicNativeInterface | null {
+  if (Capacitor.getPlatform() !== 'android') return null
+  if (!nativePanic) {
+    try {
+      nativePanic = registerPlugin<PanicNativeInterface>('Panic')
+    } catch {
+      return null
+    }
+  }
+  return nativePanic
+}
+
+/**
+ * Espelha o estado do Guardião para o lado nativo: SharedPreferences
+ * (para os gatilhos funcionarem sem JS) + serviço foreground on/off.
+ * Fire-and-forget — o Guardião web funciona mesmo sem a ponte.
+ */
+function syncNative(cfg: GuardianConfig): void {
+  const panic = getNativePanic()
+  if (!panic) return
+  panic
+    .setGuardian({ armed: cfg.armed, shakeEnabled: cfg.shakeEnabled, silent: cfg.silent })
+    .catch(() => {})
 }

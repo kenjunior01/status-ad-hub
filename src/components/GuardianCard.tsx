@@ -15,10 +15,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, ShieldOff, Mic, VolumeX, Smartphone, Vibrate,
-  ChevronDown, Hand, Power, Link as LinkIcon, Loader2,
+  ChevronDown, Hand, Power, Link as LinkIcon, Loader2, BellRing,
+  BatteryWarning, ChevronRight,
 } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { useGuardian } from '@/hooks/useGuardian'
 import { requestMotionPermission } from '@/lib/shake'
+import { getNativePanic } from '@/lib/guardian'
 import { haptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -80,7 +83,7 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
     setExpanded(false)
     void haptic('sos')
     toast.success('Guardião ACTIVO', {
-      description: 'Telemóvel armado. Agite ×3, atalho SOS ou Power ×4 para disparar.',
+      description: 'Sentinela 24/7 armada — Agite ×3, atalho SOS ou Power ×4, mesmo com a app fechada.',
       duration: 6000,
     })
   }, [arm, config.shakeEnabled])
@@ -121,7 +124,7 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
               </p>
               <p className="text-[10px] text-white/35 mt-1 truncate">
                 {armed
-                  ? 'Agite ×3 · Atalho SOS · Power ×4 — tudo dispara'
+                  ? 'Sentinela 24/7 · Agite ×3 · Power ×4 — mesmo com a app fechada'
                   : 'Toque para ver como armar o telemóvel'}
               </p>
             </button>
@@ -191,7 +194,7 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
           </div>
           <p className="text-[10px] text-white/35 mt-0.5">
             {armed
-              ? 'Sentinela activa — 4 gatilhos de pânico prontos'
+              ? 'Sentinela 24/7 activa — funciona mesmo com a app fechada'
               : 'Arme para o telemóvel proteger sozinho'}
           </p>
         </div>
@@ -237,6 +240,33 @@ function GuardianDetails({ config, update }: {
   config: { autoRecord: boolean; silent: boolean; shakeEnabled: boolean; armed: boolean }
   update: (patch: { autoRecord?: boolean; silent?: boolean; shakeEnabled?: boolean }) => void
 }) {
+  const isAndroid = Capacitor.getPlatform() === 'android'
+  const [batteryExempt, setBatteryExempt] = useState<boolean | null>(null)
+
+  // Estado da bateria (só Android — a sentinela pode ser "adormecida" por OEMs)
+  useEffect(() => {
+    if (!isAndroid) return
+    const panic = getNativePanic()
+    if (!panic) { setBatteryExempt(true); return }
+    panic.batteryStatus()
+      .then((r) => setBatteryExempt(!!r.exempt))
+      .catch(() => setBatteryExempt(true))
+  }, [isAndroid])
+
+  const requestExemption = useCallback(async () => {
+    const panic = getNativePanic()
+    if (!panic) return
+    try {
+      await panic.requestBatteryExemption()
+      toast.info('Escolha "Permitir" no diálogo do sistema', {
+        description: 'Isto impede o Android de adormecer a sentinela do Guardião.',
+      })
+      setBatteryExempt(true)
+    } catch {
+      toast.error('Abra manualmente: Definições › Bateria › StatusAds Connect › Sem restrições')
+    }
+  }, [])
+
   const toggles = [
     { key: 'shakeEnabled' as const, icon: Vibrate, label: 'Agitação forte ×3', desc: 'Agarraram-lhe o braço — agite o telemóvel' },
     { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: 'Áudio + fotos disfarçadas ao disparar' },
@@ -258,6 +288,32 @@ function GuardianDetails({ config, update }: {
       className="overflow-hidden"
     >
       <div className="px-3.5 pb-3.5 pt-1 space-y-3">
+        {/* Sentinela 24/7: notificação + bateria (só Android) */}
+        {isAndroid && (
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2.5 p-2 rounded-xl border border-emerald-400/[0.15] bg-emerald-500/[0.04]">
+              <BellRing className="h-3.5 w-3.5 text-emerald-400/80 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-white/50 leading-relaxed">
+                A notificação discreta <b className="text-white/70">«Protecção activa»</b> mantém a sentinela
+                viva 24/7 — <b className="text-white/70">funciona mesmo com a app fechada</b> e religa-se
+                sozinha ao reiniciar o telemóvel. Não a deslize.
+              </p>
+            </div>
+            {batteryExempt === false && (
+              <button
+                onClick={requestExemption}
+                className="w-full flex items-center gap-2.5 p-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] text-left active:scale-[0.99] transition-transform"
+              >
+                <BatteryWarning className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[11px] font-semibold text-amber-300">Optimizar bateria</span>
+                  <span className="block text-[9px] text-white/40">Permita «Sem restrições» para a sentinela nunca dormir (Xiaomi/Samsung)</span>
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-white/30 shrink-0" />
+              </button>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-1.5">
           {toggles.map(t => (
             <button

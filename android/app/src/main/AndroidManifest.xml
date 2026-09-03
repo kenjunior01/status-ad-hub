@@ -32,6 +32,26 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
+        <!-- Modo Guardião: sentinela 24/7 — Power ×4 + agitação mesmo com a app fechada -->
+        <service
+            android:name=".GuardianService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Sentinela de pânico: detecta gatilhos de emergência (padrão do botão power, agitação forte) para avisar contactos de emergência em caso de roubo ou sequestro" />
+        </service>
+
+        <!-- Modo Guardião: religa a sentinela após reinício/actualização da app -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Modo Guardião: tile "SOS" nos atalhos rápidos do Android -->
         <service
             android:name=".SosTileService"
@@ -79,4 +99,13 @@
 
     <!-- Manter CPU activo durante emergencia / Dead Man's Switch -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Modo Guardião: sentinela 24/7 (serviço foreground + sobrevive a reinícios) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- SOS com o ecrã apagado: abrir por cima do ecrã de bloqueio (padrão alarme) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Impedir OEMs (Xiaomi/Samsung) de adormecer a sentinela -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 </manifest>

@@ -2,9 +2,15 @@
  * GuardianWatcher — cérebro invisível do Modo Guardião (montado no App.tsx).
  *
  * Escuta TODOS os gatilhos e liga-os à cadeia de pânico existente:
- *  · shake.ts            → agitação forte ×3            (web + nativo)
- *  · @capacitor/app      → com.statusads.connect://sos  (atalho no ícone / tile QS)
- *  · plugin nativo Panic → botão Power ×4 (ecrã apagado, nativo só)
+ *  · shake.ts            → agitação forte ×3            (app aberta)
+ *  · @capacitor/app      → com.statusads.connect://sos  (atalho / tile / sentinela
+ *    nativa 24/7: Power ×4 e agitação com a app FECHADA — v3.8.0)
+ *
+ * A origem do gatilho vem no deep link (?t=power|shake); os disparos nativos
+ * com a app viva também chegam por aqui (a MainActivity é singleTask →
+ * onNewIntent → appUrlOpen).
+ *
+ * A notificação "Protecção activa" abre ://guardiao → só navega, sem contagem.
  *
  * Regras de segurança:
  *  · Só dispara com o Guardião ARMADO e utilizador autenticado
@@ -12,10 +18,7 @@
  */
 
 import { useEffect } from 'react'
-import { registerPlugin } from '@capacitor/core'
-import type { PluginListenerHandle } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
-import { Capacitor } from '@capacitor/core'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { usePanicMode } from '@/hooks/usePanicMode'
@@ -23,16 +26,9 @@ import { useAntiCoercion } from '@/hooks/useAntiCoercion'
 import { startShakeListener } from '@/lib/shake'
 import {
   requestPanicCountdown, setPanicExecutor, isGuardianArmed, loadGuardian,
+  PanicSource,
 } from '@/lib/guardian'
 import { SOURCE_LABEL } from '@/lib/guardian'
-
-/** Plugin nativo PanicPlugin.java (Power ×4) — implementado só no Android */
-interface PanicPluginInterface {
-  addListener(
-    eventName: 'panic',
-    listenerFunc: (data: { source: string }) => void
-  ): Promise<PluginListenerHandle> & PluginListenerHandle
-}
 
 export function GuardianWatcher() {
   const { user } = useAuth()
@@ -73,7 +69,8 @@ export function GuardianWatcher() {
     }
   }, [user, isCoercionMode, panicState.isActive])
 
-  // 2. Deep link SOS (atalho do ícone / tile dos atalhos rápidos)
+  // 2. Deep link SOS — atalho do ícone, tile dos atalhos rápidos OU sentinela
+  //    nativa 24/7 (Power ×4 / agitação com a app fechada)
   useEffect(() => {
     if (!user || isCoercionMode) return
 
@@ -81,47 +78,37 @@ export function GuardianWatcher() {
       if (!url) return
       try {
         const u = url.toLowerCase()
+        // Notificação "Protecção activa" → só abrir a app, sem contagem
+        if (u.includes('://guardiao')) {
+          navigate('/dashboard')
+          return
+        }
         if (u.includes('://sos') || u.endsWith('://sos/') || u.includes('#/sos')) {
           if (!isGuardianArmed()) {
             navigate('/dashboard')
             return
           }
-          requestPanicCountdown('shortcut')
+          // Origem enviada pela sentinela nativa (contagens diferentes)
+          let source: PanicSource = 'shortcut'
+          if (u.includes('t=power')) source = 'power'
+          else if (u.includes('t=shake')) source = 'shake'
+          requestPanicCountdown(source)
         }
       } catch {
         // URL mal formado — ignorar
       }
     }
 
-    let handle: PluginListenerHandle | null = null
+    let handle: { remove: () => Promise<void> } | null = null
     CapApp.addListener('appUrlOpen', (data) => handleUrl(data.url))
       .then((h) => { handle = h })
       .catch(() => {})
 
-    // Arranque a frio (app fechada, aberta pelo atalho SOS)
+    // Arranque a frio (app fechada, aberta pelo atalho/sentinela SOS)
     CapApp.getLaunchUrl().then((info) => handleUrl(info?.url)).catch(() => {})
 
     return () => { handle?.remove().catch(() => {}) }
   }, [user, isCoercionMode, navigate])
-
-  // 3. Plugin nativo: botão Power ×4 com o ecrã apagado (Android)
-  useEffect(() => {
-    if (!user || isCoercionMode) return
-    if (Capacitor.getPlatform() !== 'android') return
-
-    let handle: PluginListenerHandle | null = null
-    try {
-      const Panic = registerPlugin<PanicPluginInterface>('Panic')
-      Panic.addListener('panic', () => {
-        if (!isGuardianArmed()) return
-        if (panicState.isActive || isCoercionMode) return
-        requestPanicCountdown('power')
-      }).then((h) => { handle = h }).catch(() => {})
-    } catch {
-      // plugin não disponível — sem Power ×4 (comportamento web)
-    }
-    return () => { handle?.remove().catch(() => {}) }
-  }, [user, isCoercionMode, panicState.isActive])
 
   return null
 }

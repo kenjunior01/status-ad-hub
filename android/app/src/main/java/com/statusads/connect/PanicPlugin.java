@@ -1,11 +1,12 @@
 package com.statusads.connect;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.SystemClock;
-import android.view.KeyEvent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
+import android.provider.Settings;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -14,89 +15,101 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * PanicPlugin — Botão de pânico físico: Power ×4 com o ecrã apagado.
+ * PanicPlugin — ponte WebView ⇄ Guardião nativo (v3.8.0).
  *
- * Cenário: telemóvel no bolso durante um roubo/sequestro. A vítima aperta
- * o botão power 4 vezes (padrão discreto, sem tirar o telemóvel do bolso)
- * e o plugin emite o evento "panic" para o WebView → Modo Guardião dispara
- * a contagem decrescente de SOS.
+ * O detector de Power ×4 foi MOVIDO para GuardianService (sentinela 24/7 que
+ * vive mesmo com a app fechada). Este plugin agora:
  *
- * Técnica: receiver dinâmico de ACTION_SCREEN_ON/ACTION_SCREEN_OFF.
- * Cada pressão do botão power gera exactamente um destes eventos, portanto
- * 4 eventos dentro de uma janela de 6s = 4 pressões. Padrões normais
- * (bloquear agora, acordar mais tarde) ficam de fora da janela.
- *
- * Nota: o receiver vive enquanto o processo da app estiver vivo (com o
- * Guardião armado e a app usada recentemente é o caso normal). Um serviço
- * foreground dedicado é o passo seguinte para cobertura 24/7.
+ *  · setGuardian({armed, shakeEnabled, silent}) — espelha o estado do WebView
+ *    em SharedPreferences e liga/desliga o GuardianService
+ *  · load() — auto-cura: se o Guardião estava armado mas a sentinela morreu
+ *    (sistema/OEM matou o processo), religa-a quando a app abre
+ *  · batteryStatus() / requestBatteryExemption() — impede o Android/OEM de
+ *    "adormecer" a sentinela (crítico em Xiaomi/Samsung comuns em Moçambique)
  */
 @CapacitorPlugin(name = "Panic")
 public class PanicPlugin extends Plugin {
 
-    private static final int REQUIRED_EVENTS = 4;
-    private static final long WINDOW_MS = 6000;
-    private static final int MAX_EVENTS = 16;
-
-    private BroadcastReceiver receiver;
-    private final long[] events = new long[MAX_EVENTS];
-    private int eventCount = 0;
+    private static final String PREFS = "guardian_prefs";
 
     @Override
     public void load() {
-        receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (Intent.ACTION_SCREEN_ON.equals(action) || Intent.ACTION_SCREEN_OFF.equals(action)) {
-                    registerPowerEvent();
-                }
-            }
-        };
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        // AUTO-CURA: app aberta + Guardião armado + sentinela morta → religar.
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean("armed", false)) {
+            startSentinel();
+        }
+    }
+
+    @PluginMethod
+    public void setGuardian(PluginCall call) {
+        Boolean armed = call.getBoolean("armed");
+        Boolean shakeEnabled = call.getBoolean("shakeEnabled");
+        Boolean silent = call.getBoolean("silent");
+
+        if (armed == null) {
+            call.reject("armed é obrigatório");
+            return;
+        }
+
         try {
-            // SCREEN_ON/OFF são system broadcasts protegidos — registo simples é seguro
-            getContext().registerReceiver(receiver, filter);
-        } catch (Exception e) {
-            android.util.Log.w("PanicPlugin", "Não foi possível registar receiver de power: " + e.getMessage());
-        }
-    }
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            prefs.edit()
+                    .putBoolean("armed", armed)
+                    .putBoolean("shake_enabled", shakeEnabled == null || shakeEnabled)
+                    .putBoolean("silent", silent == null || silent)
+                    .apply();
 
-    @Override
-    protected void handleOnDestroy() {
-        if (receiver != null) {
-            try {
-                getContext().unregisterReceiver(receiver);
-            } catch (Exception ignored) {
+            if (armed) {
+                startSentinel();
+            } else {
+                getContext().stopService(new Intent(getContext(), GuardianService.class));
             }
-            receiver = null;
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Falha ao sincronizar o Guardião: " + e.getMessage());
         }
     }
 
-    private synchronized void registerPowerEvent() {
-        long now = SystemClock.elapsedRealtime();
-
-        if (eventCount >= MAX_EVENTS) {
-            // deslizar janela
-            System.arraycopy(events, 1, events, 0, MAX_EVENTS - 1);
-            eventCount = MAX_EVENTS - 1;
+    private void startSentinel() {
+        Intent svc = new Intent(getContext(), GuardianService.class);
+        try {
+            if (Build.VERSION.SDK_INT >= 26) {
+                getContext().startForegroundService(svc);
+            } else {
+                getContext().startService(svc);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("PanicPlugin", "sentinela: " + e.getMessage());
         }
-        events[eventCount++] = now;
+    }
 
-        // remover eventos fora da janela
-        int start = 0;
-        while (start < eventCount && now - events[start] > WINDOW_MS) start++;
-        if (start > 0) {
-            System.arraycopy(events, start, events, 0, eventCount - start);
-            eventCount -= start;
+    @PluginMethod
+    public void batteryStatus(PluginCall call) {
+        PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+        boolean exempt = pm != null && pm.isIgnoringBatteryOptimizations(getContext().getPackageName());
+        JSObject r = new JSObject();
+        r.put("exempt", exempt);
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void requestBatteryExemption(PluginCall call) {
+        PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+        String pkg = getContext().getPackageName();
+        if (pm != null && pm.isIgnoringBatteryOptimizations(pkg)) {
+            call.resolve();
+            return;
         }
-
-        if (eventCount >= REQUIRED_EVENTS) {
-            eventCount = 0;
-            JSObject data = new JSObject();
-            data.put("source", "power");
-            notifyListeners("panic", data);
+        try {
+            Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:" + pkg));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (Exception e) {
+            // OEM sem a activity ou permissão em falta — instrução manual no ecrã
+            call.reject("Abrir Definições › Bateria › Sem restrições manualmente");
         }
     }
 }

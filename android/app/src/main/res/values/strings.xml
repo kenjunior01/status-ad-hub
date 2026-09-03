@@ -10,4 +10,12 @@
     <string name="shortcut_sos_long">SOS Agora — dispara protecção</string>
     <string name="shortcut_sos_disabled">SOS indisponível</string>
     <string name="tile_sos_label">SOS Guardião</string>
+
+    <!-- Modo Guardião: sentinela 24/7 (GuardianService) -->
+    <string name="guardian_channel_status">Protecção activa</string>
+    <string name="guardian_channel_alert">Alertas SOS</string>
+    <string name="guardian_notif_title">Protecção activa</string>
+    <string name="guardian_notif_text">O Guardião está de sentinela. Toque para abrir.</string>
+    <string name="guardian_alert_title">SOS Guardião</string>
+    <string name="guardian_alert_text">Gatilho de emergência detectado — toque para abrir</string>
 </resources>
