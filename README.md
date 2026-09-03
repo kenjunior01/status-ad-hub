@@ -87,8 +87,23 @@ npm run build        # produção (dist/)
 
 - **RLS em todas as tabelas** — cada utilizador só acede aos seus dados
 - **Aprovação manual de pagamentos** — nenhum gateway, nenhum segredo no frontend
-- **CSP estrito** + anon key apenas (service_role nunca no cliente)
+- **CSP estrito (sem `unsafe-eval`)** + anon key apenas (service_role nunca no cliente)
+- **Edge functions autenticadas** — todas exigem JWT de utilizador (com verificação de
+  ownership) ou service_role key; CORS com allowlist de origens; rate limiting por conta
+  (`send-sms` 3 SMS/hora, `notify-contacts` 5/10 min, `web-push` 10/min)
+- **Webhook de pagamentos blindado** — define `PAYMENT_WEBHOOK_SECRET` nos secrets das
+  edge functions; sem ele, só confirmações demo autenticadas (JWT + ownership) são aceites
+- **Anti força-bruta na BD** — rate limits nos RPCs de activação/admin/promoções +
+  `security_attempt_log` e auditoria em Painel Admin → Segurança
 - **Emergência à prova de falha** — retries com backoff, fila offline, alarme local independente de rede
+
+### Redeploy das edge functions (obrigatório após actualizar)
+
+```bash
+supabase functions deploy send-sms notify-contacts web-push notify-missed-checkin payments-webhook create-payment
+# E define o segredo do webhook no Dashboard → Edge Functions → Secrets:
+#   PAYMENT_WEBHOOK_SECRET=<string aleatória forte>
+```
 
 ---
 

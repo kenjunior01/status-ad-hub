@@ -1,14 +1,18 @@
 /**
  * Supabase Edge Function: notify-contacts
  *
- * Orchestrates notification delivery to all emergency contacts when
- * an emergency is triggered. Called from:
- *   1. Frontend after trigger_emergency RPC succeeds
- *   2. Database trigger via pg_net (automatic)
+ * Orquestra a notificação dos contactos de emergência quando um alerta é
+ * activado. Chamada por:
+ *   1. Frontend após o RPC trigger_emergency (JWT de utilizador)
+ *   2. Trigger da base de dados via pg_net (service_role key)
  *
- * For each contact it attempts:
- *   - SMS via Twilio (if phone available)
- *   - Web Push (if the contact is also a registered user)
+ * SEGURANÇA (hardening):
+ *  - Exige autenticação: service_role OU JWT de utilizador com
+ *    body.userId == sub do token (impede disparar emergências alheias).
+ *  - contactPhones do cliente é IGNORADO para utilizadores — os números são
+ *    SEMPRE lidos da base de dados (impede usar a app como SMS bomber).
+ *  - Validação estrita de UUIDs e coordenadas.
+ *  - Rate limit de 5 chamadas / 10 min por utilizador.
  *
  * Environment secrets:
  *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
@@ -17,19 +21,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface NotifyContactsPayload {
-  userId: string
-  alertId: string
-  latitude: number
-  longitude: number
-  contactPhones?: string[]  // Pre-fetched phones (avoids extra DB call)
-}
+import {
+  corsHeaders, handlePreflight, json, isServiceRole, authenticateUser,
+  rateLimit, isUuid, clampCoordinates, safeText,
+} from '../_shared/security.ts'
 
 interface ContactRow {
   phone: string
@@ -39,26 +34,56 @@ interface ContactRow {
 }
 
 serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const preflight = handlePreflight(req)
+  if (preflight) return preflight
+  const cors = corsHeaders(req)
+
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405, cors)
 
   try {
-    const { userId, alertId, latitude, longitude, contactPhones } = await req.json() as NotifyContactsPayload
+    const payload = await req.json().catch(() => ({} as any))
+    const service = isServiceRole(req)
 
-    if (!userId || !alertId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing userId or alertId' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // ── Autenticação ──
+    let callerId: string | null = null
+    if (!service) {
+      callerId = await authenticateUser(req)
+      if (!callerId) return json({ error: 'Não autenticado' }, 401, cors)
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const admin = createClient(supabaseUrl, serviceKey)
+    const userId = safeText(payload?.userId, 64)
+    const alertId = safeText(payload?.alertId, 64)
+    if (!isUuid(userId) || !isUuid(alertId)) {
+      return json({ error: 'userId/alertId inválidos' }, 400, cors)
+    }
 
-    // 1. Fetch emergency contacts (if not pre-fetched)
-    let phones: string[] = contactPhones || []
+    // Utilizador só pode notificar as próprias emergências
+    if (!service && callerId !== userId) {
+      return json({ error: 'Proibido' }, 403, cors)
+    }
+
+    // Rate limit por utilizador (service_role não se limita — vem da DB)
+    if (!service) {
+      const rl = rateLimit(`notify:${userId}`, 5, 10 * 60 * 1000)
+      if (!rl.ok) {
+        return json({ error: `Demasiadas chamadas. Tente dentro de ${rl.retryAfter}s` }, 429, cors)
+      }
+    }
+
+    // Coordenadas: números finitos dentro dos limites geográficos
+    const coords = clampCoordinates(payload?.latitude ?? 0, payload?.longitude ?? 0)
+    if (!coords.ok) {
+      return json({ error: 'Coordenadas inválidas' }, 400, cors)
+    }
+
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    // ── Números de telefone: SEMPRE da base de dados para chamadas de
+    //    utilizador; service_role (pg_net) pode pré-fornecer. ──
+    let phones: string[] = service ? (Array.isArray(payload?.contactPhones) ? payload.contactPhones.slice(0, 20).map((p: unknown) => safeText(p, 20)).filter(Boolean) : []) : []
     let contactNames: Map<string, string> = new Map()
 
     if (phones.length === 0) {
@@ -80,27 +105,31 @@ serve(async (req: Request) => {
       }
     }
 
-    // 2. Build SMS message
-    const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`
-    const trackUrl = `${supabaseUrl.replace('/rest/v1', '').replace('/auth/v1', '')}/track/${alertId}`
+    if (phones.length === 0) {
+      return json({ sent: 0, failed: 0, total: 0 }, 200, cors)
+    }
+
+    // ── Mensagem SMS (tudo derivado de valores validados/limitados) ──
+    const googleMapsUrl = `https://www.google.com/maps?q=${coords.lat.toFixed(5)},${coords.lng.toFixed(5)}`
+    const trackUrl = `${Deno.env.get('SUPABASE_URL')!.replace('/rest/v1', '').replace('/auth/v1', '')}/track/${alertId}`
 
     const smsBody =
       `EMERGENCIA - StatusAds Connect\n` +
       `Uma emergencia foi activada!\n` +
-      `Localizacao: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n` +
+      `Localizacao: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}\n` +
       `Mapa: ${googleMapsUrl}\n` +
       `Acompanhe: ${trackUrl}\n` +
       `Receba alertas silenciosos.`
 
-    // 3. Send SMS to all contacts in parallel
+    // ── Enviar SMS em paralelo ──
     const smsResults = await Promise.allSettled(
       phones.map(async (phone) => {
         try {
-          const response = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+          const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-sms`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${serviceKey}`,
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
             },
             body: JSON.stringify({
               to: phone,
@@ -108,7 +137,7 @@ serve(async (req: Request) => {
               emergencyId: alertId,
             }),
           })
-          const result = await response.json()
+          const result = await response.json().catch(() => ({}))
           return { phone, success: response.ok, ...result }
         } catch (err) {
           return { phone, success: false, error: String(err) }
@@ -116,12 +145,12 @@ serve(async (req: Request) => {
       })
     )
 
-    const sent = smsResults.filter(r => r.status === 'fulfilled' && r.value.success).length
+    const sent = smsResults.filter(r => r.status === 'fulfilled' && (r.value as any).success).length
     const failed = smsResults.length - sent
 
-    console.log(`[NOTIFY] ${sent}/${phones.length} SMS sent for alert ${alertId.slice(0, 8)}`)
+    console.log(`[NOTIFY] ${sent}/${phones.length} SMS sent for alert ${alertId.slice(0, 8)} (caller: ${service ? 'service' : callerId?.slice(0, 8)})`)
 
-    // 4. Send Web Push to the user's own devices
+    // ── Web Push para os dispositivos do próprio utilizador ──
     try {
       const { data: pushSubs } = await admin
         .from('push_subscriptions')
@@ -149,8 +178,8 @@ serve(async (req: Request) => {
                     data: {
                       emergency: true,
                       alertId,
-                      latitude,
-                      longitude,
+                      latitude: coords.lat,
+                      longitude: coords.lng,
                       url: '/dashboard/emergency',
                     },
                     tag: `emergency-${alertId}`,
@@ -178,15 +207,9 @@ serve(async (req: Request) => {
       // Non-critical — SMS is the primary delivery
     }
 
-    return new Response(
-      JSON.stringify({ sent, failed, total: phones.length }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ sent, failed, total: phones.length }, 200, cors)
   } catch (err) {
     console.error('[NOTIFY] Unexpected error:', err)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', sent: 0, failed: 0 }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ error: 'Internal server error', sent: 0, failed: 0 }, 500, cors)
   }
 })

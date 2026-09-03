@@ -3,13 +3,32 @@
 // PayPal) ou devolve fluxo de demonstração se nenhum provider
 // estiver configurado.
 // Valida o JWT do chamador (obrigatório).
+// SEGURANÇA: CORS com allowlist + validação do origin
+// (usado no return_url do PayPal — impede open redirect).
 // ============================================================
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders, handlePreflight } from '../_shared/security.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ORIGIN_ALLOWLIST = [
+  'https://statusmonetize.com',
+  'https://www.statusmonetize.com',
+  'https://statusads-connect.lovable.app',
+  'https://preview--statusads-connect.lovable.app',
+  'http://localhost:8080',
+  'http://localhost:8090',
+  'http://localhost:8091',
+  'http://localhost:8092',
+  'http://localhost:8093',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'https://localhost',
+  'capacitor://localhost',
+]
+
+function resolveOrigin(candidate: string | null | undefined, fallbackOrigin: string | null): string {
+  const pick = (o: string | null | undefined) => (o && ORIGIN_ALLOWLIST.includes(o) ? o : null)
+  return pick(candidate) ?? pick(fallbackOrigin) ?? 'https://statusmonetize.com'
 }
 
 // ── Env: M-Pesa (Vodacom Moçambique) ──
@@ -41,10 +60,13 @@ const hasPaypal = !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET)
 const demoAllowed = Deno.env.get('PAYMENT_DEMO_MODE') === 'true' ||
   (!hasMpesa && !hasEmola && !hasMkesh && !hasPaypal)
 
+// CORS headers do request corrente (preenchido no início de serve())
+let currentCors: Record<string, string> = {}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...currentCors, 'Content-Type': 'application/json' },
   })
 }
 
@@ -155,7 +177,9 @@ async function paypalOrder(payment: any, plan: any, origin: string): Promise<{ o
 }
 
 serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const preflight = handlePreflight(req)
+  if (preflight) return preflight
+  currentCors = corsHeaders(req)
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   try {
@@ -176,7 +200,8 @@ serve(async (req: Request) => {
     const planSlug: string = body.planSlug ?? ''
     const method: string = body.method ?? ''
     const phone: string = body.phone ?? ''
-    const origin = body.origin ?? req.headers.get('origin') ?? 'https://statusmonetize.com'
+    // Origin só é aceite se estiver na allowlist (return_url PayPal)
+    const origin = resolveOrigin(body.origin, req.headers.get('origin'))
     const action: string = body.action ?? 'create'
 
     // ── Capture PayPal (retorno do approval) ──

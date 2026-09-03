@@ -162,13 +162,10 @@ export async function sendPushNotification(payload: {
   }
 
   // Try to call the edge function to send push
+  // (a função lê as subscrições do próprio utilizador na BD — ignorado aqui)
   try {
-    const { data: result, error: fnError } = await supabase.functions.invoke('web-push/send', {
+    const { data: result, error: fnError } = await supabase.functions.invoke('web-push', {
       body: {
-        subscriptions: subs.map((s) => ({
-          endpoint: s.endpoint,
-          keys: { p256dh: s.keys_p256dh, auth: s.keys_auth },
-        })),
         payload: { title, body, data, urgency, tag },
       },
     })

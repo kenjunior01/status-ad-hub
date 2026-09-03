@@ -4,20 +4,19 @@
 // demonstração. Actualiza o pagamento; a assinatura é
 // activada pelo trigger trg_payment_confirmed na DB.
 //
-// Segurança:
-//  - Se PAYMENT_WEBHOOK_SECRET estiver definido, exige o header
-//    x-webhook-secret (providers devem chamar
-//    .../payments-webhook?secret=XXX ou enviar o header).
-//  - Confirmação "demo" só é aceite quando nenhum provider real
-//    está configurado (ou PAYMENT_DEMO_MODE=true).
+// SEGURANÇA (hardening — auto-confirmação de pagamentos):
+//  1. PAYMENT_WEBHOOK_SECRET definido → exige o header
+//     x-webhook-secret (ou ?secret=) em TODAS as chamadas.
+//  2. Sem secret configurado:
+//     · confirmação "demo" → exige JWT de utilizador e o pagamento
+//       tem de pertencer ao próprio utilizador;
+//     · provider real activo → REJEITA tudo (503) até o dono
+//       definir PAYMENT_WEBHOOK_SECRET — nunca aceita confirmações
+//       anónimas de dinheiro.
 // ============================================================
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
-}
+import { corsHeaders, handlePreflight, json, authenticateUser, isServiceRole } from '../_shared/security.ts'
 
 const MPESA_API_KEY = Deno.env.get('MPESA_API_KEY') ?? ''
 const EMOLA_API_KEY = Deno.env.get('EMOLA_API_KEY') ?? ''
@@ -28,19 +27,16 @@ const WEBHOOK_SECRET = Deno.env.get('PAYMENT_WEBHOOK_SECRET') ?? ''
 const hasAnyProvider = !!(MPESA_API_KEY || EMOLA_API_KEY || MKESH_API_KEY || PAYPAL_CLIENT_ID)
 const demoAllowed = Deno.env.get('PAYMENT_DEMO_MODE') === 'true' || !hasAnyProvider
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+function json2(body: unknown, status = 200) {
+  return json(body, status, {})
 }
 
-// Normaliza o payload de vários providers para { reference, status, provider_ref, raw }
+// Normaliza o payload de vários providers para { reference, status, provider_ref }
 function normalize(body: any): { reference?: string; status: 'confirmed' | 'failed' | 'pending'; provider_ref?: string } {
   // Formato genérico (demo, e-Mola, mKesh, admin manual)
   if (body.reference && body.status) {
     const map: Record<string, 'confirmed' | 'failed' | 'pending'> = {
-      confirmed: 'confirmed', paid: 'confirmed', success: 'confirmed', successs: 'confirmed',
+      confirmed: 'confirmed', paid: 'confirmed', success: 'confirmed',
       failed: 'failed', error: 'failed', cancelled: 'failed', canceled: 'failed',
       pending: 'pending', processing: 'pending',
     }
@@ -71,24 +67,44 @@ function normalize(body: any): { reference?: string; status: 'confirmed' | 'fail
 }
 
 serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const preflight = handlePreflight(req)
+  if (preflight) return preflight
+
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   try {
-    // ── Segredo do webhook ──
+    const body = await req.json().catch(() => ({}))
+    const norm = normalize(body)
+    if (!norm.reference || typeof norm.reference !== 'string' || norm.reference.length > 64) {
+      return json({ error: 'Referência ausente' }, 400)
+    }
+
+    const service = isServiceRole(req)
+
+    // ── Camada 1: segredo do webhook (obrigatório quando configurado) ──
     if (WEBHOOK_SECRET) {
       const url = new URL(req.url)
       const given = req.headers.get('x-webhook-secret') ?? url.searchParams.get('secret') ?? ''
       if (given !== WEBHOOK_SECRET) return json({ error: 'Webhook não autorizado' }, 401)
-    }
-
-    const body = await req.json().catch(() => ({}))
-    const norm = normalize(body)
-    if (!norm.reference) return json({ error: 'Referência ausente' }, 400)
-
-    // ── Bloqueia confirmação demo se um provider real está activo ──
-    if (body.demo === true && !demoAllowed) {
-      return json({ error: 'Modo demo desactivado' }, 403)
+    } else {
+      // ── Camada 2 (sem secret): chamada anónima só aceita demo autenticada ──
+      if (!demoAllowed) {
+        // Provider real activo sem secret configurado → recusa anónimas
+        // (evita auto-confirmação de pagamentos; o dono deve definir
+        //  PAYMENT_WEBHOOK_SECRET nos secrets das edge functions)
+        console.error('[WEBHOOK] PAYMENT_WEBHOOK_SECRET não definido com provider real activo — recusando chamada anónima')
+        return json({ error: 'Webhook secret obrigatório (definir PAYMENT_WEBHOOK_SECRET)' }, 503)
+      }
+      if (!service) {
+        // Demo: exige JWT e o pagamento tem de pertencer ao utilizador
+        const userId = await authenticateUser(req)
+        if (!userId) return json({ error: 'Não autenticado' }, 401)
+        if (body.demo !== true) {
+          return json({ error: 'Só confirmações demo são aceites por utilizadores' }, 403)
+        }
+        // Guarda o userId para verificação de ownership abaixo
+        body.__callerUserId = userId
+      }
     }
 
     const supabase = createClient(
@@ -100,8 +116,15 @@ serve(async (req: Request) => {
       .from('payments').select('*').eq('reference', norm.reference).single()
     if (!payment) return json({ error: 'Pagamento não encontrado' }, 404)
 
-    if (payment.status === 'confirmed') {
-      return json({ success: true, status: 'confirmed', already: true })
+    // ── Camada 3: ownership para confirmações demo de utilizadores ──
+    const callerUserId: string | undefined = body.__callerUserId
+    if (callerUserId && payment.user_id !== callerUserId) {
+      return json({ error: 'Pagamento não pertence ao utilizador' }, 403)
+    }
+
+    // ── Bloqueia confirmação demo se um provider real está activo ──
+    if (body.demo === true && !demoAllowed) {
+      return json({ error: 'Modo demo desactivado' }, 403)
     }
 
     const patch: any = { status: norm.status }

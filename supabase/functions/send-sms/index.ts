@@ -1,88 +1,89 @@
 /**
  * Supabase Edge Function: send-sms
  *
- * Sends an SMS message via Twilio to a single phone number.
- * Called by notify-contacts or directly from the frontend.
+ * Envia SMS via Twilio para um número em formato E.164.
  *
- * Environment secrets (set in Supabase Dashboard > Edge Functions > Secrets):
- *   TWILIO_ACCOUNT_SID  — Your Twilio account SID
- *   TWILIO_AUTH_TOKEN   — Your Twilio auth token
- *   TWILIO_PHONE_NUMBER — Your Twilio phone number (e.g. +15551234567)
+ * SEGURANÇA (hardening anti-abuso — SMS bombing / phishing):
+ *  - Chamada com SUPABASE_SERVICE_ROLE_KEY (servidor↔servidor, pg_net):
+ *    texto arbitrário permitido (fluxo de emergência).
+ *  - Chamada com JWT de utilizador autenticado:
+ *    · body.dryRun = true  → valida apenas a configuração, NÃO envia SMS.
+ *    · caso contrário      → envia APENAS um SMS de teste com TEXTO FIXO
+ *      definido no servidor (o campo body/message do cliente é ignorado),
+ *      limitado a 3 envios por hora por utilizador.
+ *  - Sem credenciais válidas → 401.
  *
- * For production in Mozambique, consider:
- *   - Twilio (global, reliable)
- *   - Africa's Talking (local, cheaper for MZ numbers)
- *   - M-Pesa SMS API (Vodacom Mozambique)
+ * Environment secrets (Supabase Dashboard > Edge Functions > Secrets):
+ *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import {
+  corsHeaders, handlePreflight, json, isServiceRole, authenticateUser, rateLimit, safeText,
+} from '../_shared/security.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface SendSmsPayload {
-  to: string       // E.164 format: +258841234567
-  body: string
-  emergencyId?: string
-}
+const E164_RE = /^\+[1-9]\d{1,14}$/
 
 serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const preflight = handlePreflight(req)
+  if (preflight) return preflight
+  const cors = corsHeaders(req)
+
+  if (req.method !== 'POST') return json({ error: 'Method not allowed', sent: false }, 405, cors)
 
   try {
-    const { to, body, emergencyId } = await req.json() as SendSmsPayload
+    const body = await req.json().catch(() => ({} as any))
+    const dryRun = body?.dryRun === true
+    const to = safeText(body?.to ?? body?.phone, 20).trim()
 
-    if (!to || !body) {
-      return new Response(
-        JSON.stringify({ error: 'Missing "to" or "body" parameter' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (!to || !E164_RE.test(to)) {
+      return json({ error: 'Invalid phone number format. Use E.164 (e.g. +258841234567)', sent: false }, 400, cors)
     }
 
     const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN')
     const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER')
+    const configured = !!(accountSid && authToken && fromNumber)
 
-    if (!accountSid || !authToken || !fromNumber) {
+    // ── Autenticação ──
+    const service = isServiceRole(req)
+    let callerId: string | null = null
+    if (!service) {
+      callerId = await authenticateUser(req)
+      if (!callerId) return json({ error: 'Não autenticado', sent: false }, 401, cors)
+    }
+
+    // dryRun → não envia nada, só informa a configuração
+    if (dryRun) {
+      return json({ dryRun: true, configured, sent: false }, 200, cors)
+    }
+
+    if (!configured) {
       console.error('[SMS] Twilio credentials not configured')
-      return new Response(
-        JSON.stringify({ error: 'SMS service not configured', sent: false }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: 'SMS service not configured', sent: false }, 503, cors)
     }
 
-    // Validate phone number format (basic E.164 check)
-    const e164Regex = /^\+[1-9]\d{1,14}$/
-    if (!e164Regex.test(to)) {
-      console.warn(`[SMS] Invalid phone format: ${to}`)
-      return new Response(
-        JSON.stringify({ error: 'Invalid phone number format. Use E.164 (e.g. +258841234567)', sent: false }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // ── Utilizadores autenticados: só SMS de teste, texto fixo, rate limited ──
+    let smsBody: string
+    if (service) {
+      smsBody = safeText(body?.body ?? body?.message, 160)
+      if (!smsBody) return json({ error: 'Missing "body" parameter', sent: false }, 400, cors)
+    } else {
+      const rl = rateLimit(`sms:${callerId}`, 3, 60 * 60 * 1000)
+      if (!rl.ok) {
+        return json({ error: `Limite de SMS de teste atingido. Tente dentro de ${rl.retryAfter}s`, sent: false }, 429, cors)
+      }
+      smsBody = '[StatusAds Connect] Teste de integracao SMS. Se recebeu esta mensagem, a integracao esta correcta.'
     }
 
-    // Encode credentials for Twilio API
     const credentials = btoa(`${accountSid}:${authToken}`)
-
     const twilioBody = new URLSearchParams({
       To: to,
-      From: fromNumber,
-      Body: body.length > 160
-        ? body.substring(0, 157) + '...'
-        : body,
+      From: fromNumber!,
+      Body: smsBody.length > 160 ? smsBody.slice(0, 157) + '...' : smsBody,
     })
 
-    // Add emergency metadata in status callback if emergencyId provided
-    if (emergencyId) {
-      // We'll log this for tracking purposes
-      console.log(`[SMS] Emergency ${emergencyId} -> ${to}`)
-    }
-
-    console.log(`[SMS] Sending to ${to.slice(-4)}: "${body.slice(0, 50)}..."`)
+    console.log(`[SMS] Sending to ${to.slice(-4)} (caller: ${service ? 'service' : callerId?.slice(0, 8)})`)
 
     const twilioResponse = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
@@ -99,29 +100,15 @@ serve(async (req: Request) => {
     if (!twilioResponse.ok) {
       const errorData = await twilioResponse.text()
       console.error(`[SMS] Twilio error ${twilioResponse.status}:`, errorData)
-      return new Response(
-        JSON.stringify({ error: `Twilio API error: ${twilioResponse.status}`, sent: false }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: `Twilio API error: ${twilioResponse.status}`, sent: false }, 502, cors)
     }
 
     const result = await twilioResponse.json()
     console.log(`[SMS] Sent successfully, SID: ${result.sid}`)
 
-    return new Response(
-      JSON.stringify({
-        sent: true,
-        sid: result.sid,
-        to: result.to,
-        status: result.status,
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ sent: true, sid: result.sid, to: result.to, status: result.status }, 200, cors)
   } catch (err) {
     console.error('[SMS] Unexpected error:', err)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', sent: false }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ error: 'Internal server error', sent: false }, 500, cors)
   }
 })

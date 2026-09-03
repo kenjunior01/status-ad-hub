@@ -1,5 +1,16 @@
+// ============================================================
+// notify-missed-checkin — Notifica contactos quando um check-in
+// agendado não é confirmado. Chamado EXCLUSIVAMENTE por pg_net
+// (trigger da base de dados) com a service_role key.
+//
+// SEGURANÇA (hardening):
+//  - Exige Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>.
+//    Chamadas sem a chave do serviço são rejeitadas (401) — impede
+//    usar a função como SMS bomber para números arbitrários.
+// ============================================================
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isServiceRole, isUuid, safeText } from '../_shared/security.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -12,11 +23,24 @@ const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER') || ''
 
 serve(async (req) => {
   try {
+    // ── Apenas o servidor (pg_net) pode chamar ──
+    if (!isServiceRole(req)) {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const { user_id, checkin_id, contacts, missed_at } = await req.json()
 
-    if (!user_id || !contacts || contacts.length === 0) {
+    if (!isUuid(user_id)) {
+      return new Response(JSON.stringify({ error: 'user_id inválido' }), { status: 400 })
+    }
+    if (!Array.isArray(contacts) || contacts.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 })
     }
+    // Números vindos da DB (confiável), mas limitados por defesa em profundidade
+    const phones = contacts.slice(0, 20).map((p: unknown) => safeText(p, 20)).filter(Boolean)
 
     // Get user info
     const { data: profile } = await supabase
@@ -30,7 +54,7 @@ serve(async (req) => {
 
     // Send SMS to each contact
     const results = await Promise.allSettled(
-      (contacts as string[]).map(async (phone: string) => {
+      phones.map(async (phone: string) => {
         if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
           return { phone, status: 'skipped', reason: 'Twilio not configured' }
         }
@@ -62,7 +86,7 @@ serve(async (req) => {
     )
 
     const summary = results.map((r, i) => ({
-      phone: contacts[i],
+      phone: phones[i],
       ...('value' in r ? r.value : { status: 'error' }),
     }))
 
@@ -70,7 +94,7 @@ serve(async (req) => {
     await supabase.from('location_events').insert({
       user_id,
       type: 'alert',
-      description: `Check-in falhado notificado para ${contacts.length} contacto(s)`,
+      description: `Check-in falhado notificado para ${phones.length} contacto(s)`,
       metadata: { checkin_id, notification_results: summary },
     })
 

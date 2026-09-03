@@ -1,7 +1,7 @@
 {
   "name": "statusads-connect",
   "private": true,
-  "version": "3.3.0",
+  "version": "3.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -56,7 +56,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-leaflet": "^4.2.1",
-    "react-router-dom": "^6.26.2",
+    "react-router-dom": "^7.18.3",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
@@ -83,5 +83,8 @@
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
     "vite-plugin-pwa": "^1.3.0"
+  },
+  "overrides": {
+    "nanoid": "^3.3.8"
   }
 }

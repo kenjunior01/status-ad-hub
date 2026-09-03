@@ -673,36 +673,38 @@ export default function Settings() {
     setTwilioStatus('loading')
     setPgNetStatus('loading')
 
-    // Check Twilio by invoking send-sms with a dry-run flag
+    // Check Twilio by invoking send-sms with a dry-run flag (nunca envia SMS)
     try {
-      const { error } = await supabase.functions.invoke('send-sms', {
+      const { data, error } = await supabase.functions.invoke('send-sms', {
         body: { phone: '+258000000000', message: 'TEST_CHECK', dryRun: true },
       })
-      // If the function exists, error will be about Twilio creds (warn) or success (ok)
       if (error) {
         const msg = (error as any).message || ''
-        if (msg.includes('TWILIO_ACCOUNT_SID') || msg.includes('credentials') || msg.includes('environment')) {
-          setTwilioStatus('error')
-        } else if (msg.includes('invalid') || msg.includes('E.164')) {
-          setTwilioStatus('ok') // Function works, phone was just test
-        } else {
-          setTwilioStatus('warn')
-        }
+        setTwilioStatus(msg.includes('not found') || msg.includes('404') ? 'error' : 'warn')
       } else {
-        setTwilioStatus('ok')
+        // dryRun devolve { dryRun: true, configured } — 'ok' só se Twilio configurado
+        setTwilioStatus((data as any)?.configured ? 'ok' : 'warn')
       }
     } catch {
       setTwilioStatus('error') // Function doesn't exist
     }
 
-    // Check pg_net by calling the notify-contacts function
+    // Check pg_net: a função está protegida — 400/401/403 significa que existe
+    // e está a rejeitar correctamente chamadas inválidas (comportamento desejado)
     try {
       const { error } = await supabase.functions.invoke('notify-contacts', {
         body: { userId: 'test', alertId: 'test', lat: 0, lng: 0, contactPhones: [] },
       })
       if (error) {
+        const ctx = (error as any).context?.status ?? (error as any).status ?? 0
         const msg = (error as any).message || ''
-        setPgNetStatus(msg.includes('not found') || msg.includes('404') ? 'error' : 'warn')
+        if (msg.includes('not found') || msg.includes('404') || ctx === 404) {
+          setPgNetStatus('error')
+        } else if ([400, 401, 403].includes(ctx)) {
+          setPgNetStatus('ok') // protegida e activa
+        } else {
+          setPgNetStatus('warn')
+        }
       } else {
         setPgNetStatus('ok')
       }
