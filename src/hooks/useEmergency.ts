@@ -8,6 +8,7 @@ import { showEmergencyOfflineWarning } from '@/hooks/useNetworkStatus'
 import * as api from '@/lib/api'
 import { sendEmergencyPush } from '@/lib/web-push'
 import { supabase } from '@/lib/supabase'
+import { isSilentPanic } from '@/lib/guardian'
 import { toast } from 'sonner'
 
 /**
@@ -65,8 +66,9 @@ export function useEmergency() {
     onSuccess: async (result, vars) => {
       const { alertId, contactsNotified } = result
 
-      // 1. Sound the emergency alarm (siren + vibration)
-      triggerAlarm()
+      // 1. Sound the emergency alarm (siren + vibration) — EXCEPTO em pânico silencioso
+      //    (Guardião em modo roubo: nada de sirene que entregue a vítima)
+      if (!isSilentPanic()) triggerAlarm()
 
       // 2. Show success toast
       toast.success(`Emergencia activada! ${contactsNotified.length} contacto(s) serao notificados via SMS.`, {
@@ -117,7 +119,7 @@ export function useEmergency() {
       )
 
       // Always sound alarm for immediate user feedback regardless of error type
-      triggerAlarm()
+      if (!isSilentPanic()) triggerAlarm()
 
       if (retryCountRef.current < MAX_RETRIES && (isNetworkError || isSupabaseUnavailable)) {
         // Auto-retry with exponential backoff (2s, 4s, 8s)

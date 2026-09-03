@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Atalho estático "SOS Agora" — long-press no ícone da app no launcher -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="sos_now"
+        android:enabled="true"
+        android:icon="@drawable/ic_sos_shortcut"
+        android:shortcutShortLabel="@string/shortcut_sos_short"
+        android:shortcutLongLabel="@string/shortcut_sos_long"
+        android:shortcutDisabledMessage="@string/shortcut_sos_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="com.statusads.connect://sos"
+            android:targetPackage="com.statusads.connect"
+            android:targetClass="com.statusads.connect.MainActivity" />
+        <categories android:name="android.shortcut.communication" />
+    </shortcut>
+</shortcuts>

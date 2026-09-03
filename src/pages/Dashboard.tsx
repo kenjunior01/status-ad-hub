@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { ProximityPanel } from '@/components/ProximityPanel'
 import { ReadinessRings, CoachCard } from '@/components/ReadinessRings'
+import { GuardianCard } from '@/components/GuardianCard'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -459,6 +460,13 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+      {/* MODO GUARDIÃO — faixa de armamento (mobile, sob a barra de estado) */}
+      {isReady && (
+        <div className="absolute top-[108px] left-0 right-0 z-30 md:hidden">
+          <GuardianCard variant="banner" />
+        </div>
+      )}
+
       {/* LEFT PANEL - Device List */}
       {isReady && (
       <motion.div
@@ -477,6 +485,10 @@ export default function Dashboard() {
               gpsOk={!!userPos}
               alerts={alertCount}
             />
+          </div>
+          {/* MODO GUARDIÃO — o único interruptor (desktop) */}
+          <div className="mb-4">
+            <GuardianCard variant="panel" />
           </div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-sm font-semibold text-white">Dispositivos</h3>

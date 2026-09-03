@@ -4,4 +4,10 @@
     <string name="title_activity_main">StatusAds Connect</string>
     <string name="package_name">com.statusads.connect</string>
     <string name="custom_url_scheme">com.statusads.connect</string>
+
+    <!-- Modo Guardião: atalho SOS no ícone + tile de atalhos rápidos -->
+    <string name="shortcut_sos_short">SOS</string>
+    <string name="shortcut_sos_long">SOS Agora — dispara protecção</string>
+    <string name="shortcut_sos_disabled">SOS indisponível</string>
+    <string name="tile_sos_label">SOS Guardião</string>
 </resources>

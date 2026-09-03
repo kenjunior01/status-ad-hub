@@ -19,11 +19,20 @@ import * as api from '@/lib/api'
 import { saveAudioEvidence } from '@/lib/api'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { setSilentPanic } from '@/lib/guardian'
 import type { PanicModeState } from '@/lib/types'
+
+/** Opções de activação — source identifica o gatilho (Guardião, botão, etc.) */
+export interface PanicActivateOptions {
+  /** Sem sirene/toast alto (roubo/sequestro) — default false */
+  silent?: boolean
+  /** Origem do disparo para o registo de eventos */
+  source?: string
+}
 
 interface PanicModeContextValue {
   state: PanicModeState
-  activate: () => void
+  activate: (opts?: PanicActivateOptions) => void
   deactivate: (pin?: string) => boolean
   capturePhoto: () => Promise<void>
   clearPhotos: () => void
@@ -138,11 +147,15 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user])
 
-  const activate = useCallback(() => {
+  const activate = useCallback((opts?: PanicActivateOptions) => {
     if (state.isActive) return
+    const silent = opts?.silent ?? false
 
     const now = new Date().toISOString()
     setState(prev => ({ ...prev, isActive: true, activatedAt: now, isScreenLocked: true }))
+
+    // Guardião: informar a cadeia de emergência para não tocar a sirene
+    setSilentPanic(silent)
 
     // Start audio recording
     audioRecorder.startRecording()
@@ -163,17 +176,26 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
 
     // Log event
     if (user) {
-      api.logEvent(user.id, 'panic_mode', 'Modo pânico activado — gravação iniciada').catch(() => {})
+      const via = opts?.source ? ` via ${opts.source}` : ''
+      api.logEvent(user.id, 'panic_mode', `Pânico activado${via} — gravação iniciada${silent ? ' (silencioso)' : ''}`).catch(() => {})
     }
 
-    toast.error('MODO PÂNICO ACTIVADO', {
-      description: 'A gravar áudio e fotos. Emergência disparada.',
-      duration: 10000,
-    })
+    if (silent) {
+      // Roubo/sequestro: NADA de alertas visíveis ou sonoros no telemóvel
+      toast('Protecção activa', {
+        description: 'A gravar e a alertar os seus contactos em silêncio.',
+        duration: 6000,
+      })
+    } else {
+      toast.error('MODO PÂNICO ACTIVADO', {
+        description: 'A gravar áudio e fotos. Emergência disparada.',
+        duration: 10000,
+      })
+    }
 
-    // Vibrate pattern
+    // Vibrate pattern (curto e único em modo silencioso)
     if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200, 100, 500])
+      navigator.vibrate(silent ? [150] : [200, 100, 200, 100, 500])
     }
 
     // Security: High-frequency GPS tracking during panic (every 10s)
@@ -191,6 +213,9 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
       )
     }, 10_000)
   }, [state.isActive, user, triggerEmergency, queueEmergency, audioRecorder])
+
+  // Compatibilidade: chamadas antigas sem objecto de opções
+  // (activate() continua a funcionar; activate({silent:true}) para o Guardião)
 
   const deactivate = useCallback((pin?: string) => {
     // Check PIN if configured

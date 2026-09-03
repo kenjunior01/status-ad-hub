@@ -25,6 +25,8 @@ import { AntiCoercionProvider, useAntiCoercion } from '@/hooks/useAntiCoercion'
 import { FakeDashboard } from '@/components/FakeDashboard'
 import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
 import { PanicModeOverlay } from '@/components/PanicModeOverlay'
+import { GuardianWatcher } from '@/components/GuardianWatcher'
+import { GuardianSOSOverlay } from '@/components/GuardianSOSOverlay'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
@@ -202,6 +204,9 @@ function InnerApp() {
       <GlassesOverlayWrapper />
       <PanicModeOverlay />
       <DiscreetModeOverlay />
+      {/* Modo Guardião: gatilhos de pânico + contagem decrescente de SOS */}
+      <GuardianWatcher />
+      <GuardianSOSOverlay />
       <SOSButton />
       <Toaster
         position="top-right"
