@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useIsAdmin } from '@/hooks/useAdmin'
 import { useDemoMode } from '@/hooks/useSubscription'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   LayoutDashboard, Users, CreditCard, CalendarClock, ShieldAlert,
   Settings2, Lock, ArrowLeft, Loader2, FlaskConical, SlidersHorizontal,
+  KeyRound, Crown,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 const tabs = [
@@ -27,6 +32,7 @@ export default function AdminShell() {
   const demo = useDemoMode()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const qc = useQueryClient()
 
   if (loading) {
     return (
@@ -37,25 +43,7 @@ export default function AdminShell() {
   }
 
   if (!isAdmin) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4">
-        <div className="max-w-sm w-full rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-8 text-center">
-          <div className="h-12 w-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <Lock className="h-5 w-5 text-red-400" />
-          </div>
-          <h2 className="font-display font-bold text-lg text-white">Acesso restrito</h2>
-          <p className="text-xs text-white/40 mt-2 leading-relaxed">
-            Esta área é exclusiva de administradores. Se és o dono da plataforma, executa a migration 009 e corre:
-          </p>
-          <code className="block mt-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-[10px] font-mono text-[#D4AF37] text-left overflow-x-auto">
-            update profiles set role = 'admin' where user_id = (select id from auth.users where email = 'teu-email');
-          </code>
-          <Button onClick={() => navigate('/dashboard')} variant="outline" className="mt-5 border-white/10 bg-white/[0.03] text-white/70 rounded-xl h-10">
-            <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar ao painel
-          </Button>
-        </div>
-      </div>
-    )
+    return <AdminGate onActivated={() => qc.invalidateQueries({ queryKey: ['my-role', user?.id] })} />
   }
 
   return (
@@ -114,6 +102,117 @@ export default function AdminShell() {
 
       <div className="max-w-6xl mx-auto px-0 sm:px-6 py-6">
         <Outlet />
+      </div>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * AdminGate — ecrã de desbloqueio por código digitado.
+ * O dono da plataforma entra na sua conta, digita o código de
+ * administração (definido na migration 013 em app_security_config)
+ * e o painel desbloqueia na hora, sem precisar de correr SQL.
+ * ────────────────────────────────────────────────────────────── */
+function AdminGate({ onActivated }: { onActivated: () => void }) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [code, setCode] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleActivate() {
+    if (!code.trim() || submitting) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const { data, error: rpcErr } = await supabase.rpc('activate_admin', { p_code: code.trim() })
+      if (rpcErr) {
+        const code = (rpcErr as { code?: string }).code ?? ''
+        if (code === 'PGRST202' || rpcErr.message.includes('Could not find the function')) {
+          setError('O servidor ainda não tem o activador de admin. Aplique a migration 013 (ficheiro supabase/APLICAR-TUDO.sql) no SQL Editor do Supabase.')
+        } else if (code === '42703' || rpcErr.message.includes('does not exist')) {
+          setError('O servidor ainda não tem o schema completo. Aplique supabase/APLICAR-TUDO.sql no SQL Editor e volte a tentar.')
+        } else {
+          setError('Não foi possível validar o código agora. Tente novamente.')
+        }
+        return
+      }
+      const res = data as { success: boolean; message: string }
+      if (res?.success) {
+        toast.success(res.message ?? 'Administrador activado!')
+        onActivated()
+      } else {
+        setError(res?.message ?? 'Código incorrecto. Verifique e tente novamente.')
+      }
+    } catch {
+      setError('Erro de ligação ao servidor. Verifique a internet e tente novamente.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-10">
+      <div className="max-w-sm w-full">
+        <div className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-b from-[#D4AF37]/[0.07] to-transparent p-7 text-center relative overflow-hidden">
+          {/* brilho de fundo */}
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-32 w-56 bg-[#D4AF37]/10 blur-3xl rounded-full pointer-events-none" />
+
+          <div className="relative">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8C6D1F] flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(212,175,55,0.25)]">
+              <Crown className="h-6 w-6 text-black" strokeWidth={2} />
+            </div>
+            <h2 className="font-display font-bold text-lg text-white">Painel do Administrador</h2>
+            <p className="text-xs text-white/45 mt-2 leading-relaxed">
+              Área exclusiva do dono da plataforma. Introduza o
+              <span className="text-[#D4AF37] font-medium"> código de administração </span>
+              para desbloquear esta sessão.
+            </p>
+
+            <div className="mt-5 space-y-3 text-left">
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
+                <Input
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value); setError(null) }}
+                  onKeyDown={(e) => e.key === 'Enter' && void handleActivate()}
+                  placeholder="Código de administração"
+                  autoComplete="off"
+                  autoFocus
+                  className={cn(
+                    'pl-10 h-12 rounded-xl bg-black/30 border text-white tracking-widest font-mono text-sm placeholder:text-white/20 placeholder:font-sans placeholder:tracking-normal',
+                    error ? 'border-red-500/50' : 'border-white/10 focus-visible:border-[#D4AF37]/40'
+                  )}
+                />
+              </div>
+
+              {error && (
+                <p className="text-[11px] text-red-400 leading-relaxed bg-red-500/[0.06] border border-red-500/15 rounded-xl px-3 py-2.5">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                onClick={() => void handleActivate()}
+                disabled={!code.trim() || submitting}
+                className="w-full h-12 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-sm disabled:opacity-40 shadow-lg shadow-[#D4AF37]/20"
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4 mr-1.5" />}
+                {submitting ? 'A validar…' : 'Desbloquear Painel Admin'}
+              </Button>
+            </div>
+
+            <p className="text-[10px] text-white/25 mt-4 leading-relaxed">
+              Sessão: <span className="font-mono text-white/40">{user?.email ?? '—'}</span><br />
+              O código é definido pelo dono no servidor (tabela app_security_config)
+              e pode ser alterado a qualquer momento no SQL Editor.
+            </p>
+
+            <Button onClick={() => navigate('/dashboard')} variant="ghost" className="mt-4 text-white/40 hover:text-white/70 text-xs rounded-xl h-9">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Voltar ao painel
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

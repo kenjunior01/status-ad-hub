@@ -341,6 +341,62 @@ export default function Dashboard() {
         </div>
       </motion.header>
 
+      {/* MOBILE STATUS STRIP — resumo de segurança só no telemóvel */}
+      <motion.div
+        initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}
+        className="absolute top-[58px] left-0 right-0 z-40 md:hidden"
+      >
+        <div className="mx-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {/* Prontidão */}
+          <div className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
+            readinessScore >= 80
+              ? 'bg-[#0C0B08]/70 border-[#D4AF37]/25'
+              : readinessScore >= 50
+                ? 'bg-[#0C0B08]/70 border-amber-400/25'
+                : 'bg-[#0C0B08]/70 border-red-400/25'
+          )}>
+            <Shield className={cn('h-3.5 w-3.5', readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
+            <span className={cn(
+              'text-[11px] font-bold',
+              readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
+            )}>{readinessScore}%</span>
+            <span className="text-[10px] text-white/35">{readinessLabel}</span>
+          </div>
+          {/* Dispositivos activos */}
+          <button onClick={() => navigate('/dashboard/devices')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0C0B08]/70 backdrop-blur-xl border border-white/[0.08] shrink-0 active:scale-95 transition-transform">
+            <BluetoothConnected className="h-3.5 w-3.5 text-white/50" />
+            <span className="text-[11px] font-semibold text-white/70">{activeDevices}/{totalDevices || 0}</span>
+            <span className="text-[10px] text-white/30">disp.</span>
+          </button>
+          {/* GPS */}
+          <div className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
+            userPos ? 'bg-[#0C0B08]/70 border-[#D4AF37]/20' : 'bg-[#0C0B08]/70 border-white/[0.08]'
+          )}>
+            <MapPin className={cn('h-3.5 w-3.5', userPos ? 'text-[#D4AF37]' : 'text-white/25')} />
+            <span className="text-[11px] font-medium text-white/60">{userPos ? 'GPS activo' : 'Sem GPS'}</span>
+          </div>
+          {/* Alertas */}
+          {alertCount > 0 && (
+            <button onClick={() => navigate('/dashboard/emergency')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 backdrop-blur-xl border border-red-500/30 shrink-0">
+              <Bell className="h-3.5 w-3.5 text-red-400" />
+              <span className="text-[11px] font-semibold text-red-300">{alertCount}</span>
+            </button>
+          )}
+          {/* Zona segura */}
+          {zone && (
+            <div className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
+              zoneState === 'inside' ? 'bg-[#0C0B08]/70 border-[#D4AF37]/20' : 'bg-red-500/10 border-red-500/25'
+            )}>
+              <Crosshair className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400')} />
+              <span className="text-[11px] font-medium text-white/60">{zoneState === 'inside' ? 'Na zona' : 'Fora!'}</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
       {/* MAP */}
       <MapContainer center={userPos ? [userPos.latitude, userPos.longitude] : [-25.9692, 32.5732]} zoom={15} className="h-full w-full z-0" zoomControl={false} attributionControl={false}>
         <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
@@ -361,7 +417,7 @@ export default function Dashboard() {
         {showNotifBanner && isReady && (
           <motion.div
             initial={{ y: -60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -60, opacity: 0 }}
-            className="absolute top-16 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
+            className="absolute top-[104px] md:top-16 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
           >
             <div className="flex items-center gap-3 p-3 rounded-xl bg-[#221E16]/90 backdrop-blur-xl border border-white/[0.08]">
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/15 shrink-0">

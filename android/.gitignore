@@ -102,3 +102,6 @@ app/src/main/res/xml/config.xml
 
 # Assinatura de release (credenciais) — nunca commitar
 keystore.properties
+
+# Chaves privadas nunca no repo (cópia de segurança fora do git)
+*.keystore

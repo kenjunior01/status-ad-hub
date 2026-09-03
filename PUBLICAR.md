@@ -36,15 +36,38 @@ pagamentos manuais, ficha médica, configurações de pagamento** + RLS + trigge
 3. Abre o ficheiro `supabase/APLICAR-TUDO.sql`, copia **TUDO**, cola no editor e clica **RUN**
 4. Se aparecerem erros `already exists` — ignora: significa que essas partes já existem
 5. Verificação: Table Editor deve mostrar as tabelas `plans`, `subscriptions`, `payments`, `app_settings`
+6. **Verificação automática dentro do app**: Painel Admin → **Saúde do Servidor** —
+   o cartão mostra ✅/❌ para cada componente (planos, role admin, RPCs, bucket de
+   gravações, códigos BELLVION) e desaparece sozinho quando está tudo verde
 
 > ⚠️ **Já aplicaste migrations antes?** Podes correr o ficheiro todo na mesma —
 > os objectos existentes não são recriados (o seed dos planos actualiza preços sem duplicar).
 
 ---
 
-## PASSO 2 — Tornar-te ADMIN (1 min)
+## PASSO 2 — Tornar-te ADMIN (1 min, por código digitado)
 
-No **SQL Editor** do Supabase, corre (troca o email para o TEU email de registo):
+**A partir da migration 013** já não precisas de SQL para te tornares admin:
+
+1. Cria a tua conta normal no app (Registar, com o teu email)
+2. Vai a **Painel Admin** no menu (mostra o ecrã de desbloqueio)
+3. Digita o **código de administração** e clica **Desbloquear Painel Admin**
+
+O código por defeito é:
+
+```
+STATUSADS-ADMIN-2026
+```
+
+> 🔐 **TROCA o código logo após activar** — no SQL Editor:
+> ```sql
+> update public.app_security_config
+> set value = 'O-TEU-CODIGO-SECRETO'
+> where key = 'admin_activation_code';
+> ```
+> Cada tentativa (falhada ou bem-sucedida) fica registada em `admin_logs`.
+
+**Alternativa SQL** (se preferires):
 
 ```sql
 update public.profiles

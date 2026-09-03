@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Archive, Play, Pause, Download, Trash2, Mic, ArrowLeft,
-  Shield, Lock, Loader2, Sparkles, AlertTriangle, Square,
+  Shield, Lock, Loader2, Sparkles, Square,
+  Share2, RefreshCw, CloudUpload, Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,28 +15,17 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePlanState } from '@/hooks/useSubscription'
 import { formatDateTime } from '@/lib/payments'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
-import { saveEvidenceRecording } from '@/lib/evidence'
+import {
+  saveEvidenceRecording, syncLocalEvidence, resolveEvidenceSource,
+  shareEvidenceRecording, deleteLocalEvidence, getLocalEvidence,
+  type EvidenceRecord,
+} from '@/lib/evidence'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-interface Evidence {
-  id: string
-  audio_url: string | null
-  audio_data_b64: string | null
-  duration_seconds: number
-  file_size_bytes: number
-  mime_type: string
-  created_at: string
-}
+type Evidence = EvidenceRecord
 
-const LS_EVIDENCE = 'statusads-local-evidence'
 const FREE_LIMIT = 3
-
-function sourceUrl(e: Evidence): string | null {
-  if (e.audio_url) return e.audio_url
-  if (e.audio_data_b64) return e.audio_data_b64.startsWith('data:') ? e.audio_data_b64 : `data:audio/webm;base64,${e.audio_data_b64}`
-  return null
-}
 
 export default function EvidenceVault() {
   const navigate = useNavigate()
@@ -43,9 +33,12 @@ export default function EvidenceVault() {
   const { state } = usePlanState()
   const [items, setItems] = useState<Evidence[]>([])
   const [loading, setLoading] = useState(true)
-  const [isLocal, setIsLocal] = useState(false)
+  const [localPending, setLocalPending] = useState(0)
+  const [syncing, setSyncing] = useState(false)
   const [playingId, setPlayingId] = useState<string | null>(null)
+  const [playUrl, setPlayUrl] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [sharingId, setSharingId] = useState<string | null>(null)
 
   // ── Gravação directa no cofre ──
   const recorder = useAudioRecorder(300)
@@ -70,32 +63,50 @@ export default function EvidenceVault() {
   const load = useCallback(async () => {
     if (!user) { setLoading(false); return }
     let remote: Evidence[] = []
-    let tableMissing = false
     try {
+      // select('*') — compatível com servidores sem a coluna storage_path
+      // (antes da migration 013) e com os novos (ficheiro no bucket)
       const { data, error } = await supabase
         .from('audio_evidence')
-        .select('id, audio_url, audio_data_b64, duration_seconds, file_size_bytes, mime_type, created_at')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
       remote = (data ?? []) as Evidence[]
-    } catch {
-      tableMissing = true
-    }
+    } catch { /* tabela/nuvem indisponível → só locais */ }
+
     // funde com evidências locais (gravações offline ainda não sincronizadas)
-    let local: Evidence[] = []
-    try {
-      local = JSON.parse(localStorage.getItem(LS_EVIDENCE) ?? '[]')
-    } catch { local = [] }
+    const local = getLocalEvidence()
     const remoteIds = new Set(remote.map((e) => e.id))
     const merged = [...remote, ...local.filter((e) => !remoteIds.has(e.id))]
     setItems(merged)
-    setIsLocal(tableMissing || local.length > 0)
+    setLocalPending(local.length)
     setLoading(false)
   }, [user])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { void load() }, [load])
+
+  // ── Sincronização automática: gravações offline → nuvem ──
+  const runSync = useCallback(async (silent: boolean) => {
+    const pending = getLocalEvidence().length
+    if (pending === 0) { if (!silent) toast.info('Tudo sincronizado — não há gravações pendentes neste dispositivo'); return }
+    setSyncing(true)
+    try {
+      const n = await syncLocalEvidence()
+      if (n > 0) toast.success(`${n} gravação(ões) sincronizada(s) na nuvem`, { description: 'Já estão no seu histórico, disponíveis em qualquer dispositivo.' })
+      else if (!silent) toast.error('Não foi possível sincronizar agora — sem internet ou servidor indisponível. Tentamos mais tarde.')
+      await load()
+    } finally {
+      setSyncing(false)
+    }
+  }, [load])
+
+  useEffect(() => {
+    // auto-sync discreto ao abrir (se houver pendentes)
+    if (!loading && localPending > 0) void runSync(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   const toggleRecording = useCallback(async () => {
     if (recorder.isRecording) {
@@ -126,7 +137,7 @@ export default function EvidenceVault() {
           const res = await saveEvidenceRecording(b64, recSecondsRef.current, 'audio/webm')
           if (res.saved) {
             toast.success(`Evidência guardada (${recSecondsRef.current}s)`, {
-              description: res.location === 'local' ? 'Guardada neste dispositivo' : 'Sincronizada na sua conta',
+              description: res.location === 'local' ? 'No dispositivo — sincroniza com a nuvem assim que houver internet' : 'No seu histórico na nuvem',
             })
           } else {
             toast.error(res.error ?? 'Não foi possível guardar')
@@ -149,26 +160,50 @@ export default function EvidenceVault() {
 
   async function handleDelete(id: string) {
     setDeleteId(null)
+    const target = items.find((e) => e.id === id)
     try {
+      if (target?.storage_path) {
+        await supabase.storage.from('evidence-audio').remove([target.storage_path])
+      }
       const { error } = await supabase.from('audio_evidence').delete().eq('id', id)
       if (error) throw error
     } catch {
-      // local
-      const local = JSON.parse(localStorage.getItem(LS_EVIDENCE) ?? '[]').filter((e: Evidence) => e.id !== id)
-      localStorage.setItem(LS_EVIDENCE, JSON.stringify(local))
+      deleteLocalEvidence(id)
     }
     setItems((prev) => prev.filter((e) => e.id !== id))
     toast.success('Evidência eliminada')
   }
 
-  function handleDownload(e: Evidence) {
-    const url = sourceUrl(e)
+  async function handlePlay(e: Evidence) {
+    if (playingId === e.id) { setPlayingId(null); setPlayUrl(null); return }
+    setPlayingId(e.id)
+    setPlayUrl(null)
+    const url = await resolveEvidenceSource(e)
+    if (url) setPlayUrl(url)
+    else setPlayingId(null)
+  }
+
+  async function handleDownload(e: Evidence) {
+    const url = await resolveEvidenceSource(e)
     if (!url) { toast.error('Fonte de áudio indisponível'); return }
     const a = document.createElement('a')
     a.href = url
     a.download = `statusads-evidencia-${e.id.slice(0, 8)}.${e.mime_type.includes('mp4') ? 'm4a' : 'webm'}`
     a.target = '_blank'
     a.click()
+  }
+
+  async function handleShare(e: Evidence) {
+    setSharingId(e.id)
+    try {
+      const ok = await shareEvidenceRecording(e)
+      if (ok) toast.success('Partilha aberta — escolha para quem enviar')
+      // cancelado pelo utilizador → sem toast de erro
+    } catch {
+      toast.error('Não foi possível partilhar — tente descarregar primeiro')
+    } finally {
+      setSharingId(null)
+    }
   }
 
   return (
@@ -193,9 +228,31 @@ export default function EvidenceVault() {
           <div>
             <h1 className="font-display font-bold text-base">Provas que falam por ti</h1>
             <p className="text-xs text-white/40 mt-1 leading-relaxed">
-              Áudio gravado automaticamente durante emergências, modo pânico e óculos inteligentes.
-              Guardado com segurança e disponível como prova.
+              Grave áudio em qualquer momento — fica guardado no <span className="text-[#D4AF37]/80 font-medium">histórico da sua conta na nuvem</span> e
+              no dispositivo. Disponível como prova mesmo que perca o telemóvel.
             </p>
+          </div>
+        </div>
+
+        {/* ── DICAS: como funciona o fluxo da gravação ── */}
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+          <p className="flex items-center gap-2 text-xs font-semibold text-white/70 mb-3.5">
+            <Info className="h-3.5 w-3.5 text-[#D4AF37]" /> Como usar as gravações
+          </p>
+          <div className="space-y-3">
+            {[
+              { n: '1', t: 'Grave', d: 'Toque no microfone dourado abaixo. O áudio é gravado mesmo com o ecrã bloqueado (na app instalada) e guardado automaticamente ao parar.' },
+              { n: '2', t: 'Fica salvo na nuvem', d: 'Com internet, a gravação sobe para o histórico da sua conta — aparece aqui em qualquer aparelho onde entre. Sem internet, fica no telemóvel e sobe sozinha depois (sincronização automática).' },
+              { n: '3', t: 'Partilhe com quem confia', d: 'Toque em Partilhar numa gravação para enviar por WhatsApp, Telegram, SMS ou e-mail — o ficheiro de áudio vai anexado. Pode também descarregar para guardar fora do telemóvel.' },
+            ].map((s) => (
+              <div key={s.n} className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center shrink-0 text-[11px] font-bold text-[#D4AF37]">{s.n}</div>
+                <div>
+                  <p className="text-[13px] font-semibold text-white/85">{s.t}</p>
+                  <p className="text-[11px] text-white/35 leading-relaxed mt-0.5">{s.d}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -233,7 +290,7 @@ export default function EvidenceVault() {
                 <p className="text-[11px] text-white/40">
                   {recorder.isRecording
                     ? `${recSeconds}s — toque para parar e guardar no cofre`
-                    : 'Toque no microfone. O áudio fica guardado como prova.'}
+                    : 'Toque no microfone. O áudio fica salvo no seu histórico.'}
                 </p>
               </div>
             </div>
@@ -244,6 +301,26 @@ export default function EvidenceVault() {
             )}
           </div>
         </div>
+
+        {/* Sincronização */}
+        {(localPending > 0 || syncing) && (
+          <button
+            onClick={() => void runSync(false)}
+            disabled={syncing}
+            className="w-full flex items-center gap-3 rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 text-left hover:bg-blue-500/[0.1] transition disabled:opacity-60"
+          >
+            <div className="h-9 w-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+              {syncing ? <Loader2 className="h-4 w-4 text-blue-400 animate-spin" /> : <CloudUpload className="h-4 w-4 text-blue-400" />}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-300">
+                {syncing ? 'A sincronizar…' : `${localPending} gravação(ões) apenas neste dispositivo`}
+              </p>
+              <p className="text-[11px] text-white/40">Toque para enviar à nuvem — assim ficam no histórico da sua conta e não se perdem.</p>
+            </div>
+            <RefreshCw className={cn('h-4 w-4 text-blue-400/60', syncing && 'animate-spin')} />
+          </button>
+        )}
 
         {!isPremium && items.length > FREE_LIMIT && (
           <button
@@ -268,15 +345,8 @@ export default function EvidenceVault() {
             <Mic className="h-8 w-8 text-white/10 mx-auto mb-3" />
             <p className="text-sm text-white/60 font-medium">Ainda não há evidências</p>
             <p className="text-[11px] text-white/30 mt-1.5 max-w-[300px] mx-auto leading-relaxed">
-              As gravações aparecem aqui automaticamente quando o SOS, o modo pânico ou os óculos inteligentes activam a captação de áudio.
+              Grave agora com o microfone acima, ou deixe que o SOS, o modo pânico e os óculos inteligentes activem a captação automaticamente.
             </p>
-          </div>
-        )}
-
-        {isLocal && items.length > 0 && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3">
-            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-200/80">Evidências locais deste dispositivo (servidor ainda não migrado). Descarrega as que forem importantes.</p>
           </div>
         )}
 
@@ -286,13 +356,14 @@ export default function EvidenceVault() {
               className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
               <div className="flex items-center gap-3.5">
                 <button
-                  onClick={() => setPlayingId(playingId === e.id ? null : e.id)}
+                  onClick={() => void handlePlay(e)}
                   className={cn(
                     'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border transition-all',
                     playingId === e.id
                       ? 'bg-[#D4AF37] border-[#D4AF37] text-black'
                       : 'bg-[#D4AF37]/10 border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/20',
                   )}
+                  aria-label={playingId === e.id ? 'Parar reprodução' : 'Reproduzir gravação'}
                 >
                   {playingId === e.id ? <Pause className="h-4.5 w-4.5" /> : <Play className="h-4.5 w-4.5 ml-0.5" />}
                 </button>
@@ -300,11 +371,21 @@ export default function EvidenceVault() {
                   <p className="text-[13px] font-semibold text-white">
                     Gravação de {formatDateTime(e.created_at)}
                   </p>
-                  <p className="text-[11px] text-white/30 font-mono mt-0.5">
-                    {Math.floor(e.duration_seconds / 60)}:{String(e.duration_seconds % 60).padStart(2, '0')} · {(e.file_size_bytes / 1024).toFixed(0)} KB · {e.mime_type.split('/')[1]?.split(';')[0] ?? 'audio'}
+                  <p className="text-[11px] text-white/30 font-mono mt-0.5 flex items-center gap-1.5">
+                    <span>
+                      {Math.floor(e.duration_seconds / 60)}:{String(e.duration_seconds % 60).padStart(2, '0')} · {(e.file_size_bytes / 1024).toFixed(0)} KB
+                    </span>
+                    {!e.audio_data_b64?.startsWith('data:') && (
+                      <span className="inline-flex items-center gap-1 text-[#D4AF37]/50 not-italic" title="Guardada na nuvem">
+                        <CloudUpload className="h-3 w-3" /> nuvem
+                      </span>
+                    )}
                   </p>
                 </div>
-                <button onClick={() => handleDownload(e)} className="p-2 rounded-lg hover:bg-white/[0.06] transition" title="Descarregar">
+                <button onClick={() => void handleShare(e)} disabled={sharingId === e.id} className="p-2 rounded-lg hover:bg-[#D4AF37]/[0.08] transition disabled:opacity-50" title="Partilhar (WhatsApp, SMS…)">
+                  {sharingId === e.id ? <Loader2 className="h-4 w-4 text-[#D4AF37] animate-spin" /> : <Share2 className="h-4 w-4 text-white/40 hover:text-[#D4AF37]" />}
+                </button>
+                <button onClick={() => void handleDownload(e)} className="p-2 rounded-lg hover:bg-white/[0.06] transition" title="Descarregar">
                   <Download className="h-4 w-4 text-white/40 hover:text-[#D4AF37]" />
                 </button>
                 <button onClick={() => setDeleteId(e.id)} className="p-2 rounded-lg hover:bg-red-500/[0.08] transition" title="Eliminar">
@@ -313,16 +394,19 @@ export default function EvidenceVault() {
               </div>
               {playingId === e.id && (
                 <div className="mt-3.5">
-                  {sourceUrl(e) ? (
+                  {playUrl ? (
                     <audio
-                      src={sourceUrl(e)!}
+                      src={playUrl}
                       controls
                       autoPlay
-                      onEnded={() => setPlayingId(null)}
+                      onEnded={() => { setPlayingId(null); setPlayUrl(null) }}
                       className="w-full h-9"
                     />
                   ) : (
-                    <p className="text-[11px] text-red-400/70">Fonte de áudio indisponível para esta evidência.</p>
+                    <div className="flex items-center gap-2 py-1.5">
+                      <Loader2 className="h-3.5 w-3.5 text-[#D4AF37] animate-spin" />
+                      <p className="text-[11px] text-white/30">A abrir o áudio…</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -336,6 +420,10 @@ export default function EvidenceVault() {
             </div>
           )}
         </div>
+
+        <p className="text-center text-[10px] text-white/20 pt-2">
+          As gravações são privadas — só a sua conta acede. Active a partilha apenas com pessoas de confiança.
+        </p>
       </div>
 
       {/* Confirmação de eliminação */}
@@ -346,7 +434,7 @@ export default function EvidenceVault() {
               <Trash2 className="h-5 w-5 text-red-400" />
             </div>
             <p className="font-display font-bold text-sm">Eliminar evidência?</p>
-            <p className="text-[11px] text-white/35">Esta acção é permanente — a gravação não pode ser recuperada.</p>
+            <p className="text-[11px] text-white/35">Esta acção é permanente — a gravação é removida do dispositivo e da nuvem.</p>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" onClick={() => setDeleteId(null)} className="flex-1 h-10 border-white/10 bg-white/[0.03] text-white/60 rounded-xl">Cancelar</Button>
               <Button onClick={() => deleteId && handleDelete(deleteId)} className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl">Eliminar</Button>

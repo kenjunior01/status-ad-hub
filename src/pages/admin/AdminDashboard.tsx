@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAdminStats, useAdminPayments, useAdminEvents } from '@/hooks/useAdmin'
 import { formatMzn, formatDateTime, METHOD_LABELS } from '@/lib/payments'
+import { ServerHealth } from '@/components/admin/ServerHealth'
 import { cn } from '@/lib/utils'
 
 const PLAN_COLORS: Record<string, string> = { free: '#6B7280', familia: '#D4AF37', premium: '#8C6D1F' }
@@ -33,6 +34,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-5">
+      {/* Diagnóstico do servidor (aparece quando falta aplicar SQL) */}
+      <ServerHealth />
+
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi icon={Users} label="Utilizadores" value={String(stats.totalUsers)} sub={`${stats.newUsers7d} novos (7d)`} trend={stats.newUsers7d > 0 ? 'up' : 'flat'} />

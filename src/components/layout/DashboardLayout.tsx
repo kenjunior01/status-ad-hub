@@ -363,24 +363,28 @@ export default function DashboardLayout() {
               if (item.isSOS) {
                 return (
                   <NavLink key={item.to} to={item.to} className="relative flex flex-col items-center gap-0.5 -mt-4">
-                    <div className={cn(
-                      'h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg',
-                      active
-                        ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
-                        : 'bg-red-500/15 border-2 border-red-500/30 active:bg-red-500/30'
-                    )}>
-                      <ShieldAlert className={cn('h-5 w-5', active ? 'text-white' : 'text-red-400')} strokeWidth={2} />
+                    <div className="relative">
+                      {/* anel de emissão contínuo — o SOS nunca passa despercebido */}
+                      <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-red-500/60 sos-ring" />
+                      <div className={cn(
+                        'relative h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg',
+                        active
+                          ? 'bg-red-500 shadow-[0_0_24px_rgba(239,68,68,0.55)]'
+                          : 'bg-gradient-to-b from-red-500 to-red-600 shadow-[0_0_18px_rgba(239,68,68,0.35)] active:scale-95'
+                      )}>
+                        <ShieldAlert className="h-5 w-5 text-white" strokeWidth={2} />
+                      </div>
                     </div>
-                    <span className={cn('text-[9px] font-semibold', active ? 'text-red-400' : 'text-white/25')}>SOS</span>
+                    <span className={cn('text-[9px] font-bold tracking-widest', active ? 'text-red-400' : 'text-red-400/70')}>SOS</span>
                   </NavLink>
                 )
               }
               return (
                 <NavLink key={item.to} to={item.to} className="flex flex-col items-center gap-0.5 py-1.5 px-3 transition-all duration-150">
                   <div className="relative">
-                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-[#D4AF37]' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
+                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-[#D4AF37] gold-glow' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
                     {active && (
-                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-[#D4AF37]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.7)]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
                     )}
                   </div>
                   <span className={cn('text-[10px] font-medium', active ? 'text-[#D4AF37]' : 'text-white/25')}>{item.label}</span>

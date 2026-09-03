@@ -54,9 +54,22 @@
     @apply border-border;
   }
 
+  /* ── MOBILE POLISH GLOBAL ──────────────────────────────
+     Sem flash cinzento no toque (Android WebView/Chrome) e
+     sem atraso de 300ms em toques rápidos. */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, a, [role="button"], input[type="submit"], summary {
+    touch-action: manipulation;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* iOS: impede zoom automático em inputs com focus */
+    -webkit-text-size-adjust: 100%;
   }
 
   /* Smooth scrolling */
@@ -287,6 +300,30 @@
 .animate-cursor-blink {
   animation: cursor-blink 1s step-end infinite;
 }
+
+/* ── SOS PULSE — anel de emergência (bottom nav mobile) ── */
+@keyframes sos-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+.sos-ring {
+  animation: sos-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Brilho dourado activo (itens da bottom nav) */
+@keyframes gold-drop {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.25)); }
+  50% { filter: drop-shadow(0 0 9px rgba(212, 175, 55, 0.55)); }
+}
+
+.gold-glow {
+  animation: gold-drop 2.4s ease-in-out infinite;
+}
+
+/* Esconde scrollbar em carrosséis horizontais (faixa de estado mobile, tabs) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ══════════════════════════════════════════════════════════════ */
 /*  UTILITY CLASSES                                                 */

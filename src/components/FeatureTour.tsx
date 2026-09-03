@@ -102,11 +102,11 @@ const TOUR_STEPS: TourStep[] = [
     badge: 'PROVA',
     title: 'Gravação de Evidências',
     description:
-      'Grave áudio discretamente em situações de ameaça. As gravações ficam guardadas no Cofre de Evidências como prova — com data, duração e download.',
+      'Grave áudio em qualquer momento de ameaça — fica salvo no Cofre e sincroniza com o histórico da sua conta na nuvem, disponível mesmo que troque ou perca o telemóvel. Pode partilhar cada gravação por WhatsApp, SMS ou e-mail com quem confia.',
     howTo: [
       'Acções Rápidas → "Gravação Rápida" → toque para começar',
       'Toque de novo para parar — guarda sozinho no Cofre',
-      'Gestão completa em Acções Rápidas → "Cofre de Evidências"',
+      'No Cofre: Partilhar envia o áudio; o botão Sincronizar sobe tudo à nuvem',
     ],
     link: { label: 'Abrir Cofre de Evidências', to: '/dashboard/evidencias' },
     accent: 'text-[#D4AF37]',

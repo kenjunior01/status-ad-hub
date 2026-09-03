@@ -1206,3 +1206,115 @@ $$;
 -- Elegibilidade (informativo para a app — a verificação é feita por RLS
 -- na tabela device_activation_codes: activated_by = auth.uid()):
 -- A app chama verify_activation_code/redeem_activation_code (20260903082415).
+
+-- ══════════════════════════════════════════════════════════════
+-- MIGRATION 013 — Admin por Código + Gravações na Nuvem (2026-09-03)
+-- Código de admin por defeito: STATUSADS-ADMIN-2026 → TROQUE após aplicar!
+--   update app_security_config set value='NOVO-CODIGO' where key='admin_activation_code';
+-- (conteúdo completo em supabase/migrations/013_admin_code_evidence_cloud.sql)
+-- ══════════════════════════════════════════════════════════════
+
+-- 1) Configuração de segurança (código de activação de admin)
+CREATE TABLE IF NOT EXISTS public.app_security_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.app_security_config ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.app_security_config FROM anon, authenticated;
+INSERT INTO public.app_security_config (key, value)
+VALUES ('admin_activation_code', 'STATUSADS-ADMIN-2026')
+ON CONFLICT (key) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.admin_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id TEXT,
+  details JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.admin_logs ENABLE ROW LEVEL SECURITY;
+
+-- 2) RPC activate_admin(p_code) — promove a admin quando o código coincide
+CREATE OR REPLACE FUNCTION public.activate_admin(p_code TEXT)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_code TEXT;
+  v_user UUID := auth.uid();
+  v_profile RECORD;
+BEGIN
+  IF v_user IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Sessão não encontrada. Entre na sua conta primeiro.');
+  END IF;
+  SELECT value INTO v_code FROM public.app_security_config WHERE key = 'admin_activation_code' LIMIT 1;
+  IF v_code IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Código de administração não configurado (migration 013).');
+  END IF;
+  IF trim(p_code) <> v_code THEN
+    INSERT INTO public.admin_logs (action, target_type, target_id, details)
+    VALUES ('admin_activation_failed', 'profile', v_user::TEXT, json_build_object('at', now()));
+    RETURN json_build_object('success', false, 'message', 'Código incorrecto. Verifique e tente novamente.');
+  END IF;
+  SELECT id, role INTO v_profile FROM public.profiles WHERE user_id = v_user LIMIT 1;
+  IF v_profile.id IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Perfil não encontrado. Complete o registo primeiro.');
+  END IF;
+  IF v_profile.role = 'admin' THEN
+    RETURN json_build_object('success', true, 'message', 'Esta conta já é de administração.');
+  END IF;
+  UPDATE public.profiles SET role = 'admin', updated_at = now() WHERE user_id = v_user;
+  INSERT INTO public.admin_logs (action, target_type, target_id, details)
+  VALUES ('admin_activated_by_code', 'profile', v_user::TEXT, json_build_object('at', now()));
+  RETURN json_build_object('success', true, 'message', 'Administrador activado! O painel foi desbloqueado.');
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.activate_admin(TEXT) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.activate_admin(TEXT) FROM anon;
+
+-- 3) Storage: bucket privado evidence-audio (ficheiros até 25 MB)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('evidence-audio', 'evidence-audio', false, 26214400,
+        ARRAY['audio/webm','audio/mp4','audio/mpeg','audio/ogg','audio/wav','audio/aac'])
+ON CONFLICT (id) DO UPDATE
+  SET file_size_limit = EXCLUDED.file_size_limit,
+      allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "Evidence upload own folder" ON storage.objects;
+CREATE POLICY "Evidence upload own folder" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'evidence-audio' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS "Evidence read own folder" ON storage.objects;
+CREATE POLICY "Evidence read own folder" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'evidence-audio' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS "Evidence delete own folder" ON storage.objects;
+CREATE POLICY "Evidence delete own folder" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'evidence-audio' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- 4) audio_evidence.storage_path + assinatura de URLs privadas
+ALTER TABLE public.audio_evidence ADD COLUMN IF NOT EXISTS storage_path TEXT;
+CREATE OR REPLACE FUNCTION public.evidence_signed_url(p_path TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_url TEXT;
+BEGIN
+  IF v_user IS NULL THEN RETURN NULL; END IF;
+  IF (split_part(p_path, '/', 1)) <> v_user::text THEN RETURN NULL; END IF;
+  SELECT signed_url INTO v_url
+  FROM storage.create_signed_url('evidence-audio', p_path, 7200);
+  RETURN v_url;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.evidence_signed_url(TEXT) TO authenticated;
