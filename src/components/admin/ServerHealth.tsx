@@ -27,6 +27,7 @@ const INITIAL: Check[] = [
   { id: 'rpc_stats', label: 'Estatísticas do servidor (get_dashboard_stats)', hint: 'RPC que alimenta o painel com números reais.', state: 'pending' },
   { id: 'bucket', label: 'Nuvem de gravações (bucket evidence-audio)', hint: 'Guarda os áudios do Cofre como ficheiros privados.', state: 'pending' },
   { id: 'bellvion', label: 'Códigos de dispositivo BELLVION', hint: 'Verificação de hardware para o plano de 99 MT.', state: 'pending' },
+  { id: 'promos', label: 'Promoções e segurança (migration 014)', hint: 'Códigos promocionais no checkout, gerador de códigos e auditoria.', state: 'pending' },
 ]
 
 export function ServerHealth() {
@@ -63,6 +64,11 @@ export function ServerHealth() {
       set('bellvion', 'checking')
       const { error: codesErr } = await supabase.from('device_activation_codes').select('code').limit(1)
       set('bellvion', codesErr ? 'fail' : 'ok')
+
+      // 6) promo_codes (migration 014)
+      set('promos', 'checking')
+      const { error: promoErr } = await supabase.from('promo_codes').select('id').limit(1)
+      set('promos', promoErr ? 'fail' : 'ok')
 
       if (alive) setRunning(false)
     })()

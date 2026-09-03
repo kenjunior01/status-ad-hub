@@ -39,6 +39,7 @@ export interface Payment {
   provider_ref?: string | null
   note?: string | null
   payer_name?: string | null
+  promo_code?: string | null
   created_at: string
   confirmed_at?: string | null
 }
@@ -241,6 +242,68 @@ export interface ManualPaymentOpts {
   txnRef: string      // ID da transacção que o utilizador copiou do SMS/app
   phone?: string
   payerName?: string
+  promo?: PromoInfo   // promoção já validada no checkout (aplica o desconto ao montante)
+}
+
+// ── Promoções ──
+export interface PromoInfo {
+  code: string
+  discount_type: 'percent' | 'fixed'
+  discount_value: number
+  description?: string
+}
+
+/** Desconto em número (percentagem sobre a base, ou valor fixo) — nunca negativo */
+export function applyDiscount(base: number, promo: Pick<PromoInfo, 'discount_type' | 'discount_value'>): number {
+  const v = promo.discount_type === 'percent'
+    ? base * (1 - Math.min(100, promo.discount_value) / 100)
+    : base - promo.discount_value
+  return Math.max(0, Math.round(v * 100) / 100)
+}
+
+/** Promoções de demonstração (só existem em modo demo — sem servidor) */
+export const DEMO_PROMOS: PromoInfo[] = [
+  { code: 'BEMVINDO10', discount_type: 'percent', discount_value: 10, description: 'Bónus de boas-vindas (demo)' },
+  { code: 'STATUSADS50', discount_type: 'fixed', discount_value: 50, description: '−50 MT (demo)' },
+]
+
+export function findDemoPromo(code: string): PromoInfo | null {
+  const c = code.trim().toUpperCase().replace(/\s/g, '')
+  return DEMO_PROMOS.find((p) => p.code === c) ?? null
+}
+
+/**
+ * Valida um código promocional. No servidor real usa a RPC validate_promo
+ * (migration 014). Em modo demo usa a lista local DEMO_PROMOS.
+ */
+export interface PromoResult {
+  ok: boolean
+  promo?: PromoInfo
+  message?: string
+}
+
+export async function validatePromo(code: string, planSlug: string): Promise<PromoResult> {
+  const demo = await isDemoMode()
+  if (demo) {
+    const p = findDemoPromo(code)
+    return p ? { ok: true, promo: p } : { ok: false, message: 'Código promocional inválido (demo).' }
+  }
+  try {
+    const { data, error } = await supabase.rpc('validate_promo', { p_code: code, p_plan: planSlug })
+    if (error) {
+      if ((error as { code?: string }).code === 'PGRST202' || error.message.includes('Could not find the function')) {
+        return { ok: false, message: 'O servidor ainda não tem promoções — aplique a migration 014 (TUDO.sql) no SQL Editor.' }
+      }
+      return { ok: false, message: 'Não foi possível validar o código agora. Tente novamente.' }
+    }
+    const res = data as { valid: boolean; message: string; discount_type?: 'percent' | 'fixed'; discount_value?: number; code?: string; description?: string }
+    if (res?.valid && res.code && res.discount_type && res.discount_value != null) {
+      return { ok: true, promo: { code: res.code, discount_type: res.discount_type, discount_value: Number(res.discount_value), description: res.description } }
+    }
+    return { ok: false, message: res?.message ?? 'Código inválido ou expirado.' }
+  } catch {
+    return { ok: false, message: 'Erro de ligação ao servidor. Tente novamente.' }
+  }
 }
 
 /**
@@ -251,7 +314,9 @@ export interface ManualPaymentOpts {
  * (trigger trg_payment_confirmed, migration 009).
  */
 export async function submitManualPayment(opts: ManualPaymentOpts): Promise<Payment> {
-  const amount = opts.method === 'paypal' ? opts.plan.price_usd : opts.plan.price_mzn
+  const base = opts.method === 'paypal' ? opts.plan.price_usd : opts.plan.price_mzn
+  // Desconto promocional (validado antes no checkout) — nunca negativo
+  const amount = opts.promo ? applyDiscount(base, opts.promo) : base
   const currency = opts.method === 'paypal' ? 'USD' : 'MZN'
   const demo = await isDemoMode()
 
@@ -268,6 +333,7 @@ export async function submitManualPayment(opts: ManualPaymentOpts): Promise<Paym
       provider_ref: opts.txnRef,
       note: 'manual',
       payer_name: opts.payerName ?? null,
+      promo_code: opts.promo?.code ?? null,
       created_at: new Date().toISOString(),
       confirmed_at: null,
     }
@@ -298,6 +364,7 @@ export async function submitManualPayment(opts: ManualPaymentOpts): Promise<Paym
       status: 'pending',
       note: 'manual',
       payer_name: opts.payerName ?? null,
+      promo_code: opts.promo?.code ?? null,
     })
     .select('*')
     .single()

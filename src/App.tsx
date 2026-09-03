@@ -60,6 +60,8 @@ const AdminSubscriptions = lazy(() => import('@/pages/admin/AdminSubscriptions')
 const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'))
 const AdminPlans = lazy(() => import('@/pages/admin/AdminPlans'))
 const AdminConfiguracoes = lazy(() => import('@/pages/admin/AdminConfiguracoes'))
+const AdminCodigos = lazy(() => import('@/pages/admin/AdminCodigos'))
+const AdminSeguranca = lazy(() => import('@/pages/admin/AdminSeguranca'))
 const EvidenceVault = lazy(() => import('@/pages/EvidenceVault'))
 const MedicalProfile = lazy(() => import('@/pages/MedicalProfile'))
 const FallDetection = lazy(() => import('@/pages/FallDetection'))
@@ -133,6 +135,8 @@ function AppRoutes() {
           <Route path="eventos" element={<AdminEvents />} />
           <Route path="planos" element={<AdminPlans />} />
           <Route path="configuracoes" element={<AdminConfiguracoes />} />
+          <Route path="codigos" element={<AdminCodigos />} />
+          <Route path="seguranca" element={<AdminSeguranca />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

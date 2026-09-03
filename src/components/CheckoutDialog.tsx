@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import {
   Smartphone, Wallet, Landmark, Globe, ArrowLeft, CheckCircle2, Loader2,
-  ShieldCheck, Clock, AlertTriangle, Copy, Radio, Info, ChevronDown,
+  ShieldCheck, Clock, AlertTriangle, Copy, Radio, Info, ChevronDown, Ticket, X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   startCheckout, submitManualPayment, formatMzn, isValidMzPhone, normalizeMzPhone,
-  METHOD_LABELS, type Plan, type PaymentMethod, type Payment, type CheckoutResult,
+  validatePromo, applyDiscount, METHOD_LABELS,
+  type Plan, type PaymentMethod, type Payment, type CheckoutResult, type PromoInfo,
 } from '@/lib/payments'
 import { useAppSettings } from '@/hooks/useAppSettings'
 import { cn } from '@/lib/utils'
@@ -72,12 +73,18 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const { data: settings } = useAppSettings()
+  // ── Código promocional (pagamento manual) ──
+  const [promoInput, setPromoInput] = useState('')
+  const [promo, setPromo] = useState<PromoInfo | null>(null)
+  const [promoChecking, setPromoChecking] = useState(false)
+  const [promoMsg, setPromoMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
     if (open) {
       setStage('method'); setAutoMode(false); setMethod(null); setPhone('')
       setPayerName(''); setTxnRef(''); setResult(null); setPayment(null)
       setError(null); setSubmitting(false)
+      setPromoInput(''); setPromo(null); setPromoMsg(null); setPromoChecking(false)
     }
   }, [open])
 
@@ -89,6 +96,36 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
       ? { value: plan.price_usd, label: `$${plan.price_usd.toFixed(2)} USD` }
       : { value: plan.price_mzn, label: formatMzn(plan.price_mzn) }
   }, [plan, isUsd])
+
+  // ── Montante a pagar (com desconto promocional, se aplicado) ──
+  const payValue = useMemo(
+    () => (promo && amount.value > 0 ? applyDiscount(amount.value, promo) : amount.value),
+    [promo, amount.value],
+  )
+  const payLabel = useMemo(
+    () => (isUsd ? `$${payValue.toFixed(2)} USD` : formatMzn(payValue)),
+    [payValue, isUsd],
+  )
+
+  async function applyPromo() {
+    if (!promoInput.trim() || !plan || promoChecking) return
+    setPromoChecking(true); setPromoMsg(null)
+    const r = await validatePromo(promoInput, plan.slug)
+    if (r.ok && r.promo) {
+      setPromo(r.promo)
+      setPromoMsg({ ok: true, text: `Código ${r.promo.code} aplicado — ${r.promo.discount_type === 'percent' ? `−${r.promo.discount_value}%` : `−${formatMzn(r.promo.discount_value)}`}` })
+      toast.success('Código promocional aplicado!')
+    } else {
+      setPromo(null)
+      setPromoMsg({ ok: false, text: r.message ?? 'Código inválido ou expirado.' })
+    }
+    setPromoChecking(false)
+  }
+
+
+  function removePromo() {
+    setPromo(null); setPromoMsg(null); setPromoInput('')
+  }
 
   function reset() {
     setStage('method'); setMethod(null); setPhone(''); setPayerName('')
@@ -117,6 +154,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         txnRef: txnRef.trim(),
         phone: method === 'paypal' ? undefined : normalizeMzPhone(phone),
         payerName: payerName.trim() || undefined,
+        promo: promo ?? undefined,
       })
       setPayment(p)
       setStage('manual_success')
@@ -178,7 +216,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
   }
 
   function manualInstructions(): string[] {
-    const a = amount.label
+    const a = payLabel
     switch (method) {
       case 'mpesa': return [
         'Abre *150# no telefone ou o app M-Pesa',
@@ -230,7 +268,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
           <div className="mt-3 flex items-center justify-between rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2.5">
             <span className="text-xs text-white/50">Total por mês</span>
             <span className="font-display font-bold text-[#D4AF37] text-base">
-              {method ? amount.label : formatMzn(plan.price_mzn)}
+              {method ? payLabel : formatMzn(plan.price_mzn)}
             </span>
           </div>
         </div>
@@ -324,6 +362,48 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
               <ArrowLeft className="h-3.5 w-3.5" /> Trocar método
             </button>
 
+            {/* Código promocional */}
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+              <label className="text-[10px] font-semibold text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+                <Ticket className="h-3 w-3" /> Código promocional (opcional)
+              </label>
+              {promo ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/25 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-mono font-semibold text-emerald-300">{promo.code}</p>
+                    <p className="text-[10px] text-emerald-200/60 truncate">
+                      {promo.discount_type === 'percent' ? `Desconto de ${promo.discount_value}%` : `Desconto de ${formatMzn(promo.discount_value)}`}
+                      {promo.description ? ` · ${promo.description}` : ''}
+                    </p>
+                  </div>
+                  <button onClick={removePromo} className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10 shrink-0" title="Remover código">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Ex: BEMVINDO10"
+                    value={promoInput}
+                    onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoMsg(null) }}
+                    onKeyDown={(e) => e.key === 'Enter' && void applyPromo()}
+                    className="bg-white/[0.05] border-white/[0.08] text-white font-mono uppercase text-xs placeholder:text-white/20 placeholder:font-sans placeholder:normal-case placeholder:tracking-normal flex-1 h-9"
+                  />
+                  <Button
+                    onClick={() => void applyPromo()}
+                    disabled={!promoInput.trim() || promoChecking}
+                    size="sm"
+                    className="h-9 px-4 rounded-xl bg-white/[0.08] hover:bg-[#D4AF37]/20 text-white border border-white/10 text-xs"
+                  >
+                    {promoChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Aplicar'}
+                  </Button>
+                </div>
+              )}
+              {promoMsg && (
+                <p className={cn('text-[10px] leading-relaxed', promoMsg.ok ? 'text-emerald-300' : 'text-amber-300')}>{promoMsg.text}</p>
+              )}
+            </div>
+
             {/* Dados de pagamento do dono */}
             <div className="rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.04] p-3.5 space-y-2">
               <p className="text-[10px] font-semibold text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
@@ -339,7 +419,10 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
                 </div>
               ))}
               <p className="text-[10px] text-white/40 leading-relaxed">
-                Envia exactamente <span className="text-[#D4AF37] font-bold">{amount.label}</span> para os dados acima.
+                {promo
+                  ? <>Preço original <span className="line-through opacity-60">{amount.label}</span> · com desconto envia exactamente <span className="text-[#D4AF37] font-bold">{payLabel}</span></>
+                  : <>Envia exactamente <span className="text-[#D4AF37] font-bold">{payLabel}</span> para os dados acima.</>
+                }
               </p>
             </div>
 
@@ -494,7 +577,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             </div>
             <p className="font-display font-bold text-lg text-white">Pagamento submetido!</p>
             <p className="text-xs text-white/40 max-w-[300px] leading-relaxed">
-              Recebemos o teu comprovativo de {amount.label} via <span className="text-white/70">{method ? METHOD_LABELS[method] : ''}</span>.
+              Recebemos o teu comprovativo de {payLabel} via <span className="text-white/70">{method ? METHOD_LABELS[method] : ''}</span>.
               Assim que validarmos a recepção, o plano <span className="text-[#D4AF37]">{plan.name}</span> activa automaticamente — normalmente em minutos.
             </p>
             {payment && (
@@ -513,7 +596,10 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
                 </div>
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">Valor</span>
-                  <span className="text-white/80 font-semibold">{amount.label}</span>
+                  <span className="text-white/80 font-semibold">
+                    {promo && <span className="line-through opacity-50 mr-1.5">{amount.label}</span>}
+                    {payLabel}
+                  </span>
                 </div>
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">Estado</span>
