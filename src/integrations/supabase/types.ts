@@ -1607,6 +1607,7 @@ export type Database = {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: boolean
       }
+      redeem_activation_code: { Args: { p_code: string }; Returns: string }
       resolve_emergency: {
         Args: { p_alert_id: string; p_reason?: string }
         Returns: undefined
@@ -1616,6 +1617,14 @@ export type Database = {
         Returns: {
           alert_id: string
           notified_phones: string[]
+        }[]
+      }
+      verify_activation_code: {
+        Args: { p_code: string }
+        Returns: {
+          device_type: string
+          id: string
+          product_id: string
         }[]
       }
     }

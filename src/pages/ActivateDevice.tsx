@@ -10,10 +10,10 @@ import * as api from '@/lib/api'
 type Step = 'intro' | 'enter-code' | 'create-account' | 'success'
 
 const DEVICES = [
-  { id: 'glasses', name: 'StatusAds Glasses', desc: 'Oculos inteligentes com SOS integrado, camera oculta e gravacao de audio', icon: Glasses, color: '#D4AF37' },
-  { id: 'watch', name: 'StatusAds Watch', desc: 'Relogio com botao de panico, GPS e monitoramento de batimentos', icon: Watch, color: '#3B82F6' },
-  { id: 'earbuds', name: 'StatusAds Buds', desc: 'Fones com deteccao de palavras-chave e gravacao ambiental', icon: Headphones, color: '#F59E0B' },
-  { id: 'tracker', name: 'StatusAds Tracker', desc: 'Rastreador portatil com botao SOS e GPS de alta precisao', icon: Smartphone, color: '#EF4444' },
+  { id: 'glasses', name: 'BELLVION Glasses', desc: 'Oculos inteligentes com SOS integrado, camera oculta e gravacao de audio', icon: Glasses, color: '#D4AF37' },
+  { id: 'watch', name: 'BELLVION Watch', desc: 'Relogio com botao de panico, GPS e monitoramento de batimentos', icon: Watch, color: '#3B82F6' },
+  { id: 'earbuds', name: 'BELLVION Buds', desc: 'Fones com deteccao de palavras-chave e gravacao ambiental', icon: Headphones, color: '#F59E0B' },
+  { id: 'tracker', name: 'BELLVION Tracker', desc: 'Rastreador portatil com botao SOS e GPS de alta precisao', icon: Smartphone, color: '#EF4444' },
 ]
 
 export default function ActivateDevice() {
@@ -33,12 +33,9 @@ export default function ActivateDevice() {
     setLoading(true)
     try {
       // Verify activation code with Supabase
-      const { data, error } = await supabase
-        .from('device_activation_codes')
-        .select('id, device_type, product_id, used')
-        .eq('code', activationCode.trim().toUpperCase())
-        .eq('used', false)
-        .single()
+      const { data: rows, error } = await supabase
+        .rpc('verify_activation_code', { p_code: activationCode.trim().toUpperCase() })
+      const data = Array.isArray(rows) ? rows[0] : rows
 
       if (error || !data) {
         toast.error('Codigo invalido', { description: 'Verifique o codigo no seu dispositivo ou contacte o suporte.' })
@@ -85,9 +82,7 @@ export default function ActivateDevice() {
         if (profileError) console.error(profileError)
         // Mark activation code as used
         const { error: codeError } = await supabase
-          .from('device_activation_codes')
-          .update({ used: true, activated_by: authData.user.id, activated_at: new Date().toISOString() })
-          .eq('code', activationCode.trim().toUpperCase())
+          .rpc('redeem_activation_code', { p_code: activationCode.trim().toUpperCase() })
         if (codeError) console.error(codeError)
         setStep('success')
       }
