@@ -207,7 +207,7 @@ export default function BellvionDevices() {
                     <button onClick={() => copy(c.code)} className="p-2 rounded-lg hover:bg-white/[0.06] text-white/50" aria-label="Copiar código">
                       <Copy className="w-4 h-4" />
                     </button>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400/70" title="Código usado" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400/70" aria-label="Código usado" />
                   </div>
                 </li>
               )
