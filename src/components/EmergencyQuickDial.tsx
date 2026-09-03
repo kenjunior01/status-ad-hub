@@ -117,7 +117,7 @@ function EmptyState() {
       </div>
       <Link
         to="/dashboard/contacts"
-        className="mt-1 flex items-center gap-1.5 rounded-xl bg-[#D4AF37]/10 px-4 py-2 text-xs font-semibold text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20"
+        className="mt-1 flex items-center gap-1.5 rounded-xl bg-brand/10 px-4 py-2 text-xs font-semibold text-brand transition-colors hover:bg-brand/20"
       >
         <UserPlus className="h-3.5 w-3.5" />
         Adicionar Contactos
@@ -155,7 +155,7 @@ function ContactCard({
       className={cn(
         'relative flex-shrink-0 rounded-2xl border bg-white/[0.02] transition-colors',
         contact.is_primary
-          ? 'border-[#D4AF37]/30 shadow-[0_0_16px_rgba(212,175,55,0.08)]'
+          ? 'border-brand/30 shadow-[0_0_16px_rgba(212,175,55,0.08)]'
           : 'border-white/[0.06]',
         compact ? 'w-[72px] p-2' : 'w-[160px] p-3'
       )}
@@ -163,7 +163,7 @@ function ContactCard({
       {/* Primary pulse ring */}
       {contact.is_primary && (
         <motion.span
-          className="pointer-events-none absolute -inset-px rounded-2xl border-2 border-[#D4AF37]/20"
+          className="pointer-events-none absolute -inset-px rounded-2xl border-2 border-brand/20"
           animate={{ opacity: [0.2, 0.5, 0.2] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -180,7 +180,7 @@ function ContactCard({
         >
           {firstLetter}
           {contact.is_primary && (
-            <Star className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 fill-[#D4AF37] text-[#D4AF37]" />
+            <Star className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 fill-brand text-brand" />
           )}
         </div>
 
@@ -205,7 +205,7 @@ function ContactCard({
               e.preventDefault()
               onCall(contact.phone)
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors hover:bg-brand/20"
             aria-label={`Ligar para ${contact.name}`}
           >
             <Phone className="h-3.5 w-3.5" />
@@ -362,7 +362,7 @@ export function EmergencyQuickDial({
     <div className={cn('relative', className)}>
       {/* Section label */}
       <div className="mb-3 flex items-center gap-2">
-        <Shield className="h-4 w-4 text-[#D4AF37]/60" />
+        <Shield className="h-4 w-4 text-brand/60" />
         <span className="text-xs font-semibold uppercase tracking-wider text-white/40">
           Marcacao Rapida
         </span>

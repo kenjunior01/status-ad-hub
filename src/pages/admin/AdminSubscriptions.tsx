@@ -46,7 +46,7 @@ export default function AdminSubscriptions() {
 
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
         <div className="divide-y divide-white/[0.04]">
-          {isLoading && <div className="py-14 text-center"><Loader2 className="h-6 w-6 text-[#D4AF37] animate-spin mx-auto" /></div>}
+          {isLoading && <div className="py-14 text-center"><Loader2 className="h-6 w-6 text-brand animate-spin mx-auto" /></div>}
           {!isLoading && subs.length === 0 && (
             <div className="py-14 text-center">
               <CalendarClock className="h-7 w-7 text-white/10 mx-auto mb-2.5" />
@@ -63,7 +63,7 @@ export default function AdminSubscriptions() {
                     <Badge variant="outline" className={cn('text-[9px]', STATUS_BADGE[s.status])}>
                       {STATUS_LABEL[s.status] ?? s.status}
                     </Badge>
-                    <Badge variant="outline" className="text-[9px] text-[#D4AF37] border-[#D4AF37]/25 capitalize">{(s as any).plan_slug ?? (s as any).plans?.slug ?? '—'}</Badge>
+                    <Badge variant="outline" className="text-[9px] text-brand border-brand/25 capitalize">{(s as any).plan_slug ?? (s as any).plans?.slug ?? '—'}</Badge>
                   </div>
                   <p className="text-[10px] text-white/25 mt-0.5">
                     {formatDate(s.starts_at)} → {formatDate(s.expires_at)}
@@ -85,7 +85,7 @@ export default function AdminSubscriptions() {
                         onError: () => { toast.error('Erro ao estender'); setBusyId(null) },
                       })
                     }}
-                    className="h-7 px-2 text-[10px] text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-lg gap-1">
+                    className="h-7 px-2 text-[10px] text-brand hover:bg-brand/10 rounded-lg gap-1">
                     {busyId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} 30d
                   </Button>
                   {s.status === 'active' && (

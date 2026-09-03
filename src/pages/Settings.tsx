@@ -6,7 +6,7 @@ import {
   Crosshair, Navigation, Key, MessageSquare, Wifi, AlertTriangle, CheckCircle2,
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
-  ShieldAlert, KeyRound,
+  ShieldAlert, KeyRound, Palette,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,12 +30,14 @@ import * as api from '@/lib/api'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useSmartGlasses } from '@/hooks/useSmartGlasses'
 import { useAntiCoercion } from '@/hooks/useAntiCoercion'
+import { useTheme, THEMES } from '@/hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'notificacoes' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'notificacoes' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
+  { id: 'aparencia', title: 'Aparencia', icon: Palette },
   { id: 'notificacoes', title: 'Notificacoes', icon: Bell },
   { id: 'integracoes', title: 'Integracoes', icon: Key },
   { id: 'privacidade', title: 'Privacidade', icon: Lock },
@@ -53,7 +55,7 @@ const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
 function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
   return (
     <button onClick={onToggle} className="shrink-0">
-      <div className={cn('w-10 h-5 rounded-full relative transition-colors duration-300', enabled ? 'bg-[#D4AF37]' : 'bg-white/10')}>
+      <div className={cn('w-10 h-5 rounded-full relative transition-colors duration-300', enabled ? 'bg-brand' : 'bg-white/10')}>
         <motion.div className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm" animate={{ left: enabled ? 20 : 2 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
       </div>
     </button>
@@ -61,7 +63,7 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 }
 
 function StatusDot({ status }: { status: 'ok' | 'warn' | 'error' | 'loading' | 'idle' }) {
-  const colors = { ok: 'bg-[#D4AF37]', warn: 'bg-amber-400', error: 'bg-red-400', loading: 'bg-blue-400 animate-pulse', idle: 'bg-white/15' }
+  const colors = { ok: 'bg-brand', warn: 'bg-amber-400', error: 'bg-red-400', loading: 'bg-blue-400 animate-pulse', idle: 'bg-white/15' }
   return <div className={cn('w-2 h-2 rounded-full', colors[status])} />
 }
 
@@ -84,7 +86,7 @@ function IntegrationCheck({
   isChecking?: boolean
 }) {
   const statusLabels: Record<string, { text: string; color: string }> = {
-    ok: { text: 'Configurado', color: 'text-[#D4AF37]' },
+    ok: { text: 'Configurado', color: 'text-brand' },
     warn: { text: 'Parcial', color: 'text-amber-400' },
     error: { text: 'Nao configurado', color: 'text-red-400/70' },
     loading: { text: 'A verificar...', color: 'text-blue-400' },
@@ -96,13 +98,13 @@ function IntegrationCheck({
     <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors">
       <div className={cn(
         'p-2 rounded-lg shrink-0',
-        status === 'ok' ? 'bg-[#D4AF37]/[0.08] border border-[#D4AF37]/15' :
+        status === 'ok' ? 'bg-brand/[0.08] border border-brand/15' :
         status === 'error' ? 'bg-red-500/[0.06] border border-red-500/10' :
         'bg-white/[0.03] border border-white/[0.06]'
       )}>
         <Icon className={cn(
           'h-4 w-4',
-          status === 'ok' ? 'text-[#D4AF37]' : status === 'error' ? 'text-red-400/60' : 'text-white/40'
+          status === 'ok' ? 'text-brand' : status === 'error' ? 'text-red-400/60' : 'text-white/40'
         )} strokeWidth={1.5} />
       </div>
       <div className="flex-1 min-w-0">
@@ -163,8 +165,8 @@ function TestSmsModal({
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/15">
-              <Send className="h-4 w-4 text-[#D4AF37]" />
+            <div className="p-2 rounded-lg bg-brand/10 border border-brand/15">
+              <Send className="h-4 w-4 text-brand" />
             </div>
             <div>
               <p className="text-sm font-medium text-white">Testar SMS</p>
@@ -189,7 +191,7 @@ function TestSmsModal({
           <Button
             onClick={() => onSend(phone)}
             disabled={isSending || phone.length < 8}
-            className="w-full bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl gap-2 h-11"
+            className="w-full bg-brand hover:bg-brand-dark text-white rounded-xl gap-2 h-11"
           >
             {isSending ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> A enviar...</> : <><Send className="h-3.5 w-3.5" /> Enviar SMS de Teste</>}
           </Button>
@@ -406,12 +408,12 @@ function AntiCoercionSettings() {
           <KeyRound className="h-4 w-4 text-white/30" />
           <div>
             <p className="text-xs text-white/60">Status</p>
-            <p className={cn('text-[11px] font-medium', isConfigured ? 'text-[#D4AF37]' : 'text-white/25')}>
+            <p className={cn('text-[11px] font-medium', isConfigured ? 'text-brand' : 'text-white/25')}>
               {isConfigured ? 'Configurada' : 'Nao configurada'}
             </p>
           </div>
         </div>
-        <div className={cn('h-2 w-2 rounded-full', isConfigured ? 'bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.5)]' : 'bg-white/10')} />
+        <div className={cn('h-2 w-2 rounded-full', isConfigured ? 'bg-brand shadow-[0_0_6px_rgba(212,175,55,0.5)]' : 'bg-white/10')} />
       </div>
 
       {/* SET PASSWORD */}
@@ -429,7 +431,7 @@ function AntiCoercionSettings() {
               placeholder="Nova senha anti-coercao"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-9 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[#D4AF37]/30"
+              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-9 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-brand/30"
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/40">
               {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -443,14 +445,14 @@ function AntiCoercionSettings() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
-              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-4 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[#D4AF37]/30"
+              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-4 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-brand/30"
             />
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => { setStep('idle'); setNewPassword(''); setConfirmPassword('') }} className="flex-1 rounded-lg text-xs text-white/40">
               Cancelar
             </Button>
-            <Button onClick={handleSetPassword} disabled={isSaving || !newPassword || !confirmPassword} className="flex-1 rounded-lg bg-[#D4AF37] hover:bg-[#B8962E] text-white text-xs gap-1.5">
+            <Button onClick={handleSetPassword} disabled={isSaving || !newPassword || !confirmPassword} className="flex-1 rounded-lg bg-brand hover:bg-brand-dark text-white text-xs gap-1.5">
               {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
               Guardar
             </Button>
@@ -470,13 +472,13 @@ function AntiCoercionSettings() {
               value={testPassword}
               onChange={(e) => { setTestPassword(e.target.value); setTestResult('idle') }}
               onKeyDown={(e) => e.key === 'Enter' && handleTestPassword()}
-              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-4 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[#D4AF37]/30"
+              className="w-full h-10 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-4 text-white text-xs placeholder:text-white/20 outline-none focus:ring-1 focus:ring-brand/30"
             />
           </div>
           {testResult === 'match' && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#D4AF37]" />
-              <span className="text-[11px] text-[#D4AF37]">Senha correcta! O modo de coercao seria activado.</span>
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-brand/[0.06] border border-brand/15">
+              <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
+              <span className="text-[11px] text-brand">Senha correcta! O modo de coercao seria activado.</span>
             </div>
           )}
           {testResult === 'no-match' && (
@@ -500,7 +502,7 @@ function AntiCoercionSettings() {
       {step === 'idle' && (
         <div className="flex gap-2">
           {!isConfigured ? (
-            <Button onClick={() => setStep('setting')} className="flex-1 gap-2 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20 h-10 rounded-xl text-xs">
+            <Button onClick={() => setStep('setting')} className="flex-1 gap-2 bg-brand/10 text-brand border border-brand/20 hover:bg-brand/20 h-10 rounded-xl text-xs">
               <KeyRound className="h-3.5 w-3.5" /> Configurar Senha
             </Button>
           ) : (
@@ -539,6 +541,53 @@ function AntiCoercionSettings() {
 // ============================================
 // MAIN SETTINGS PAGE
 // ============================================
+
+/** Secção Aparência — temas seleccionáveis (estilo Calorist Themes) */
+function ThemeSection() {
+  const { theme, setTheme } = useTheme()
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-medium text-white/80">Cor de destaque</p>
+        <p className="text-xs text-white/25 mt-0.5">
+          Escolhe a cor que combina contigo — muda botões, alertas e destaques em toda a app.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {THEMES.map((t) => {
+          const active = theme === t.slug
+          return (
+            <button
+              key={t.slug}
+              onClick={() => setTheme(t.slug)}
+              className={cn(
+                'relative p-4 rounded-2xl border text-left transition-all active:scale-[0.97]',
+                active
+                  ? 'border-transparent ring-2'
+                  : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+              )}
+              style={active ? ({ background: `${t.swatch}14`, boxShadow: `0 0 0 2px ${t.swatch}` } as React.CSSProperties) : undefined}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className="inline-block h-8 w-8 rounded-full shadow-inner"
+                  style={{ background: t.swatch, boxShadow: `0 0 14px -2px ${t.swatch}66` }}
+                />
+                {active && <CheckCircle2 className="h-4 w-4" style={{ color: t.swatch }} />}
+              </div>
+              <p className="text-sm font-semibold text-white/85">{t.name}</p>
+              <p className="text-[11px] text-white/30 mt-0.5">{t.description}</p>
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-[11px] text-white/20 flex items-center gap-1.5">
+        <Palette className="h-3 w-3" />
+        A tua escolha fica guardada neste dispositivo.
+      </p>
+    </div>
+  )
+}
 
 export default function Settings() {
   const { user, signOut } = useAuth()
@@ -839,7 +888,7 @@ export default function Settings() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="font-display text-2xl font-bold text-white">Configuracoes</h1>
         <p className="text-sm text-white/30 mt-1">Gerir a sua conta e preferencias</p>
@@ -866,19 +915,19 @@ export default function Settings() {
                   <SpotlightCard className="overflow-hidden">
                     <button onClick={() => toggleSection(section.id)} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-[#D4AF37]/[0.08] border border-[#D4AF37]/15"><IconComp className="h-4 w-4 text-[#D4AF37]" strokeWidth={1.5} /></div>
-                        <span className="font-medium text-sm text-[#D4AF37]">{section.title}</span>
+                        <div className="p-2 rounded-lg bg-brand/[0.08] border border-brand/15"><IconComp className="h-4 w-4 text-brand" strokeWidth={1.5} /></div>
+                        <span className="font-medium text-sm text-brand">{section.title}</span>
                       </div>
                       {isOpen ? <ChevronUp className="h-4 w-4 text-white/20" /> : <ChevronDown className="h-4 w-4 text-white/20" />}
                     </button>
                     <AnimatePresence>
                       {isOpen && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                          <div className="px-4 pb-5 border-t border-[#D4AF37]/10 pt-5">
+                          <div className="px-4 pb-5 border-t border-brand/10 pt-5">
                             <div className="space-y-4">
-                              <div className="flex items-center justify-between p-4 rounded-xl bg-[#D4AF37]/[0.05] border border-[#D4AF37]/15">
+                              <div className="flex items-center justify-between p-4 rounded-xl bg-brand/[0.05] border border-brand/15">
                                 <div>
-                                  <p className="font-display font-semibold text-[#D4AF37] text-sm">Plano {profile?.plan === 'premium' ? 'Premium' : profile?.plan === 'familia' ? 'Familia' : 'Gratuito'}</p>
+                                  <p className="font-display font-semibold text-brand text-sm">Plano {profile?.plan === 'premium' ? 'Premium' : profile?.plan === 'familia' ? 'Familia' : 'Gratuito'}</p>
                                   <p className="text-[11px] text-white/25 mt-0.5">
                                     {profile?.plan === 'premium' ? 'Dispositivos ilimitados - Suporte 24/7' : profile?.plan === 'familia' ? 'Ate 5 dispositivos - Suporte prioritario' : 'Ate 2 dispositivos - Suporte basico'}
                                   </p>
@@ -888,9 +937,9 @@ export default function Settings() {
                                 </span>
                               </div>
                               {profile?.plan === 'free' ? (
-                                <Button onClick={() => navigate('/dashboard/assinatura')} className="bg-[#D4AF37] hover:bg-[#B8962E] text-black gap-2 rounded-xl font-semibold"><Shield className="h-4 w-4" />Ver planos e fazer upgrade</Button>
+                                <Button onClick={() => navigate('/dashboard/assinatura')} className="bg-brand hover:bg-brand-dark text-black gap-2 rounded-xl font-semibold"><Shield className="h-4 w-4" />Ver planos e fazer upgrade</Button>
                               ) : (
-                                <Button variant="outline" onClick={() => navigate('/dashboard/assinatura')} className="border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20 gap-2 rounded-xl"><Shield className="h-4 w-4" />Gerir assinatura e pagamentos</Button>
+                                <Button variant="outline" onClick={() => navigate('/dashboard/assinatura')} className="border-brand/30 bg-brand/10 text-brand hover:bg-brand/20 gap-2 rounded-xl"><Shield className="h-4 w-4" />Gerir assinatura e pagamentos</Button>
                               )}
                             </div>
                           </div>
@@ -916,7 +965,7 @@ export default function Settings() {
                           <div className="space-y-5">
                             <div className="flex items-center gap-4">
                               <div className="relative">
-                                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center text-xl font-display font-bold text-white shadow-[0_0_30px_-5px_rgba(212,175,55,0.2)]">
+                                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand to-amber-500 flex items-center justify-center text-xl font-display font-bold text-white shadow-[0_0_30px_-5px_rgba(212,175,55,0.2)]">
                                   {profileName.charAt(0).toUpperCase()}
                                 </div>
                                 <button className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/[0.08] transition"><Camera className="h-3 w-3 text-white/50" /></button>
@@ -928,11 +977,14 @@ export default function Settings() {
                               <div className="space-y-1.5"><Label className="text-white/40 text-xs">Email</Label><Input value={user?.email || ''} readOnly className="bg-white/[0.02] border-white/[0.06] text-white/30 cursor-not-allowed rounded-xl" /></div>
                               <div className="space-y-1.5 md:col-span-2"><Label className="text-white/40 text-xs">Telefone</Label><Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="bg-white/[0.03] border-white/[0.08] text-white rounded-xl" /></div>
                             </div>
-                            <Button onClick={handleSaveProfile} disabled={isUpdating} className="bg-[#D4AF37] hover:bg-[#B8962E] text-white hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)] rounded-xl gap-2">
+                            <Button onClick={handleSaveProfile} disabled={isUpdating} className="bg-brand hover:bg-brand-dark text-white hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)] rounded-xl gap-2">
                               {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                               Guardar Alteracoes
                             </Button>
                           </div>
+                        )}
+                        {section.id === 'aparencia' && (
+                          <ThemeSection />
                         )}
                         {section.id === 'notificacoes' && (
                           <div className="space-y-4">
@@ -946,12 +998,12 @@ export default function Settings() {
                                 <div className={cn(
                                   'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium border',
                                   isPushSubscribed
-                                    ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20 text-[#D4AF37]'
+                                    ? 'bg-brand/10 border-brand/20 text-brand'
                                     : notifPermission === 'granted'
                                       ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
                                       : 'bg-white/[0.04] border-white/[0.06] text-white/30'
                                 )}>
-                                  <div className={cn('w-1.5 h-1.5 rounded-full', isPushSubscribed ? 'bg-[#D4AF37]' : 'bg-white/20')} />
+                                  <div className={cn('w-1.5 h-1.5 rounded-full', isPushSubscribed ? 'bg-brand' : 'bg-white/20')} />
                                   {isPushSubscribed ? 'Activo' : notifPermission === 'granted' ? 'Nao inscrito' : 'Desactivado'}
                                 </div>
                               </div>
@@ -964,7 +1016,7 @@ export default function Settings() {
                                     'w-full rounded-xl text-xs gap-2 border',
                                     isPushSubscribed
                                       ? 'border-red-500/20 text-red-400 hover:bg-red-500/10'
-                                      : 'border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/10'
+                                      : 'border-brand/20 text-brand hover:bg-brand/10'
                                   )}
                                 >
                                   {isPushSubscribed ? 'Desactivar Push' : 'Activar Notificacoes Push'}
@@ -979,7 +1031,7 @@ export default function Settings() {
                                     <code className="text-[10px] text-white/20 font-mono flex-1 truncate">
                                       VITE_VAPID_PUBLIC_KEY={vapidPublicKey ? '***' + vapidPublicKey.slice(-8) : '(nao definida)'}
                                     </code>
-                                    <button onClick={() => toggleSection('integracoes')} className="text-[9px] text-[#D4AF37]/70 hover:underline">Abrir Integracoes</button>
+                                    <button onClick={() => toggleSection('integracoes')} className="text-[9px] text-brand/70 hover:underline">Abrir Integracoes</button>
                                   </div>
                                 </div>
                               )}
@@ -1109,8 +1161,8 @@ export default function Settings() {
                               </div>
                               {vapidPublicKey ? (
                                 <div className="flex items-center gap-1.5">
-                                  <CheckCircle2 className="h-3 w-3 text-[#D4AF37]" />
-                                  <span className="text-[10px] text-[#D4AF37]">Chave VAPID configurada no frontend</span>
+                                  <CheckCircle2 className="h-3 w-3 text-brand" />
+                                  <span className="text-[10px] text-brand">Chave VAPID configurada no frontend</span>
                                 </div>
                               ) : (
                                 <div className="space-y-2">
@@ -1131,14 +1183,14 @@ export default function Settings() {
                             </div>
 
                             {/* Environment variables guide */}
-                            <div className="p-4 rounded-xl bg-[#D4AF37]/[0.03] border border-[#D4AF37]/10 space-y-3">
+                            <div className="p-4 rounded-xl bg-brand/[0.03] border border-brand/10 space-y-3">
                               <div className="flex items-center gap-2">
-                                <Globe className="h-3.5 w-3.5 text-[#D4AF37]/60" />
-                                <span className="text-xs font-medium text-[#D4AF37]/80">Variaveis de Ambiente Necessarias</span>
+                                <Globe className="h-3.5 w-3.5 text-brand/60" />
+                                <span className="text-xs font-medium text-brand/80">Variaveis de Ambiente Necessarias</span>
                               </div>
                               <div className="space-y-2 text-[10px]">
                                 <div className="flex items-start gap-2">
-                                  <span className="shrink-0 px-1.5 py-0.5 rounded bg-[#D4AF37]/10 text-[#D4AF37] font-mono text-[9px]">.env</span>
+                                  <span className="shrink-0 px-1.5 py-0.5 rounded bg-brand/10 text-brand font-mono text-[9px]">.env</span>
                                   <div className="space-y-0.5 text-white/30">
                                     <p><code className="text-white/40">VITE_SUPABASE_URL</code></p>
                                     <p><code className="text-white/40">VITE_SUPABASE_ANON_KEY</code></p>
@@ -1225,7 +1277,7 @@ export default function Settings() {
                               <div className={cn(
                                 'p-4 rounded-xl border transition-colors',
                                 zoneState === 'inside'
-                                  ? 'bg-[#D4AF37]/[0.05] border-[#D4AF37]/15'
+                                  ? 'bg-brand/[0.05] border-brand/15'
                                   : zoneState === 'outside'
                                     ? 'bg-red-500/[0.05] border-red-500/15'
                                     : 'bg-white/[0.02] border-white/[0.06]'
@@ -1233,17 +1285,17 @@ export default function Settings() {
                                 <div className="flex items-center gap-3">
                                   <div className={cn(
                                     'p-2 rounded-lg',
-                                    zoneState === 'inside' ? 'bg-[#D4AF37]/10' : zoneState === 'outside' ? 'bg-red-500/10' : 'bg-white/[0.04]'
+                                    zoneState === 'inside' ? 'bg-brand/10' : zoneState === 'outside' ? 'bg-red-500/10' : 'bg-white/[0.04]'
                                   )}>
                                     <Navigation className={cn(
                                       'h-4 w-4',
-                                      zoneState === 'inside' ? 'text-[#D4AF37]' : zoneState === 'outside' ? 'text-red-400' : 'text-white/30'
+                                      zoneState === 'inside' ? 'text-brand' : zoneState === 'outside' ? 'text-red-400' : 'text-white/30'
                                     )} />
                                   </div>
                                   <div className="flex-1">
                                     <p className={cn(
                                       'text-sm font-medium',
-                                      zoneState === 'inside' ? 'text-[#D4AF37]' : zoneState === 'outside' ? 'text-red-400' : 'text-white/40'
+                                      zoneState === 'inside' ? 'text-brand' : zoneState === 'outside' ? 'text-red-400' : 'text-white/40'
                                     )}>
                                       {zoneState === 'inside' ? 'Dentro da zona' : zoneState === 'outside' ? 'FORA DA ZONA' : 'A aguardar GPS...'}
                                     </p>
@@ -1255,7 +1307,7 @@ export default function Settings() {
                                   </div>
                                   <div className={cn(
                                     'w-2.5 h-2.5 rounded-full',
-                                    zoneState === 'inside' ? 'bg-[#D4AF37] animate-pulse' : zoneState === 'outside' ? 'bg-red-500 animate-pulse' : 'bg-white/20'
+                                    zoneState === 'inside' ? 'bg-brand animate-pulse' : zoneState === 'outside' ? 'bg-red-500 animate-pulse' : 'bg-white/20'
                                   )} />
                                 </div>
                               </div>
@@ -1263,7 +1315,7 @@ export default function Settings() {
 
                             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
                               <div className="flex items-center gap-2 mb-3">
-                                <MapPin className="h-4 w-4 text-[#D4AF37]" />
+                                <MapPin className="h-4 w-4 text-brand" />
                                 <span className="text-sm font-medium text-white/70">Zona Configurada</span>
                               </div>
                               <p className="text-[11px] text-white/20 font-mono mb-3">
@@ -1277,7 +1329,7 @@ export default function Settings() {
                                 <input
                                   type="range" min={100} max={5000} step={50} value={zoneRadius}
                                   onChange={(e) => setZoneRadius(Number(e.target.value))}
-                                  className="w-full h-1 rounded-full appearance-none bg-white/[0.08] accent-[#D4AF37] cursor-pointer"
+                                  className="w-full h-1 rounded-full appearance-none bg-white/[0.08] accent-brand cursor-pointer"
                                 />
                                 <div className="flex justify-between text-[9px] text-white/15">
                                   <span>100m</span><span>5km</span>
@@ -1296,7 +1348,7 @@ export default function Settings() {
                                 'w-full gap-2 rounded-xl h-11 transition-all',
                                 geoPermission === 'denied'
                                   ? 'bg-white/[0.03] border border-white/[0.08] text-white/20 cursor-not-allowed'
-                                  : 'bg-[#D4AF37] hover:bg-[#B8962E] text-white hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)]'
+                                  : 'bg-brand hover:bg-brand-dark text-white hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)]'
                               )}
                             >
                               {settingZone
@@ -1317,10 +1369,10 @@ export default function Settings() {
                             {/* Network Status */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2.5">
-                                <div className={cn('w-2 h-2 rounded-full', network.isOnline ? 'bg-[#D4AF37]' : 'bg-amber-400 animate-pulse')} />
+                                <div className={cn('w-2 h-2 rounded-full', network.isOnline ? 'bg-brand' : 'bg-amber-400 animate-pulse')} />
                                 <span className="text-sm text-white/60">Estado da conexao</span>
                               </div>
-                              <span className={cn('text-xs font-medium', network.isOnline ? 'text-[#D4AF37]' : 'text-amber-400')}>
+                              <span className={cn('text-xs font-medium', network.isOnline ? 'text-brand' : 'text-amber-400')}>
                                 {network.isOnline ? 'Online' : network.offlineDuration ? `Offline ha ${formatOfflineDuration(network.offlineDuration)}` : 'Offline'}
                               </span>
                             </div>
@@ -1355,7 +1407,7 @@ export default function Settings() {
                                 size="sm"
                                 onClick={() => queue.syncQueue()}
                                 disabled={!network.isOnline || queue.isSyncing || queue.pendingCount === 0}
-                                className="flex-1 gap-1.5 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20 h-9 rounded-lg text-xs"
+                                className="flex-1 gap-1.5 bg-brand/10 text-brand border border-brand/20 hover:bg-brand/20 h-9 rounded-lg text-xs"
                               >
                                 <RefreshCw className={cn('h-3.5 w-3.5', queue.isSyncing && 'animate-spin')} />
                                 {queue.isSyncing ? 'Sincronizando...' : 'Sincronizar agora'}
@@ -1434,7 +1486,7 @@ export default function Settings() {
                             {/* Log list */}
                             {errorLogs.length === 0 ? (
                               <div className="text-center py-6">
-                                <CheckCircle2 className="h-8 w-8 text-[#D4AF37]/40 mx-auto mb-2" />
+                                <CheckCircle2 className="h-8 w-8 text-brand/40 mx-auto mb-2" />
                                 <p className="text-xs text-white/30">Sem erros registados</p>
                               </div>
                             ) : (
@@ -1540,22 +1592,22 @@ export default function Settings() {
                                     <div key={s.id} className={cn(
                                       'flex items-center gap-3 p-3 rounded-xl border transition-colors',
                                       s.isCurrent
-                                        ? 'bg-[#D4AF37]/[0.04] border-[#D4AF37]/15'
+                                        ? 'bg-brand/[0.04] border-brand/15'
                                         : 'bg-white/[0.02] border-white/[0.05]'
                                     )}>
                                       <div className={cn(
                                         'p-2 rounded-lg shrink-0',
                                         s.isCurrent
-                                          ? 'bg-[#D4AF37]/10 border border-[#D4AF37]/15'
+                                          ? 'bg-brand/10 border border-brand/15'
                                           : 'bg-white/[0.04] border border-white/[0.06]'
                                       )}>
-                                        <Icon className={cn('h-4 w-4', s.isCurrent ? 'text-[#D4AF37]' : 'text-white/30')} strokeWidth={1.5} />
+                                        <Icon className={cn('h-4 w-4', s.isCurrent ? 'text-brand' : 'text-white/30')} strokeWidth={1.5} />
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                           <p className="text-sm font-medium text-white/80 truncate">{s.browser}</p>
                                           {s.isCurrent && (
-                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">Actual</span>
+                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">Actual</span>
                                           )}
                                         </div>
                                         <p className="text-[11px] text-white/30 mt-0.5">{s.device} · {s.os}</p>
@@ -1596,7 +1648,7 @@ export default function Settings() {
                               </p>
                               <Button
                                 onClick={() => navigate('/dashboard/oculos')}
-                                className="w-full gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/20 rounded-xl text-sm"
+                                className="w-full gap-2 bg-brand/10 border border-brand/20 text-brand hover:bg-brand/20 rounded-xl text-sm"
                                 variant="outline"
                               >
                                 <Glasses className="h-4 w-4" /> Gerir Oculos Inteligentes
@@ -1612,7 +1664,7 @@ export default function Settings() {
                               </div>
                               <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3 text-center">
                                 <p className="text-[10px] text-white/30 mb-1">HID Activo</p>
-                                <span className={cn('text-xs font-medium', glassesState.isHIDActive ? 'text-[#D4AF37]' : 'text-white/30')}>
+                                <span className={cn('text-xs font-medium', glassesState.isHIDActive ? 'text-brand' : 'text-white/30')}>
                                   {glassesState.isHIDActive ? 'Sim' : 'Nao'}
                                 </span>
                               </div>
@@ -1631,7 +1683,7 @@ export default function Settings() {
                             {[{ l: 'Versao', r: '2.9.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (
                               <div key={item.l} className="flex items-center justify-between py-1">
                                 <span className="text-sm text-white/40">{item.l}</span>
-                                {item.link ? <button className="text-sm text-[#D4AF37]/70 flex items-center gap-1 hover:text-[#D4AF37] hover:underline"><span>Ver</span><ExternalLink className="h-3 w-3" /></button> : <span className="text-sm text-white/60 font-mono">{item.r}</span>}
+                                {item.link ? <button className="text-sm text-brand/70 flex items-center gap-1 hover:text-brand hover:underline"><span>Ver</span><ExternalLink className="h-3 w-3" /></button> : <span className="text-sm text-white/60 font-mono">{item.r}</span>}
                               </div>
                             ))}
                           </div>

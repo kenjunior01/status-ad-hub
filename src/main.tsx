@@ -47,6 +47,19 @@ window.addEventListener('unhandledrejection', (event) => {
   _earlyHandler(msg)
 })
 
+// ── Tema seleccionável (estilo Calorist) — aplica ANTES do mount para
+//    não haver flash da cor errada. gold = default (sem data-theme). ──
+try {
+  const saved = localStorage.getItem('statusads-theme')
+  if (saved && ['mint', 'lavanda', 'mono', 'coral'].includes(saved)) {
+    document.documentElement.setAttribute('data-theme', saved)
+    const metaColors: Record<string, string> = {
+      mint: '#0B3B2E', lavanda: '#221A3F', mono: '#09090B', coral: '#3F0A16',
+    }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', metaColors[saved] ?? '#D4AF37')
+  }
+} catch { /* storage indisponível — fica gold */ }
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

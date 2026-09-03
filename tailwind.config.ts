@@ -42,12 +42,21 @@ const config: Config = {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
-        // Custom safety colors
-        safe: {
-          DEFAULT: '#D4AF37',
-          light: '#D4AF3720',
-          dark: '#8C6D1F',
+        // Custom safety colors — brand segue o tema seleccionado (Settings → Aparência)
+        brand: {
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--brand-dark-rgb) / <alpha-value>)',
         },
+        safe: {
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          light: 'rgb(var(--brand-rgb) / 0.13)',
+          dark: 'rgb(var(--brand-dark-rgb) / <alpha-value>)',
+        },
+        // Cores dos anéis de progresso (estilo Calorist — fixas em todos os temas)
+        ringprotein: '#F87171',
+        ringcarbs: '#FBBF24',
+        ringwater: '#60A5FA',
+        ringok: '#34D399',
         danger: {
           DEFAULT: '#EF4444',
           light: '#EF444420',
@@ -88,8 +97,8 @@ const config: Config = {
           '50%': { transform: 'translateY(-10px)' },
         },
         'glow': {
-          '0%, 100%': { boxShadow: '0 0 5px rgba(212, 175, 55, 0.3)' },
-          '50%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 5px rgb(var(--brand-rgb) / 0.3)' },
+          '50%': { boxShadow: '0 0 20px rgb(var(--brand-rgb) / 0.6)' },
         },
         'slide-up': {
           '0%': { transform: 'translateY(20px)', opacity: '0' },
@@ -115,7 +124,7 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-glow': 'radial-gradient(ellipse at center, rgba(212,175,55,0.18) 0%, transparent 70%)',
+        'hero-glow': 'radial-gradient(ellipse at center, rgb(var(--brand-rgb) / 0.18) 0%, transparent 70%)',
         'danger-glow': 'radial-gradient(ellipse at center, rgba(239,68,68,0.15) 0%, transparent 70%)',
       },
     },

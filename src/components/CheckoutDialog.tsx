@@ -53,7 +53,7 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
           () => toast.error('Erro ao copiar'),
         )
       }}
-      className="h-7 w-7 shrink-0 rounded-lg flex items-center justify-center text-white/30 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+      className="h-7 w-7 shrink-0 rounded-lg flex items-center justify-center text-white/30 hover:text-brand hover:bg-brand/10 transition-colors"
       title={`Copiar ${label}`}
     >
       <Copy className="h-3.5 w-3.5" />
@@ -253,12 +253,12 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#14120D] border-white/10 text-white max-w-md p-0 overflow-hidden max-h-[92vh] overflow-y-auto">
+      <DialogContent className="bg-card border-white/10 text-white max-w-md p-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-5 bg-gradient-to-b from-[#D4AF37]/[0.07] to-transparent">
+        <div className="relative px-6 pt-6 pb-5 bg-gradient-to-b from-brand/[0.07] to-transparent">
           <DialogHeader>
             <DialogTitle className="font-display text-lg flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
+              <ShieldCheck className="h-5 w-5 text-brand" />
               Assinar {plan.name}
             </DialogTitle>
             <DialogDescription className="text-white/40 text-xs">
@@ -267,7 +267,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
           </DialogHeader>
           <div className="mt-3 flex items-center justify-between rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2.5">
             <span className="text-xs text-white/50">Total por mês</span>
-            <span className="font-display font-bold text-[#D4AF37] text-base">
+            <span className="font-display font-bold text-brand text-base">
               {method ? payLabel : formatMzn(plan.price_mzn)}
             </span>
           </div>
@@ -280,7 +280,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
           <div className="px-6 py-5 space-y-2.5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">Pagamento Manual</p>
-              <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/25 text-[9px]">100% SEM API</Badge>
+              <Badge className="bg-brand/10 text-brand border border-brand/25 text-[9px]">100% SEM API</Badge>
             </div>
             <p className="text-[11px] text-white/35 -mt-1.5 mb-1">
               Pagas para o número oficial e submetes o ID da transacção — activação após validação.
@@ -291,13 +291,13 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
                 <button
                   key={m.id}
                   onClick={() => { setMethod(m.id); setStage('manual') }}
-                  className="w-full flex items-center gap-3.5 p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-[#D4AF37]/[0.06] hover:border-[#D4AF37]/30 transition-all text-left group"
+                  className="w-full flex items-center gap-3.5 p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-brand/[0.06] hover:border-brand/30 transition-all text-left group"
                 >
                   <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${m.color}1A`, border: `1px solid ${m.color}33` }}>
                     <Icon className="h-5 w-5" style={{ color: m.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white group-hover:text-[#D4AF37] transition-colors">{m.label}</p>
+                    <p className="text-sm font-semibold text-white group-hover:text-brand transition-colors">{m.label}</p>
                     <p className="text-[11px] text-white/35">{m.desc}</p>
                   </div>
                   {m.id === 'paypal' && (
@@ -310,7 +310,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             })}
             <button
               onClick={() => { setAutoMode(true); reset() }}
-              className="w-full flex items-center justify-center gap-1.5 pt-2 text-[11px] text-white/30 hover:text-[#D4AF37] transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 pt-2 text-[11px] text-white/30 hover:text-brand transition-colors"
             >
               <ChevronDown className="h-3 w-3 rotate-[-90deg]" />
               Tens API do operador configurada? Usar pagamento automático
@@ -334,13 +334,13 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
                 <button
                   key={m.id}
                   onClick={() => { setMethod(m.id); m.id === 'paypal' ? submitAuto() : setStage('phone') }}
-                  className="w-full flex items-center gap-3.5 p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-[#D4AF37]/[0.06] hover:border-[#D4AF37]/30 transition-all text-left group"
+                  className="w-full flex items-center gap-3.5 p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-brand/[0.06] hover:border-brand/30 transition-all text-left group"
                 >
                   <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${m.color}1A`, border: `1px solid ${m.color}33` }}>
                     <Icon className="h-5 w-5" style={{ color: m.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white group-hover:text-[#D4AF37] transition-colors">{m.label}</p>
+                    <p className="text-sm font-semibold text-white group-hover:text-brand transition-colors">{m.label}</p>
                     <p className="text-[11px] text-white/35">{m.desc}</p>
                   </div>
                 </button>
@@ -348,7 +348,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             })}
             <button
               onClick={() => { setAutoMode(false); reset() }}
-              className="w-full flex items-center justify-center gap-1.5 pt-2 text-[11px] text-white/30 hover:text-[#D4AF37] transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 pt-2 text-[11px] text-white/30 hover:text-brand transition-colors"
             >
               <ArrowLeft className="h-3 w-3" /> Voltar ao pagamento manual (sem API)
             </button>
@@ -358,13 +358,13 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         {/* ── Passo 2 (manual): detalhes + submissão ── */}
         {stage === 'manual' && method && (
           <div className="px-6 py-5 space-y-4">
-            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-white/40 hover:text-[#D4AF37] transition-colors">
+            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-white/40 hover:text-brand transition-colors">
               <ArrowLeft className="h-3.5 w-3.5" /> Trocar método
             </button>
 
             {/* Código promocional */}
             <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-              <label className="text-[10px] font-semibold text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-[10px] font-semibold text-brand uppercase tracking-wider flex items-center gap-1.5">
                 <Ticket className="h-3 w-3" /> Código promocional (opcional)
               </label>
               {promo ? (
@@ -393,7 +393,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
                     onClick={() => void applyPromo()}
                     disabled={!promoInput.trim() || promoChecking}
                     size="sm"
-                    className="h-9 px-4 rounded-xl bg-white/[0.08] hover:bg-[#D4AF37]/20 text-white border border-white/10 text-xs"
+                    className="h-9 px-4 rounded-xl bg-white/[0.08] hover:bg-brand/20 text-white border border-white/10 text-xs"
                   >
                     {promoChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Aplicar'}
                   </Button>
@@ -405,8 +405,8 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             </div>
 
             {/* Dados de pagamento do dono */}
-            <div className="rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.04] p-3.5 space-y-2">
-              <p className="text-[10px] font-semibold text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+            <div className="rounded-xl border border-brand/20 bg-brand/[0.04] p-3.5 space-y-2">
+              <p className="text-[10px] font-semibold text-brand uppercase tracking-wider flex items-center gap-1.5">
                 <Info className="h-3 w-3" /> Dados para pagamento — {METHOD_LABELS[method]}
               </p>
               {manualDetailRows().map((r) => (
@@ -420,8 +420,8 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
               ))}
               <p className="text-[10px] text-white/40 leading-relaxed">
                 {promo
-                  ? <>Preço original <span className="line-through opacity-60">{amount.label}</span> · com desconto envia exactamente <span className="text-[#D4AF37] font-bold">{payLabel}</span></>
-                  : <>Envia exactamente <span className="text-[#D4AF37] font-bold">{payLabel}</span> para os dados acima.</>
+                  ? <>Preço original <span className="line-through opacity-60">{amount.label}</span> · com desconto envia exactamente <span className="text-brand font-bold">{payLabel}</span></>
+                  : <>Envia exactamente <span className="text-brand font-bold">{payLabel}</span> para os dados acima.</>
                 }
               </p>
             </div>
@@ -485,7 +485,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             <Button
               onClick={submitManual}
               disabled={submitting}
-              className="w-full h-11 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl gap-2"
+              className="w-full h-11 bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl gap-2"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               Submeter para validação
@@ -499,13 +499,13 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         {/* ── Passo 2 (automático): telefone ── */}
         {stage === 'phone' && method && (
           <div className="px-6 py-5 space-y-4">
-            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-white/40 hover:text-[#D4AF37] transition-colors">
+            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-white/40 hover:text-brand transition-colors">
               <ArrowLeft className="h-3.5 w-3.5" /> Trocar método
             </button>
             <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
               <div className="text-sm font-semibold text-white">{METHOD_LABELS[method]}</div>
               <div className="flex-1" />
-              <div className="text-sm font-bold text-[#D4AF37]">{amount.label}</div>
+              <div className="text-sm font-bold text-brand">{amount.label}</div>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-white/50">Número do telefone (o prompt chega aqui)</label>
@@ -532,7 +532,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             <Button
               onClick={submitAuto}
               disabled={submitting}
-              className="w-full h-11 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl gap-2"
+              className="w-full h-11 bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl gap-2"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
               Pagar {amount.label}
@@ -544,8 +544,8 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         {stage === 'processing' && (
           <div className="px-6 py-8 flex flex-col items-center text-center gap-4">
             <div className="relative">
-              <Loader2 className="h-12 w-12 text-[#D4AF37] animate-spin" strokeWidth={1.5} />
-              <div className="absolute inset-0 rounded-full bg-[#D4AF37]/10 blur-xl" />
+              <Loader2 className="h-12 w-12 text-brand animate-spin" strokeWidth={1.5} />
+              <div className="absolute inset-0 rounded-full bg-brand/10 blur-xl" />
             </div>
             <div className="space-y-1.5">
               <p className="font-display font-semibold text-white">A processar pagamento…</p>
@@ -556,7 +556,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
               </p>
             </div>
             {payment?.reference && (
-              <Badge variant="outline" className="font-mono text-[10px] text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/5">
+              <Badge variant="outline" className="font-mono text-[10px] text-brand border-brand/30 bg-brand/5">
                 {payment.reference}
               </Badge>
             )}
@@ -570,21 +570,21 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         {stage === 'manual_success' && (
           <div className="px-6 py-8 flex flex-col items-center text-center gap-3">
             <div className="relative">
-              <div className="h-14 w-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 flex items-center justify-center">
-                <Radio className="h-7 w-7 text-[#D4AF37] animate-pulse" strokeWidth={1.5} />
+              <div className="h-14 w-14 rounded-full bg-brand/10 border border-brand/25 flex items-center justify-center">
+                <Radio className="h-7 w-7 text-brand animate-pulse" strokeWidth={1.5} />
               </div>
-              <div className="absolute inset-0 rounded-full bg-[#D4AF37]/10 blur-2xl" />
+              <div className="absolute inset-0 rounded-full bg-brand/10 blur-2xl" />
             </div>
             <p className="font-display font-bold text-lg text-white">Pagamento submetido!</p>
             <p className="text-xs text-white/40 max-w-[300px] leading-relaxed">
               Recebemos o teu comprovativo de {payLabel} via <span className="text-white/70">{method ? METHOD_LABELS[method] : ''}</span>.
-              Assim que validarmos a recepção, o plano <span className="text-[#D4AF37]">{plan.name}</span> activa automaticamente — normalmente em minutos.
+              Assim que validarmos a recepção, o plano <span className="text-brand">{plan.name}</span> activa automaticamente — normalmente em minutos.
             </p>
             {payment && (
               <div className="w-full mt-2 rounded-xl bg-white/[0.03] border border-white/[0.06] divide-y divide-white/[0.05] text-left">
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">Referência interna</span>
-                  <span className="font-mono text-[#D4AF37]">{payment.reference}</span>
+                  <span className="font-mono text-brand">{payment.reference}</span>
                 </div>
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">ID transacção</span>
@@ -609,7 +609,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             )}
             <Button
               onClick={() => onOpenChange(false)}
-              className="w-full h-11 mt-2 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl"
+              className="w-full h-11 mt-2 bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl"
             >
               Perfeito, continuar
             </Button>
@@ -620,8 +620,8 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
         {stage === 'success' && (
           <div className="px-6 py-8 flex flex-col items-center text-center gap-3">
             <div className="relative">
-              <CheckCircle2 className="h-14 w-14 text-[#D4AF37]" strokeWidth={1.5} />
-              <div className="absolute inset-0 rounded-full bg-[#D4AF37]/15 blur-2xl" />
+              <CheckCircle2 className="h-14 w-14 text-brand" strokeWidth={1.5} />
+              <div className="absolute inset-0 rounded-full bg-brand/15 blur-2xl" />
             </div>
             <p className="font-display font-bold text-lg text-white">Pagamento confirmado!</p>
             <p className="text-xs text-white/40 max-w-[280px]">
@@ -631,7 +631,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
               <div className="w-full mt-2 rounded-xl bg-white/[0.03] border border-white/[0.06] divide-y divide-white/[0.05] text-left">
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">Referência</span>
-                  <span className="font-mono text-[#D4AF37]">{payment.reference}</span>
+                  <span className="font-mono text-brand">{payment.reference}</span>
                 </div>
                 <div className="flex justify-between px-3.5 py-2 text-xs">
                   <span className="text-white/35">Método</span>
@@ -645,7 +645,7 @@ export function CheckoutDialog({ open, onOpenChange, plan, onSuccess }: Props) {
             )}
             <Button
               onClick={() => onOpenChange(false)}
-              className="w-full h-11 mt-2 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl"
+              className="w-full h-11 mt-2 bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl"
             >
               Perfeito, continuar
             </Button>

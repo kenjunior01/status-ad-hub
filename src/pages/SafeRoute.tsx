@@ -60,9 +60,9 @@ export default function SafeRoute() {
       </div>
 
       {/* Origin info */}
-      <div className='bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15 rounded-xl p-3 flex items-center gap-3'>
-        <div className='w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center'>
-      <div className='w-3 h-3 rounded-full bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.5)]' />
+      <div className='bg-brand/[0.06] border border-brand/15 rounded-xl p-3 flex items-center gap-3'>
+        <div className='w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center'>
+      <div className='w-3 h-3 rounded-full bg-brand shadow-[0_0_8px_rgba(212,175,55,0.5)]' />
     </div>
     <div className='flex-1'>
       <div className='text-white text-sm font-medium'>Sua Localização</div>

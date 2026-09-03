@@ -91,7 +91,7 @@ function RelativeTime({ dateStr }: { dateStr: string }) {
 
 function TrackLoading() {
   return (
-    <div className="min-h-screen bg-[#0C0B08] flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
       <NoiseTexture opacity={0.02} />
       <MorphingBlob className="-left-32 top-1/3" color="rgba(239, 68, 68, 0.04)" size={350} />
       <MorphingBlob className="-right-32 bottom-1/3" color="rgba(239, 68, 68, 0.03)" size={300} />
@@ -118,7 +118,7 @@ function TrackLoading() {
 
 function NotFoundState() {
   return (
-    <div className="min-h-screen bg-[#0C0B08] flex flex-col items-center justify-center relative overflow-hidden px-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden px-4">
       <NoiseTexture opacity={0.02} />
       <div className="relative z-10 text-center max-w-md">
         <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/[0.03] border border-white/[0.06] mx-auto mb-6">
@@ -131,7 +131,7 @@ function NotFoundState() {
         </p>
         <a
           href="/"
-          className="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-white text-sm font-semibold transition-colors"
+          className="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-sm font-semibold transition-colors"
         >
           <Shield className="h-4 w-4" />
           Ir para StatusAds Connect
@@ -147,10 +147,10 @@ function NotFoundState() {
 
 function ResolvedBanner({ data }: { data: PublicEmergencyData }) {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-[#D4AF37]/10 to-amber-900/20 border-b border-[#D4AF37]/15">
+    <div className="relative overflow-hidden bg-gradient-to-r from-brand/10 to-amber-900/20 border-b border-brand/15">
       <div className="px-4 md:px-6 py-4 flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 shrink-0">
-          <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 border border-brand/20 shrink-0">
+          <ShieldCheck className="h-5 w-5 text-brand" />
         </div>
         <div className="flex-1">
           <h1 className="text-base font-display font-bold text-white">Emergencia Resolvida</h1>
@@ -256,17 +256,17 @@ export default function TrackEmergency() {
   const googleMapsUrl = `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <NoiseTexture opacity={0.01} />
 
       {/* Top bar with branding */}
-      <header className="sticky top-0 z-50 flex items-center justify-between h-14 px-4 md:px-6 backdrop-blur-2xl bg-[#0C0B08]/80 border-b border-white/[0.04]">
+      <header className="sticky top-0 z-50 flex items-center justify-between h-14 px-4 md:px-6 backdrop-blur-2xl bg-background/80 border-b border-white/[0.04]">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-            <Shield className="h-4 w-4 text-[#D4AF37]" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 border border-brand/20">
+            <Shield className="h-4 w-4 text-brand" />
           </div>
           <span className="font-display font-bold text-white text-base tracking-tight">
-            Status<span className="text-[#D4AF37]">Ads</span>
+            Status<span className="text-brand">Ads</span>
           </span>
           <span className="text-[10px] text-white/20 font-medium px-2 py-0.5 rounded-md bg-white/[0.04] ml-1">
             Tracking Publico
@@ -333,7 +333,7 @@ export default function TrackEmergency() {
         <div className="relative z-20 -mt-8 px-4 md:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Coordinates */}
-            <div className="bg-[#14120D]/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
+            <div className="bg-card/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <MapPin className="h-4 w-4 text-red-400/70" />
                 <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Localizacao GPS</span>
@@ -345,7 +345,7 @@ export default function TrackEmergency() {
                 href={googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-2 text-[10px] text-[#D4AF37] hover:text-[#B8962E] transition-colors"
+                className="inline-flex items-center gap-1.5 mt-2 text-[10px] text-brand hover:text-brand-dark transition-colors"
               >
                 <ExternalLink className="h-3 w-3" />
                 Abrir no Google Maps
@@ -353,7 +353,7 @@ export default function TrackEmergency() {
             </div>
 
             {/* Contacts notified */}
-            <div className="bg-[#14120D]/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
+            <div className="bg-card/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Phone className="h-4 w-4 text-blue-400/70" />
                 <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Contactos</span>
@@ -374,7 +374,7 @@ export default function TrackEmergency() {
             </div>
 
             {/* Time info */}
-            <div className="bg-[#14120D]/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
+            <div className="bg-card/90 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4 text-amber-400/70" />
                 <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Tempo</span>
@@ -446,7 +446,7 @@ export default function TrackEmergency() {
           <div className="flex items-center gap-1.5 text-[10px] text-white/15">
             <div className={cn(
               'w-1.5 h-1.5 rounded-full',
-              isActive ? 'bg-red-500 animate-pulse' : 'bg-[#D4AF37]'
+              isActive ? 'bg-red-500 animate-pulse' : 'bg-brand'
             )} />
             {isActive ? 'Emergencia activa' : 'Emergencia encerrada'}
             {isActive && ' — Dados actualizados automaticamente'}

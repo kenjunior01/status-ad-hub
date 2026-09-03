@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const { data: events = [] } = useAdminEvents()
 
   if (isLoading || !stats) {
-    return <div className="flex justify-center py-24"><Loader2 className="h-7 w-7 text-[#D4AF37] animate-spin" /></div>
+    return <div className="flex justify-center py-24"><Loader2 className="h-7 w-7 text-brand animate-spin" /></div>
   }
 
   // Receita dos últimos 14 dias (MZN)
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
               <h3 className="font-display font-semibold text-sm text-white">Receita confirmada — últimos 14 dias</h3>
               <p className="text-[10px] text-white/30 mt-0.5">Valores em MZN (PayPal convertido a ~260 MT/$)</p>
             </div>
-            <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
+            <TrendingUp className="h-4 w-4 text-brand" />
           </div>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
         <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
           <h3 className="font-display font-semibold text-sm text-white">Pagamentos recentes</h3>
-          <button onClick={() => navigate('/dashboard/admin/pagamentos')} className="text-[11px] text-[#D4AF37] hover:underline">Ver todos</button>
+          <button onClick={() => navigate('/dashboard/admin/pagamentos')} className="text-[11px] text-brand hover:underline">Ver todos</button>
         </div>
         <div className="divide-y divide-white/[0.04]">
           {recentPayments.length === 0 && <p className="px-5 py-8 text-center text-xs text-white/25">Sem pagamentos ainda.</p>}
@@ -174,15 +174,15 @@ function Kpi({ icon: Icon, label, value, sub, gold, alert, trend }: any) {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       className={cn(
         'rounded-2xl border p-4',
-        gold ? 'border-[#D4AF37]/25 bg-gradient-to-b from-[#D4AF37]/[0.08] to-white/[0.02]' : 'border-white/[0.06] bg-white/[0.02]',
+        gold ? 'border-brand/25 bg-gradient-to-b from-brand/[0.08] to-white/[0.02]' : 'border-white/[0.06] bg-white/[0.02]',
         alert && 'border-amber-500/25',
       )}>
       <div className="flex items-center justify-between mb-2.5">
-        <Icon className={cn('h-4 w-4', gold ? 'text-[#D4AF37]' : 'text-white/40')} />
+        <Icon className={cn('h-4 w-4', gold ? 'text-brand' : 'text-white/40')} />
         {trend === 'up' && <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />}
         {trend === 'down' && <TrendingDown className="h-3.5 w-3.5 text-red-400" />}
       </div>
-      <p className={cn('font-display font-bold text-xl leading-none', gold ? 'text-[#D4AF37]' : 'text-white')}>{value}</p>
+      <p className={cn('font-display font-bold text-xl leading-none', gold ? 'text-brand' : 'text-white')}>{value}</p>
       <p className="text-[11px] text-white/50 mt-1.5">{label}</p>
       {sub && <p className="text-[10px] text-white/25 mt-0.5">{sub}</p>}
     </motion.div>

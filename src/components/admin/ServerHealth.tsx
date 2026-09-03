@@ -81,10 +81,10 @@ export function ServerHealth() {
   if (!running && fails === 0) return null // tudo OK → não incomoda
 
   return (
-    <div className="rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-b from-[#D4AF37]/[0.06] to-transparent p-5">
+    <div className="rounded-2xl border border-brand/20 bg-gradient-to-b from-brand/[0.06] to-transparent p-5">
       <div className="flex items-center gap-2.5 mb-4">
-        <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-          <ServerCog className="h-4.5 w-4.5 text-[#D4AF37]" />
+        <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+          <ServerCog className="h-4.5 w-4.5 text-brand" />
         </div>
         <div>
           <p className="font-display font-bold text-sm">Saúde do Servidor</p>
@@ -120,7 +120,7 @@ export function ServerHealth() {
           <FileWarning className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-200/80 leading-relaxed">
             Abrir o <span className="font-semibold">Supabase Dashboard → SQL Editor</span>, colar o ficheiro{' '}
-            <span className="font-mono text-[#D4AF37]">supabase/APLICAR-TUDO.sql</span> (inclui a migration 013 com o
+            <span className="font-mono text-brand">supabase/APLICAR-TUDO.sql</span> (inclui a migration 013 com o
             código de administrador e o bucket de gravações) e executar uma única vez. A app sai do modo demo
             automaticamente.
           </p>

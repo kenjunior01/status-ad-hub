@@ -246,8 +246,8 @@ function LivePreview({ type, onClose, onSelect, isSelected, onSOS }: {
             className={cn(
               'flex-1 py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2',
               isSelected
-                ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
-                : 'bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90'
+                ? 'bg-brand/20 text-brand border border-brand/30'
+                : 'bg-brand text-white hover:bg-brand/90'
             )}
           >
             {isSelected ? <><Check className='w-4 h-4' /> Activo</> : <><Eye className='w-4 h-4' /> Usar Este</>}
@@ -315,14 +315,14 @@ export function DisguisePicker({ mode = 'inline', onSelect, autoPreview = false 
               className={cn(
                 'relative rounded-2xl border-2 p-2 text-left transition-all overflow-hidden group',
                 isSelected
-                  ? 'border-[#D4AF37]/60 bg-[#D4AF37]/[0.06]'
+                  ? 'border-brand/60 bg-brand/[0.06]'
                   : isPreview
                     ? 'border-purple-500/60 bg-purple-500/[0.06]'
                     : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]'
               )}
             >
               {isSelected && (
-                <div className='absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-lg shadow-[#D4AF37]/30'>
+                <div className='absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-brand flex items-center justify-center shadow-lg shadow-brand/30'>
                   <Check className='w-3 h-3 text-white' strokeWidth={3} />
                 </div>
               )}
@@ -428,7 +428,7 @@ export function QuickDisguiseSelector() {
                     className={cn(
                       'relative rounded-xl border overflow-hidden transition-all',
                       isSel
-                        ? 'border-[#D4AF37]/60 ring-1 ring-[#D4AF37]/20'
+                        ? 'border-brand/60 ring-1 ring-brand/20'
                         : 'border-white/[0.06] hover:border-white/[0.15]'
                     )}
                   >
@@ -436,7 +436,7 @@ export function QuickDisguiseSelector() {
                       <MiniPreview type={disguise.type} />
                     </div>
                     {isSel && (
-                      <div className='absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#D4AF37] flex items-center justify-center'>
+                      <div className='absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-brand flex items-center justify-center'>
                         <Check className='w-2 h-2 text-white' strokeWidth={3} />
                       </div>
                     )}

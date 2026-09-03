@@ -70,16 +70,16 @@ function Navbar() {
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
       scrolled
-        ? 'bg-[#0C0B08]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20'
+        ? 'bg-background/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20'
         : 'bg-transparent'
     )}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         <Link to="/" className="group flex items-center gap-2.5">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 transition-all group-hover:bg-[#D4AF37]/20 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.15)]">
-            <Shield className="h-4.5 w-4.5 text-[#D4AF37] transition-transform group-hover:scale-110" />
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 border border-brand/20 transition-all group-hover:bg-brand/20 group-hover:border-brand/40 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+            <Shield className="h-4.5 w-4.5 text-brand transition-transform group-hover:scale-110" />
           </div>
           <span className="font-display text-lg font-bold text-white tracking-tight">
-            Status<span className="text-[#D4AF37]">Ads</span>
+            Status<span className="text-brand">Ads</span>
           </span>
         </Link>
         <div className="hidden items-center gap-1 md:flex">
@@ -90,7 +90,7 @@ function Navbar() {
           ))}
           <div className="ml-4">
             <MagneticButton strength={0.15}>
-              <Button asChild className="bg-[#D4AF37] text-white hover:bg-[#B8962E] hover:shadow-[0_0_30px_-5px_rgba(212,175,55,0.4)] transition-all duration-300 rounded-xl">
+              <Button asChild className="bg-brand text-white hover:bg-brand-dark hover:shadow-[0_0_30px_-5px_rgba(212,175,55,0.4)] transition-all duration-300 rounded-xl">
                 <Link to="/ativar">Começar Agora <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
               </Button>
             </MagneticButton>
@@ -101,14 +101,14 @@ function Navbar() {
         </button>
       </div>
       {open && (
-        <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }} className="border-t border-white/[0.06] bg-[#0C0B08]/95 backdrop-blur-2xl md:hidden overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }} className="border-t border-white/[0.06] bg-background/95 backdrop-blur-2xl md:hidden overflow-hidden">
           <div className="flex flex-col gap-1 px-4 py-3">
             {links.map((l) => (
               <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-3 py-2.5 text-sm text-white/60 transition hover:text-white hover:bg-white/5 rounded-xl">
                 {l.label}
               </a>
             ))}
-            <Button asChild className="mt-2 w-full bg-[#D4AF37] text-white hover:bg-[#B8962E] rounded-xl">
+            <Button asChild className="mt-2 w-full bg-brand text-white hover:bg-brand-dark rounded-xl">
               <Link to="/ativar" onClick={() => setOpen(false)}>Começar Agora</Link>
             </Button>
           </div>
@@ -137,7 +137,7 @@ function Hero() {
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="relative h-[600px] w-[600px]">
           <div className="absolute inset-0 rounded-full border border-white/[0.03] animate-slow-rotate" />
-          <div className="absolute inset-8 rounded-full border border-[#D4AF37]/[0.06] animate-slow-rotate" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
+          <div className="absolute inset-8 rounded-full border border-brand/[0.06] animate-slow-rotate" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
           <div className="absolute inset-16 rounded-full border border-white/[0.02] animate-slow-rotate" style={{ animationDuration: '35s' }} />
         </div>
       </div>
@@ -147,13 +147,13 @@ function Hero() {
 
       <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-5xl text-center">
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 px-4 py-1.5 text-xs font-medium text-[#D4AF37] backdrop-blur-sm">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/5 px-4 py-1.5 text-xs font-medium text-brand backdrop-blur-sm">
             <Sparkles className="h-3.5 w-3.5" />
             Protecção Pessoal Inteligente via BLE
           </div>
           <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
             A Sua Segurança.{' '}
-            <span className="bg-gradient-to-r from-[#D4AF37] via-amber-300 to-[#D4AF37] bg-clip-text text-transparent bg-[length:200%_auto] animate-[text-shimmer_4s_linear_infinite]">
+            <span className="bg-gradient-to-r from-brand via-amber-300 to-brand bg-clip-text text-transparent bg-[length:200%_auto] animate-[text-shimmer_4s_linear_infinite]">
               Um Botão de Distância.
             </span>
           </h1>
@@ -178,7 +178,7 @@ function Hero() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55, duration: 0.8 }} className="mt-6">
           <button
             onClick={() => window.location.href = '/instalar'}
-            className="inline-flex items-center gap-1.5 text-sm text-[#D4AF37]/80 hover:text-[#D4AF37] transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-brand/80 hover:text-brand transition-colors"
           >
             <Download className="h-4 w-4" />
             PWA, App Nativa ou Camuflada? Escolha como instalar
@@ -192,8 +192,8 @@ function Hero() {
             { value: 0, suffix: '100%', label: 'Offline-First', isText: true },
           ].map((s, i) => (
             <motion.div key={s.label} custom={i} variants={scaleIn} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }} className="group">
-              <div className="mx-auto w-full max-w-[200px] rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all duration-500 group-hover:border-[#D4AF37]/20 group-hover:bg-[#D4AF37]/[0.03] group-hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.1)]">
-                <p className="text-3xl font-display font-extrabold text-[#D4AF37]">
+              <div className="mx-auto w-full max-w-[200px] rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all duration-500 group-hover:border-brand/20 group-hover:bg-brand/[0.03] group-hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.1)]">
+                <p className="text-3xl font-display font-extrabold text-brand">
                   {s.isText ? s.suffix : <CounterAnimated target={s.value} suffix={s.suffix} decimals={(s as any).decimals || 0} />}
                 </p>
                 <p className="mt-1.5 text-xs text-white/40 font-medium">{s.label}</p>
@@ -241,7 +241,7 @@ function HowItWorks() {
     <Section id="como-funciona" className="py-28">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Processo Simples</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Processo Simples</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Como <span className="text-gradient-safe">Funciona</span>
           </h2>
@@ -250,14 +250,14 @@ function HowItWorks() {
           </p>
         </motion.div>
         <div className="relative mt-20 grid grid-cols-1 gap-12 md:grid-cols-3">
-          <div className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-16 hidden h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent md:block" />
+          <div className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-16 hidden h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent md:block" />
           {steps.map((step, i) => (
             <motion.div key={step.num} custom={i} variants={fadeUp} className="relative flex flex-col items-center text-center">
               <div className="relative">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.06] backdrop-blur-sm transition-all duration-500 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.15)]">
-                  <step.Icon className="h-8 w-8 text-[#D4AF37]" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-brand/20 bg-brand/[0.06] backdrop-blur-sm transition-all duration-500 hover:border-brand/40 hover:bg-brand/10 hover:shadow-[0_0_40px_-10px_rgba(212,175,55,0.15)]">
+                  <step.Icon className="h-8 w-8 text-brand" />
                 </div>
-                <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-[#0C0B08] border border-[#D4AF37]/30 text-[10px] font-bold text-[#D4AF37] font-mono">
+                <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-background border border-brand/30 text-[10px] font-bold text-brand font-mono">
                   {step.num}
                 </span>
               </div>
@@ -288,7 +288,7 @@ function FeaturesGrid() {
       <ParticleField count={20} className="opacity-30" />
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Tecnologia Avançada</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Tecnologia Avançada</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Funcionalidades
           </h2>
@@ -300,7 +300,7 @@ function FeaturesGrid() {
           {features.map((f, i) => (
             <motion.div key={f.title} custom={i} variants={fadeUp}>
               <SpotlightCard className="p-7 h-full">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4AF37]/[0.08] text-[#D4AF37] border border-[#D4AF37]/10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/[0.08] text-brand border border-brand/10">
                   <f.Icon className="h-5 w-5" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-display mt-5 text-base font-semibold text-white">{f.title}</h3>
@@ -328,7 +328,7 @@ function SocialProof() {
     <Section className="py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center mb-16">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Depoimentos</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Depoimentos</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">Quem Confia em Nós</h2>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -336,7 +336,7 @@ function SocialProof() {
             <motion.div key={t.name} custom={i} variants={fadeUp}>
               <SpotlightCard className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-amber-500/20 border border-[#D4AF37]/20 flex items-center justify-center text-sm font-bold text-[#D4AF37]">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand/20 to-amber-500/20 border border-brand/20 flex items-center justify-center text-sm font-bold text-brand">
                     {t.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
@@ -418,7 +418,7 @@ function TrustStats() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           {stats.map((s, i) => (
             <motion.div key={s.label} custom={i} variants={fadeUp} className="text-center">
-              <p className="font-display text-4xl font-extrabold text-[#D4AF37] sm:text-5xl">
+              <p className="font-display text-4xl font-extrabold text-brand sm:text-5xl">
                 {s.prefix}<CounterAnimated target={s.value} suffix={s.suffix} decimals={s.decimals} />
               </p>
               <p className="mt-2 text-sm text-white/40 font-medium">{s.label}</p>
@@ -443,7 +443,7 @@ function Pricing() {
     <Section id="precos" className="py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Planos</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Planos</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Escolha o Plano Ideal
           </h2>
@@ -454,10 +454,10 @@ function Pricing() {
             const card = (
               <GlowCard className={cn(
                 'p-8 flex flex-col h-full',
-                plan.popular && 'border-[#D4AF37]/30'
+                plan.popular && 'border-brand/30'
               )}>
                 {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-300 px-4 py-1 text-[11px] font-semibold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand to-amber-300 px-4 py-1 text-[11px] font-semibold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                     Mais Popular
                   </span>
                 )}
@@ -470,8 +470,8 @@ function Pricing() {
                 <ul className="mt-8 flex flex-1 flex-col gap-3.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
-                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10">
-                        <Check className="h-2.5 w-2.5 text-[#D4AF37]" />
+                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand/10">
+                        <Check className="h-2.5 w-2.5 text-brand" />
                       </div>
                       {f}
                     </li>
@@ -512,7 +512,7 @@ function SafetyTipsPreview() {
     <Section className="py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center mb-12">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Conteúdo gratuito</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Conteúdo gratuito</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl">
             Dicas de Segurança que Salvam Vidas
           </h2>
@@ -527,10 +527,10 @@ function SafetyTipsPreview() {
               key={tip.id}
               variants={fadeUp}
               custom={i}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-[#D4AF37]/25"
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-brand/25"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-sm font-bold text-[#D4AF37]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 border border-brand/20 text-sm font-bold text-brand">
                   {i + 1}
                 </div>
                 <h3 className="text-sm font-semibold text-white">{tip.title}</h3>
@@ -542,7 +542,7 @@ function SafetyTipsPreview() {
         <motion.div variants={fadeUp} custom={4} className="text-center mt-10">
           <a
             href="/login"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 px-6 py-3 text-sm font-semibold text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand/10 border border-brand/25 px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand/20"
           >
             <Lightbulb className="h-4 w-4" />
             Criar conta e ver todas as {SAFETY_TIPS.length}+ dicas
@@ -580,7 +580,7 @@ function FAQ() {
     <Section className="py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} custom={0} className="text-center mb-14">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]/70">Dúvidas Frequentes</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/70">Dúvidas Frequentes</span>
           <h2 className="font-display mt-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Perguntas Frequentes
           </h2>
@@ -605,7 +605,7 @@ function FAQ() {
                     transition={{ duration: 0.3 }}
                     className="shrink-0"
                   >
-                    <ChevronDown className="h-4 w-4 text-[#D4AF37]/60" />
+                    <ChevronDown className="h-4 w-4 text-brand/60" />
                   </motion.div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -638,8 +638,8 @@ function FinalCta() {
   return (
     <Section className="py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <motion.div variants={scaleIn} custom={0} className="relative overflow-hidden rounded-3xl border border-[#D4AF37]/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37] to-amber-500" />
+        <motion.div variants={scaleIn} custom={0} className="relative overflow-hidden rounded-3xl border border-brand/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand to-amber-500" />
           <div className="pointer-events-none absolute -left-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
           <FloatingOrbs className="opacity-30" />
@@ -659,7 +659,7 @@ function FinalCta() {
                 className="h-12 w-full max-w-xs border-white/20 bg-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-xl backdrop-blur-sm"
               />
               <MagneticButton strength={0.15}>
-                <RippleButton variant="outline" className="h-12 bg-white text-[#0C0B08] font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/ativar'}>
+                <RippleButton variant="outline" className="h-12 bg-white text-background font-semibold hover:bg-white/90 border-0 rounded-xl px-6" onClick={() => window.location.href = '/ativar'}>
                   Activar Dispositivo <ArrowRight className="ml-2 h-4 w-4" />
                 </RippleButton>
               </MagneticButton>
@@ -682,15 +682,15 @@ function Footer() {
     { title: 'Suporte', links: ['Central de Ajuda', 'Contacto', 'Status', 'Comunidade', 'FAQ'] },
   ]
   return (
-    <footer className="border-t border-white/[0.04] bg-[#0C0B08]">
+    <footer className="border-t border-white/[0.04] bg-background">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-                <Shield className="h-4 w-4 text-[#D4AF37]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 border border-brand/20">
+                <Shield className="h-4 w-4 text-brand" />
               </div>
-              <span className="font-display text-base font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
+              <span className="font-display text-base font-bold text-white">Status<span className="text-brand">Ads</span></span>
             </Link>
             <p className="mt-3 text-xs leading-relaxed text-white/25">
               Segurança pessoal através de tecnologia BLE. Protegendo pessoas em Moçambique e no mundo.
@@ -720,7 +720,7 @@ function Footer() {
 /* ════════════════════════════════════════════════ */
 export default function Landing() {
   return (
-    <div className="dark min-h-screen bg-[#0C0B08] text-white overflow-x-hidden">
+    <div className="dark min-h-screen bg-background text-white overflow-x-hidden">
       <ScrollProgress />
       <Navbar />
       <Hero />

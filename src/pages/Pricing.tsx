@@ -45,16 +45,16 @@ export default function Pricing() {
   }
 
   return (
-    <div className="dark min-h-screen bg-[#0C0B08] text-white relative overflow-x-hidden">
+    <div className="dark min-h-screen bg-background text-white relative overflow-x-hidden">
       <NoiseTexture opacity={0.02} />
       <MorphingBlob className="-left-40 top-0" color="rgba(212, 175, 55, 0.05)" size={420} />
       <MorphingBlob className="-right-40 bottom-1/4" color="rgba(212, 175, 55, 0.04)" size={380} />
 
       {/* Nav mínima */}
-      <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 sm:px-8 backdrop-blur-2xl bg-[#0C0B08]/80 border-b border-white/[0.04]">
+      <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 sm:px-8 backdrop-blur-2xl bg-background/80 border-b border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-[#D4AF37]" />
-          <span className="text-sm font-bold">Status<span className="text-[#D4AF37]">Ads</span></span>
+          <Shield className="h-4 w-4 text-brand" />
+          <span className="text-sm font-bold">Status<span className="text-brand">Ads</span></span>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate(user ? '/dashboard' : '/')} className="text-white/50 hover:text-white gap-1.5">
           <ArrowLeft className="h-4 w-4" /> {user ? 'Painel' : 'Voltar'}
@@ -65,13 +65,13 @@ export default function Pricing() {
         {/* Hero */}
         <div className="text-center pt-14 pb-10">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="bg-[#D4AF37]/10 border-[#D4AF37]/25 text-[#D4AF37] gap-1.5 mb-5">
+            <Badge className="bg-brand/10 border-brand/25 text-brand gap-1.5 mb-5">
               <Sparkles className="h-3 w-3" /> Planos e Preços
             </Badge>
             <h1 className="font-display text-3xl sm:text-5xl font-bold leading-tight">
               Protecção que cabe
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5D576] via-[#D4AF37] to-[#B8962E]">no seu bolso</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5D576] via-brand to-brand-dark">no seu bolso</span>
             </h1>
             <p className="mt-4 text-sm sm:text-base text-white/40 max-w-xl mx-auto">
               Pague com M-Pesa, e-Mola, mKesh ou PayPal. Sem contratos — cancele quando quiser, fica com o plano Grátis.
@@ -113,12 +113,12 @@ export default function Pricing() {
         <div className="pb-16 -mt-6">
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Watch className="h-4 w-4 text-[#D4AF37]" />
+              <Watch className="h-4 w-4 text-brand" />
               <h3 className="font-display font-semibold text-sm">Funciona com o seu dispositivo — qualquer que seja</h3>
             </div>
             <p className="text-xs text-white/35 max-w-2xl">
               A app aceita qualquer dispositivo Bluetooth Low Energy: Mi Band, Galaxy Watch, AirPods, iTag, Tile, botões SOS genéricos…
-              Quem usa um <span className="text-[#D4AF37] font-semibold">dispositivo BELLVION</span> desbloqueia o plano Bellvion (99 MT/mês) e funcionalidades exclusivas da marca.
+              Quem usa um <span className="text-brand font-semibold">dispositivo BELLVION</span> desbloqueia o plano Bellvion (99 MT/mês) e funcionalidades exclusivas da marca.
             </p>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function Pricing() {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="flex-1 text-center sm:text-left">
                 <h3 className="font-display font-semibold text-lg flex items-center gap-2 justify-center sm:justify-start">
-                  <CreditCard className="h-4.5 w-4.5 text-[#D4AF37]" /> Métodos de pagamento aceites
+                  <CreditCard className="h-4.5 w-4.5 text-brand" /> Métodos de pagamento aceites
                 </h3>
                 <p className="text-xs text-white/35 mt-1.5 max-w-md mx-auto sm:mx-0">
                   Os pagamentos por carteira móvel chegam como um prompt no seu telefone — confirme com o PIN e a assinatura activa na hora.
@@ -161,7 +161,7 @@ export default function Pricing() {
               const Icon = g.icon
               return (
                 <div key={g.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                  <Icon className="h-5 w-5 text-[#D4AF37] mb-2.5" />
+                  <Icon className="h-5 w-5 text-brand mb-2.5" />
                   <p className="text-sm font-semibold text-white">{g.title}</p>
                   <p className="text-[11px] text-white/35 mt-1 leading-relaxed">{g.desc}</p>
                 </div>
@@ -209,17 +209,17 @@ function PlanCard({ plan, current, onChoose, hasBellvion }: { plan: Plan; curren
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-display font-bold text-lg text-white">{plan.name}</h3>
         {plan.popular && (
-          <Badge className="bg-[#D4AF37] text-black text-[10px] font-bold gap-1 border-0">
+          <Badge className="bg-brand text-black text-[10px] font-bold gap-1 border-0">
             <Star className="h-3 w-3 fill-black" /> Mais Popular
           </Badge>
         )}
         {isBellvion && (
-          <Badge className="bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-bold gap-1 border border-[#D4AF37]/30">
+          <Badge className="bg-brand/15 text-brand text-[10px] font-bold gap-1 border border-brand/30">
             <Watch className="h-3 w-3" /> EXCLUSIVO
           </Badge>
         )}
         {current && (
-          <Badge variant="outline" className="text-[10px] text-[#D4AF37] border-[#D4AF37]/40 bg-[#D4AF37]/5">Plano actual</Badge>
+          <Badge variant="outline" className="text-[10px] text-brand border-brand/40 bg-brand/5">Plano actual</Badge>
         )}
       </div>
       <p className="text-xs text-white/35 mb-5">{plan.description}</p>
@@ -230,7 +230,7 @@ function PlanCard({ plan, current, onChoose, hasBellvion }: { plan: Plan; curren
         ) : (
           <>
             <span className="font-display text-4xl font-bold text-white">{plan.price_mzn}</span>
-            <span className="text-sm text-[#D4AF37] font-semibold">MT/mês</span>
+            <span className="text-sm text-brand font-semibold">MT/mês</span>
           </>
         )}
         {isBellvion && plan.price_mzn > 0 && (
@@ -259,7 +259,7 @@ function PlanCard({ plan, current, onChoose, hasBellvion }: { plan: Plan; curren
       <ul className="space-y-2.5 mb-6 flex-1">
         {plan.features.map((f) => (
           <li key={f} className="flex items-start gap-2.5 text-[13px] text-white/60">
-            <Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" strokeWidth={2.5} />
+            <Check className="h-4 w-4 text-brand shrink-0 mt-0.5" strokeWidth={2.5} />
             {f}
           </li>
         ))}
@@ -271,10 +271,10 @@ function PlanCard({ plan, current, onChoose, hasBellvion }: { plan: Plan; curren
         className={cn(
           'w-full h-11 rounded-xl font-semibold gap-2',
           plan.popular || isBellvion
-            ? 'bg-[#D4AF37] hover:bg-[#B8962E] text-black'
+            ? 'bg-brand hover:bg-brand-dark text-black'
             : plan.slug === 'free'
               ? 'bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08]'
-              : 'bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/25',
+              : 'bg-brand/15 hover:bg-brand/25 text-brand border border-brand/25',
         )}
       >
         {current
@@ -314,10 +314,10 @@ function BellvionVerifyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dark bg-[#14120D] border border-[#D4AF37]/20 text-white max-w-md rounded-2xl">
+      <DialogContent className="dark bg-card border border-brand/20 text-white max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
-            <Watch className="h-5 w-5 text-[#D4AF37]" /> Verificar dispositivo BELLVION
+            <Watch className="h-5 w-5 text-brand" /> Verificar dispositivo BELLVION
           </DialogTitle>
           <DialogDescription className="text-white/45 text-sm">
             Introduza o código de activação impresso na caixa do seu dispositivo BELLVION para desbloquear o plano com desconto.
@@ -332,14 +332,14 @@ function BellvionVerifyDialog({
               placeholder="Ex: BV-XXXX-XXXX"
               maxLength={24}
               autoFocus
-              className="w-full h-12 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white text-center font-mono text-lg tracking-[0.2em] placeholder:text-white/20 placeholder:tracking-normal outline-none focus:border-[#D4AF37]/50"
+              className="w-full h-12 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white text-center font-mono text-lg tracking-[0.2em] placeholder:text-white/20 placeholder:tracking-normal outline-none focus:border-brand/50"
             />
             {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
           </div>
           <Button
             onClick={submit}
             disabled={verifying || code.length < 6}
-            className="w-full h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold gap-2"
+            className="w-full h-11 rounded-xl bg-brand hover:bg-brand-dark text-black font-semibold gap-2"
           >
             {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
             {verifying ? 'A verificar…' : 'Verificar código'}

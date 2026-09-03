@@ -146,16 +146,16 @@ function AppRoutes() {
 
 function LoadingScreen() {
   return (
-    <div className="dark min-h-screen bg-[#0C0B08] flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="dark min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
       <NoiseTexture opacity={0.02} />
       <MorphingBlob className="-left-32 top-1/3" color="rgba(212, 175, 55, 0.04)" size={350} />
       <MorphingBlob className="-right-32 bottom-1/3" color="rgba(212, 175, 55, 0.03)" size={300} />
       <div className="relative z-10 flex flex-col items-center gap-5">
         <div className="relative">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 animate-breathe">
-            <Shield className="h-7 w-7 text-[#D4AF37]" strokeWidth={1.5} />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 border border-brand/20 animate-breathe">
+            <Shield className="h-7 w-7 text-brand" strokeWidth={1.5} />
           </div>
-          <div className="absolute inset-0 rounded-2xl bg-[#D4AF37]/5 blur-xl" />
+          <div className="absolute inset-0 rounded-2xl bg-brand/5 blur-xl" />
         </div>
         <div className="flex flex-col items-center gap-2.5 w-48">
           <Shimmer className="h-3 w-32 rounded-lg" />
@@ -206,7 +206,7 @@ function InnerApp() {
       <Toaster
         position="top-right"
         toastOptions={{
-          className: 'dark:bg-[#221E16] dark:text-white dark:border-white/10'
+          className: 'dark:bg-card dark:text-white dark:border-white/10'
         }}
       />
     </BrowserRouter>

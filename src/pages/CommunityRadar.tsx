@@ -242,7 +242,7 @@ export default function CommunityRadar() {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="bg-[#221E16] rounded-2xl p-5 w-full max-w-sm"
+              className="bg-card rounded-2xl p-5 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -314,7 +314,7 @@ export default function CommunityRadar() {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="bg-[#221E16] rounded-2xl p-5 w-full max-w-sm"
+              className="bg-card rounded-2xl p-5 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">

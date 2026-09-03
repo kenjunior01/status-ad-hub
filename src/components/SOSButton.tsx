@@ -178,8 +178,8 @@ export function SOSButton() {
 
   // GPS dot
   const gpsDot = isTracking ? (
-    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#0C0B08] flex items-center justify-center">
-      <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-background flex items-center justify-center">
+      <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
     </div>
   ) : null
 
@@ -231,7 +231,7 @@ export function SOSButton() {
               initial={{ opacity: 0, y: 5, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 5, scale: 0.9 }}
-              className="absolute -top-10 right-0 whitespace-nowrap px-2.5 py-1 rounded-lg bg-[#14120D] border border-white/[0.08] text-[10px] text-white/50"
+              className="absolute -top-10 right-0 whitespace-nowrap px-2.5 py-1 rounded-lg bg-card border border-white/[0.08] text-[10px] text-white/50"
             >
               Prima e segure para activar
             </motion.div>

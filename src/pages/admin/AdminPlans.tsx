@@ -19,7 +19,7 @@ export default function AdminPlans() {
   }, [plans])
 
   if (isLoading) {
-    return <div className="py-20 text-center"><Loader2 className="h-6 w-6 text-[#D4AF37] animate-spin mx-auto" /></div>
+    return <div className="py-20 text-center"><Loader2 className="h-6 w-6 text-brand animate-spin mx-auto" /></div>
   }
 
   function patch(id: string, changes: Partial<EditablePlan>) {
@@ -37,7 +37,7 @@ export default function AdminPlans() {
     <div className="space-y-4">
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3.5">
         <p className="text-[11px] text-white/40">
-          Edita preços e limites — as mudanças reflectem-se de imediato na página <span className="text-[#D4AF37]">/planos</span> e no checkout.
+          Edita preços e limites — as mudanças reflectem-se de imediato na página <span className="text-brand">/planos</span> e no checkout.
           Em modo demo as alterações não persistem.
         </p>
       </div>
@@ -108,7 +108,7 @@ export default function AdminPlans() {
                 onClick={() => save(plan)}
                 disabled={!dirty || updatePlan.isPending}
                 className={cn('w-full h-9 rounded-xl text-xs font-semibold gap-1.5',
-                  dirty ? 'bg-[#D4AF37] hover:bg-[#B8962E] text-black' : 'bg-white/[0.04] text-white/30')}
+                  dirty ? 'bg-brand hover:bg-brand-dark text-black' : 'bg-white/[0.04] text-white/30')}
               >
                 {updatePlan.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {dirty ? 'Guardar alterações' : 'Sem alterações'}
@@ -146,7 +146,7 @@ function AddFeature({ onAdd }: { onAdd: (f: string) => void }) {
         className="h-8 text-[11px] bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 rounded-lg"
       />
       <Button size="sm" variant="ghost" onClick={() => { if (v.trim()) { onAdd(v.trim()); setV('') } }}
-        className="h-8 w-8 p-0 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-lg shrink-0">
+        className="h-8 w-8 p-0 text-brand hover:bg-brand/10 rounded-lg shrink-0">
         <Plus className="h-3.5 w-3.5" />
       </Button>
     </div>

@@ -9,12 +9,20 @@
 --   3. No fim, troca o email no bloco final para o TEU email de admin
 --      e corre só esse bloco (ver PUBLICAR.md passo 3)
 --
--- Este ficheiro consolida as migrations 003 a 011:
+-- Este ficheiro consolida as migrations 003 a 014:
 --   003 auto notify on emergency | 004 settings | 005 check-in
 --   006 smart glasses | 007 anti-coercion | 008 device activation
 --   009 pagamentos + assinaturas + admin | 010 ficha médica
 --   011 pagamento manual offline (zero API)
 --   012 plano Bellvion (99 MT/mês, exclusivo dispositivos da marca)
+--   013 código de admin + gravações na nuvem (bucket evidence-audio)
+--   014 códigos de activação + promoções + blindagem de segurança
+--        (rate limiting, auditoria, admin_generate_codes, promo_codes)
+--
+-- DEPOIS DE CORRER:
+--   · Painel Admin → Saúde do Servidor deve ficar 100% verde
+--   · Troca o código de admin em: Painel Admin → Segurança
+--     (ou: update app_security_config set value='O-TEU-CODIGO' where key='admin_activation_code';)
 --
 -- Se já aplicaste alguma destas migrations antes, procura o bloco
 -- correspondente abaixo e remove-o antes de correr (ou ignora os erros

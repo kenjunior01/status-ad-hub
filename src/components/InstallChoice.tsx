@@ -76,7 +76,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
       className={cn(
         'relative p-6 flex flex-col gap-4 cursor-pointer transition-all duration-300 rounded-2xl border',
         accent
-          ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.04] hover:bg-[#D4AF37]/[0.08]'
+          ? 'border-brand/40 bg-brand/[0.04] hover:bg-brand/[0.08]'
           : 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05]'
       )}
     >
@@ -84,13 +84,13 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
         <div className="flex items-start justify-between">
           <div className={cn(
             'p-3 rounded-2xl border',
-            accent ? 'bg-[#D4AF37]/10 border-[#D4AF37]/25' : 'bg-white/[0.04] border-white/[0.08]'
+            accent ? 'bg-brand/10 border-brand/25' : 'bg-white/[0.04] border-white/[0.08]'
           )}>
-            <Icon className={cn('h-6 w-6', accent ? 'text-[#D4AF37]' : 'text-white/70')} strokeWidth={1.5} />
+            <Icon className={cn('h-6 w-6', accent ? 'text-brand' : 'text-white/70')} strokeWidth={1.5} />
           </div>
           <span className={cn(
             'text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full border',
-            accent ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-white/40 border-white/10 bg-white/[0.03]'
+            accent ? 'text-brand border-brand/30 bg-brand/10' : 'text-white/40 border-white/10 bg-white/[0.03]'
           )}>
             {badge}
           </span>
@@ -100,7 +100,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
         <ul className="mt-4 space-y-2">
           {features.map(f => (
             <li key={f} className="flex items-start gap-2 text-[13px] text-white/60">
-              <Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" strokeWidth={2} />
+              <Check className="h-4 w-4 text-brand shrink-0 mt-0.5" strokeWidth={2} />
               {f}
             </li>
           ))}
@@ -111,7 +111,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
         className={cn(
           'w-full mt-auto rounded-xl gap-2 font-semibold',
           accent
-            ? 'bg-[#D4AF37] hover:bg-[#B8962E] text-black'
+            ? 'bg-brand hover:bg-brand-dark text-black'
             : 'bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10'
         )}
       >
@@ -122,8 +122,8 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
 
   return (
     <div className={cn(
-      'min-h-screen bg-[#0C0B08] text-white overflow-y-auto',
-      embedded && 'fixed inset-0 z-[80] bg-[#0C0B08]/95 backdrop-blur-xl'
+      'min-h-screen bg-background text-white overflow-y-auto',
+      embedded && 'fixed inset-0 z-[80] bg-background/95 backdrop-blur-xl'
     )}>
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         {/* Header */}
@@ -152,8 +152,8 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
               transition={{ duration: 0.35 }}
             >
               <div className="text-center mb-10">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#D4AF37]/10 border border-[#D4AF37]/25">
-                  <Download className="h-8 w-8 text-[#D4AF37]" strokeWidth={1.5} />
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand/10 border border-brand/25">
+                  <Download className="h-8 w-8 text-brand" strokeWidth={1.5} />
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
                   Como queres instalar?
@@ -224,14 +224,14 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
               className="max-w-lg mx-auto"
             >
               <div className="text-center mb-8">
-                <Smartphone className="h-12 w-12 text-[#D4AF37] mx-auto mb-4" strokeWidth={1.5} />
+                <Smartphone className="h-12 w-12 text-brand mx-auto mb-4" strokeWidth={1.5} />
                 <h2 className="text-2xl font-bold">Instalar como PWA</h2>
               </div>
 
               {installed ? (
-                <SpotlightCard className="p-8 text-center border-[#D4AF37]/30 bg-[#D4AF37]/[0.04] rounded-2xl">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30">
-                    <Check className="h-7 w-7 text-[#D4AF37]" strokeWidth={2} />
+                <SpotlightCard className="p-8 text-center border-brand/30 bg-brand/[0.04] rounded-2xl">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand/15 border border-brand/30">
+                    <Check className="h-7 w-7 text-brand" strokeWidth={2} />
                   </div>
                   <h3 className="text-lg font-bold">Instalação iniciada!</h3>
                   <p className="mt-2 text-sm text-white/40">
@@ -244,13 +244,13 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
                     <Apple className="h-5 w-5" /> iPhone / iPad — instalação manual
                   </h3>
                   <ol className="mt-4 space-y-3 text-sm text-white/60">
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">1</span> Toca no botão <strong>Partilhar</strong> (quadrado com seta) no Safari</li>
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">2</span> Escolhe <strong>“Adicionar ao Ecrã Principal”</strong></li>
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">3</span> Toca em <strong>Adicionar</strong> — pronto, a app aparece como ícone</li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">1</span> Toca no botão <strong>Partilhar</strong> (quadrado com seta) no Safari</li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">2</span> Escolhe <strong>“Adicionar ao Ecrã Principal”</strong></li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">3</span> Toca em <strong>Adicionar</strong> — pronto, a app aparece como ícone</li>
                   </ol>
                 </SpotlightCard>
               ) : isInstallable ? (
-                <SpotlightCard className="p-8 text-center border-[#D4AF37]/30 bg-[#D4AF37]/[0.04] rounded-2xl">
+                <SpotlightCard className="p-8 text-center border-brand/30 bg-brand/[0.04] rounded-2xl">
                   <p className="text-sm text-white/50 mb-6">
                     O teu navegador suporta instalação directa. Clica abaixo e confirma.
                   </p>
@@ -258,7 +258,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
                     onClick={() => doInstall(null)}
                     disabled={installing}
                     size="lg"
-                    className="w-full bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold rounded-xl h-12"
+                    className="w-full bg-brand hover:bg-brand-dark text-black font-bold rounded-xl h-12"
                   >
                     {installing ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     {installing ? 'A instalar…' : 'Instalar Agora'}
@@ -268,9 +268,9 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
                 <SpotlightCard className="p-6 border-white/10 bg-white/[0.02] rounded-2xl">
                   <h3 className="font-bold">Instalação manual</h3>
                   <ol className="mt-4 space-y-3 text-sm text-white/60">
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">1</span> Abre o menu do navegador (⋮ no Chrome)</li>
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">2</span> Toca em <strong>“Instalar aplicação”</strong> ou <strong>“Adicionar ao ecrã principal”</strong></li>
-                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-bold">3</span> Confirma — o ícone aparece na tua área de trabalho</li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">1</span> Abre o menu do navegador (⋮ no Chrome)</li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">2</span> Toca em <strong>“Instalar aplicação”</strong> ou <strong>“Adicionar ao ecrã principal”</strong></li>
+                    <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand text-xs font-bold">3</span> Confirma — o ícone aparece na tua área de trabalho</li>
                   </ol>
                 </SpotlightCard>
               )}
@@ -285,7 +285,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
               className="max-w-lg mx-auto"
             >
               <div className="text-center mb-8">
-                <Bluetooth className="h-12 w-12 text-[#D4AF37] mx-auto mb-4" strokeWidth={1.5} />
+                <Bluetooth className="h-12 w-12 text-brand mx-auto mb-4" strokeWidth={1.5} />
                 <h2 className="text-2xl font-bold">App Nativa (Android / iOS)</h2>
                 <p className="mt-2 text-sm text-white/40">
                   A protecção anti-rapto completa exige a app nativa: o navegador suspende o
@@ -295,22 +295,22 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
 
               <SpotlightCard className="p-6 border-white/10 bg-white/[0.02] rounded-2xl space-y-4">
                 <h3 className="font-bold flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-[#D4AF37]" /> APK v3.2.0 já compilada e assinada
+                  <Shield className="h-5 w-5 text-brand" /> APK v3.2.0 já compilada e assinada
                 </h3>
                 <p className="text-sm text-white/50">
-                  A versão Android nativa está pronta: <code className="text-[#D4AF37]">StatusAdsConnect-v3.2.0.apk</code>{' '}
+                  A versão Android nativa está pronta: <code className="text-brand">StatusAdsConnect-v3.2.0.apk</code>{' '}
                   (6.7 MB, assinada, Android 7.0+). Instala activando "Fontes desconhecidas".
                   Para recompilar com actualizações, o guia{' '}
-                  <code className="text-[#D4AF37]">BUILD-NATIVA.md</code> tem os comandos verificados:
+                  <code className="text-brand">BUILD-NATIVA.md</code> tem os comandos verificados:
                 </p>
                 <div className="rounded-xl bg-black/60 border border-white/10 p-4 font-mono text-[12px] leading-relaxed">
                   <div><span className="text-white/30">$</span> npm run build && npx cap sync</div>
                   <div><span className="text-white/30">$</span> cd android && ./gradlew assembleRelease</div>
                 </div>
                 <ul className="space-y-2 text-[13px] text-white/60">
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> GPS nativo, haptics e status bar dourada via plugins Capacitor</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> Permissões incluídas: localização, câmara, microfone, sensores de queda, notificações</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" /> Suporta build camuflado (nome e ícone à escolha no momento de compilar)</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-brand shrink-0 mt-0.5" /> GPS nativo, haptics e status bar dourada via plugins Capacitor</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-brand shrink-0 mt-0.5" /> Permissões incluídas: localização, câmara, microfone, sensores de queda, notificações</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-brand shrink-0 mt-0.5" /> Suporta build camuflado (nome e ícone à escolha no momento de compilar)</li>
                 </ul>
               </SpotlightCard>
             </motion.div>
@@ -324,7 +324,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
               className="max-w-2xl mx-auto"
             >
               <div className="text-center mb-8">
-                <EyeOff className="h-12 w-12 text-[#D4AF37] mx-auto mb-4" strokeWidth={1.5} />
+                <EyeOff className="h-12 w-12 text-brand mx-auto mb-4" strokeWidth={1.5} />
                 <h2 className="text-2xl font-bold">Escolhe o disfarce</h2>
                 <p className="mt-2 text-sm text-white/40">
                   O ícone e o ecrã inicial mostrarão a app disfarçada. O SOS continua activo dentro do disfarce.
@@ -339,13 +339,13 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
                     className={cn(
                       'p-4 rounded-2xl border text-left transition-all',
                       disguise === d.type
-                        ? 'border-[#D4AF37]/60 bg-[#D4AF37]/[0.08]'
+                        ? 'border-brand/60 bg-brand/[0.08]'
                         : 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05]'
                     )}
                   >
                     <d.icon className={cn(
                       'h-6 w-6 mb-2',
-                      disguise === d.type ? 'text-[#D4AF37]' : 'text-white/50'
+                      disguise === d.type ? 'text-brand' : 'text-white/50'
                     )} strokeWidth={1.5} />
                     <div className="text-sm font-semibold">{d.label}</div>
                     <div className="text-[11px] text-white/30">{d.hint}</div>
@@ -358,7 +358,7 @@ export function InstallChoice({ embedded = false, onClose }: { embedded?: boolea
                   onClick={() => doInstall(disguise)}
                   disabled={!disguise || installing}
                   size="lg"
-                  className="w-full bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold rounded-xl h-12 disabled:opacity-40"
+                  className="w-full bg-brand hover:bg-brand-dark text-black font-bold rounded-xl h-12 disabled:opacity-40"
                 >
                   {installing ? <RefreshCw className="h-5 w-5 animate-spin" /> : <EyeOff className="h-5 w-5" />}
                   {!disguise ? 'Escolhe um disfarce primeiro' : installing ? 'A instalar…' : 'Instalar Camuflado'}

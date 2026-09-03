@@ -74,7 +74,7 @@ export default function FallDetection() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <PersonStanding className="w-6 h-6 text-[#D4AF37]" />
+            <PersonStanding className="w-6 h-6 text-brand" />
             Deteccao de Queda
           </h1>
           <p className="text-white/40 text-sm mt-1">
@@ -94,7 +94,7 @@ export default function FallDetection() {
       </div>
 
       {/* Estado / activação */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
@@ -146,32 +146,32 @@ export default function FallDetection() {
       </SpotlightCard>
 
       {/* Como funciona */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl">
         <h3 className="text-white font-semibold flex items-center gap-2 text-[15px]">
-          <Info className="h-4 w-4 text-[#D4AF37]" /> Como funciona
+          <Info className="h-4 w-4 text-brand" /> Como funciona
         </h3>
         <ol className="mt-3 space-y-2.5 text-sm text-white/50">
           <li className="flex gap-2.5">
-            <span className="shrink-0 h-5 w-5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[11px] font-bold flex items-center justify-center">1</span>
+            <span className="shrink-0 h-5 w-5 rounded-full bg-brand/10 text-brand text-[11px] font-bold flex items-center justify-center">1</span>
             O acelerómetro do telemóvel detecta <strong className="text-white/70">queda livre</strong> (~0 g durante 250 ms).
           </li>
           <li className="flex gap-2.5">
-            <span className="shrink-0 h-5 w-5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[11px] font-bold flex items-center justify-center">2</span>
+            <span className="shrink-0 h-5 w-5 rounded-full bg-brand/10 text-brand text-[11px] font-bold flex items-center justify-center">2</span>
             De seguida procura um <strong className="text-white/70">impacto forte</strong> contra o chão.
           </li>
           <li className="flex gap-2.5">
-            <span className="shrink-0 h-5 w-5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[11px] font-bold flex items-center justify-center">3</span>
+            <span className="shrink-0 h-5 w-5 rounded-full bg-brand/10 text-brand text-[11px] font-bold flex items-center justify-center">3</span>
             Dispara um <strong className="text-white/70">alarme sonoro</strong> e conta {config.countdownSeconds}s para cancelares.
           </li>
           <li className="flex gap-2.5">
-            <span className="shrink-0 h-5 w-5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[11px] font-bold flex items-center justify-center">4</span>
+            <span className="shrink-0 h-5 w-5 rounded-full bg-brand/10 text-brand text-[11px] font-bold flex items-center justify-center">4</span>
             Sem resposta? <strong className="text-white/70">SOS automático</strong> com a tua localização GPS.
           </li>
         </ol>
       </SpotlightCard>
 
       {/* Configuração */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl space-y-6">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl space-y-6">
         <h3 className="text-white font-semibold text-[15px]">Configuração</h3>
 
         {/* Sensibilidade */}
@@ -185,13 +185,13 @@ export default function FallDetection() {
                 className={cn(
                   'rounded-xl border p-3 text-center transition-all',
                   config.sensitivity === opt.value
-                    ? 'border-[#D4AF37]/50 bg-[#D4AF37]/10'
+                    ? 'border-brand/50 bg-brand/10'
                     : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]'
                 )}
               >
                 <p className={cn(
                   'text-sm font-semibold',
-                  config.sensitivity === opt.value ? 'text-[#D4AF37]' : 'text-white/70'
+                  config.sensitivity === opt.value ? 'text-brand' : 'text-white/70'
                 )}>
                   {opt.label}
                 </p>
@@ -207,7 +207,7 @@ export default function FallDetection() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-white/70 text-sm font-medium">Tempo para cancelar</p>
-            <span className="text-[#D4AF37] text-sm font-bold tabular-nums">{config.countdownSeconds}s</span>
+            <span className="text-brand text-sm font-bold tabular-nums">{config.countdownSeconds}s</span>
           </div>
           <Slider
             value={[config.countdownSeconds]}
@@ -251,7 +251,7 @@ export default function FallDetection() {
       </SpotlightCard>
 
       {/* Teste */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl">
         <h3 className="text-white font-semibold text-[15px] flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-emerald-400" /> Testar sem cair
         </h3>
@@ -261,7 +261,7 @@ export default function FallDetection() {
         <Button
           onClick={handleSimulate}
           disabled={phase === 'countdown'}
-          className="w-full h-12 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold"
+          className="w-full h-12 bg-brand hover:bg-brand-dark text-black font-bold"
         >
           <Play className="h-4 w-4 mr-2" />
           {phase === 'countdown' ? 'Teste em curso…' : 'Simular queda agora'}

@@ -73,9 +73,9 @@ export default function AdminPayments() {
     <div className="space-y-4">
       {/* Totalizadores */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.05] p-4">
+        <div className="rounded-2xl border border-brand/20 bg-brand/[0.05] p-4">
           <p className="text-[10px] text-white/40 uppercase tracking-wider">Total confirmado</p>
-          <p className="font-display font-bold text-xl text-[#D4AF37] mt-1">{formatMzn(totalMzn)}</p>
+          <p className="font-display font-bold text-xl text-brand mt-1">{formatMzn(totalMzn)}</p>
         </div>
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
           <p className="text-[10px] text-white/40 uppercase tracking-wider">Transacções</p>
@@ -100,14 +100,14 @@ export default function AdminPayments() {
         </div>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-[130px] h-9 text-xs bg-white/[0.04] border-white/[0.08] text-white/70 rounded-xl"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-[#14120D] border-white/10 text-white">
+          <SelectContent className="bg-card border-white/10 text-white">
             <SelectItem value="all" className="text-xs">Todos estados</SelectItem>
             {Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={method} onValueChange={setMethod}>
           <SelectTrigger className="w-[110px] h-9 text-xs bg-white/[0.04] border-white/[0.08] text-white/70 rounded-xl"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-[#14120D] border-white/10 text-white">
+          <SelectContent className="bg-card border-white/10 text-white">
             <SelectItem value="all" className="text-xs">Todos métodos</SelectItem>
             {Object.entries(METHOD_LABELS).filter(([k]) => k !== 'manual').map(([k, v]) => (
               <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
@@ -122,7 +122,7 @@ export default function AdminPayments() {
       {/* Lista */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
         <div className="divide-y divide-white/[0.04]">
-          {isLoading && <div className="py-14 text-center"><Loader2 className="h-6 w-6 text-[#D4AF37] animate-spin mx-auto" /></div>}
+          {isLoading && <div className="py-14 text-center"><Loader2 className="h-6 w-6 text-brand animate-spin mx-auto" /></div>}
           {!isLoading && filtered.length === 0 && (
             <div className="py-14 text-center">
               <Wallet className="h-7 w-7 text-white/10 mx-auto mb-2.5" />
@@ -161,7 +161,7 @@ function PaymentRow({ payment: p, busy, onConfirm, onFail, onRefund }: {
             {STATUS_LABEL[p.status] ?? p.status}
           </Badge>
           {p.note === 'demo' && <Badge variant="outline" className="text-[8px] text-amber-400/70 border-amber-500/20">demo</Badge>}
-          {p.note === 'manual' && <Badge variant="outline" className="text-[8px] text-[#D4AF37]/80 border-[#D4AF37]/30 bg-[#D4AF37]/5">manual</Badge>}
+          {p.note === 'manual' && <Badge variant="outline" className="text-[8px] text-brand/80 border-brand/30 bg-brand/5">manual</Badge>}
         </div>
         <p className="text-[10px] text-white/25 mt-0.5">
           {METHOD_LABELS[p.method] ?? p.method}

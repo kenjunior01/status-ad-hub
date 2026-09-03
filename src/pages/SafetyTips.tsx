@@ -56,7 +56,7 @@ export default function SafetyTips() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Lightbulb className="w-6 h-6 text-[#D4AF37]" />
+          <Lightbulb className="w-6 h-6 text-brand" />
           Dicas de Segurança
         </h1>
         <p className="text-white/40 text-sm mt-1">
@@ -65,13 +65,13 @@ export default function SafetyTips() {
       </div>
 
       {/* Dica do dia */}
-      <SpotlightCard className="p-5 rounded-2xl bg-gradient-to-br from-[#D4AF37]/[0.12] to-[#14120D] border border-[#D4AF37]/25 relative overflow-hidden">
+      <SpotlightCard className="p-5 rounded-2xl bg-gradient-to-br from-brand/[0.12] to-card border border-brand/25 relative overflow-hidden">
         <div className="absolute -right-8 -top-8 opacity-[0.06]">
-          <Sparkles className="h-36 w-36 text-[#D4AF37]" />
+          <Sparkles className="h-36 w-36 text-brand" />
         </div>
         <div className="relative">
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="px-2.5 py-1 rounded-full bg-[#D4AF37] text-black text-[10px] font-bold tracking-wide">
+            <span className="px-2.5 py-1 rounded-full bg-brand text-black text-[10px] font-bold tracking-wide">
               DICA DE HOJE
             </span>
             <span className="text-[11px] text-white/40">
@@ -84,7 +84,7 @@ export default function SafetyTips() {
           {TIP_ACTION_MAP[daily.id] && (
             <a
               href={TIP_ACTION_MAP[daily.id].to}
-              className="inline-flex items-center gap-1.5 mt-4 text-[#D4AF37] text-xs font-semibold hover:gap-2.5 transition-all"
+              className="inline-flex items-center gap-1.5 mt-4 text-brand text-xs font-semibold hover:gap-2.5 transition-all"
             >
               {TIP_ACTION_MAP[daily.id].label}
               <ArrowRight className="h-3.5 w-3.5" />
@@ -100,7 +100,7 @@ export default function SafetyTips() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Procurar dica (ex: táxi, WhatsApp, crianças…)"
-          className="w-full h-12 pl-10 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#D4AF37]/40"
+          className="w-full h-12 pl-10 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-brand/40"
         />
       </div>
 
@@ -111,7 +111,7 @@ export default function SafetyTips() {
           className={cn(
             'shrink-0 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all',
             activeCategory === 'all'
-              ? 'bg-[#D4AF37] text-black border-[#D4AF37]'
+              ? 'bg-brand text-black border-brand'
               : 'bg-white/[0.03] text-white/50 border-white/[0.08] hover:bg-white/[0.06]'
           )}
         >
@@ -124,7 +124,7 @@ export default function SafetyTips() {
             className={cn(
               'shrink-0 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all',
               activeCategory === c.id
-                ? 'bg-[#D4AF37] text-black border-[#D4AF37]'
+                ? 'bg-brand text-black border-brand'
                 : 'bg-white/[0.03] text-white/50 border-white/[0.08] hover:bg-white/[0.06]'
             )}
           >
@@ -152,23 +152,23 @@ export default function SafetyTips() {
                   className={cn(
                     'w-full text-left p-4 rounded-2xl border transition-all',
                     isOpen
-                      ? 'bg-[#14120D] border-[#D4AF37]/25'
-                      : 'bg-[#14120D]/60 border-white/[0.05] hover:border-white/[0.12]'
+                      ? 'bg-card border-brand/25'
+                      : 'bg-card/60 border-white/[0.05] hover:border-white/[0.12]'
                   )}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {tip.essential && <Star className="h-3.5 w-3.5 text-[#D4AF37] shrink-0 fill-[#D4AF37]" />}
+                      {tip.essential && <Star className="h-3.5 w-3.5 text-brand shrink-0 fill-brand" />}
                       <span className={cn(
                         'text-sm font-semibold truncate',
-                        isOpen ? 'text-[#D4AF37]' : 'text-white/85'
+                        isOpen ? 'text-brand' : 'text-white/85'
                       )}>
                         {tip.title}
                       </span>
                     </div>
                     <ChevronDown className={cn(
                       'h-4 w-4 shrink-0 text-white/30 transition-transform',
-                      isOpen && 'rotate-180 text-[#D4AF37]'
+                      isOpen && 'rotate-180 text-brand'
                     )} />
                   </div>
 
@@ -184,7 +184,7 @@ export default function SafetyTips() {
                         {action && (
                           <a
                             href={action.to}
-                            className="inline-flex items-center gap-1.5 mt-3 text-[#D4AF37] text-xs font-semibold hover:gap-2.5 transition-all"
+                            className="inline-flex items-center gap-1.5 mt-3 text-brand text-xs font-semibold hover:gap-2.5 transition-all"
                           >
                             {action.label}
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -209,9 +209,9 @@ export default function SafetyTips() {
 
       {/* Rodapé de contexto */}
       <div className="flex items-start gap-2.5 px-1 text-xs text-white/30 leading-relaxed">
-        <Lightbulb className="h-4 w-4 shrink-0 mt-0.5 text-[#D4AF37]/50" />
+        <Lightbulb className="h-4 w-4 shrink-0 mt-0.5 text-brand/50" />
         <p>
-          As dicas marcadas com <Star className="h-3 w-3 inline text-[#D4AF37] fill-[#D4AF37]" /> são as
+          As dicas marcadas com <Star className="h-3 w-3 inline text-brand fill-brand" /> são as
           essenciais que recomendamos partilhar com toda a família. A dica em destaque muda todos os dias —
           volta amanhã para aprenderes algo novo. Conteúdo educativo de prevenção: não substitui orientação
           das autoridades em situações reais.

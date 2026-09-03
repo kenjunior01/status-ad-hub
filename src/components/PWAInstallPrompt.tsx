@@ -44,18 +44,18 @@ export function PWAInstallPrompt() {
           exit={{ y: 60, opacity: 0 }}
           className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md"
         >
-          <SpotlightCard className="p-4 flex items-center gap-3 border-[#D4AF37]/20">
-            <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15 shrink-0 animate-glow-pulse">
-              <RefreshCw className="h-5 w-5 text-[#D4AF37]" strokeWidth={1.5} />
+          <SpotlightCard className="p-4 flex items-center gap-3 border-brand/20">
+            <div className="p-2.5 rounded-xl bg-brand/10 border border-brand/15 shrink-0 animate-glow-pulse">
+              <RefreshCw className="h-5 w-5 text-brand" strokeWidth={1.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[#D4AF37]">Actualizacao Disponivel</p>
+              <p className="text-sm font-medium text-brand">Actualizacao Disponivel</p>
               <p className="text-[11px] text-white/30 mt-0.5">Nova versao do app pronta para instalar.</p>
             </div>
             <Button
               onClick={updateApp}
               size="sm"
-              className="shrink-0 bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl text-xs gap-1.5"
+              className="shrink-0 bg-brand hover:bg-brand-dark text-white rounded-xl text-xs gap-1.5"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Actualizar
             </Button>
@@ -73,9 +73,9 @@ export function PWAInstallPrompt() {
           exit={{ y: 60, opacity: 0 }}
           className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md"
         >
-          <SpotlightCard className="p-4 flex items-center gap-3 border-[#D4AF37]/20">
-            <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/15 shrink-0">
-              <Shield className="h-5 w-5 text-[#D4AF37]" strokeWidth={1.5} />
+          <SpotlightCard className="p-4 flex items-center gap-3 border-brand/20">
+            <div className="p-2.5 rounded-xl bg-brand/10 border border-brand/15 shrink-0">
+              <Shield className="h-5 w-5 text-brand" strokeWidth={1.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white">Instalar StatusAds</p>
@@ -84,7 +84,7 @@ export function PWAInstallPrompt() {
             <Button
               onClick={() => navigate('/instalar')}
               size="sm"
-              className="shrink-0 bg-[#D4AF37] hover:bg-[#B8962E] text-black rounded-xl text-xs gap-1.5 hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)] transition-all"
+              className="shrink-0 bg-brand hover:bg-brand-dark text-black rounded-xl text-xs gap-1.5 hover:shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)] transition-all"
             >
               <Download className="h-3.5 w-3.5" /> Escolher forma
             </Button>

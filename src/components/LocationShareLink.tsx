@@ -346,7 +346,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
               className={cn(
                 'flex h-9 w-9 items-center justify-center rounded-xl',
                 isActive
-                  ? 'bg-[#D4AF37]/15 text-[#D4AF37]'
+                  ? 'bg-brand/15 text-brand'
                   : isDeactivated
                   ? 'bg-red-500/15 text-red-400'
                   : 'bg-white/[0.06] text-white/50'
@@ -363,12 +363,12 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                   <span
                     className={cn(
                       'inline-block h-2 w-2 rounded-full',
-                      isActive ? 'bg-[#D4AF37] animate-pulse' : 'bg-red-400'
+                      isActive ? 'bg-brand animate-pulse' : 'bg-red-400'
                     )}
                   />\n                  <span
                     className={cn(
                       'text-xs font-medium',
-                      isActive ? 'text-[#D4AF37]' : 'text-red-400'
+                      isActive ? 'text-brand' : 'text-red-400'
                     )}
                   >
                     {statusLabel}
@@ -385,7 +385,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
               animate={{ scale: 1, opacity: 1 }}
               className="flex items-center gap-1.5 rounded-lg bg-white/[0.04] px-3 py-1.5"
             >
-              <Clock size={14} className="text-[#D4AF37]" />
+              <Clock size={14} className="text-brand" />
               <span className="font-mono text-sm font-semibold tabular-nums text-white/80">
                 {formatCountdown(remainingMs)}
               </span>
@@ -411,7 +411,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
           />
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/[0.04] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-brand/[0.04] to-transparent" />
 
           {isGenerating ? (
             <Shimmer className="h-full w-full rounded-xl" />
@@ -420,9 +420,9 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
               <motion.div
                 animate={{ y: [0, -4, 0] }}
                 transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D4AF37]/20"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/20"
               >
-                <MapPin size={20} className="text-[#D4AF37]" />
+                <MapPin size={20} className="text-brand" />
               </motion.div>
               <p className="text-center text-xs font-medium text-white/60">
                 {formatCoords(position.latitude, position.longitude)}
@@ -445,7 +445,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-[#0C0B08]/80 backdrop-blur-sm"
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm"
               >
                 <Shield size={28} className="text-red-400/60" />
                 <p className="text-sm font-semibold text-red-400">{statusLabel}</p>
@@ -484,7 +484,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                   className={cn(
                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors',
                     copied
-                      ? 'bg-[#D4AF37]/20 text-[#D4AF37]'
+                      ? 'bg-brand/20 text-brand'
                       : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1] hover:text-white/70'
                   )}
                   aria-label="Copiar link"
@@ -528,7 +528,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                 onClick={handleWhatsApp}
                 className="flex flex-col items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-3 transition-colors hover:bg-white/[0.06]"
               >
-                <Phone size={18} className="text-[#D4AF37]" />
+                <Phone size={18} className="text-brand" />
                 <span className="text-[10px] font-medium text-white/50">WhatsApp</span>
               </motion.button>
 
@@ -589,7 +589,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                   className={cn(
                     'rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
                     expiryMs === opt.value
-                      ? 'border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37]'
+                      ? 'border-brand/40 bg-brand/10 text-brand'
                       : 'border-white/[0.06] bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60'
                   )}
                 >
@@ -612,12 +612,12 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
               className={cn(
                 'flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-all',
                 passwordEnabled
-                  ? 'border-[#D4AF37]/30 bg-[#D4AF37]/[0.06]'
+                  ? 'border-brand/30 bg-brand/[0.06]'
                   : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Lock size={16} className={passwordEnabled ? 'text-[#D4AF37]' : 'text-white/40'} />
+                <Lock size={16} className={passwordEnabled ? 'text-brand' : 'text-white/40'} />
                 <div className="text-left">
                   <p className={cn(
                     'text-sm font-medium',
@@ -635,7 +635,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
               <div
                 className={cn(
                   'relative h-5 w-9 rounded-full transition-colors',
-                  passwordEnabled ? 'bg-[#D4AF37]/30' : 'bg-white/[0.1]'
+                  passwordEnabled ? 'bg-brand/30' : 'bg-white/[0.1]'
                 )}
               >
                 <motion.div
@@ -643,7 +643,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                   className={cn(
                     'absolute top-0.5 h-4 w-4 rounded-full shadow-md',
                     passwordEnabled
-                      ? 'left-[18px] bg-[#D4AF37]'
+                      ? 'left-[18px] bg-brand'
                       : 'left-0.5 bg-white/50'
                   )}
                 />
@@ -683,14 +683,14 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
-            className="mb-4 flex items-center gap-2 rounded-lg bg-[#D4AF37]/[0.06] border border-[#D4AF37]/10 px-3 py-2"
+            className="mb-4 flex items-center gap-2 rounded-lg bg-brand/[0.06] border border-brand/10 px-3 py-2"
           >
             <motion.div
               animate={{ scale: [1, 1.3, 1] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="h-2 w-2 rounded-full bg-[#D4AF37]"
+              className="h-2 w-2 rounded-full bg-brand"
             />
-            <span className="text-xs text-[#D4AF37]/80">
+            <span className="text-xs text-brand/80">
               Coordenadas a actualizar a cada 10 segundos
             </span>
           </motion.div>
@@ -709,7 +709,7 @@ export function LocationShareLink({ className, autoGenerate = true }: LocationSh
                 'flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all',
                 isGenerating || !position
                   ? 'bg-white/[0.04] text-white/30 cursor-not-allowed'
-                  : 'bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37]/25'
+                  : 'bg-brand/15 text-brand hover:bg-brand/25'
               )}
             >
               {isGenerating ? (

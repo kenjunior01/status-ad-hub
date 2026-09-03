@@ -39,7 +39,7 @@ export default function AdminShell() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-[#D4AF37] animate-spin" />
+        <Loader2 className="h-8 w-8 text-brand animate-spin" />
       </div>
     )
   }
@@ -49,13 +49,13 @@ export default function AdminShell() {
   }
 
   return (
-    <div className="dark bg-[#0C0B08] text-white relative min-h-screen">
+    <div className="dark bg-background text-white relative min-h-screen">
       {/* Header admin */}
-      <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 bg-[#0C0B08]/90 backdrop-blur-xl border-b border-white/[0.05]">
+      <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 bg-background/90 backdrop-blur-xl border-b border-white/[0.05]">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#8C6D1F] flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-brand to-[#8C6D1F] flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.2)]">
                 <LayoutDashboard className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </div>
               <div>
@@ -89,7 +89,7 @@ export default function AdminShell() {
                   className={({ isActive }) => cn(
                     'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0',
                     isActive
-                      ? 'bg-[#D4AF37]/[0.12] text-[#D4AF37] border border-[#D4AF37]/25'
+                      ? 'bg-brand/[0.12] text-brand border border-brand/25'
                       : 'text-white/35 hover:text-white/70 hover:bg-white/[0.04] border border-transparent',
                   )}
                 >
@@ -156,18 +156,18 @@ function AdminGate({ onActivated }: { onActivated: () => void }) {
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-10">
       <div className="max-w-sm w-full">
-        <div className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-b from-[#D4AF37]/[0.07] to-transparent p-7 text-center relative overflow-hidden">
+        <div className="rounded-3xl border border-brand/20 bg-gradient-to-b from-brand/[0.07] to-transparent p-7 text-center relative overflow-hidden">
           {/* brilho de fundo */}
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-32 w-56 bg-[#D4AF37]/10 blur-3xl rounded-full pointer-events-none" />
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-32 w-56 bg-brand/10 blur-3xl rounded-full pointer-events-none" />
 
           <div className="relative">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8C6D1F] flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(212,175,55,0.25)]">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-brand to-[#8C6D1F] flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(212,175,55,0.25)]">
               <Crown className="h-6 w-6 text-black" strokeWidth={2} />
             </div>
             <h2 className="font-display font-bold text-lg text-white">Painel do Administrador</h2>
             <p className="text-xs text-white/45 mt-2 leading-relaxed">
               Área exclusiva do dono da plataforma. Introduza o
-              <span className="text-[#D4AF37] font-medium"> código de administração </span>
+              <span className="text-brand font-medium"> código de administração </span>
               para desbloquear esta sessão.
             </p>
 
@@ -183,7 +183,7 @@ function AdminGate({ onActivated }: { onActivated: () => void }) {
                   autoFocus
                   className={cn(
                     'pl-10 h-12 rounded-xl bg-black/30 border text-white tracking-widest font-mono text-sm placeholder:text-white/20 placeholder:font-sans placeholder:tracking-normal',
-                    error ? 'border-red-500/50' : 'border-white/10 focus-visible:border-[#D4AF37]/40'
+                    error ? 'border-red-500/50' : 'border-white/10 focus-visible:border-brand/40'
                   )}
                 />
               </div>
@@ -197,7 +197,7 @@ function AdminGate({ onActivated }: { onActivated: () => void }) {
               <Button
                 onClick={() => void handleActivate()}
                 disabled={!code.trim() || submitting}
-                className="w-full h-12 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-sm disabled:opacity-40 shadow-lg shadow-[#D4AF37]/20"
+                className="w-full h-12 rounded-xl bg-brand hover:bg-brand-dark text-black font-bold text-sm disabled:opacity-40 shadow-lg shadow-brand/20"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4 mr-1.5" />}
                 {submitting ? 'A validar…' : 'Desbloquear Painel Admin'}

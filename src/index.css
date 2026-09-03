@@ -26,28 +26,81 @@
     --input: 220 13% 91%;
     --ring: 152 100% 48%;
     --radius: 0.75rem;
+
+    /* ══ MARCA (Calorist-style temas seleccionáveis) ══ */
+    /* gold por defeito — identidade StatusAds */
+    --brand-rgb: 212 175 55;
+    --brand-dark-rgb: 168 138 40;
   }
 
+  /* ════════════════════════════════════════════════════════════
+     TEMA DARK — base neutra estilo Calorist (dark mono/dark green)
+     Superfícies neutras elevadas, sem tinte castanho.
+     ════════════════════════════════════════════════════════════ */
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 224 71% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71% 6%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 152 100% 25%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 218 11% 65%;
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
+    --background: 240 5% 4%;      /* #09090B — quase-preto neutro */
+    --foreground: 0 0% 98%;
+    --card: 240 4% 8%;            /* #121214 — card elevado */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 4% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 43 65% 52%;        /* dourado da marca */
+    --primary-foreground: 240 6% 4%;
+    --secondary: 240 4% 13%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 13%;
+    --muted-foreground: 240 5% 64%;
+    --accent: 240 4% 13%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 152 100% 25%;
+    --border: 240 4% 15%;         /* #242428 — borda subtil */
+    --input: 240 4% 15%;
+    --ring: 43 65% 52%;
+    --radius: 1rem;               /* cantos arredondados Calorist */
+
+    --brand-rgb: 212 175 55;
+    --brand-dark-rgb: 168 138 40;
+  }
+
+  /* ── TEMA: Mint (verde esmeralda — default visual do Calorist) ── */
+  .dark[data-theme="mint"] {
+    --primary: 160 84% 39%;
+    --ring: 160 84% 39%;
+    --brand-rgb: 16 185 129;
+    --brand-dark-rgb: 5 150 105;
+  }
+
+  /* ── TEMA: Lavanda (roxo vivo — 2.º preset Calorist) ── */
+  .dark[data-theme="lavanda"] {
+    --primary: 258 90% 66%;
+    --ring: 258 90% 66%;
+    --brand-rgb: 139 92 246;
+    --brand-dark-rgb: 124 58 237;
+  }
+
+  /* ── TEMA: Mono (acento branco — 4.º preset Calorist) ── */
+  .dark[data-theme="mono"] {
+    --primary: 0 0% 96%;
+    --ring: 0 0% 96%;
+    --brand-rgb: 245 245 244;
+    --brand-dark-rgb: 212 212 216;
+  }
+
+  /* ── TEMA: Coral (vermelho/rosa vivo — energia Calorist) ── */
+  .dark[data-theme="coral"] {
+    --primary: 347 77% 60%;
+    --ring: 347 77% 60%;
+    --brand-rgb: 244 63 94;
+    --brand-dark-rgb: 225 29 72;
+  }
+
+  /* ── TEMA: Gold (dourado — identidade StatusAds, default) ── */
+  .dark[data-theme="gold"] {
+    --primary: 43 65% 52%;
+    --ring: 43 65% 52%;
+    --brand-rgb: 212 175 55;
+    --brand-dark-rgb: 168 138 40;
   }
 
   * {
@@ -79,7 +132,7 @@
 
   /* Selection color */
   ::selection {
-    background: rgba(212, 175, 55, 0.3);
+    background: rgb(var(--brand-rgb) / 0.3);
     color: white;
   }
 }
@@ -174,8 +227,8 @@
 
 /* Glow pulse for icons */
 @keyframes glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3)); }
-  50% { filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.6)); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgb(var(--brand-rgb) / 0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgb(var(--brand-rgb) / 0.6)); }
 }
 
 .animate-glow-pulse {
@@ -271,8 +324,8 @@
 
 /* Border glow pulse */
 @keyframes border-glow {
-  0%, 100% { border-color: rgba(212, 175, 55, 0.15); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
-  50% { border-color: rgba(212, 175, 55, 0.3); box-shadow: 0 0 20px -5px rgba(212, 175, 55, 0.15); }
+  0%, 100% { border-color: rgb(var(--brand-rgb) / 0.15); box-shadow: 0 0 0 0 rgb(var(--brand-rgb) / 0); }
+  50% { border-color: rgb(var(--brand-rgb) / 0.3); box-shadow: 0 0 20px -5px rgb(var(--brand-rgb) / 0.15); }
 }
 
 .animate-border-glow {
@@ -313,8 +366,8 @@
 
 /* Brilho dourado activo (itens da bottom nav) */
 @keyframes gold-drop {
-  0%, 100% { filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.25)); }
-  50% { filter: drop-shadow(0 0 9px rgba(212, 175, 55, 0.55)); }
+  0%, 100% { filter: drop-shadow(0 0 3px rgb(var(--brand-rgb) / 0.25)); }
+  50% { filter: drop-shadow(0 0 9px rgb(var(--brand-rgb) / 0.55)); }
 }
 
 .gold-glow {
@@ -351,7 +404,7 @@
 input:focus,
 textarea:focus,
 select:focus {
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 0 20px -8px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 0 1px rgb(var(--brand-rgb) / 0.15), 0 0 20px -8px rgb(var(--brand-rgb) / 0.1);
 }
 
 /* Smooth card hover lift */
@@ -368,7 +421,7 @@ select:focus {
   transition: box-shadow 0.3s ease;
 }
 .glow-hover:hover {
-  box-shadow: 0 0 30px -8px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 30px -8px rgb(var(--brand-rgb) / 0.25);
 }
 
 /* Text balance for headings */
@@ -388,7 +441,7 @@ select:focus {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), transparent 40%, transparent 60%, rgba(212, 175, 55, 0.2));
+  background: linear-gradient(135deg, rgb(var(--brand-rgb) / 0.3), transparent 40%, transparent 60%, rgb(var(--brand-rgb) / 0.2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

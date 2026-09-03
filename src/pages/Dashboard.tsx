@@ -17,6 +17,7 @@ import {
   Mic, Skull, Radar, Timer, Activity, Lightbulb, ArrowRight,
 } from 'lucide-react'
 import { ProximityPanel } from '@/components/ProximityPanel'
+import { ReadinessRings, CoachCard } from '@/components/ReadinessRings'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,7 +54,7 @@ type DisplayDevice = {
 
 const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch, smart_glasses: Watch, bellvion: Watch, tracker: Wifi, panic_button: Bell, other: Wifi }
 const statusLabels: Record<string, { label: string; className: string }> = {
-  online: { label: 'Online', className: 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20' },
+  online: { label: 'Online', className: 'bg-brand/15 text-brand border border-brand/20' },
   connected: { label: 'Conectado', className: 'bg-blue-500/15 text-blue-400 border border-blue-500/20' },
   low_battery: { label: 'Bateria Baixa', className: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' },
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.08]' },
@@ -272,7 +273,7 @@ export default function Dashboard() {
   const totalDevices = stats?.total_devices ?? displayDevices.length
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#0C0B08]">
+    <div className="relative h-screen w-full overflow-hidden bg-background">
       {(loading || !dataReady) && (
         <>
           <div className="absolute top-4 left-4 z-50 w-80 space-y-3">
@@ -293,11 +294,11 @@ export default function Dashboard() {
       {/* TOP BAR */}
       <motion.header
         initial={{ y: -60 }} animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-4 md:px-6 py-3 backdrop-blur-2xl bg-[#0C0B08]/60 border-b border-white/[0.04]"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-4 md:px-6 py-3 backdrop-blur-2xl bg-background/60 border-b border-white/[0.04]"
       >
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-            <Shield className="h-4 w-4 text-[#D4AF37]" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 border border-brand/20">
+            <Shield className="h-4 w-4 text-brand" />
           </div>
           <span className="font-display font-bold text-white text-base tracking-tight">StatusAD</span>
         </div>
@@ -307,15 +308,15 @@ export default function Dashboard() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
             <Input
               placeholder="Pesquisar dispositivos..."
-              className="pl-9 h-9 bg-white/[0.03] border-white/[0.08] text-white text-sm placeholder:text-white/15 rounded-xl focus-visible:ring-[#D4AF37]/20 focus-visible:border-[#D4AF37]/20"
+              className="pl-9 h-9 bg-white/[0.03] border-white/[0.08] text-white text-sm placeholder:text-white/15 rounded-xl focus-visible:ring-brand/20 focus-visible:border-brand/20"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
-            <span className="text-[11px] font-medium text-[#D4AF37]">{safeMode ? 'Seguro' : 'Inactivo'}</span>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/[0.06] border border-brand/15">
+            <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
+            <span className="text-[11px] font-medium text-brand">{safeMode ? 'Seguro' : 'Inactivo'}</span>
           </div>
 
           {isMonitoring && (
@@ -335,7 +336,7 @@ export default function Dashboard() {
             )}
           </button>
 
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand to-amber-500 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_15px_rgba(212,175,55,0.2)]">
             {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
         </div>
@@ -347,24 +348,39 @@ export default function Dashboard() {
         className="absolute top-[58px] left-0 right-0 z-40 md:hidden"
       >
         <div className="mx-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {/* Prontidão */}
+          {/* Prontidão — mini anel Calorist */}
           <div className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
+            'flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
             readinessScore >= 80
-              ? 'bg-[#0C0B08]/70 border-[#D4AF37]/25'
+              ? 'bg-background/70 border-brand/25'
               : readinessScore >= 50
-                ? 'bg-[#0C0B08]/70 border-amber-400/25'
-                : 'bg-[#0C0B08]/70 border-red-400/25'
+                ? 'bg-background/70 border-amber-400/25'
+                : 'bg-background/70 border-red-400/25'
           )}>
-            <Shield className={cn('h-3.5 w-3.5', readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
-            <span className={cn(
-              'text-[11px] font-bold',
-              readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
-            )}>{readinessScore}%</span>
-            <span className="text-[10px] text-white/35">{readinessLabel}</span>
+            <span className="relative inline-flex items-center justify-center h-7 w-7">
+              <svg width="28" height="28" className="-rotate-90">
+                <circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                <circle
+                  cx="14" cy="14" r="11" fill="none" strokeLinecap="round"
+                  stroke={readinessScore >= 80 ? 'rgb(var(--brand-rgb))' : readinessScore >= 50 ? '#f59e0b' : '#ef4444'}
+                  strokeWidth="3"
+                  strokeDasharray={2 * Math.PI * 11}
+                  strokeDashoffset={2 * Math.PI * 11 * (1 - readinessScore / 100)}
+                  style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)' }}
+                />
+              </svg>
+              <Shield className={cn('absolute h-3 w-3', readinessScore >= 80 ? 'text-brand' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
+            </span>
+            <span className="leading-none">
+              <span className={cn(
+                'block text-[11px] font-bold',
+                readinessScore >= 80 ? 'text-brand' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
+              )}>{readinessScore}%</span>
+              <span className="block text-[9px] text-white/35">{readinessLabel}</span>
+            </span>
           </div>
           {/* Dispositivos activos */}
-          <button onClick={() => navigate('/dashboard/devices')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0C0B08]/70 backdrop-blur-xl border border-white/[0.08] shrink-0 active:scale-95 transition-transform">
+          <button onClick={() => navigate('/dashboard/devices')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/70 backdrop-blur-xl border border-white/[0.08] shrink-0 active:scale-95 transition-transform">
             <BluetoothConnected className="h-3.5 w-3.5 text-white/50" />
             <span className="text-[11px] font-semibold text-white/70">{activeDevices}/{totalDevices || 0}</span>
             <span className="text-[10px] text-white/30">disp.</span>
@@ -372,9 +388,9 @@ export default function Dashboard() {
           {/* GPS */}
           <div className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
-            userPos ? 'bg-[#0C0B08]/70 border-[#D4AF37]/20' : 'bg-[#0C0B08]/70 border-white/[0.08]'
+            userPos ? 'bg-background/70 border-brand/20' : 'bg-background/70 border-white/[0.08]'
           )}>
-            <MapPin className={cn('h-3.5 w-3.5', userPos ? 'text-[#D4AF37]' : 'text-white/25')} />
+            <MapPin className={cn('h-3.5 w-3.5', userPos ? 'text-brand' : 'text-white/25')} />
             <span className="text-[11px] font-medium text-white/60">{userPos ? 'GPS activo' : 'Sem GPS'}</span>
           </div>
           {/* Alertas */}
@@ -388,9 +404,9 @@ export default function Dashboard() {
           {zone && (
             <div className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0',
-              zoneState === 'inside' ? 'bg-[#0C0B08]/70 border-[#D4AF37]/20' : 'bg-red-500/10 border-red-500/25'
+              zoneState === 'inside' ? 'bg-background/70 border-brand/20' : 'bg-red-500/10 border-red-500/25'
             )}>
-              <Crosshair className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400')} />
+              <Crosshair className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-brand' : 'text-red-400')} />
               <span className="text-[11px] font-medium text-white/60">{zoneState === 'inside' ? 'Na zona' : 'Fora!'}</span>
             </div>
           )}
@@ -419,7 +435,7 @@ export default function Dashboard() {
             initial={{ y: -60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -60, opacity: 0 }}
             className="absolute top-[104px] md:top-16 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
           >
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#221E16]/90 backdrop-blur-xl border border-white/[0.08]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-card/90 backdrop-blur-xl border border-white/[0.08]">
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/15 shrink-0">
                 <Bell className="h-4 w-4 text-amber-400" />
               </div>
@@ -433,7 +449,7 @@ export default function Dashboard() {
                   sessionStorage.setItem('notif-prompt-shown', '1')
                   setShowNotifBanner(false)
                 }}
-                className="h-8 text-[10px] bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-lg shrink-0"
+                className="h-8 text-[10px] bg-brand hover:bg-brand-dark text-white rounded-lg shrink-0"
               >Activar</Button>
               <button onClick={() => { setShowNotifBanner(false); sessionStorage.setItem('notif-prompt-shown', '1') }} className="text-white/20 hover:text-white/40 p-1">
                 <X className="h-3.5 w-3.5" />
@@ -451,9 +467,20 @@ export default function Dashboard() {
         className="absolute bottom-20 left-4 z-30 w-80 hidden md:block"
       >
         <SpotlightCard className="p-5">
+          {/* ANÉIS DE PRONTIDÃO — estilo Calorist */}
+          <div className="pb-5 mb-4 border-b border-border/60">
+            <ReadinessRings
+              readiness={readinessScore}
+              label={readinessLabel}
+              devicesActive={activeDevices}
+              devicesTotal={totalDevices || 0}
+              gpsOk={!!userPos}
+              alerts={alertCount}
+            />
+          </div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-sm font-semibold text-white">Dispositivos</h3>
-            <span className="px-2 py-0.5 text-[10px] rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-medium">{activeDevices} activos</span>
+            <span className="px-2 py-0.5 text-[10px] rounded-lg bg-brand/10 text-brand border border-brand/20 font-medium">{activeDevices} activos</span>
           </div>
           {displayDevices.length === 0 ? (
             <div className="text-center py-6">
@@ -486,26 +513,21 @@ export default function Dashboard() {
           )}
         </SpotlightCard>
 
-        {/* DICA DO DIA — rotação diária */}
+        {/* DICA DO DIA — coach card estilo Calorist */}
         {(() => {
           const tip = getDailyTip()
           const cat = TIP_CATEGORIES.find(c => c.id === tip.category)
           return (
-            <SpotlightCard className="p-4 mt-3">
-              <button onClick={() => navigate('/dashboard/dicas')} className="w-full text-left group">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] text-white/30 font-medium flex items-center gap-1.5">
-                    <Lightbulb className="h-3 w-3 text-[#D4AF37]" /> Dica de Hoje
-                  </p>
-                  <span className="text-[9px] text-white/25">{cat?.emoji} {cat?.label}</span>
-                </div>
-                <p className="text-xs font-semibold text-white/85 leading-snug">{tip.title}</p>
-                <p className="text-[10px] text-white/35 leading-relaxed mt-1.5 line-clamp-2">{tip.text}</p>
-                <span className="inline-flex items-center gap-1 mt-2.5 text-[10px] font-semibold text-[#D4AF37] group-hover:gap-2 transition-all">
-                  Ver todas as dicas <ArrowRight className="h-3 w-3" />
-                </span>
-              </button>
-            </SpotlightCard>
+            <div className="mt-3">
+              <CoachCard
+                icon={Lightbulb}
+                tone="info"
+                title={tip.title}
+                message={tip.text}
+                stat={`${cat?.emoji ?? '💡'} ${cat?.label ?? 'Dica'} · ver todas`}
+                onClick={() => navigate('/dashboard/dicas')}
+              />
+            </div>
           )
         })()}
       </motion.div>
@@ -524,19 +546,19 @@ export default function Dashboard() {
             <div className={cn(
               'flex items-center gap-1.5 px-2.5 py-1 rounded-full border',
               readinessScore >= 80
-                ? 'bg-[#D4AF37]/[0.08] border-[#D4AF37]/20'
+                ? 'bg-brand/[0.08] border-brand/20'
                 : readinessScore >= 50
                   ? 'bg-amber-400/[0.08] border-amber-400/20'
                   : 'bg-red-400/[0.08] border-red-400/20'
             )}>
-              <Shield className={cn('h-3 w-3', readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
+              <Shield className={cn('h-3 w-3', readinessScore >= 80 ? 'text-brand' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400')} />
               <span className={cn(
                 'text-[10px] font-bold tracking-wider',
-                readinessScore >= 80 ? 'text-[#D4AF37]' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
+                readinessScore >= 80 ? 'text-brand' : readinessScore >= 50 ? 'text-amber-400' : 'text-red-400'
               )}>{readinessLabel.toUpperCase()}</span>
               <span className={cn(
                 'text-[10px] font-mono ml-0.5',
-                readinessScore >= 80 ? 'text-[#D4AF37]/60' : readinessScore >= 50 ? 'text-amber-400/60' : 'text-red-400/60'
+                readinessScore >= 80 ? 'text-brand/60' : readinessScore >= 50 ? 'text-amber-400/60' : 'text-red-400/60'
               )}>{readinessScore}%</span>
             </div>
           </div>
@@ -603,16 +625,16 @@ export default function Dashboard() {
                   className={cn(
                     'flex flex-col items-center gap-1 py-2 rounded-xl border transition-colors',
                     item.ok
-                      ? 'bg-[#D4AF37]/[0.04] border-[#D4AF37]/10'
+                      ? 'bg-brand/[0.04] border-brand/10'
                       : 'bg-white/[0.02] border-white/[0.04]'
                   )}
                   title={item.tip}
                 >
                   {item.ok
-                    ? <CheckCircle2 className="h-3.5 w-3.5 text-[#D4AF37]" />
+                    ? <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
                     : <AlertCircle className={cn('h-3.5 w-3.5', item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')} />
                   }
-                  <span className={cn('text-[9px] font-medium', item.ok ? 'text-[#D4AF37]/80' : item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')}>{item.label}</span>
+                  <span className={cn('text-[9px] font-medium', item.ok ? 'text-brand/80' : item.label === 'Zona' && zoneState === 'outside' || item.label === 'Panico' && panicState.isActive ? 'text-red-400' : 'text-white/20')}>{item.label}</span>
                 </div>
               ))}
             </div>
@@ -621,17 +643,17 @@ export default function Dashboard() {
               <div className={cn(
                 'mt-3 flex items-center justify-between px-3 py-2 rounded-xl border',
                 zoneState === 'inside'
-                  ? 'bg-[#D4AF37]/[0.04] border-[#D4AF37]/10'
+                  ? 'bg-brand/[0.04] border-brand/10'
                   : 'bg-red-500/[0.04] border-red-500/10'
               )}>
                 <div className="flex items-center gap-2">
-                  <MapPin className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400')} />
+                  <MapPin className={cn('h-3.5 w-3.5', zoneState === 'inside' ? 'text-brand' : 'text-red-400')} />
                   <span className="text-[10px] text-white/50">Distancia ao centro</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     'text-xs font-mono font-bold',
-                    zoneState === 'inside' ? 'text-[#D4AF37]' : 'text-red-400'
+                    zoneState === 'inside' ? 'text-brand' : 'text-red-400'
                   )}>{Math.round(geofenceDistance)}m</span>
                   <span className="text-[9px] text-white/20">/ {zone.radius}m</span>
                 </div>
@@ -646,10 +668,10 @@ export default function Dashboard() {
       <motion.div
         initial={{ y: 80 }} animate={{ y: 0 }}
         transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-2xl bg-[#0C0B08]/70 border-t border-white/[0.04] md:bottom-0 lg:bottom-0"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-2xl bg-background/70 border-t border-white/[0.04] md:bottom-0 lg:bottom-0"
       >
         {[
-          { label: safeMode ? 'Seguro' : 'Inactivo', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-[#D4AF37] text-white shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)]' },
+          { label: safeMode ? 'Seguro' : 'Inactivo', icon: Shield, active: safeMode, onClick: () => setSafeMode(!safeMode), activeClass: 'bg-brand text-white shadow-[0_0_20px_-5px_rgba(212,175,55,0.3)]' },
           { label: 'Partilhar', icon: Share2, active: false, onClick: handleShareLocation },
           { label: 'Testar', icon: Zap, active: false, onClick: () => refetchDevices() },
           { label: 'EMERGENCIA', icon: ShieldAlert, active: false, onClick: handleEmergency, danger: true },
@@ -661,7 +683,7 @@ export default function Dashboard() {
               btn.danger
                 ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse hover:shadow-[0_0_30px_-5px_rgba(239,68,68,0.4)]'
                 : btn.active
-                  ? btn.activeClass || 'bg-[#D4AF37] text-white'
+                  ? btn.activeClass || 'bg-brand text-white'
                   : 'border border-white/[0.08] bg-white/[0.03] text-white/40 hover:text-white/70 hover:bg-white/[0.06]'
             )}
           >
@@ -674,7 +696,7 @@ export default function Dashboard() {
           <div className={cn(
             'hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-medium border',
             zoneState === 'inside'
-              ? 'bg-[#D4AF37]/[0.08] border-[#D4AF37]/20 text-[#D4AF37]'
+              ? 'bg-brand/[0.08] border-brand/20 text-brand'
               : 'bg-red-500/[0.08] border-red-500/20 text-red-400'
           )}>
             <MapPin className="h-3 w-3" />

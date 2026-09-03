@@ -172,7 +172,7 @@ export default function TripTracking() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6' onClick={() => setShowCreate(false)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className='bg-[#221E16] rounded-2xl p-6 w-full max-w-sm' onClick={e => e.stopPropagation()}>
+              className='bg-card rounded-2xl p-6 w-full max-w-sm' onClick={e => e.stopPropagation()}>
               <h3 className='text-white text-center text-lg font-semibold mb-1'>Nova Viagem</h3>
               <p className='text-white/40 text-center text-xs mb-4'>Crie uma viagem para partilhar a sua localização</p>
               <div className='space-y-3'>

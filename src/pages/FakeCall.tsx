@@ -80,7 +80,7 @@ export default function FakeCall() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <PhoneIncoming className="w-6 h-6 text-[#D4AF37]" />
+          <PhoneIncoming className="w-6 h-6 text-brand" />
           Chamada Falsa
         </h1>
         <p className="text-white/40 text-sm mt-1">
@@ -93,12 +93,12 @@ export default function FakeCall() {
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-4 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 flex items-center justify-between"
+          className="p-4 rounded-2xl bg-brand/10 border border-brand/25 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
-            <Timer className="h-5 w-5 text-[#D4AF37] animate-pulse" />
+            <Timer className="h-5 w-5 text-brand animate-pulse" />
             <div>
-              <p className="text-[#D4AF37] font-semibold text-sm">Chamada agendada</p>
+              <p className="text-brand font-semibold text-sm">Chamada agendada</p>
               <p className="text-white/40 text-xs">A tocar em {secondsUntilCall}s</p>
             </div>
           </div>
@@ -114,9 +114,9 @@ export default function FakeCall() {
       )}
 
       {/* Contacto */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl space-y-5">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl space-y-5">
         <h3 className="text-white font-semibold text-[15px] flex items-center gap-2">
-          <User className="h-4 w-4 text-[#D4AF37]" /> Quem "liga"?
+          <User className="h-4 w-4 text-brand" /> Quem "liga"?
         </h3>
 
         <div className="space-y-3">
@@ -153,7 +153,7 @@ export default function FakeCall() {
                 className={cn(
                   'rounded-xl border py-2.5 text-xs font-semibold transition-all',
                   config.carrier === c
-                    ? 'border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#D4AF37]'
+                    ? 'border-brand/50 bg-brand/10 text-brand'
                     : 'border-white/[0.06] bg-white/[0.02] text-white/50 hover:bg-white/[0.05]'
                 )}
               >
@@ -184,7 +184,7 @@ export default function FakeCall() {
       </SpotlightCard>
 
       {/* Efeitos */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl space-y-5">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl space-y-5">
         <h3 className="text-white font-semibold text-[15px]">Efeitos da chamada</h3>
 
         <div className="flex items-center justify-between">
@@ -217,9 +217,9 @@ export default function FakeCall() {
       </SpotlightCard>
 
       {/* Agendamento + iniciar */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl">
         <h3 className="text-white font-semibold text-[15px] flex items-center gap-2">
-          <Play className="h-4 w-4 text-[#D4AF37]" /> Iniciar chamada
+          <Play className="h-4 w-4 text-brand" /> Iniciar chamada
         </h3>
         <p className="text-white/40 text-xs mt-1 mb-4">
           Escolhe quando queres receber o telefonema.
@@ -233,7 +233,7 @@ export default function FakeCall() {
               className={cn(
                 'rounded-xl border py-2.5 text-xs font-semibold transition-all',
                 config.delaySeconds === d.value
-                  ? 'border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#D4AF37]'
+                  ? 'border-brand/50 bg-brand/10 text-brand'
                   : 'border-white/[0.06] bg-white/[0.02] text-white/50 hover:bg-white/[0.05]'
               )}
             >
@@ -245,7 +245,7 @@ export default function FakeCall() {
         <Button
           onClick={() => handleSaveAndStart()}
           disabled={phase !== 'idle'}
-          className="w-full h-13 h-[52px] bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-base"
+          className="w-full h-13 h-[52px] bg-brand hover:bg-brand-dark text-black font-bold text-base"
         >
           <Phone className="h-5 w-5 mr-2" />
           {config.delaySeconds === 0 ? 'Chamar-me agora' : `Chamar em ${DELAY_OPTIONS.find((d) => d.value === config.delaySeconds)?.label}`}
@@ -259,7 +259,7 @@ export default function FakeCall() {
       </SpotlightCard>
 
       {/* Preview */}
-      <SpotlightCard className="p-5 bg-[#14120D] border border-white/[0.06] rounded-2xl">
+      <SpotlightCard className="p-5 bg-card border border-white/[0.06] rounded-2xl">
         <h3 className="text-white font-semibold text-[15px] mb-3">Pré-visualização</h3>
         <div className="mx-auto max-w-[220px] rounded-[2rem] border-4 border-white/10 bg-black overflow-hidden shadow-2xl">
           <div className="bg-gradient-to-b from-neutral-900 to-black p-5 flex flex-col items-center gap-2 py-8">
@@ -298,7 +298,7 @@ export default function FakeCall() {
       <div className="flex items-start gap-2.5 px-1 text-xs text-white/30 leading-relaxed">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
         <p>
-          Para o toque soar com o ecrã bloqueado, instala a app nativa em <span className="text-[#D4AF37]">/instalar</span>.
+          Para o toque soar com o ecrã bloqueado, instala a app nativa em <span className="text-brand">/instalar</span>.
         </p>
       </div>
     </div>

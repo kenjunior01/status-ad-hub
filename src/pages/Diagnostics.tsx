@@ -274,7 +274,7 @@ export default function Diagnostics() {
 
   const statusColors = {
     checking: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    pass: 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/20',
+    pass: 'text-brand bg-brand/10 border-brand/20',
     fail: 'text-red-400 bg-red-500/10 border-red-500/20',
     warn: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   }
@@ -286,7 +286,7 @@ export default function Diagnostics() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="font-display text-2xl font-bold text-white">Diagnostico do Sistema</h1>
         <p className="text-sm text-white/30 mt-1">Verifique se o StatusAds Connect esta pronto para proteger voce.</p>
@@ -300,21 +300,21 @@ export default function Diagnostics() {
           className={cn(
             'flex items-center gap-4 p-4 rounded-2xl border mb-6',
             isReady
-              ? 'bg-[#D4AF37]/[0.05] border-[#D4AF37]/15'
+              ? 'bg-brand/[0.05] border-brand/15'
               : 'bg-red-500/[0.05] border-red-500/15'
           )}
         >
           <div className={cn(
             'flex h-12 w-12 items-center justify-center rounded-2xl',
-            isReady ? 'bg-[#D4AF37]/15' : 'bg-red-500/15'
+            isReady ? 'bg-brand/15' : 'bg-red-500/15'
           )}>
             {isReady
-              ? <CheckCircle2 className="h-6 w-6 text-[#D4AF37]" />
+              ? <CheckCircle2 className="h-6 w-6 text-brand" />
               : <AlertCircle className="h-6 w-6 text-red-400" />
             }
           </div>
           <div className="flex-1">
-            <h2 className={cn('font-display font-bold', isReady ? 'text-[#D4AF37]' : 'text-red-400')}>
+            <h2 className={cn('font-display font-bold', isReady ? 'text-brand' : 'text-red-400')}>
               {isReady ? 'Sistema Pronto' : 'Atencao Necessaria'}
             </h2>
             <p className="text-xs text-white/40 mt-0.5">
@@ -379,7 +379,7 @@ export default function Diagnostics() {
                     <p className="text-[11px] text-white/30 mt-0.5">{check.description}</p>
                     <p className={cn(
                       'text-xs mt-1.5 font-mono',
-                      check.status === 'pass' ? 'text-[#D4AF37]/70' :
+                      check.status === 'pass' ? 'text-brand/70' :
                       check.status === 'fail' ? 'text-red-400/70' : 'text-amber-400/70'
                     )}>
                       {check.detail}
@@ -390,7 +390,7 @@ export default function Diagnostics() {
                       size="sm"
                       onClick={check.action.onClick}
                       variant="outline"
-                      className="shrink-0 h-8 text-[10px] rounded-lg border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+                      className="shrink-0 h-8 text-[10px] rounded-lg border-brand/20 text-brand hover:bg-brand/10"
                     >
                       {check.action.label}
                       <ExternalLink className="h-3 w-3 ml-1" />
@@ -432,9 +432,9 @@ export default function Diagnostics() {
           </div>
         </div>
         {errorLogs.length === 0 ? (
-          <div className="p-4 rounded-xl bg-[#D4AF37]/[0.03] border border-[#D4AF37]/10 text-center">
-            <CheckCircle2 className="h-5 w-5 text-[#D4AF37]/40 mx-auto mb-1.5" />
-            <p className="text-xs text-[#D4AF37]/50">Sem erros registados. O sistema esta estavel.</p>
+          <div className="p-4 rounded-xl bg-brand/[0.03] border border-brand/10 text-center">
+            <CheckCircle2 className="h-5 w-5 text-brand/40 mx-auto mb-1.5" />
+            <p className="text-xs text-brand/50">Sem erros registados. O sistema esta estavel.</p>
           </div>
         ) : (
           <div className="space-y-1.5 max-h-64 overflow-auto">

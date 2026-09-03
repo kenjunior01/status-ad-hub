@@ -115,7 +115,7 @@ function RelativeTime({ dateStr }: { dateStr: string }) {
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   active: { label: 'ACTIVA', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', icon: ShieldAlert },
-  resolved: { label: 'RESOLVIDA', color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10 border-[#D4AF37]/20', icon: ShieldCheck },
+  resolved: { label: 'RESOLVIDA', color: 'text-brand', bg: 'bg-brand/10 border-brand/20', icon: ShieldCheck },
   false_alarm: { label: 'FALSO ALARME', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', icon: XCircle },
 }
 
@@ -163,7 +163,7 @@ function ResolveDialog({
         className="w-full max-w-md mx-4 mb-4 sm:mb-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#14120D] rounded-2xl border border-white/[0.06] p-6 shadow-2xl">
+        <div className="bg-card rounded-2xl border border-white/[0.06] p-6 shadow-2xl">
           <h3 className="text-base font-display font-bold text-white mb-1">
             {mode === 'resolve' ? 'Resolver Emergencia' : 'Marcar como Falso Alarme'}
           </h3>
@@ -179,7 +179,7 @@ function ResolveDialog({
               onChange={(e) => setReason(e.target.value)}
               placeholder={'Nota opcional (ex: Contactado pela policia, Encontrei o dispositivo)...'}
               rows={3}
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 resize-none focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37]/30 mb-4"
+              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 resize-none focus:outline-none focus:ring-1 focus:ring-brand/30 focus:border-brand/30 mb-4"
             />
           )}
 
@@ -200,7 +200,7 @@ function ResolveDialog({
             <Button
               onClick={() => onResolve(reason)}
               disabled={isResolving}
-              className="flex-1 bg-[#D4AF37] hover:bg-[#B8962E] text-white font-semibold rounded-xl disabled:opacity-50"
+              className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-xl disabled:opacity-50"
             >
               {isResolving ? 'A processar...' : 'Confirmar Resolucao'}
             </Button>
@@ -397,7 +397,7 @@ export default function Emergency() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 space-y-4">
+      <div className="min-h-screen bg-background p-4 md:p-6 space-y-4">
         <Shimmer className="h-48 w-full rounded-2xl" />
         <Shimmer className="h-64 w-full rounded-2xl" />
         <Shimmer className="h-40 w-full rounded-2xl" />
@@ -406,7 +406,7 @@ export default function Emergency() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] pb-24 lg:pb-6">
+    <div className="min-h-screen bg-background pb-24 lg:pb-6">
       {/* Active Emergency Banner */}
       {hasActive && (
         <motion.div
@@ -516,15 +516,15 @@ export default function Emergency() {
               {userPos?.accuracy != null && (
                 <div className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border',
-                  userPos.accuracy < 20 ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20' : userPos.accuracy < 50 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'
+                  userPos.accuracy < 20 ? 'bg-brand/10 border-brand/20' : userPos.accuracy < 50 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'
                 )}>
                   <Radio className={cn(
                     'h-3.5 w-3.5',
-                    userPos.accuracy < 20 ? 'text-[#D4AF37]' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
+                    userPos.accuracy < 20 ? 'text-brand' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
                   )} />
                   <span className={cn(
                     'text-[11px] font-mono font-medium',
-                    userPos.accuracy < 20 ? 'text-[#D4AF37]' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
+                    userPos.accuracy < 20 ? 'text-brand' : userPos.accuracy < 50 ? 'text-amber-400' : 'text-red-400'
                   )}>Precisao {Math.round(userPos.accuracy)}m</span>
                 </div>
               )}
@@ -534,7 +534,7 @@ export default function Emergency() {
             <div className="flex flex-wrap gap-2 mt-3">
               <Button
                 onClick={() => setShowResolve(true)}
-                className="bg-[#D4AF37] hover:bg-[#B8962E] text-white font-semibold rounded-xl gap-2 text-xs"
+                className="bg-brand hover:bg-brand-dark text-white font-semibold rounded-xl gap-2 text-xs"
               >
                 <ShieldCheck className="h-3.5 w-3.5" /> Resolver Emergencia
               </Button>
@@ -599,16 +599,16 @@ export default function Emergency() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-12 text-center"
           >
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15 mb-5">
-              <ShieldCheck className="h-10 w-10 text-[#D4AF37]/60" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand/[0.06] border border-brand/15 mb-5">
+              <ShieldCheck className="h-10 w-10 text-brand/60" />
             </div>
             <h2 className="text-xl font-display font-bold text-white mb-2">Sem Emergencias Activas</h2>
             <p className="text-sm text-white/30 max-w-sm">
               Nenhuma emergencia activa neste momento. O sistema continua a monitorizar os seus dispositivos e zona de seguranca.
             </p>
-            <div className="flex items-center gap-2 mt-6 px-4 py-2 rounded-xl bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15">
-              <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
-              <span className="text-xs font-medium text-[#D4AF37]">Monitorizacao activa</span>
+            <div className="flex items-center gap-2 mt-6 px-4 py-2 rounded-xl bg-brand/[0.06] border border-brand/15">
+              <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+              <span className="text-xs font-medium text-brand">Monitorizacao activa</span>
             </div>
           </motion.div>
         )}
@@ -641,7 +641,7 @@ export default function Emergency() {
                   <div className="min-w-0">
                     <p className="text-[10px] text-white/25">Localizacao</p>
                     <p className="text-xs font-mono text-white/70">{activeEmergency.latitude.toFixed(5)}, {activeEmergency.longitude.toFixed(5)}</p>
-                    {address && <p className="text-[10px] text-[#D4AF37]/80 truncate" title={address}>{address}</p>}
+                    {address && <p className="text-[10px] text-brand/80 truncate" title={address}>{address}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
@@ -674,7 +674,7 @@ export default function Emergency() {
                     onClick={handleCopyLink}
                     className="shrink-0 h-8 px-3 rounded-lg text-[10px] gap-1.5 text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
                   >
-                    {copied ? <Check className="h-3 w-3 text-[#D4AF37]" /> : <Copy className="h-3 w-3" />}
+                    {copied ? <Check className="h-3 w-3 text-brand" /> : <Copy className="h-3 w-3" />}
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
@@ -712,9 +712,9 @@ export default function Emergency() {
 
               {/* Resolve reason */}
               {activeEmergency.resolve_reason && (
-                <div className="mt-3 p-3 rounded-xl bg-[#D4AF37]/[0.04] border border-[#D4AF37]/10">
-                  <p className="text-[10px] text-[#D4AF37]/50 mb-0.5">Motivo da resolucao</p>
-                  <p className="text-xs text-[#D4AF37]/80">{activeEmergency.resolve_reason}</p>
+                <div className="mt-3 p-3 rounded-xl bg-brand/[0.04] border border-brand/10">
+                  <p className="text-[10px] text-brand/50 mb-0.5">Motivo da resolucao</p>
+                  <p className="text-xs text-brand/80">{activeEmergency.resolve_reason}</p>
                 </div>
               )}
             </SpotlightCard>
@@ -743,7 +743,7 @@ export default function Emergency() {
                 <div className={cn(
                   'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-medium border backdrop-blur-md',
                   isTracking
-                    ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20 text-[#D4AF37]'
+                    ? 'bg-brand/10 border-brand/20 text-brand'
                     : 'bg-white/[0.04] border-white/[0.06] text-white/30'
                 )}>
                   <Radio className="h-3 w-3" />
@@ -792,10 +792,10 @@ export default function Emergency() {
                 >
                   <div className={cn(
                     'p-2 rounded-lg shrink-0',
-                    item.status === 'active' ? 'bg-red-500/10' : item.status === 'resolved' ? 'bg-[#D4AF37]/10' : 'bg-amber-500/10'
+                    item.status === 'active' ? 'bg-red-500/10' : item.status === 'resolved' ? 'bg-brand/10' : 'bg-amber-500/10'
                   )}>
                     {item.status === 'active' && <ShieldAlert className="h-4 w-4 text-red-400" />}
-                    {item.status === 'resolved' && <ShieldCheck className="h-4 w-4 text-[#D4AF37]" />}
+                    {item.status === 'resolved' && <ShieldCheck className="h-4 w-4 text-brand" />}
                     {item.status === 'false_alarm' && <XCircle className="h-4 w-4 text-amber-400" />}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -74,7 +74,7 @@ export function ProximityPanel({ isMonitoring, deviceStatuses, alerts, onDismiss
                 ds.inGracePeriod
                   ? 'bg-amber-500/[0.06] border-amber-500/20'
                   : ds.connected
-                    ? 'bg-[#D4AF37]/[0.03] border-[#D4AF37]/10'
+                    ? 'bg-brand/[0.03] border-brand/10'
                     : 'bg-red-500/[0.04] border-red-500/10'
               )}
             >
@@ -83,7 +83,7 @@ export function ProximityPanel({ isMonitoring, deviceStatuses, alerts, onDismiss
                 {ds.inGracePeriod ? (
                   <Clock className="h-4 w-4 text-amber-400 animate-pulse" />
                 ) : ds.connected ? (
-                  <CheckCircle2 className="h-4 w-4 text-[#D4AF37]" />
+                  <CheckCircle2 className="h-4 w-4 text-brand" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 text-red-400" />
                 )}
@@ -97,7 +97,7 @@ export function ProximityPanel({ isMonitoring, deviceStatuses, alerts, onDismiss
                     Grace: {ds.graceRemaining}s
                   </p>
                 ) : ds.connected ? (
-                  <p className="text-[9px] text-[#D4AF37]/60">Conectado</p>
+                  <p className="text-[9px] text-brand/60">Conectado</p>
                 ) : (
                   <p className="text-[9px] text-red-400/60">
                     {ds.disconnectedAt ? `Desconectado ha ${timeSince(ds.disconnectedAt)}` : 'Desconectado'}
@@ -111,7 +111,7 @@ export function ProximityPanel({ isMonitoring, deviceStatuses, alerts, onDismiss
                 ds.inGracePeriod
                   ? 'bg-amber-400 animate-pulse'
                   : ds.connected
-                    ? 'bg-[#D4AF37]'
+                    ? 'bg-brand'
                     : 'bg-red-400'
               )} />
             </div>

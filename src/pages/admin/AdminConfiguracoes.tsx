@@ -55,7 +55,7 @@ export default function AdminConfiguracoes() {
   if (isLoading) {
     return (
       <div className="py-14 text-center">
-        <Loader2 className="h-6 w-6 text-[#D4AF37] animate-spin mx-auto" />
+        <Loader2 className="h-6 w-6 text-brand animate-spin mx-auto" />
       </div>
     )
   }
@@ -63,14 +63,14 @@ export default function AdminConfiguracoes() {
   return (
     <div className="space-y-4 max-w-2xl">
       {/* Explicação do fluxo */}
-      <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.04] p-4 flex gap-3">
-        <Info className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" />
+      <div className="rounded-2xl border border-brand/20 bg-brand/[0.04] p-4 flex gap-3">
+        <Info className="h-4 w-4 text-brand shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-[#D4AF37]">Como funciona o pagamento manual (sem API)</p>
+          <p className="text-xs font-semibold text-brand">Como funciona o pagamento manual (sem API)</p>
           <p className="text-[11px] text-white/45 leading-relaxed">
             1. Configura aqui os teus números M-Pesa, e-Mola, mKesh, conta bancária e PayPal.
             2. O utilizador escolhe o método no checkout, paga para estes números e submete o ID da transacção.
-            3. Vês o pagamento em <span className="text-[#D4AF37]">Admin → Pagamentos</span>; ao clicares
+            3. Vês o pagamento em <span className="text-brand">Admin → Pagamentos</span>; ao clicares
             "Confirmar", a assinatura activa automaticamente (+31 dias, trigger SQL).
             Nenhuma API do operador é necessária — funciona desde já.
           </p>
@@ -81,7 +81,7 @@ export default function AdminConfiguracoes() {
       <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-bold text-sm text-white flex items-center gap-2">
-            <Phone className="h-4 w-4 text-[#D4AF37]" /> Números de Pagamento
+            <Phone className="h-4 w-4 text-brand" /> Números de Pagamento
           </h3>
           <Badge variant="outline" className="text-[9px] text-white/30 border-white/10">aparecem no checkout</Badge>
         </div>
@@ -95,7 +95,7 @@ export default function AdminConfiguracoes() {
 
         <div className="border-t border-white/[0.05] pt-4">
           <h4 className="text-xs font-semibold text-white/60 flex items-center gap-2 mb-3">
-            <Landmark className="h-3.5 w-3.5 text-[#D4AF37]" /> Transferência Bancária
+            <Landmark className="h-3.5 w-3.5 text-brand" /> Transferência Bancária
           </h4>
           <div className="grid sm:grid-cols-2 gap-3">
             <Field label="Banco" value={pn.bank_name} onChange={(v) => set('bank_name', v)} placeholder="BCI / BIM / Standard Bank" />
@@ -107,7 +107,7 @@ export default function AdminConfiguracoes() {
         <Button
           onClick={savePaymentNumbers}
           disabled={updateSetting.isPending}
-          className="h-10 bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl gap-2"
+          className="h-10 bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl gap-2"
         >
           {updateSetting.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Guardar números de pagamento
@@ -117,7 +117,7 @@ export default function AdminConfiguracoes() {
       {/* Suporte */}
       <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <h3 className="font-display font-bold text-sm text-white flex items-center gap-2">
-          <LifeBuoy className="h-4 w-4 text-[#D4AF37]" /> Contactos de Suporte
+          <LifeBuoy className="h-4 w-4 text-brand" /> Contactos de Suporte
         </h3>
         <div className="grid sm:grid-cols-2 gap-3">
           <Field label="WhatsApp de suporte" value={support.whatsapp} onChange={(v) => setSupport((s) => ({ ...s, whatsapp: v }))} placeholder="+258 84 xxx xxxx" mono />
@@ -135,7 +135,7 @@ export default function AdminConfiguracoes() {
       </section>
 
       <div className="flex items-center gap-2 text-[11px] text-white/25">
-        <CheckCircle2 className="h-3.5 w-3.5 text-[#D4AF37]/50" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-brand/50" />
         Estes dados são lidos em tempo real pelo checkout — alterações aplicam-se de imediato.
       </div>
     </div>

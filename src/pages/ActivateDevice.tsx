@@ -95,7 +95,7 @@ export default function ActivateDevice() {
   const selectedDevice = DEVICES.find(d => d.id === deviceType)
 
   return (
-    <div className="dark min-h-screen bg-[#0C0B08] relative overflow-hidden">
+    <div className="dark min-h-screen bg-background relative overflow-hidden">
       <AnimatedGrid opacity={0.2} />
       <FloatingOrbs />
       <NoiseTexture opacity={0.015} />
@@ -109,10 +109,10 @@ export default function ActivateDevice() {
             <ChevronLeft className="h-5 w-5 text-white/50" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-              <Shield className="h-3.5 w-3.5 text-[#D4AF37]" />
+            <div className="h-7 w-7 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center">
+              <Shield className="h-3.5 w-3.5 text-brand" />
             </div>
-            <span className="font-display text-sm font-bold text-white">Status<span className="text-[#D4AF37]">Ads</span></span>
+            <span className="font-display text-sm font-bold text-white">Status<span className="text-brand">Ads</span></span>
           </div>
         </header>
 
@@ -122,7 +122,7 @@ export default function ActivateDevice() {
             {['intro', 'enter-code', 'create-account', 'success'].map((s, i) => (
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                  ['intro', 'enter-code', 'create-account', 'success'].indexOf(step) >= i ? 'bg-[#D4AF37]' : 'bg-white/[0.06]'
+                  ['intro', 'enter-code', 'create-account', 'success'].indexOf(step) >= i ? 'bg-brand' : 'bg-white/[0.06]'
                 }`} />
               </div>
             ))}
@@ -136,8 +136,8 @@ export default function ActivateDevice() {
             {step === 'intro' && (
               <motion.div key="intro" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
                 <div className="text-center space-y-3">
-                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-[#D4AF37]/[0.08] border border-[#D4AF37]/20">
-                    <Package className="h-8 w-8 text-[#D4AF37]" />
+                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-brand/[0.08] border border-brand/20">
+                    <Package className="h-8 w-8 text-brand" />
                   </div>
                   <h1 className="text-2xl font-bold text-white">Activar Dispositivo</h1>
                   <p className="text-sm text-white/40 leading-relaxed max-w-sm mx-auto">
@@ -166,7 +166,7 @@ export default function ActivateDevice() {
                 </div>
 
                 <p className="text-center text-xs text-white/20">
-                  Nao tem um dispositivo? <a href="#" className="text-[#D4AF37]/60 hover:text-[#D4AF37]">Compre aqui</a>
+                  Nao tem um dispositivo? <a href="#" className="text-brand/60 hover:text-brand">Compre aqui</a>
                 </p>
               </motion.div>
             )}
@@ -196,7 +196,7 @@ export default function ActivateDevice() {
                       onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
                       placeholder="XXXX-XXXX-XXXX"
                       maxLength={14}
-                      className="w-full h-14 rounded-2xl border border-white/[0.08] bg-white/[0.03] pl-12 pr-4 text-white text-lg font-mono tracking-wider text-center placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37]/30 transition-all uppercase"
+                      className="w-full h-14 rounded-2xl border border-white/[0.08] bg-white/[0.03] pl-12 pr-4 text-white text-lg font-mono tracking-wider text-center placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:border-brand/30 transition-all uppercase"
                       autoFocus
                     />
                   </div>
@@ -226,8 +226,8 @@ export default function ActivateDevice() {
             {step === 'create-account' && (
               <motion.div key="create-account" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
                 <div className="text-center space-y-3">
-                  <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-                    <CheckCircle2 className="h-7 w-7 text-[#D4AF37]" />
+                  <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand/10 border border-brand/20">
+                    <CheckCircle2 className="h-7 w-7 text-brand" />
                   </div>
                   <h1 className="text-xl font-bold text-white">Codigo Validado!</h1>
                   <p className="text-sm text-white/40">Crie a sua conta para comecar a usar o {selectedDevice?.name || 'dispositivo'}.</p>
@@ -236,21 +236,21 @@ export default function ActivateDevice() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-medium text-white/40 mb-1.5 block">Nome Completo</label>
-                    <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Seu nome" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 transition-all" />
+                    <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Seu nome" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-all" />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-white/40 mb-1.5 block">Email</label>
-                    <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="seu@email.com" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 transition-all" />
+                    <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="seu@email.com" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-all" />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-white/40 mb-1.5 block">Telefone (+258)</label>
-                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+258840000000" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 transition-all" />
+                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+258840000000" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-white/40 mb-1.5 block">Senha</label>
                       <div className="relative">
-                        <input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Min. 6 chars" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 pr-10 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 transition-all" />
+                        <input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Min. 6 chars" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 pr-10 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-all" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50">
                           {showPassword ? '🙈' : '👁'}
                         </button>
@@ -258,7 +258,7 @@ export default function ActivateDevice() {
                     </div>
                     <div>
                       <label className="text-xs font-medium text-white/40 mb-1.5 block">Confirmar</label>
-                      <input type={showPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="Repetir" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/30 transition-all" />
+                      <input type={showPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="Repetir" className="w-full h-12 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-white text-sm placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-all" />
                     </div>
                   </div>
 
@@ -272,8 +272,8 @@ export default function ActivateDevice() {
             {/* STEP 4: Success */}
             {step === 'success' && (
               <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.2 }} className="h-20 w-20 rounded-full bg-[#D4AF37]/10 border-2 border-[#D4AF37]/30 flex items-center justify-center">
-                  <CheckCircle2 className="h-10 w-10 text-[#D4AF37]" />
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.2 }} className="h-20 w-20 rounded-full bg-brand/10 border-2 border-brand/30 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-brand" />
                 </motion.div>
                 <div className="space-y-2">
                   <h1 className="text-2xl font-bold text-white">Conta Criada!</h1>
@@ -293,7 +293,7 @@ export default function ActivateDevice() {
         {step !== 'success' && (
           <div className="px-6 pb-6">
             <p className="text-center text-sm text-white/25">
-              Ja tem conta? <Link to="/login" className="font-medium text-[#D4AF37]/60 hover:text-[#D4AF37]">Entrar</Link>
+              Ja tem conta? <Link to="/login" className="font-medium text-brand/60 hover:text-brand">Entrar</Link>
             </p>
           </div>
         )}

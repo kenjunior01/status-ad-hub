@@ -310,7 +310,7 @@ export default function AdminCodigos() {
               onClick={() => setTab(id)}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition',
-                tab === id ? 'bg-[#D4AF37]/[0.15] text-[#D4AF37]' : 'text-white/40 hover:text-white/70',
+                tab === id ? 'bg-brand/[0.15] text-brand' : 'text-white/40 hover:text-white/70',
               )}
             >
               <Icon className="h-3.5 w-3.5" /> {label}
@@ -323,7 +323,7 @@ export default function AdminCodigos() {
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3">
           <p className="text-[11px] text-amber-200/80 leading-relaxed">
             Modo demo — os dados ficam apenas neste dispositivo. Aplique a migration 014
-            (<span className="font-mono text-[#D4AF37]">TUDO.sql</span>) para gerir códigos reais no servidor.
+            (<span className="font-mono text-brand">TUDO.sql</span>) para gerir códigos reais no servidor.
           </p>
         </div>
       )}
@@ -335,17 +335,17 @@ export default function AdminCodigos() {
           <div className="grid grid-cols-3 gap-3">
             {([['Total', stats.total], ['Livres', stats.free], ['Usados', stats.used]] as const).map(([label, v], i) => (
               <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                <p className={cn('font-display font-bold text-xl', i === 1 ? 'text-emerald-400' : i === 2 ? 'text-white/50' : 'text-[#D4AF37]')}>{v}</p>
+                <p className={cn('font-display font-bold text-xl', i === 1 ? 'text-emerald-400' : i === 2 ? 'text-white/50' : 'text-brand')}>{v}</p>
                 <p className="text-[10px] text-white/35 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
 
           {/* Gerador */}
-          <div className="rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-b from-[#D4AF37]/[0.05] to-transparent p-5 space-y-4">
+          <div className="rounded-2xl border border-brand/20 bg-gradient-to-b from-brand/[0.05] to-transparent p-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-                <Sparkles className="h-4.5 w-4.5 text-[#D4AF37]" />
+              <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+                <Sparkles className="h-4.5 w-4.5 text-brand" />
               </div>
               <div>
                 <p className="font-display font-bold text-sm text-white">Gerar códigos de activação</p>
@@ -364,11 +364,11 @@ export default function AdminCodigos() {
                       className={cn(
                         'rounded-lg border px-2.5 py-2 text-left transition',
                         model === m.id
-                          ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.1]'
+                          ? 'border-brand/40 bg-brand/[0.1]'
                           : 'border-white/[0.07] bg-white/[0.02] hover:border-white/20',
                       )}
                     >
-                      <p className={cn('text-[11px] font-semibold', model === m.id ? 'text-[#D4AF37]' : 'text-white/70')}>{m.label}</p>
+                      <p className={cn('text-[11px] font-semibold', model === m.id ? 'text-brand' : 'text-white/70')}>{m.label}</p>
                       <p className="text-[9px] font-mono text-white/30">{m.prefix}</p>
                     </button>
                   ))}
@@ -383,7 +383,7 @@ export default function AdminCodigos() {
                       onClick={() => setQty(n)}
                       className={cn(
                         'h-9 min-w-11 px-2 rounded-lg border text-xs font-semibold transition',
-                        qty === n ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.12] text-[#D4AF37]' : 'border-white/[0.07] bg-white/[0.02] text-white/50 hover:text-white',
+                        qty === n ? 'border-brand/40 bg-brand/[0.12] text-brand' : 'border-white/[0.07] bg-white/[0.02] text-white/50 hover:text-white',
                       )}
                     >
                       {n}
@@ -396,7 +396,7 @@ export default function AdminCodigos() {
             <Button
               onClick={() => void generate()}
               disabled={generating}
-              className="w-full h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-sm gap-2"
+              className="w-full h-11 rounded-xl bg-brand hover:bg-brand-dark text-black font-bold text-sm gap-2"
             >
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               {generating ? 'A gerar…' : `Gerar ${qty} códigos ${modelObj.prefix}`}
@@ -441,20 +441,20 @@ export default function AdminCodigos() {
                     <button
                       key={id}
                       onClick={() => setFilter(id)}
-                      className={cn('px-2.5 py-1 rounded-md text-[10px] font-medium transition', filter === id ? 'bg-[#D4AF37]/[0.15] text-[#D4AF37]' : 'text-white/35 hover:text-white/60')}
+                      className={cn('px-2.5 py-1 rounded-md text-[10px] font-medium transition', filter === id ? 'bg-brand/[0.15] text-brand' : 'text-white/35 hover:text-white/60')}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => void loadCodes()} className="h-7 w-7 p-0 text-white/40 hover:text-[#D4AF37]">
+                <Button size="sm" variant="ghost" onClick={() => void loadCodes()} className="h-7 w-7 p-0 text-white/40 hover:text-brand">
                   <RefreshCw className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
 
             {loading ? (
-              <div className="py-10 text-center"><Loader2 className="h-5 w-5 text-[#D4AF37] animate-spin mx-auto" /></div>
+              <div className="py-10 text-center"><Loader2 className="h-5 w-5 text-brand animate-spin mx-auto" /></div>
             ) : filteredCodes.length === 0 ? (
               <p className="text-xs text-white/30 py-8 text-center">Sem códigos neste filtro — gere os primeiros acima.</p>
             ) : (
@@ -487,10 +487,10 @@ export default function AdminCodigos() {
       {tab === 'promos' && (
         <div className="space-y-4">
           {/* Criar promoção */}
-          <div className="rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-b from-[#D4AF37]/[0.05] to-transparent p-5 space-y-4">
+          <div className="rounded-2xl border border-brand/20 bg-gradient-to-b from-brand/[0.05] to-transparent p-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-                <Ticket className="h-4.5 w-4.5 text-[#D4AF37]" />
+              <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+                <Ticket className="h-4.5 w-4.5 text-brand" />
               </div>
               <div>
                 <p className="font-display font-bold text-sm text-white">Criar promoção</p>
@@ -508,7 +508,7 @@ export default function AdminCodigos() {
                     placeholder="EX: VERAO2026"
                     className="bg-black/30 border-white/[0.08] text-white font-mono text-xs h-10 flex-1"
                   />
-                  <Button size="sm" variant="ghost" onClick={() => setPCode(suggestPromoCode())} className="h-10 px-2.5 text-white/40 hover:text-[#D4AF37]" title="Sugerir código">
+                  <Button size="sm" variant="ghost" onClick={() => setPCode(suggestPromoCode())} className="h-10 px-2.5 text-white/40 hover:text-brand" title="Sugerir código">
                     <Sparkles className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -529,7 +529,7 @@ export default function AdminCodigos() {
                       onClick={() => setPType(id)}
                       className={cn(
                         'flex-1 h-10 rounded-lg border text-xs font-medium transition',
-                        pType === id ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.1] text-[#D4AF37]' : 'border-white/[0.07] bg-white/[0.02] text-white/50 hover:text-white',
+                        pType === id ? 'border-brand/40 bg-brand/[0.1] text-brand' : 'border-white/[0.07] bg-white/[0.02] text-white/50 hover:text-white',
                       )}
                     >
                       {label}
@@ -554,7 +554,7 @@ export default function AdminCodigos() {
                 <select
                   value={pPlan}
                   onChange={(e) => setPPlan(e.target.value as Promo['applies_to'])}
-                  className="w-full h-10 rounded-lg bg-black/30 border border-white/[0.08] text-white text-xs px-2.5 outline-none focus:border-[#D4AF37]/40"
+                  className="w-full h-10 rounded-lg bg-black/30 border border-white/[0.08] text-white text-xs px-2.5 outline-none focus:border-brand/40"
                 >
                   <option value="any">Qualquer plano</option>
                   <option value="familia">Família</option>
@@ -575,7 +575,7 @@ export default function AdminCodigos() {
             <Button
               onClick={() => void createPromo()}
               disabled={creating || !pCode.trim() || !pValue}
-              className="w-full h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-sm gap-2 disabled:opacity-40"
+              className="w-full h-11 rounded-xl bg-brand hover:bg-brand-dark text-black font-bold text-sm gap-2 disabled:opacity-40"
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Criar promoção
@@ -586,7 +586,7 @@ export default function AdminCodigos() {
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="font-display font-bold text-sm text-white">Promoções ({promos.length})</p>
-              <Button size="sm" variant="ghost" onClick={() => void loadPromos()} className="h-7 w-7 p-0 text-white/40 hover:text-[#D4AF37]">
+              <Button size="sm" variant="ghost" onClick={() => void loadPromos()} className="h-7 w-7 p-0 text-white/40 hover:text-brand">
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -602,10 +602,10 @@ export default function AdminCodigos() {
                   return (
                     <div key={p.id} className={cn(
                       'rounded-xl border px-4 py-3 space-y-2',
-                      p.is_active && !dead ? 'border-[#D4AF37]/20 bg-[#D4AF37]/[0.04]' : 'border-white/[0.06] bg-black/20 opacity-70',
+                      p.is_active && !dead ? 'border-brand/20 bg-brand/[0.04]' : 'border-white/[0.06] bg-black/20 opacity-70',
                     )}>
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="font-mono text-sm font-bold text-[#D4AF37]">{p.code}</span>
+                        <span className="font-mono text-sm font-bold text-brand">{p.code}</span>
                         <Badge className={cn('text-[9px] border', p.is_active && !dead
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                           : 'bg-white/[0.05] text-white/40 border-white/10')}>
@@ -622,7 +622,7 @@ export default function AdminCodigos() {
                         <div className="flex items-center gap-2 flex-1 min-w-32">
                           <div className="h-1.5 rounded-full bg-white/[0.06] flex-1 overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-[#D4AF37] transition-all"
+                              className="h-full rounded-full bg-brand transition-all"
                               style={{ width: `${p.max_uses ? Math.min(100, (p.used_count / p.max_uses) * 100) : p.used_count > 0 ? 12 : 0}%` }}
                             />
                           </div>

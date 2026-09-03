@@ -102,8 +102,8 @@ export default function BellvionDevices() {
     <div className="min-h-screen space-y-6 pb-10">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
-        <div className="p-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-          <Package className="w-5 h-5 text-[#D4AF37]" />
+        <div className="p-2.5 rounded-xl bg-brand/10 border border-brand/20">
+          <Package className="w-5 h-5 text-brand" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Dispositivos BELLVION</h1>
@@ -117,7 +117,7 @@ export default function BellvionDevices() {
         className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
       >
         <div className="flex items-center gap-2 mb-3">
-          <BellRing className="w-4 h-4 text-[#D4AF37]" />
+          <BellRing className="w-4 h-4 text-brand" />
           <h2 className="text-sm font-semibold text-white">Estado dos Alertas</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -161,7 +161,7 @@ export default function BellvionDevices() {
         className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
       >
         <div className="flex items-center gap-2 mb-1">
-          <KeyRound className="w-4 h-4 text-[#D4AF37]" />
+          <KeyRound className="w-4 h-4 text-brand" />
           <h2 className="text-sm font-semibold text-white">Códigos de Activação Usados</h2>
         </div>
         <p className="text-[11px] text-white/35 mb-4">
@@ -176,7 +176,7 @@ export default function BellvionDevices() {
           <div className="rounded-xl border border-dashed border-white/[0.08] p-6 text-center">
             <Package className="w-6 h-6 text-white/20 mx-auto mb-2" />
             <p className="text-sm text-white/50">Ainda não activou nenhum dispositivo BELLVION.</p>
-            <Link to="/ativar" className="inline-block mt-3 rounded-xl bg-[#D4AF37] px-4 py-2 text-xs font-bold text-black">
+            <Link to="/ativar" className="inline-block mt-3 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-black">
               Activar dispositivo
             </Link>
           </div>

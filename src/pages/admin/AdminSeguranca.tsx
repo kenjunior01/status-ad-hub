@@ -123,8 +123,8 @@ export default function AdminSeguranca() {
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-              <ScanSearch className="h-4.5 w-4.5 text-[#D4AF37]" />
+            <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+              <ScanSearch className="h-4.5 w-4.5 text-brand" />
             </div>
             <div>
               <p className="font-display font-bold text-sm text-white">Auditoria do servidor</p>
@@ -133,7 +133,7 @@ export default function AdminSeguranca() {
               </p>
             </div>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => void runAudit()} disabled={auditing} className="h-8 px-3 text-[11px] text-white/50 hover:text-[#D4AF37] gap-1.5">
+          <Button size="sm" variant="ghost" onClick={() => void runAudit()} disabled={auditing} className="h-8 px-3 text-[11px] text-white/50 hover:text-brand gap-1.5">
             {auditing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Correr de novo
           </Button>
         </div>
@@ -186,7 +186,7 @@ export default function AdminSeguranca() {
         {audit && !rlsOk && (
           <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-3.5 py-3">
             <p className="text-[11px] text-red-300 leading-relaxed">
-              Foram encontradas fragilidades. Execute a <span className="font-mono text-[#D4AF37]">migration 014 (TUDO.sql)</span> no
+              Foram encontradas fragilidades. Execute a <span className="font-mono text-brand">migration 014 (TUDO.sql)</span> no
               SQL Editor — ela corrige automaticamente os furos mais comuns (códigos públicos, funções sem search_path) e esta
               auditoria passa a ficar verde.
             </p>
@@ -197,8 +197,8 @@ export default function AdminSeguranca() {
       {/* ── Rotação do código de administração ── */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-            <KeyRound className="h-4.5 w-4.5 text-[#D4AF37]" />
+          <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+            <KeyRound className="h-4.5 w-4.5 text-brand" />
           </div>
           <div>
             <p className="font-display font-bold text-sm text-white">Código de administração</p>
@@ -236,7 +236,7 @@ export default function AdminSeguranca() {
         <Button
           onClick={() => void rotateCode()}
           disabled={!oldCode.trim() || !newCode.trim() || !newCode2.trim() || rotating}
-          className="w-full sm:w-auto h-10 px-5 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-bold text-xs gap-2 disabled:opacity-40"
+          className="w-full sm:w-auto h-10 px-5 rounded-xl bg-brand hover:bg-brand-dark text-black font-bold text-xs gap-2 disabled:opacity-40"
         >
           {rotating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-3.5 w-3.5" />}
           Trocar código de administração
@@ -315,7 +315,7 @@ export default function AdminSeguranca() {
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 flex items-start gap-2.5">
           <Server className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-200/80 leading-relaxed">
-            Modo demo — a auditoria mostra dados de exemplo. Aplique a migration 014 (<span className="font-mono text-[#D4AF37]">TUDO.sql</span>) no SQL Editor do Supabase para a auditoria real.
+            Modo demo — a auditoria mostra dados de exemplo. Aplique a migration 014 (<span className="font-mono text-brand">TUDO.sql</span>) no SQL Editor do Supabase para a auditoria real.
           </p>
         </div>
       )}

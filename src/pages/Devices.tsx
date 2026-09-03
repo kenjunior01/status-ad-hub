@@ -25,7 +25,7 @@ const deviceIconMap: Record<string, React.ElementType> = {
   bellvion: Watch, tracker: Radio, panic_button: AlertTriangle, other: Radio,
 }
 const statusLabels: Record<string, { label: string; className: string }> = {
-  online: { label: 'Online', className: 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20' },
+  online: { label: 'Online', className: 'bg-brand/15 text-brand border border-brand/20' },
   connected: { label: 'Conectado', className: 'bg-blue-500/15 text-blue-400 border border-blue-500/20' },
   low_battery: { label: 'Bateria Baixa', className: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' },
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.06]' },
@@ -119,7 +119,7 @@ export default function Devices() {
 
   const stats = useMemo(() => [
     { label: 'Total', value: devicesWithBLE.length, icon: Signal, color: 'text-white' },
-    { label: 'Conectados', value: devicesWithBLE.filter((d) => d.bleConnected).length, icon: BluetoothConnected, color: 'text-[#D4AF37]' },
+    { label: 'Conectados', value: devicesWithBLE.filter((d) => d.bleConnected).length, icon: BluetoothConnected, color: 'text-brand' },
     { label: 'Bateria Baixa', value: devicesWithBLE.filter((d) => d.bleBattery <= 20).length, icon: Battery, color: 'text-amber-400' },
   ], [devicesWithBLE])
 
@@ -203,7 +203,7 @@ export default function Devices() {
   }, [startScan])
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-8">
         <div>
@@ -213,12 +213,12 @@ export default function Devices() {
         <div className="flex items-center gap-3">
           <Badge variant="outline" className={cn(
             'gap-1.5 px-3 py-1 text-[11px] rounded-lg border',
-            bleAvailable ? 'border-[#D4AF37]/30 text-[#D4AF37]' : 'border-red-500/30 text-red-400'
+            bleAvailable ? 'border-brand/30 text-brand' : 'border-red-500/30 text-red-400'
           )}>
             {bleAvailable ? <BluetoothConnected className="h-3 w-3" /> : <BluetoothOff className="h-3 w-3" />}
             {bleAvailable ? 'BLE Activo' : 'BLE Indisponivel'}
           </Badge>
-          <Button onClick={() => setShowAdd(!showAdd)} className="gap-2 bg-[#D4AF37] hover:bg-[#B8962E] text-white hover:shadow-[0_0_30px_-5px_rgba(212,175,55,0.3)] transition-all rounded-xl">
+          <Button onClick={() => setShowAdd(!showAdd)} className="gap-2 bg-brand hover:bg-brand-dark text-white hover:shadow-[0_0_30px_-5px_rgba(212,175,55,0.3)] transition-all rounded-xl">
             <Plus className="h-4 w-4" /> Adicionar
           </Button>
         </div>
@@ -237,7 +237,7 @@ export default function Devices() {
             const IconComp = s.icon
             return (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                <BeamBorder color={s.color === 'text-[#D4AF37]' ? '#D4AF37' : s.color === 'text-amber-400' ? '#F59E0B' : '#ffffff'}>
+                <BeamBorder color={s.color === 'text-brand' ? '#D4AF37' : s.color === 'text-amber-400' ? '#F59E0B' : '#ffffff'}>
                   <SpotlightCard className="p-5 flex items-center gap-4">
                     <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] animate-glow-pulse', s.color)}><IconComp className="h-5 w-5" /></div>
                     <div><p className="text-2xl font-display font-bold"><CounterAnimated target={s.value} /></p><p className="text-[11px] text-white/30">{s.label}</p></div>
@@ -291,7 +291,7 @@ export default function Devices() {
                       'w-full gap-3 py-6 rounded-xl text-sm font-medium transition-all',
                       bleScanning
                         ? 'bg-white/[0.04] border border-white/[0.08] text-white/50'
-                        : 'bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/20'
+                        : 'bg-brand/10 border border-brand/20 text-brand hover:bg-brand/20'
                     )}
                     variant="outline"
                   >
@@ -306,10 +306,10 @@ export default function Devices() {
                   {bleScanning && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center gap-3 mt-3">
                       <div className="relative">
-                        <div className="w-3 h-3 rounded-full bg-[#D4AF37] animate-ping absolute" />
-                        <div className="w-3 h-3 rounded-full bg-[#D4AF37] relative" />
+                        <div className="w-3 h-3 rounded-full bg-brand animate-ping absolute" />
+                        <div className="w-3 h-3 rounded-full bg-brand relative" />
                       </div>
-                      <span className="text-xs text-[#D4AF37]">Aguardando selecao do dispositivo no dialogo do sistema...</span>
+                      <span className="text-xs text-brand">Aguardando selecao do dispositivo no dialogo do sistema...</span>
                     </motion.div>
                   )}
                 </div>
@@ -338,19 +338,19 @@ export default function Devices() {
                             alreadyPaired
                               ? 'border-white/[0.04] bg-white/[0.02] opacity-50'
                               : isOfficial
-                                ? 'border-[#D4AF37]/30 bg-[#D4AF37]/[0.05] hover:bg-[#D4AF37]/[0.08]'
+                                ? 'border-brand/30 bg-brand/[0.05] hover:bg-brand/[0.08]'
                                 : 'border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.05]'
                           )}
                         >
-                          <div className={cn('p-2 rounded-lg', isOfficial ? 'bg-[#D4AF37]/15' : 'bg-[#D4AF37]/10')}>
-                            <IconComp className={cn('h-4 w-4', isOfficial ? 'text-[#D4AF37]' : 'text-[#D4AF37]/80')} />
+                          <div className={cn('p-2 rounded-lg', isOfficial ? 'bg-brand/15' : 'bg-brand/10')}>
+                            <IconComp className={cn('h-4 w-4', isOfficial ? 'text-brand' : 'text-brand/80')} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-white truncate">{d.name || 'Dispositivo desconhecido'}</p>
                             <p className="text-[10px] text-white/20 font-mono">{d.id.slice(0, 16)}...</p>
                           </div>
                           {isOfficial && (
-                            <Badge className="text-[10px] px-2 py-0.5 rounded-md bg-[#D4AF37] text-black font-bold shrink-0">
+                            <Badge className="text-[10px] px-2 py-0.5 rounded-md bg-brand text-black font-bold shrink-0">
                               ★ BELLVION
                             </Badge>
                           )}
@@ -366,7 +366,7 @@ export default function Devices() {
                               size="sm"
                               onClick={() => handlePair(d)}
                               disabled={pairingId === d.id}
-                              className="gap-1.5 h-8 text-[11px] bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-lg"
+                              className="gap-1.5 h-8 text-[11px] bg-brand hover:bg-brand-dark text-white rounded-lg"
                             >
                               {pairingId === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bluetooth className="h-3 w-3" />}
                               Parear
@@ -390,7 +390,7 @@ export default function Devices() {
                         className={cn(
                           'px-3 py-1.5 rounded-lg border text-[11px]',
                           c.official
-                            ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] text-[#D4AF37] font-semibold'
+                            ? 'border-brand/40 bg-brand/[0.08] text-brand font-semibold'
                             : 'border-white/[0.07] bg-white/[0.02] text-white/45'
                         )}
                         title={c.examples}
@@ -401,7 +401,7 @@ export default function Devices() {
                     ))}
                   </div>
                   <p className="text-[10px] text-white/30 mt-2.5">
-                    Dispositivos <span className="text-[#D4AF37]/80">BELLVION</span> reconhecidos automaticamente pelo nome — desbloqueiam o plano Bellvion (99 MT/mês) e funcionalidades exclusivas.
+                    Dispositivos <span className="text-brand/80">BELLVION</span> reconhecidos automaticamente pelo nome — desbloqueiam o plano Bellvion (99 MT/mês) e funcionalidades exclusivas.
                   </p>
                 </div>
               )}
@@ -427,7 +427,7 @@ export default function Devices() {
                   <Label className="text-white/40 text-xs">Tipo</Label>
                   <select
                     value={newType} onChange={(e) => setNewType(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm px-3 outline-none focus:border-[#D4AF37]/30"
+                    className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm px-3 outline-none focus:border-brand/30"
                   >
                     {Object.entries(typeLabels).map(([v, l]) => (
                       <option key={v} value={v} className="bg-[#0D1321]">{l}</option>
@@ -439,7 +439,7 @@ export default function Devices() {
                 <Button variant="ghost" onClick={() => setShowAdd(false)} className="text-white/30 hover:text-white hover:bg-white/[0.04] rounded-xl">Cancelar</Button>
                 <Button
                   onClick={handleManualAdd} disabled={isAdding || !newName.trim()}
-                  className="bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl"
+                  className="bg-brand hover:bg-brand-dark text-white rounded-xl"
                 >
                   {isAdding ? 'A guardar...' : 'Adicionar Manualmente'}
                 </Button>
@@ -462,8 +462,8 @@ export default function Devices() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-16"
         >
-          <div className="p-4 rounded-2xl bg-[#D4AF37]/[0.06] border border-[#D4AF37]/15 inline-block mb-5">
-            <Shield className="h-12 w-12 text-[#D4AF37]/60" strokeWidth={1.5} />
+          <div className="p-4 rounded-2xl bg-brand/[0.06] border border-brand/15 inline-block mb-5">
+            <Shield className="h-12 w-12 text-brand/60" strokeWidth={1.5} />
           </div>
           <h2 className="text-lg font-display font-semibold text-white mb-2">Pareie o seu primeiro dispositivo</h2>
           <p className="text-sm text-white/40 max-w-md mx-auto leading-relaxed">
@@ -471,19 +471,19 @@ export default function Devices() {
           </p>
           <div className="mt-8 max-w-sm mx-auto text-left space-y-3">
             <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold shrink-0 mt-0.5">1</span>
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-bold shrink-0 mt-0.5">1</span>
               <p className="text-sm text-white/50">Active o Bluetooth no seu dispositivo</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold shrink-0 mt-0.5">2</span>
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-bold shrink-0 mt-0.5">2</span>
               <p className="text-sm text-white/50">Prima &ldquo;Procurar Dispositivos&rdquo;</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold shrink-0 mt-0.5">3</span>
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-bold shrink-0 mt-0.5">3</span>
               <p className="text-sm text-white/50">Seleccione e pareie o dispositivo (ex: oculos inteligentes, fones, smartwatch)</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold shrink-0 mt-0.5">4</span>
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-bold shrink-0 mt-0.5">4</span>
               <p className="text-sm text-white/50">Active o monitoramento</p>
             </div>
           </div>
@@ -494,12 +494,12 @@ export default function Devices() {
             const IconComp = deviceIconMap[d.type] || Radio
             const st = statusLabels[d.bleConnected ? 'connected' : d.status] || statusLabels.offline
             const batt = d.bleBattery ?? d.battery
-            const battColor = batt > 50 ? 'bg-[#D4AF37]' : batt > 20 ? 'bg-amber-400' : 'bg-red-500'
+            const battColor = batt > 50 ? 'bg-brand' : batt > 20 ? 'bg-amber-400' : 'bg-red-500'
             const lastSeen = timeAgo(d.last_seen)
             // RSSI data
             const rssiReadings = d.bleDeviceId ? (rssiHistory?.get(d.bleDeviceId) || []) : []
             const currentRSSI = d.bleDeviceId && d.bleConnected ? getSignalStrength(d.bleDeviceId) : null
-            const rssiColor = currentRSSI === null ? 'bg-white/20' : currentRSSI > -50 ? 'bg-[#D4AF37]' : currentRSSI > -70 ? 'bg-amber-400' : 'bg-red-500'
+            const rssiColor = currentRSSI === null ? 'bg-white/20' : currentRSSI > -50 ? 'bg-brand' : currentRSSI > -70 ? 'bg-amber-400' : 'bg-red-500'
             const rssiBarWidth = currentRSSI === null ? 0 : Math.max(0, Math.min(100, ((currentRSSI + 100) / 55) * 100))
             return (
               <motion.div key={d.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
@@ -510,16 +510,16 @@ export default function Devices() {
                       <div className={cn(
                         'p-3 rounded-xl border transition-all duration-500',
                         d.bleConnected
-                          ? 'border-[#D4AF37]/30 bg-[#D4AF37]/10 shadow-[0_0_20px_-5px_rgba(212,175,55,0.2)]'
+                          ? 'border-brand/30 bg-brand/10 shadow-[0_0_20px_-5px_rgba(212,175,55,0.2)]'
                           : 'border-white/[0.06]'
                       )} style={!d.bleConnected ? { backgroundColor: d.color + '10' } : undefined}>
-                        <IconComp className={cn('h-5 w-5', d.bleConnected ? 'text-[#D4AF37]' : '')} style={!d.bleConnected ? { color: d.color } : undefined} strokeWidth={1.5} />
+                        <IconComp className={cn('h-5 w-5', d.bleConnected ? 'text-brand' : '')} style={!d.bleConnected ? { color: d.color } : undefined} strokeWidth={1.5} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-display font-semibold text-sm truncate">{d.name}</p>
                           {d.bleConnected && (
-                            <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse shrink-0" />
+                            <div className="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0" />
                           )}
                         </div>
                         <p className="text-[10px] text-white/20 font-mono mt-0.5">{d.mac_address}</p>
@@ -565,7 +565,7 @@ export default function Devices() {
                       <Switch
                         checked={d.is_monitored}
                         onCheckedChange={() => toggleMonitor(d.id, d.is_monitored)}
-                        className="data-[state=checked]:bg-[#D4AF37]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     </div>
 
@@ -583,7 +583,7 @@ export default function Devices() {
                         ) : (
                           <Button
                             variant="outline" size="sm" onClick={() => handleReconnect(d)}
-                            className="flex-1 text-[11px] gap-1.5 border-[#D4AF37]/20 text-[#D4AF37]/70 hover:text-[#D4AF37] hover:bg-[#D4AF37]/[0.06] rounded-xl"
+                            className="flex-1 text-[11px] gap-1.5 border-brand/20 text-brand/70 hover:text-brand hover:bg-brand/[0.06] rounded-xl"
                           >
                             <RefreshCw className="h-3.5 w-3.5" /> Reconectar
                           </Button>

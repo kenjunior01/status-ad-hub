@@ -150,7 +150,7 @@ export default function DiscreetModeSettings() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6" onClick={() => setShowPinSetup(null)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+              className="bg-card rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <h3 className="text-white text-center text-lg font-semibold mb-1">
                 {showPinSetup === 'normal' ? 'Definir PIN Normal' : 'Definir Duress PIN'}
               </h3>
@@ -188,15 +188,15 @@ function ToggleRow({ icon: Icon, label, description, checked, onChange }: {
   return (
     <button onClick={() => onChange(!checked)}
       className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition text-left">
-      <div className={cn('p-2 rounded-lg', checked ? 'bg-[#D4AF37]/10' : 'bg-white/5')}>
-        <Icon className={cn('w-4 h-4', checked ? 'text-[#D4AF37]' : 'text-white/30')} />
+      <div className={cn('p-2 rounded-lg', checked ? 'bg-brand/10' : 'bg-white/5')}>
+        <Icon className={cn('w-4 h-4', checked ? 'text-brand' : 'text-white/30')} />
       </div>
       <div className="flex-1">
         <div className="text-white text-sm">{label}</div>
         <div className="text-white/30 text-[11px]">{description}</div>
       </div>
-      <div className={cn('w-10 h-6 rounded-full transition-colors relative', checked ? 'bg-[#D4AF37]/30' : 'bg-white/10')}>
-        <div className={cn('absolute top-1 w-4 h-4 rounded-full transition-all', checked ? 'left-5 bg-[#D4AF37]' : 'left-1 bg-white/30')} />
+      <div className={cn('w-10 h-6 rounded-full transition-colors relative', checked ? 'bg-brand/30' : 'bg-white/10')}>
+        <div className={cn('absolute top-1 w-4 h-4 rounded-full transition-all', checked ? 'left-5 bg-brand' : 'left-1 bg-white/30')} />
       </div>
     </button>
   )

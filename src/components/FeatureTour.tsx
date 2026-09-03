@@ -48,7 +48,7 @@ const TOUR_STEPS: TourStep[] = [
       'Toque em "Seguinte" para avançar no tutorial',
       'Pode saltar quando quiser — rever depois nas Acções Rápidas',
     ],
-    accent: 'text-[#D4AF37]',
+    accent: 'text-brand',
   },
   {
     id: 'sos',
@@ -109,7 +109,7 @@ const TOUR_STEPS: TourStep[] = [
       'No Cofre: Partilhar envia o áudio; o botão Sincronizar sobe tudo à nuvem',
     ],
     link: { label: 'Abrir Cofre de Evidências', to: '/dashboard/evidencias' },
-    accent: 'text-[#D4AF37]',
+    accent: 'text-brand',
   },
   {
     id: 'escapes',
@@ -224,7 +224,7 @@ export function FeatureTour() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-            className="relative w-full max-w-lg rounded-3xl border border-[#D4AF37]/25 bg-gradient-to-b from-[#171410] to-[#0C0B08] p-6 sm:p-8 shadow-2xl shadow-[#D4AF37]/10"
+            className="relative w-full max-w-lg rounded-3xl border border-brand/25 bg-gradient-to-b from-[#171410] to-background p-6 sm:p-8 shadow-2xl shadow-brand/10"
           >
             {/* Fechar / saltar */}
             <button
@@ -247,7 +247,7 @@ export function FeatureTour() {
 
             {/* Badge + título */}
             <div className="text-center">
-              <span className="inline-block rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-0.5 text-[10px] font-bold tracking-widest text-[#D4AF37]">
+              <span className="inline-block rounded-full border border-brand/30 bg-brand/10 px-3 py-0.5 text-[10px] font-bold tracking-widest text-brand">
                 {step.badge}
               </span>
               <h2 className="mt-3 text-xl font-bold text-white sm:text-2xl">{step.title}</h2>
@@ -258,7 +258,7 @@ export function FeatureTour() {
             <ul className="mt-5 space-y-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
               {step.howTo.map((tip, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-[13px] text-white/70">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
                   <span>{tip}</span>
                 </li>
               ))}
@@ -268,7 +268,7 @@ export function FeatureTour() {
             {step.link && (
               <button
                 onClick={() => goLink(step.link!.to)}
-                className="mt-4 w-full rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 py-2.5 text-sm font-medium text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20"
+                className="mt-4 w-full rounded-xl border border-brand/30 bg-brand/10 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand/20"
               >
                 {step.link.label} →
               </button>
@@ -293,7 +293,7 @@ export function FeatureTour() {
                     aria-label={`Passo ${i + 1}`}
                     className={cn(
                       'h-1.5 rounded-full transition-all',
-                      i === stepIndex ? 'w-6 bg-[#D4AF37]' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                      i === stepIndex ? 'w-6 bg-brand' : 'w-1.5 bg-white/20 hover:bg-white/40'
                     )}
                   />
                 ))}
@@ -301,7 +301,7 @@ export function FeatureTour() {
 
               <button
                 onClick={next}
-                className="flex items-center gap-1 rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-bold text-black transition-transform hover:scale-[1.02] active:scale-95"
+                className="flex items-center gap-1 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black transition-transform hover:scale-[1.02] active:scale-95"
               >
                 {isLast ? 'Concluir' : 'Seguinte'} <ChevronRight className="h-4 w-4" />
               </button>

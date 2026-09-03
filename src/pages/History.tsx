@@ -30,7 +30,7 @@ const typeFilters: { key: EventType | 'all'; label: string; icon: React.ElementT
 ]
 
 const eventConfig: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  location: { icon: MapPin, color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10 border border-[#D4AF37]/15', label: 'Localizacao' },
+  location: { icon: MapPin, color: 'text-brand', bg: 'bg-brand/10 border border-brand/15', label: 'Localizacao' },
   alert: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10 border border-red-500/15', label: 'Alerta' },
   shield: { icon: Shield, color: 'text-blue-400', bg: 'bg-blue-500/10 border border-blue-500/15', label: 'Escudo' },
   bluetooth: { icon: Bluetooth, color: 'text-purple-400', bg: 'bg-purple-500/10 border border-purple-500/15', label: 'Bluetooth' },
@@ -84,7 +84,7 @@ export default function History() {
   const stats = useMemo(() => [
     { label: 'Eventos', value: filteredEvents.length, icon: Activity, color: 'text-white' },
     { label: 'Alertas', value: filteredEvents.filter(e => e.type === 'alert' || e.type === 'emergency').length, icon: AlertTriangle, color: 'text-red-400' },
-    { label: 'Localizacoes', value: filteredEvents.filter(e => e.type === 'location').length, icon: MapPin, color: 'text-[#D4AF37]' },
+    { label: 'Localizacoes', value: filteredEvents.filter(e => e.type === 'location').length, icon: MapPin, color: 'text-brand' },
   ], [filteredEvents])
 
   const showShimmer = shimmerLoading || isLoading
@@ -124,7 +124,7 @@ export default function History() {
   }, [filteredEvents, activePeriod])
 
   return (
-    <div className="min-h-screen bg-[#0C0B08] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-white">Historico</h1>
@@ -150,7 +150,7 @@ export default function History() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl bg-[#14120D] border border-white/[0.08] shadow-xl overflow-hidden"
+                  className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl bg-card border border-white/[0.08] shadow-xl overflow-hidden"
                 >
                   <button
                     onClick={handleExportCSV}
@@ -179,7 +179,7 @@ export default function History() {
           <button key={f.key} onClick={() => setActivePeriod(f.key)} className={cn(
             'px-4 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 border',
             activePeriod === f.key
-              ? 'bg-[#D4AF37] text-white border-[#D4AF37]/30 shadow-[0_0_20px_-5px_rgba(212,175,55,0.2)]'
+              ? 'bg-brand text-white border-brand/30 shadow-[0_0_20px_-5px_rgba(212,175,55,0.2)]'
               : 'bg-white/[0.02] text-white/35 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/60'
           )}>{f.label}</button>
         ))}
@@ -194,7 +194,7 @@ export default function History() {
           <Filter className="h-3.5 w-3.5" />
           Filtrar por tipo
           {activeType !== 'all' && (
-            <span className="px-1.5 py-0.5 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-medium">
+            <span className="px-1.5 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
               {typeFilters.find(f => f.key === activeType)?.label}
               <button onClick={(e) => { e.stopPropagation(); setActiveType('all') }} className="ml-1 hover:text-white"><X className="h-2.5 w-2.5 inline" /></button>
             </span>
@@ -219,7 +219,7 @@ export default function History() {
                       className={cn(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 border',
                         activeType === f.key
-                          ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20'
+                          ? 'bg-brand/10 text-brand border-brand/20'
                           : 'bg-white/[0.02] text-white/30 border-white/[0.06] hover:bg-white/[0.05] hover:text-white/50'
                       )}
                     >
@@ -240,7 +240,7 @@ export default function History() {
           const IconComp = s.icon
           return (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-              <BeamBorder color={s.color === 'text-red-400' ? '#EF4444' : s.color === 'text-[#D4AF37]' ? '#D4AF37' : '#ffffff'}>
+              <BeamBorder color={s.color === 'text-red-400' ? '#EF4444' : s.color === 'text-brand' ? '#D4AF37' : '#ffffff'}>
                 <SpotlightCard className="p-5 flex items-center gap-4">
                   <div className={cn('p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]', s.color)}><IconComp className="h-5 w-5" /></div>
                   <div><p className="text-2xl font-display font-bold"><CounterAnimated target={s.value} /></p><p className="text-[11px] text-white/30">{s.label}</p></div>
@@ -291,7 +291,7 @@ export default function History() {
           {activeType !== 'all' && (
             <button
               onClick={() => setActiveType('all')}
-              className="mt-3 text-xs text-[#D4AF37]/60 hover:text-[#D4AF37] transition"
+              className="mt-3 text-xs text-brand/60 hover:text-brand transition"
             >
               Limpar filtros
             </button>
@@ -313,7 +313,7 @@ export default function History() {
                 transition={{ delay: i * 0.06, type: 'spring', stiffness: 120 }}
                 className="relative flex gap-4 pb-5 last:pb-0"
               >
-                <div className={cn('relative z-10 h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border border-[#0C0B08]', config.bg)}>
+                <div className={cn('relative z-10 h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border border-background', config.bg)}>
                   <IconComp className={cn('h-4 w-4', config.color)} strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 pt-1">
@@ -365,7 +365,7 @@ export default function History() {
                                   href={`https://www.google.com/maps?q=${event.latitude},${event.longitude}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] text-[#D4AF37]/50 hover:text-[#D4AF37] transition ml-1"
+                                  className="text-[10px] text-brand/50 hover:text-brand transition ml-1"
                                 >
                                   Ver no Maps
                                 </a>
@@ -408,13 +408,13 @@ export default function History() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleExportCSV}
-                className="text-[10px] text-[#D4AF37]/40 hover:text-[#D4AF37] transition flex items-center gap-1"
+                className="text-[10px] text-brand/40 hover:text-brand transition flex items-center gap-1"
               >
                 <Download className="h-3 w-3" /> CSV
               </button>
               <button
                 onClick={handleExportJSON}
-                className="text-[10px] text-[#D4AF37]/40 hover:text-[#D4AF37] transition flex items-center gap-1"
+                className="text-[10px] text-brand/40 hover:text-brand transition flex items-center gap-1"
               >
                 <Activity className="h-3 w-3" /> JSON
               </button>

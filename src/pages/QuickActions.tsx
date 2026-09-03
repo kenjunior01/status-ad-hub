@@ -415,9 +415,9 @@ export default function QuickActions() {
       title: 'Cofre de Evidências',
       description: 'Gravações de áudio guardadas como prova segura',
       icon: Archive,
-      color: 'text-[#D4AF37]',
-      bgColor: 'bg-[#D4AF37]/10',
-      borderColor: 'border-[#D4AF37]/20',
+      color: 'text-brand',
+      bgColor: 'bg-brand/10',
+      borderColor: 'border-brand/20',
       action: () => navigate('/dashboard/evidencias'),
     },
     // GRAVAÇÃO RÁPIDA — grava ao vivo e guarda no cofre (o elo que faltava)
@@ -450,9 +450,9 @@ export default function QuickActions() {
       title: 'Dicas de Segurança',
       description: `${tipCount} dicas práticas — casa, rua, táxis, online e mais`,
       icon: Lightbulb,
-      color: 'text-[#D4AF37]',
-      bgColor: 'bg-[#D4AF37]/[0.08]',
-      borderColor: 'border-[#D4AF37]/20',
+      color: 'text-brand',
+      bgColor: 'bg-brand/[0.08]',
+      borderColor: 'border-brand/20',
       action: () => navigate('/dashboard/dicas'),
       badge: 'DICA DIÁRIA',
     },
@@ -486,7 +486,7 @@ export default function QuickActions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Zap className="w-6 h-6 text-[#D4AF37]" />
+            <Zap className="w-6 h-6 text-brand" />
             Acções Rápidas
           </h1>
           <p className="text-white/40 text-sm mt-1">Acesso instantâneo a todas as funcionalidades de segurança</p>
@@ -501,13 +501,13 @@ export default function QuickActions() {
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors',
               s.active
-                ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20'
+                ? 'bg-brand/10 text-brand border border-brand/20'
                 : 'bg-white/[0.03] text-white/20 border border-white/[0.05]'
             )}
           >
             <s.icon className="w-3 h-3" />
             <span>{s.label}</span>
-            {s.active && <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />}
+            {s.active && <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />}
           </div>
         ))}
       </div>
@@ -517,7 +517,7 @@ export default function QuickActions() {
         <BeamBorder color={safetyScore >= 80 ? '#D4AF37' : safetyScore >= 50 ? '#F59E0B' : '#EF4444'}>
           <SpotlightCard className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-4 w-4 text-[#D4AF37]" />
+              <Shield className="h-4 w-4 text-brand" />
               <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Pontuacao de Seguranca</h2>
             </div>
             <SafetyScoreGauge score={safetyScore} factors={safetyFactors} size={180} showDetails={true} />
@@ -526,7 +526,7 @@ export default function QuickActions() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-[#D4AF37]" />
+            <Phone className="h-4 w-4 text-brand" />
             <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Discagem Rapida</h2>
           </div>
           <EmergencyQuickDial compact={false} maxContacts={5} />
@@ -536,7 +536,7 @@ export default function QuickActions() {
       {/* Location Share Link */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Share2 className="h-4 w-4 text-[#D4AF37]" />
+          <Share2 className="h-4 w-4 text-brand" />
           <h2 className="text-white/60 text-sm font-medium uppercase tracking-wider">Partilha de Localizacao</h2>
         </div>
         <LocationShareLink />
@@ -622,13 +622,13 @@ export default function QuickActions() {
                     {action.badge && (
                       <span className={cn(
                         'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
-                        action.isActive ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-white/10 text-white/40'
+                        action.isActive ? 'bg-brand/20 text-brand' : 'bg-white/10 text-white/40'
                       )}>
                         {action.badge}
                       </span>
                     )}
                     {action.isActive && action.activeLabel && (
-                      <span className="text-[10px] text-[#D4AF37] font-medium">{action.activeLabel}</span>
+                      <span className="text-[10px] text-brand font-medium">{action.activeLabel}</span>
                     )}
                     <ChevronRight className="w-4 h-4 text-white/20" />
                   </div>
@@ -653,7 +653,7 @@ export default function QuickActions() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm"
+              className="bg-card rounded-2xl p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-center mb-4">
@@ -699,7 +699,7 @@ export default function QuickActions() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#221E16] rounded-2xl p-6 w-full max-w-sm"
+              className="bg-card rounded-2xl p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-center mb-4">

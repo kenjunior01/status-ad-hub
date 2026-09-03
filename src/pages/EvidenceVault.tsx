@@ -207,28 +207,28 @@ export default function EvidenceVault() {
   }
 
   return (
-    <div className="dark min-h-screen bg-[#0C0B08] text-white relative">
+    <div className="dark min-h-screen bg-background text-white relative">
       <NoiseTexture opacity={0.015} />
-      <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 backdrop-blur-2xl bg-[#0C0B08]/80 border-b border-white/[0.04]">
+      <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 backdrop-blur-2xl bg-background/80 border-b border-white/[0.04]">
         <div className="flex items-center gap-2.5">
           <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition">
             <ArrowLeft className="h-5 w-5 text-white/50" />
           </button>
-          <Archive className="h-4 w-4 text-[#D4AF37]" />
+          <Archive className="h-4 w-4 text-brand" />
           <span className="text-sm font-bold">Cofre de Evidências</span>
         </div>
         <Badge variant="outline" className="text-[10px] text-white/40 border-white/10">{items.length} gravações</Badge>
       </header>
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-4">
-        <div className="rounded-2xl border border-[#D4AF37]/15 bg-gradient-to-b from-[#D4AF37]/[0.06] to-transparent p-5 flex items-start gap-3">
-          <div className="h-9 w-9 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-            <Shield className="h-4.5 w-4.5 text-[#D4AF37]" />
+        <div className="rounded-2xl border border-brand/15 bg-gradient-to-b from-brand/[0.06] to-transparent p-5 flex items-start gap-3">
+          <div className="h-9 w-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+            <Shield className="h-4.5 w-4.5 text-brand" />
           </div>
           <div>
             <h1 className="font-display font-bold text-base">Provas que falam por ti</h1>
             <p className="text-xs text-white/40 mt-1 leading-relaxed">
-              Grave áudio em qualquer momento — fica guardado no <span className="text-[#D4AF37]/80 font-medium">histórico da sua conta na nuvem</span> e
+              Grave áudio em qualquer momento — fica guardado no <span className="text-brand/80 font-medium">histórico da sua conta na nuvem</span> e
               no dispositivo. Disponível como prova mesmo que perca o telemóvel.
             </p>
           </div>
@@ -237,7 +237,7 @@ export default function EvidenceVault() {
         {/* ── DICAS: como funciona o fluxo da gravação ── */}
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
           <p className="flex items-center gap-2 text-xs font-semibold text-white/70 mb-3.5">
-            <Info className="h-3.5 w-3.5 text-[#D4AF37]" /> Como usar as gravações
+            <Info className="h-3.5 w-3.5 text-brand" /> Como usar as gravações
           </p>
           <div className="space-y-3">
             {[
@@ -246,7 +246,7 @@ export default function EvidenceVault() {
               { n: '3', t: 'Partilhe com quem confia', d: 'Toque em Partilhar numa gravação para enviar por WhatsApp, Telegram, SMS ou e-mail — o ficheiro de áudio vai anexado. Pode também descarregar para guardar fora do telemóvel.' },
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-3">
-                <div className="h-6 w-6 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center shrink-0 text-[11px] font-bold text-[#D4AF37]">{s.n}</div>
+                <div className="h-6 w-6 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0 text-[11px] font-bold text-brand">{s.n}</div>
                 <div>
                   <p className="text-[13px] font-semibold text-white/85">{s.t}</p>
                   <p className="text-[11px] text-white/35 leading-relaxed mt-0.5">{s.d}</p>
@@ -274,7 +274,7 @@ export default function EvidenceVault() {
                   'relative flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-95 disabled:opacity-50',
                   recorder.isRecording
                     ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                    : 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/25'
+                    : 'bg-brand text-black shadow-lg shadow-brand/25'
                 )}
                 aria-label={recorder.isRecording ? 'Parar gravação' : 'Começar a gravar'}
               >
@@ -325,19 +325,19 @@ export default function EvidenceVault() {
         {!isPremium && items.length > FREE_LIMIT && (
           <button
             onClick={() => navigate('/dashboard/assinatura')}
-            className="w-full flex items-center gap-3 rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/[0.06] p-4 text-left hover:bg-[#D4AF37]/[0.1] transition"
+            className="w-full flex items-center gap-3 rounded-2xl border border-brand/25 bg-brand/[0.06] p-4 text-left hover:bg-brand/[0.1] transition"
           >
-            <Lock className="h-4.5 w-4.5 text-[#D4AF37] shrink-0" />
+            <Lock className="h-4.5 w-4.5 text-brand shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-[#D4AF37]">{locked} evidência(s) bloqueada(s)</p>
+              <p className="text-sm font-semibold text-brand">{locked} evidência(s) bloqueada(s)</p>
               <p className="text-[11px] text-white/40">O plano {state?.plan.name} mostra as {FREE_LIMIT} mais recentes. Premium = arquivo completo ilimitado.</p>
             </div>
-            <Sparkles className="h-4 w-4 text-[#D4AF37]" />
+            <Sparkles className="h-4 w-4 text-brand" />
           </button>
         )}
 
         {loading && (
-          <div className="py-16 text-center"><Loader2 className="h-7 w-7 text-[#D4AF37] animate-spin mx-auto" /></div>
+          <div className="py-16 text-center"><Loader2 className="h-7 w-7 text-brand animate-spin mx-auto" /></div>
         )}
 
         {!loading && items.length === 0 && (
@@ -360,8 +360,8 @@ export default function EvidenceVault() {
                   className={cn(
                     'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border transition-all',
                     playingId === e.id
-                      ? 'bg-[#D4AF37] border-[#D4AF37] text-black'
-                      : 'bg-[#D4AF37]/10 border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/20',
+                      ? 'bg-brand border-brand text-black'
+                      : 'bg-brand/10 border-brand/20 text-brand hover:bg-brand/20',
                   )}
                   aria-label={playingId === e.id ? 'Parar reprodução' : 'Reproduzir gravação'}
                 >
@@ -376,17 +376,17 @@ export default function EvidenceVault() {
                       {Math.floor(e.duration_seconds / 60)}:{String(e.duration_seconds % 60).padStart(2, '0')} · {(e.file_size_bytes / 1024).toFixed(0)} KB
                     </span>
                     {!e.audio_data_b64?.startsWith('data:') && (
-                      <span className="inline-flex items-center gap-1 text-[#D4AF37]/50 not-italic" title="Guardada na nuvem">
+                      <span className="inline-flex items-center gap-1 text-brand/50 not-italic" title="Guardada na nuvem">
                         <CloudUpload className="h-3 w-3" /> nuvem
                       </span>
                     )}
                   </p>
                 </div>
-                <button onClick={() => void handleShare(e)} disabled={sharingId === e.id} className="p-2 rounded-lg hover:bg-[#D4AF37]/[0.08] transition disabled:opacity-50" title="Partilhar (WhatsApp, SMS…)">
-                  {sharingId === e.id ? <Loader2 className="h-4 w-4 text-[#D4AF37] animate-spin" /> : <Share2 className="h-4 w-4 text-white/40 hover:text-[#D4AF37]" />}
+                <button onClick={() => void handleShare(e)} disabled={sharingId === e.id} className="p-2 rounded-lg hover:bg-brand/[0.08] transition disabled:opacity-50" title="Partilhar (WhatsApp, SMS…)">
+                  {sharingId === e.id ? <Loader2 className="h-4 w-4 text-brand animate-spin" /> : <Share2 className="h-4 w-4 text-white/40 hover:text-brand" />}
                 </button>
                 <button onClick={() => void handleDownload(e)} className="p-2 rounded-lg hover:bg-white/[0.06] transition" title="Descarregar">
-                  <Download className="h-4 w-4 text-white/40 hover:text-[#D4AF37]" />
+                  <Download className="h-4 w-4 text-white/40 hover:text-brand" />
                 </button>
                 <button onClick={() => setDeleteId(e.id)} className="p-2 rounded-lg hover:bg-red-500/[0.08] transition" title="Eliminar">
                   <Trash2 className="h-4 w-4 text-white/25 hover:text-red-400" />
@@ -404,7 +404,7 @@ export default function EvidenceVault() {
                     />
                   ) : (
                     <div className="flex items-center gap-2 py-1.5">
-                      <Loader2 className="h-3.5 w-3.5 text-[#D4AF37] animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 text-brand animate-spin" />
                       <p className="text-[11px] text-white/30">A abrir o áudio…</p>
                     </div>
                   )}
@@ -428,7 +428,7 @@ export default function EvidenceVault() {
 
       {/* Confirmação de eliminação */}
       <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <DialogContent className="bg-[#14120D] border-white/10 text-white max-w-xs">
+        <DialogContent className="bg-card border-white/10 text-white max-w-xs">
           <div className="text-center space-y-3 py-2">
             <div className="h-11 w-11 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
               <Trash2 className="h-5 w-5 text-red-400" />
