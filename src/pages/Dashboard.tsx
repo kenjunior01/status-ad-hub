@@ -46,12 +46,12 @@ import { toast } from 'sonner'
 import type { Device } from '@/lib/types'
 
 type DisplayDevice = {
-  id: string; name: string; type: 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'other'
+  id: string; name: string; type: 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'bellvion' | 'tracker' | 'panic_button' | 'other'
   lat: number; lng: number; color: string; status: string
   battery: number; lastSeen: string
 }
 
-const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch, other: Wifi }
+const deviceIconMap: Record<string, React.ElementType> = { phone: Smartphone, airpods: Headphones, smartwatch: Watch, smart_glasses: Watch, bellvion: Watch, tracker: Wifi, panic_button: Bell, other: Wifi }
 const statusLabels: Record<string, { label: string; className: string }> = {
   online: { label: 'Online', className: 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20' },
   connected: { label: 'Conectado', className: 'bg-blue-500/15 text-blue-400 border border-blue-500/20' },

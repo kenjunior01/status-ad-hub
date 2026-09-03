@@ -14,6 +14,7 @@ import { CheckoutDialog } from '@/components/CheckoutDialog'
 import {
   usePlans, usePlanState, useMyPayments, useDemoMode, useCancelSubscription,
 } from '@/hooks/useSubscription'
+import { useBellvion } from '@/hooks/useBellvion'
 import { capturePaypal, formatMzn, formatDate, formatDateTime, METHOD_LABELS, type Plan, type PlanSlug, type Payment } from '@/lib/payments'
 import { cn } from '@/lib/utils'
 
@@ -37,6 +38,7 @@ export default function Subscription() {
   const { data: plans = [] } = usePlans()
   const { data: isDemo } = useDemoMode()
   const cancelSub = useCancelSubscription()
+  const { hasDevice: hasBellvion } = useBellvion()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null)
@@ -143,8 +145,8 @@ export default function Subscription() {
           <div className="flex flex-wrap gap-2.5 mt-5">
             {plan?.slug === 'free' ? (
               <>
-                <Button onClick={() => openCheckout('familia')} className="bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl h-10 gap-2">
-                  <Zap className="h-4 w-4" /> Fazer Upgrade
+                <Button onClick={() => openCheckout(hasBellvion ? 'bellvion' : 'familia')} className="bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold rounded-xl h-10 gap-2">
+                  <Zap className="h-4 w-4" /> {hasBellvion ? 'Activar Bellvion · 99 MT' : 'Fazer Upgrade'}
                 </Button>
                 <Button variant="outline" onClick={() => openCheckout('premium')} className="border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20 rounded-xl h-10">
                   Ver Premium

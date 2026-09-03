@@ -15,13 +15,14 @@ import { cn } from '@/lib/utils'
 import { useDevices } from '@/hooks/useDevices'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useEmergency } from '@/hooks/useEmergency'
-import { isBluetoothAvailable, classifyDevice } from '@/lib/web-bluetooth'
+import { isBluetoothAvailable, classifyDevice, isBellvionName, COMPATIBLE_DEVICES } from '@/lib/web-bluetooth'
 import { SpotlightCard, BeamBorder, Shimmer, CounterAnimated } from '@/components/effects'
 
-type DeviceType = 'phone' | 'airpods' | 'smartwatch' | 'other'
+type DeviceType = 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'bellvion' | 'tracker' | 'panic_button' | 'other'
 
 const deviceIconMap: Record<string, React.ElementType> = {
-  phone: Smartphone, airpods: Headphones, smartwatch: Watch, smart_glasses: Glasses, other: Radio,
+  phone: Smartphone, airpods: Headphones, smartwatch: Watch, smart_glasses: Glasses,
+  bellvion: Watch, tracker: Radio, panic_button: AlertTriangle, other: Radio,
 }
 const statusLabels: Record<string, { label: string; className: string }> = {
   online: { label: 'Online', className: 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20' },
@@ -30,7 +31,8 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   offline: { label: 'Offline', className: 'bg-white/[0.06] text-white/30 border border-white/[0.06]' },
 }
 const typeLabels: Record<string, string> = {
-  phone: 'Telemovel', airpods: 'Fones Bluetooth', smartwatch: 'Relogio Inteligente', smart_glasses: 'Oculos Inteligentes', other: 'Outro',
+  phone: 'Telemovel', airpods: 'Fones Bluetooth', smartwatch: 'Relogio Inteligente', smart_glasses: 'Oculos Inteligentes',
+  bellvion: 'BELLVION Oficial', tracker: 'Rastreador', panic_button: 'Botao de Panico', other: 'Outro',
 }
 
 function timeAgo(dateStr: string): string {
@@ -325,6 +327,7 @@ export default function Devices() {
                       const alreadyPaired = devices.some((existing) =>
                         existing.mac_address.includes(d.id.replace(/-/g, ':').toUpperCase().slice(-12))
                       )
+                      const isOfficial = isBellvionName(d.name)
                       return (
                         <motion.div
                           key={d.id}
@@ -334,17 +337,24 @@ export default function Devices() {
                             'flex items-center gap-3 p-3 rounded-xl border transition-colors',
                             alreadyPaired
                               ? 'border-white/[0.04] bg-white/[0.02] opacity-50'
-                              : 'border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.05]'
+                              : isOfficial
+                                ? 'border-[#D4AF37]/30 bg-[#D4AF37]/[0.05] hover:bg-[#D4AF37]/[0.08]'
+                                : 'border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.05]'
                           )}
                         >
-                          <div className="p-2 rounded-lg bg-[#D4AF37]/10">
-                            <IconComp className="h-4 w-4 text-[#D4AF37]" />
+                          <div className={cn('p-2 rounded-lg', isOfficial ? 'bg-[#D4AF37]/15' : 'bg-[#D4AF37]/10')}>
+                            <IconComp className={cn('h-4 w-4', isOfficial ? 'text-[#D4AF37]' : 'text-[#D4AF37]/80')} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-white truncate">{d.name || 'Dispositivo desconhecido'}</p>
                             <p className="text-[10px] text-white/20 font-mono">{d.id.slice(0, 16)}...</p>
                           </div>
-                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md border-white/[0.06] text-white/30">
+                          {isOfficial && (
+                            <Badge className="text-[10px] px-2 py-0.5 rounded-md bg-[#D4AF37] text-black font-bold shrink-0">
+                              ★ BELLVION
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md border-white/[0.06] text-white/30 shrink-0">
                             {typeLabels[d.deviceClass] || 'Outro'}
                           </Badge>
                           {alreadyPaired ? (
@@ -366,6 +376,33 @@ export default function Devices() {
                       )
                     })}
                   </div>
+                </div>
+              )}
+
+              {/* Compatibilidade universal BLE */}
+              {bleAvailable && (
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 mb-5">
+                  <p className="text-xs font-semibold text-white/70 mb-2.5">Aceita qualquer dispositivo Bluetooth</p>
+                  <div className="flex flex-wrap gap-2">
+                    {COMPATIBLE_DEVICES.map((c) => (
+                      <div
+                        key={c.brand}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg border text-[11px]',
+                          c.official
+                            ? 'border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] text-[#D4AF37] font-semibold'
+                            : 'border-white/[0.07] bg-white/[0.02] text-white/45'
+                        )}
+                        title={c.examples}
+                      >
+                        {c.official && '★ '}{c.brand}
+                        <span className="text-white/25 ml-1.5 hidden sm:inline">· {c.examples}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-2.5">
+                    Dispositivos <span className="text-[#D4AF37]/80">BELLVION</span> reconhecidos automaticamente pelo nome — desbloqueiam o plano Bellvion (99 MT/mês) e funcionalidades exclusivas.
+                  </p>
                 </div>
               )}
 

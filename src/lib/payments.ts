@@ -9,7 +9,7 @@
 import { supabase } from '@/lib/supabase'
 
 // ── Tipos ──
-export type PlanSlug = 'free' | 'familia' | 'premium'
+export type PlanSlug = 'free' | 'familia' | 'bellvion' | 'premium'
 export type PaymentMethod = 'mpesa' | 'emola' | 'mkesh' | 'paypal' | 'manual' | 'bank'
 export type PaymentStatus = 'pending' | 'processing' | 'confirmed' | 'failed' | 'cancelled' | 'refunded'
 
@@ -91,6 +91,25 @@ export const FALLBACK_PLANS: Plan[] = [
       'Rota segura com GPS',
       '3 dispositivos BLE',
       'Suporte prioritário',
+    ],
+  },
+  {
+    slug: 'bellvion',
+    name: 'Bellvion',
+    description: 'Preço exclusivo para quem tem um dispositivo BELLVION',
+    price_mzn: 99,
+    price_usd: 1.59,
+    max_contacts: 6,
+    max_devices: 5,
+    features: [
+      'Tudo do plano Família',
+      'Preço reduzido — 60% de desconto para sempre',
+      'SOS pelo botão do dispositivo BELLVION',
+      'Detecção de queda do BELLVION Watch',
+      'Gravação de evidências pelos BELLVION Glasses',
+      '6 contactos de emergência',
+      '5 dispositivos BLE (da marca ou outros)',
+      'Suporte prioritário da marca',
     ],
   },
   {

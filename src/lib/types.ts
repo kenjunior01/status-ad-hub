@@ -2,7 +2,7 @@
 // StatusAds Connect — Domain Types
 // ============================================
 
-export type DeviceType = 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'other'
+export type DeviceType = 'phone' | 'airpods' | 'smartwatch' | 'smart_glasses' | 'bellvion' | 'tracker' | 'panic_button' | 'other'
 export type DeviceStatus = 'online' | 'connected' | 'offline' | 'low_battery'
 export type EventType = 'location' | 'alert' | 'shield' | 'bluetooth' | 'emergency' | 'geofence' | 'checkin' | 'glasses_sos' | 'audio_evidence' | 'glasses_removal' | 'voice_sos' | 'panic_mode' | 'threat_detected' | 'dead_mans_switch' | 'community_alert' | 'photo_evidence' | 'safe_route'
 export type ContactRelation = 'parente' | 'conjuge' | 'amigo' | 'colega' | 'outro'

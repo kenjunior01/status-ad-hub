@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check, Shield, Sparkles, Heart, Star, CreditCard, Smartphone, Globe, Lock, ArrowLeft, BadgeCheck } from 'lucide-react'
+import { Check, Shield, Sparkles, Heart, Star, CreditCard, Smartphone, Globe, Lock, ArrowLeft, BadgeCheck, Watch, KeyRound, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { NoiseTexture, MorphingBlob, BeamBorder, GlowCard } from '@/components/effects'
 import { CheckoutDialog } from '@/components/CheckoutDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { usePlans, usePlanState, useDemoMode } from '@/hooks/useSubscription'
+import { useBellvion } from '@/hooks/useBellvion'
 import { formatMzn, type Plan } from '@/lib/payments'
 import { cn } from '@/lib/utils'
 
@@ -19,8 +21,10 @@ export default function Pricing() {
   const { data: plans = [] } = usePlans()
   const { state } = usePlanState()
   const { data: isDemo } = useDemoMode()
+  const { hasDevice: hasBellvion, verifyByCode, verifying } = useBellvion()
   const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [verifyOpen, setVerifyOpen] = useState(false)
 
   function choose(plan: Plan) {
     if (plan.slug === 'free') {
@@ -29,6 +33,11 @@ export default function Pricing() {
     }
     if (!user) {
       navigate('/login')
+      return
+    }
+    // Plano Bellvion exige dispositivo da marca activado — sem ele, abre a verificação
+    if (plan.slug === 'bellvion' && !hasBellvion) {
+      setVerifyOpen(true)
       return
     }
     setCheckoutPlan(plan)
@@ -71,7 +80,7 @@ export default function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-5 pb-16 items-stretch">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 pb-16 items-stretch">
           {plans.map((plan, i) => {
             const current = state?.plan.slug === plan.slug
             return (
@@ -79,10 +88,14 @@ export default function Pricing() {
                 key={plan.slug}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.08 }}
                 className={cn('relative', plan.popular && 'md:-mt-4 md:mb-4')}
               >
-                {plan.popular ? (
+                {plan.slug === 'bellvion' ? (
+                  <BeamBorder className="rounded-2xl h-full">
+                    <PlanCard plan={plan} current={current} onChoose={choose} hasBellvion={hasBellvion} />
+                  </BeamBorder>
+                ) : plan.popular ? (
                   <BeamBorder className="rounded-2xl h-full">
                     <PlanCard plan={plan} current={current} onChoose={choose} />
                   </BeamBorder>
@@ -94,6 +107,20 @@ export default function Pricing() {
               </motion.div>
             )
           })}
+        </div>
+
+        {/* Compatibilidade BLE universal */}
+        <div className="pb-16 -mt-6">
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Watch className="h-4 w-4 text-[#D4AF37]" />
+              <h3 className="font-display font-semibold text-sm">Funciona com o seu dispositivo — qualquer que seja</h3>
+            </div>
+            <p className="text-xs text-white/35 max-w-2xl">
+              A app aceita qualquer dispositivo Bluetooth Low Energy: Mi Band, Galaxy Watch, AirPods, iTag, Tile, botões SOS genéricos…
+              Quem usa um <span className="text-[#D4AF37] font-semibold">dispositivo BELLVION</span> desbloqueia o plano Bellvion (99 MT/mês) e funcionalidades exclusivas da marca.
+            </p>
+          </div>
         </div>
 
         {/* Métodos de pagamento */}
@@ -156,11 +183,27 @@ export default function Pricing() {
         onOpenChange={setDialogOpen}
         plan={checkoutPlan}
       />
+
+      <BellvionVerifyDialog
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+        verifyByCode={verifyByCode}
+        verifying={verifying}
+        onVerified={() => {
+          setVerifyOpen(false)
+          const p = plans.find((x) => x.slug === 'bellvion')
+          if (p && user) {
+            setCheckoutPlan(p)
+            setDialogOpen(true)
+          }
+        }}
+      />
     </div>
   )
 }
 
-function PlanCard({ plan, current, onChoose }: { plan: Plan; current: boolean; onChoose: (p: Plan) => void }) {
+function PlanCard({ plan, current, onChoose, hasBellvion }: { plan: Plan; current: boolean; onChoose: (p: Plan) => void; hasBellvion?: boolean }) {
+  const isBellvion = plan.slug === 'bellvion'
   return (
     <div className="flex flex-col h-full p-6 sm:p-7">
       <div className="flex items-center justify-between mb-1">
@@ -168,6 +211,11 @@ function PlanCard({ plan, current, onChoose }: { plan: Plan; current: boolean; o
         {plan.popular && (
           <Badge className="bg-[#D4AF37] text-black text-[10px] font-bold gap-1 border-0">
             <Star className="h-3 w-3 fill-black" /> Mais Popular
+          </Badge>
+        )}
+        {isBellvion && (
+          <Badge className="bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-bold gap-1 border border-[#D4AF37]/30">
+            <Watch className="h-3 w-3" /> EXCLUSIVO
           </Badge>
         )}
         {current && (
@@ -185,11 +233,28 @@ function PlanCard({ plan, current, onChoose }: { plan: Plan; current: boolean; o
             <span className="text-sm text-[#D4AF37] font-semibold">MT/mês</span>
           </>
         )}
+        {isBellvion && plan.price_mzn > 0 && (
+          <span className="text-xs text-white/25 line-through ml-1">249</span>
+        )}
       </div>
       {plan.price_usd > 0 && (
         <p className="text-[11px] text-white/25 mb-5">≈ ${plan.price_usd.toFixed(2)} USD via PayPal</p>
       )}
       {plan.price_mzn === 0 && <div className="mb-5" />}
+
+      {isBellvion && (
+        <div className={cn(
+          'rounded-xl border px-3 py-2 mb-4 text-[11px] flex items-center gap-2',
+          hasBellvion
+            ? 'border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-300'
+            : 'border-white/[0.08] bg-white/[0.02] text-white/45'
+        )}>
+          {hasBellvion
+            ? <><BadgeCheck className="h-3.5 w-3.5 shrink-0" /> Dispositivo BELLVION verificado — desconto desbloqueado</>
+            : <><KeyRound className="h-3.5 w-3.5 shrink-0" /> Requer um dispositivo BELLVION activado (código da caixa)</>
+          }
+        </div>
+      )}
 
       <ul className="space-y-2.5 mb-6 flex-1">
         {plan.features.map((f) => (
@@ -205,15 +270,85 @@ function PlanCard({ plan, current, onChoose }: { plan: Plan; current: boolean; o
         disabled={current}
         className={cn(
           'w-full h-11 rounded-xl font-semibold gap-2',
-          plan.popular
+          plan.popular || isBellvion
             ? 'bg-[#D4AF37] hover:bg-[#B8962E] text-black'
             : plan.slug === 'free'
               ? 'bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08]'
               : 'bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/25',
         )}
       >
-        {current ? 'Plano actual' : plan.slug === 'free' ? 'Começar Grátis' : `Assinar ${plan.name}`}
+        {current
+          ? 'Plano actual'
+          : plan.slug === 'free'
+            ? 'Começar Grátis'
+            : isBellvion && !hasBellvion
+              ? 'Verificar dispositivo'
+              : `Assinar ${plan.name}`}
       </Button>
     </div>
+  )
+}
+
+function BellvionVerifyDialog({
+  open, onOpenChange, verifyByCode, verifying, onVerified,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  verifyByCode: (code: string) => Promise<{ ok: boolean; error?: string }>
+  verifying: boolean
+  onVerified: () => void
+}) {
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  async function submit() {
+    setError(null)
+    const res = await verifyByCode(code)
+    if (res.ok) {
+      setCode('')
+      onVerified()
+    } else {
+      setError(res.error ?? 'Código inválido')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="dark bg-[#14120D] border border-[#D4AF37]/20 text-white max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 font-display">
+            <Watch className="h-5 w-5 text-[#D4AF37]" /> Verificar dispositivo BELLVION
+          </DialogTitle>
+          <DialogDescription className="text-white/45 text-sm">
+            Introduza o código de activação impresso na caixa do seu dispositivo BELLVION para desbloquear o plano com desconto.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <div>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && code && !verifying && submit()}
+              placeholder="Ex: BV-XXXX-XXXX"
+              maxLength={24}
+              autoFocus
+              className="w-full h-12 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white text-center font-mono text-lg tracking-[0.2em] placeholder:text-white/20 placeholder:tracking-normal outline-none focus:border-[#D4AF37]/50"
+            />
+            {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
+          </div>
+          <Button
+            onClick={submit}
+            disabled={verifying || code.length < 6}
+            className="w-full h-11 rounded-xl bg-[#D4AF37] hover:bg-[#B8962E] text-black font-semibold gap-2"
+          >
+            {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {verifying ? 'A verificar…' : 'Verificar código'}
+          </Button>
+          <p className="text-[11px] text-white/30 text-center">
+            Ainda não tem um dispositivo BELLVION? Contacte a loja oficial para adquirir — Glasses, Watch, Buds ou Tracker.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
