@@ -1022,7 +1022,13 @@ alter table public.profiles
 -- 2. RPC de partilha estendido: devolve ficha médica
 --    (substitui a versão do schema base; campos extra são
 --    opcionais para clientes antigos)
+--    ⚠ O row type MUDOU (7 -> 12 colunas): CREATE OR REPLACE não
+--    permite alterar OUT parameters -> drop primeiro (erro 42P13).
+--    Mantém as proteções da versão antiga: token >= 16 chars,
+--    expiração de 7 dias, limit 1; REVOKE/GRANT re-aplicados.
 -- ------------------------------------------------------------
+drop function if exists public.get_emergency_by_token(text);
+
 create or replace function public.get_emergency_by_token(p_token text)
 returns table (
   id uuid,
@@ -1060,9 +1066,15 @@ begin
     p.medical_notes
   from public.emergency_alerts ea
   left join public.profiles p on p.user_id = ea.user_id
-  where ea.share_token = p_token;
+  where ea.share_token = p_token
+    and length(p_token) >= 16
+    and ea.created_at > now() - interval '7 days'
+  limit 1;
 end;
 $$;
+
+revoke all on function public.get_emergency_by_token(text) from public;
+grant execute on function public.get_emergency_by_token(text) to anon, authenticated;
 
 
 -- ═════════════════════════════════════════════════════════════════════
