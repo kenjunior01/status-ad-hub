@@ -5,12 +5,18 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -18,12 +24,23 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * GuardianService — a sentinela 24/7 do Modo Guardião (v3.8.0).
@@ -64,6 +81,12 @@ public class GuardianService extends Service implements SensorEventListener {
     private static final int REQUIRED_SPIKES = 3;
     private static final long SHAKE_COOLDOWN_MS = 120_000;
 
+    // Registo de testemunhas (scan BLE periódico enquanto armado)
+    private static final long WITNESS_SCAN_INTERVAL_MS = 45_000; // janela a cada 45s
+    private static final long WITNESS_SCAN_WINDOW_MS = 4_000;    // scan de 4s
+    private static final long WITNESS_TTL_MS = 3 * 60 * 60 * 1000L; // memória de 3h
+    private static final int WITNESS_MAX_ENTRIES = 150;
+
     private SharedPreferences prefs;
     private BroadcastReceiver powerReceiver;
     private SensorManager sensorManager;
@@ -76,6 +99,21 @@ public class GuardianService extends Service implements SensorEventListener {
     private int spikeCount = 0;
     private long shakeCooldownUntil = 0L;
 
+    // testemunhas
+    private Handler witnessHandler;
+    private BluetoothAdapter bluetoothAdapter;
+    private boolean scanningNow = false;
+    private final HashMap<String, WitnessDevice> witnessLog = new HashMap<>();
+
+    /** Dispositivo BLE visto perto do utilizador (MAC só em hash). */
+    private static class WitnessDevice {
+        String name;       // nome anunciado ou null
+        int bestRssi;
+        long firstSeen;
+        long lastSeen;
+        int hits;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -84,6 +122,9 @@ public class GuardianService extends Service implements SensorEventListener {
         startForegroundCompat();
         registerPowerReceiver();
         startShakeSensor();
+        loadWitnessLog();
+        witnessHandler = new Handler(Looper.getMainLooper());
+        witnessHandler.postDelayed(witnessScanRunnable, 5_000);
     }
 
     @Override
@@ -111,6 +152,7 @@ public class GuardianService extends Service implements SensorEventListener {
             powerReceiver = null;
         }
         stopShakeSensor();
+        stopWitnessScanner();
         super.onDestroy();
     }
 
@@ -225,11 +267,229 @@ public class GuardianService extends Service implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
+    // ── Registo de testemunhas (scan BLE 24/7 enquanto armado) ───────────────
+    // A cada 45s abre uma janela de scan de 4s. Cada dispositivo: MAC em hash
+    // (privacidade), nome anunciado, RSSI máximo, 1.ª/últ. vez, nº de vezes visto.
+    // Guardado em prefs para o JS ler (e para sobreviver ao processo). No pânico,
+    // o log é congelado em "witness_snapshot" para acompanhar o incidente.
+
+    private final Runnable witnessScanRunnable = new Runnable() {
+        @Override
+        public void run() {
+            startWitnessWindow();
+            witnessHandler.postDelayed(this, WITNESS_SCAN_INTERVAL_MS);
+        }
+    };
+
+    private final ScanCallback witnessScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            try {
+                if (result == null || result.getDevice() == null) return;
+                String mac = result.getDevice().getAddress();
+                if (mac == null || mac.isEmpty()) return;
+                String hash = sha12(mac);
+
+                String name = null;
+                try {
+                    name = result.getDevice().getName();
+                } catch (SecurityException se) {
+                    // BLUETOOTH_CONNECT ainda não concedido — segue com o nome do anúncio
+                }
+                if (name == null && result.getScanRecord() != null) {
+                    name = result.getScanRecord().getDeviceName();
+                }
+                int rssi = result.getRssi();
+
+                WitnessDevice d = witnessLog.get(hash);
+                if (d == null) {
+                    d = new WitnessDevice();
+                    d.firstSeen = System.currentTimeMillis();
+                    d.hits = 0;
+                    d.bestRssi = -127;
+                    witnessLog.put(hash, d);
+                }
+                if (name != null && !name.isEmpty()) d.name = name;
+                if (rssi > d.bestRssi) d.bestRssi = rssi;
+                d.lastSeen = System.currentTimeMillis();
+                d.hits++;
+            } catch (Exception ignored) {
+            }
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            scanningNow = false;
+        }
+    };
+
+    private void startWitnessWindow() {
+        if (!prefs.getBoolean("witness_enabled", true)) return;
+        if (!prefs.getBoolean("armed", false)) return;
+        if (scanningNow) return;
+
+        // permissões runtime (Android 12+: SCAN/CONNECT; <12: FINE_LOCATION)
+        boolean hasPerm;
+        if (Build.VERSION.SDK_INT >= 31) {
+            hasPerm = checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            hasPerm = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        }
+        if (!hasPerm) return;
+
+        try {
+            if (bluetoothAdapter == null) {
+                BluetoothManager bm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                if (bm == null) return;
+                bluetoothAdapter = bm.getAdapter();
+            }
+            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) return;
+            if (bluetoothAdapter.getBluetoothLeScanner() == null) return;
+
+            ScanSettings settings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+                    .build();
+            bluetoothAdapter.getBluetoothLeScanner().startScan(null, settings, witnessScanCallback);
+            scanningNow = true;
+
+            witnessHandler.postDelayed(() -> {
+                try {
+                    if (bluetoothAdapter != null && bluetoothAdapter.getBluetoothLeScanner() != null) {
+                        bluetoothAdapter.getBluetoothLeScanner().stopScan(witnessScanCallback);
+                    }
+                } catch (Exception ignored) {
+                }
+                scanningNow = false;
+                pruneWitnessLog();
+                persistWitnessLog();
+            }, WITNESS_SCAN_WINDOW_MS);
+        } catch (SecurityException se) {
+            scanningNow = false;
+        } catch (Exception e) {
+            scanningNow = false;
+            android.util.Log.w("GuardianService", "scan testemunhas: " + e.getMessage());
+        }
+    }
+
+    private void stopWitnessScanner() {
+        if (witnessHandler != null) {
+            witnessHandler.removeCallbacksAndMessages(null);
+        }
+        if (scanningNow && bluetoothAdapter != null) {
+            try {
+                bluetoothAdapter.getBluetoothLeScanner().stopScan(witnessScanCallback);
+            } catch (Exception ignored) {
+            }
+        }
+        scanningNow = false;
+    }
+
+    private void pruneWitnessLog() {
+        long cutoff = System.currentTimeMillis() - WITNESS_TTL_MS;
+        Iterator<Map.Entry<String, WitnessDevice>> it = witnessLog.entrySet().iterator();
+        while (it.hasNext()) {
+            WitnessDevice d = it.next().getValue();
+            if (d.lastSeen < cutoff) it.remove();
+        }
+        // cap duro (mais antigos primeiro)
+        while (witnessLog.size() > WITNESS_MAX_ENTRIES) {
+            String oldest = null;
+            long oldestT = Long.MAX_VALUE;
+            for (Map.Entry<String, WitnessDevice> e : witnessLog.entrySet()) {
+                if (e.getValue().lastSeen < oldestT) {
+                    oldestT = e.getValue().lastSeen;
+                    oldest = e.getKey();
+                }
+            }
+            if (oldest == null) break;
+            witnessLog.remove(oldest);
+        }
+    }
+
+    private void loadWitnessLog() {
+        try {
+            String raw = prefs.getString("witness_log", null);
+            if (raw == null) return;
+            JSONArray arr = new JSONArray(raw);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.getJSONObject(i);
+                WitnessDevice d = new WitnessDevice();
+                d.name = o.has("n") && !o.isNull("n") ? o.getString("n") : null;
+                d.bestRssi = o.optInt("r", -127);
+                d.firstSeen = o.optLong("f", 0L);
+                d.lastSeen = o.optLong("s", 0L);
+                d.hits = o.optInt("c", 0);
+                witnessLog.put(o.getString("h"), d);
+            }
+            pruneWitnessLog();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void persistWitnessLog() {
+        try {
+            JSONArray arr = new JSONArray();
+            for (Map.Entry<String, WitnessDevice> e : witnessLog.entrySet()) {
+                WitnessDevice d = e.getValue();
+                JSONObject o = new JSONObject();
+                o.put("h", e.getKey());
+                if (d.name != null) o.put("n", d.name);
+                o.put("r", d.bestRssi);
+                o.put("f", d.firstSeen);
+                o.put("s", d.lastSeen);
+                o.put("c", d.hits);
+                arr.put(o);
+            }
+            prefs.edit().putString("witness_log", arr.toString()).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Congela o estado actual do log para acompanhar o SOS (lido pelo WebView). */
+    private void snapshotWitnessLog() {
+        try {
+            pruneWitnessLog();
+            persistWitnessLog();
+            JSONObject snap = new JSONObject();
+            snap.put("capturedAt", System.currentTimeMillis());
+            JSONArray arr = new JSONArray();
+            for (Map.Entry<String, WitnessDevice> e : witnessLog.entrySet()) {
+                WitnessDevice d = e.getValue();
+                JSONObject o = new JSONObject();
+                o.put("h", e.getKey());
+                if (d.name != null) o.put("n", d.name);
+                o.put("r", d.bestRssi);
+                o.put("s", d.lastSeen);
+                o.put("c", d.hits);
+                arr.put(o);
+            }
+            snap.put("devices", arr);
+            prefs.edit().putString("witness_snapshot", snap.toString()).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String sha12(String mac) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(mac.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 6; i++) sb.append(String.format("%02x", digest[i]));
+            return sb.toString();
+        } catch (Exception e) {
+            return mac.replaceAll(":", ""); // fallback improvável
+        }
+    }
+
     // ── Disparo ──────────────────────────────────────────────────────────────
 
     private void triggerPanic(String source) {
         if (!prefs.getBoolean("armed", false)) return;
         vibrateShort();
+        // Congela o registo de testemunhas ANTES do SOS sair — esta lista é a
+        // “quem estava perto” que ajuda a identificar testemunhas do incidente.
+        snapshotWitnessLog();
 
         Uri uri = Uri.parse("com.statusads.connect://sos?t=" + source);
         Intent sos = new Intent(Intent.ACTION_VIEW, uri);

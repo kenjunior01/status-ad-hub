@@ -7,8 +7,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { usePanicMode } from '@/hooks/usePanicMode'
+import { readWitnessSnapshot } from '@/lib/guardian'
 import { cn } from '@/lib/utils'
-import { Lock, Mic, Camera, MapPin, ShieldAlert } from 'lucide-react'
+import { Lock, Mic, Camera, MapPin, ShieldAlert, Users } from 'lucide-react'
 
 export function PanicModeOverlay() {
   const { state, deactivate, clearPhotos } = usePanicMode()
@@ -16,6 +17,15 @@ export function PanicModeOverlay() {
   const [showDeactivate, setShowDeactivate] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [recordingDot, setRecordingDot] = useState(true)
+  const [witnessCount, setWitnessCount] = useState<number | null>(null)
+
+  // Testemunhas registadas pela sentinela (congeladas no momento do disparo)
+  useEffect(() => {
+    if (!state.isActive) { setWitnessCount(null); return }
+    readWitnessSnapshot()
+      .then((snap) => setWitnessCount(snap ? snap.devices.length : null))
+      .catch(() => setWitnessCount(null))
+  }, [state.isActive])
 
   // Timer
   useEffect(() => {
@@ -94,6 +104,17 @@ export function PanicModeOverlay() {
           <div className="text-white/60 text-xs">GPS Activo</div>
         </div>
       </div>
+
+      {/* Testemunhas registadas pela sentinela */}
+      {witnessCount !== null && witnessCount > 0 && (
+        <div className="flex items-center gap-2 mb-8 px-6 py-2.5 rounded-xl bg-sky-500/[0.08] border border-sky-400/20 max-w-sm">
+          <Users className="w-4 h-4 text-sky-400 shrink-0" />
+          <p className="text-[11px] text-sky-200/80 leading-snug">
+            <b className="text-sky-300">{witnessCount} dispositivo{witnessCount === 1 ? '' : 's'}</b> perto de si registado{witnessCount === 1 ? '' : 's'} —
+            pode ajudar a identificar testemunhas do incidente.
+          </p>
+        </div>
+      )}
 
       {/* Deactivate button (subtle) */}
       <button

@@ -18,4 +18,12 @@
     <string name="guardian_notif_text">O Guardião está de sentinela. Toque para abrir.</string>
     <string name="guardian_alert_title">SOS Guardião</string>
     <string name="guardian_alert_text">Gatilho de emergência detectado — toque para abrir</string>
+
+    <!-- Camuflagem do launcher (activity-alias) — ícone e nome disfarçados -->
+    <string name="disg_calc">Calculadora</string>
+    <string name="disg_weather">Meteorologia</string>
+    <string name="disg_notes">Notas</string>
+    <string name="disg_clock">Relógio</string>
+    <string name="disg_contacts">Contactos</string>
+    <string name="disg_music">Música</string>
 </resources>

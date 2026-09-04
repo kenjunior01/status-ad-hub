@@ -32,6 +32,9 @@ export interface GuardianConfig {
   silent: boolean
   /** Gesto de agitação armado (default ON) */
   shakeEnabled: boolean
+  /** Registo de testemunhas: dispositivos BLE vistos perto de si (default ON)
+   *  Ajuda a identificar testemunhas de um roubo/sequestro. MAC só em hash. */
+  witnessLog: boolean
 }
 
 export type PanicSource = 'shake' | 'shortcut' | 'tile' | 'power' | 'manual'
@@ -42,6 +45,7 @@ export const DEFAULT_GUARDIAN: GuardianConfig = {
   autoRecord: true,
   silent: true,
   shakeEnabled: true,
+  witnessLog: true,
 }
 
 const KEY = 'statusads-guardian'
@@ -173,11 +177,31 @@ export function firePanicNow(source: PanicSource): void {
 
 interface PanicNativeInterface {
   /** Espelha o estado no lado nativo e liga/desliga o serviço foreground. */
-  setGuardian(cfg: { armed: boolean; shakeEnabled: boolean; silent: boolean }): Promise<void>
+  setGuardian(cfg: { armed: boolean; shakeEnabled: boolean; silent: boolean; witnessLog: boolean }): Promise<void>
   /** true se a app já está isenta de optimizações de bateria. */
   batteryStatus(): Promise<{ exempt: boolean }>
   /** Abre o diálogo do sistema "Permitir sem optimizações de bateria". */
   requestBatteryExemption(): Promise<void>
+  /** Permissões de BLE para o registo de testemunhas. */
+  hasWitnessPermissions(): Promise<{ granted: boolean }>
+  requestWitnessPermissions(): Promise<void>
+  /** Log vivo de dispositivos vistos nas últimas 3h. */
+  getWitnessLog(): Promise<{ devices: WitnessEntry[] }>
+  /** Snapshot congelado no momento do disparo (vem com o SOS). */
+  getWitnessSnapshot(): Promise<{ snapshot: WitnessSnapshot | null }>
+}
+
+export interface WitnessEntry {
+  h: string      // hash do MAC (privacidade — MAC nunca sai do aparelho)
+  n?: string     // nome anunciado (se existir)
+  r: number      // melhor RSSI (sinal — quanto mais perto de 0, mais perto estava)
+  s: number      // última vez visto (epoch ms)
+  c: number      // nº de vezes visto
+}
+
+export interface WitnessSnapshot {
+  capturedAt: number
+  devices: WitnessEntry[]
 }
 
 let nativePanic: PanicNativeInterface | null = null
@@ -204,6 +228,69 @@ function syncNative(cfg: GuardianConfig): void {
   const panic = getNativePanic()
   if (!panic) return
   panic
-    .setGuardian({ armed: cfg.armed, shakeEnabled: cfg.shakeEnabled, silent: cfg.silent })
+    .setGuardian({ armed: cfg.armed, shakeEnabled: cfg.shakeEnabled, silent: cfg.silent, witnessLog: cfg.witnessLog })
     .catch(() => {})
+}
+
+// ── Testemunhas: leitura do snapshot/log nativo ──────────────────────────
+
+const WITNESS_SNAPSHOT_KEY = 'statusads-witness-snapshot'
+
+/** Snapshot do momento do SOS (nativo) — cai para a última cópia local. */
+export async function readWitnessSnapshot(): Promise<WitnessSnapshot | null> {
+  const panic = getNativePanic()
+  if (panic) {
+    try {
+      const { snapshot } = await panic.getWitnessSnapshot()
+      if (snapshot) {
+        try { localStorage.setItem(WITNESS_SNAPSHOT_KEY, JSON.stringify(snapshot)) } catch {}
+        return snapshot
+      }
+      return null
+    } catch {
+      // segue para cópia local
+    }
+  }
+  try {
+    const raw = localStorage.getItem(WITNESS_SNAPSHOT_KEY)
+    return raw ? (JSON.parse(raw) as WitnessSnapshot) : null
+  } catch {
+    return null
+  }
+}
+
+/** Nº de dispositivos vistos nas últimas 2h (para o cartão Guardião). */
+export async function countRecentWitnessDevices(maxAgeMs = 2 * 60 * 60 * 1000): Promise<number> {
+  const panic = getNativePanic()
+  if (!panic) return 0
+  try {
+    const { devices } = await panic.getWitnessLog()
+    const cutoff = Date.now() - maxAgeMs
+    return (devices || []).filter((d) => (d.s || 0) >= cutoff).length
+  } catch {
+    return 0
+  }
+}
+
+/** Pedir permissões BLE (só Android; chamado ao activar o registo). */
+export async function requestWitnessPermissions(): Promise<boolean> {
+  const panic = getNativePanic()
+  if (!panic) return true // web/PWA: sem registo nativo, nada a pedir
+  try {
+    await panic.requestWitnessPermissions()
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function hasWitnessPermissions(): Promise<boolean> {
+  const panic = getNativePanic()
+  if (!panic) return true
+  try {
+    const { granted } = await panic.hasWitnessPermissions()
+    return !!granted
+  } catch {
+    return false
+  }
 }

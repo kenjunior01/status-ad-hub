@@ -16,12 +16,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, ShieldOff, Mic, VolumeX, Smartphone, Vibrate,
   ChevronDown, Hand, Power, Link as LinkIcon, Loader2, BellRing,
-  BatteryWarning, ChevronRight,
+  BatteryWarning, ChevronRight, Users,
 } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { useGuardian } from '@/hooks/useGuardian'
 import { requestMotionPermission } from '@/lib/shake'
-import { getNativePanic } from '@/lib/guardian'
+import {
+  getNativePanic, countRecentWitnessDevices, hasWitnessPermissions, requestWitnessPermissions,
+} from '@/lib/guardian'
 import { haptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -78,6 +80,17 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
     setArming(true)
     // iOS precisa de permissão de motion para o gatilho de agitação
     if (config.shakeEnabled) await requestMotionPermission()
+    // Registo de testemunhas precisa de permissões BLE (Android 12+)
+    if (config.witnessLog && Capacitor.getPlatform() === 'android') {
+      const ok = await hasWitnessPermissions()
+      if (!ok) {
+        await requestWitnessPermissions()
+        toast.info('Autorize o Bluetooth para registar testemunhas', {
+          description: 'É o que permite identificar quem estava perto se houver SOS.',
+          duration: 6000,
+        })
+      }
+    }
     arm()
     setArming(false)
     setExpanded(false)
@@ -86,7 +99,7 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
       description: 'Sentinela 24/7 armada — Agite ×3, atalho SOS ou Power ×4, mesmo com a app fechada.',
       duration: 6000,
     })
-  }, [arm, config.shakeEnabled])
+  }, [arm, config.shakeEnabled, config.witnessLog])
 
   const armed = config.armed
 
@@ -237,11 +250,12 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
 
 /** Lista de gatilhos + opções (compartilhada entre variantes) */
 function GuardianDetails({ config, update }: {
-  config: { autoRecord: boolean; silent: boolean; shakeEnabled: boolean; armed: boolean }
-  update: (patch: { autoRecord?: boolean; silent?: boolean; shakeEnabled?: boolean }) => void
+  config: { autoRecord: boolean; silent: boolean; shakeEnabled: boolean; witnessLog: boolean; armed: boolean }
+  update: (patch: { autoRecord?: boolean; silent?: boolean; shakeEnabled?: boolean; witnessLog?: boolean }) => void
 }) {
   const isAndroid = Capacitor.getPlatform() === 'android'
   const [batteryExempt, setBatteryExempt] = useState<boolean | null>(null)
+  const [witnessCount, setWitnessCount] = useState<number | null>(null)
 
   // Estado da bateria (só Android — a sentinela pode ser "adormecida" por OEMs)
   useEffect(() => {
@@ -252,6 +266,20 @@ function GuardianDetails({ config, update }: {
       .then((r) => setBatteryExempt(!!r.exempt))
       .catch(() => setBatteryExempt(true))
   }, [isAndroid])
+
+  // Contador de testemunhas (dispositivos BLE vistos nas últimas 2h)
+  useEffect(() => {
+    if (!isAndroid || !config.witnessLog) { setWitnessCount(null); return }
+    countRecentWitnessDevices().then(setWitnessCount).catch(() => setWitnessCount(null))
+  }, [isAndroid, config.witnessLog, config.armed])
+
+  const toggleWitness = useCallback(() => {
+    const next = !config.witnessLog
+    update({ witnessLog: next })
+    if (next && isAndroid) {
+      void requestWitnessPermissions()
+    }
+  }, [config.witnessLog, update, isAndroid])
 
   const requestExemption = useCallback(async () => {
     const panic = getNativePanic()
@@ -268,9 +296,10 @@ function GuardianDetails({ config, update }: {
   }, [])
 
   const toggles = [
-    { key: 'shakeEnabled' as const, icon: Vibrate, label: 'Agitação forte ×3', desc: 'Agarraram-lhe o braço — agite o telemóvel' },
-    { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: 'Áudio + fotos disfarçadas ao disparar' },
-    { key: 'silent' as const, icon: VolumeX, label: 'Modo silencioso', desc: 'Sem sirene — o ladrão não percebe' },
+    { key: 'shakeEnabled' as const, icon: Vibrate, label: 'Agitação forte ×3', desc: 'Agarraram-lhe o braço — agite o telemóvel', action: undefined as (() => void) | undefined },
+    { key: 'witnessLog' as const, icon: Users, label: 'Registo de testemunhas', desc: 'Guarda dispositivos vistos perto de si para identificar testemunhas', action: toggleWitness },
+    { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: 'Áudio + fotos disfarçadas ao disparar', action: undefined as (() => void) | undefined },
+    { key: 'silent' as const, icon: VolumeX, label: 'Modo silencioso', desc: 'Sem sirene — o ladrão não percebe', action: undefined as (() => void) | undefined },
   ]
   const triggers = [
     { icon: Vibrate, text: 'Agite o telemóvel 3× com força' },
@@ -318,7 +347,7 @@ function GuardianDetails({ config, update }: {
           {toggles.map(t => (
             <button
               key={t.key}
-              onClick={() => update({ [t.key]: !config[t.key] })}
+              onClick={() => (t.action ? t.action() : update({ [t.key]: !config[t.key] }))}
               className={cn(
                 'flex items-center gap-2.5 p-2 rounded-xl border text-left transition-colors',
                 config[t.key]
@@ -343,6 +372,22 @@ function GuardianDetails({ config, update }: {
             </button>
           ))}
         </div>
+        {/* Testemunhas: contador vivo (só Android, feature ligada) */}
+        {isAndroid && config.witnessLog && witnessCount !== null && (
+          <div className="flex items-center gap-2.5 p-2 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+            <Users className="h-3.5 w-3.5 text-sky-400/80 shrink-0" />
+            <p className="text-[10px] text-white/50 leading-relaxed">
+              {witnessCount > 0 ? (
+                <>
+                  <b className="text-sky-300">{witnessCount} dispositivo{witnessCount === 1 ? '' : 's'} visto{witnessCount === 1 ? '' : 's'} perto de si (últimas 2h).</b>{' '}
+                  Se houver SOS, esta lista é congelada e guardada para ajudar a identificar testemunhas.
+                </>
+              ) : (
+                <span className="text-white/35">A sentinela está a observar dispositivos perto de si — a lista só é usada se houver SOS.</span>
+              )}
+            </p>
+          </div>
+        )}
         <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
           <p className="text-[9px] font-bold tracking-wider text-white/40 mb-1.5">COMO DISPARAR O SOS (armado)</p>
           <div className="space-y-1.5">

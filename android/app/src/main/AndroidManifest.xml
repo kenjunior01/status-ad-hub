@@ -14,10 +14,6 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- Deep link do Modo Guardião: com.statusads.connect://sos
                  (atalho no ícone + tile de atalhos rápidos) -->
             <intent-filter>
@@ -32,11 +28,116 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <!-- Modo Guardião: sentinela 24/7 — Power ×4 + agitação mesmo com a app fechada -->
+        <!-- ══ CAMUFLAGEM DO LAUNCHER (v3.9.0) ═════════════════════════
+             O ícone/nome real vive num alias; os disfarces são aliases com
+             ícone+label próprios. Apenas UM alias está activo de cada vez —
+             trocado em runtime via PackageManager.setComponentEnabledSetting
+             (DisguisePlugin). A activity em si nunca é desactivada, por isso
+             deep links, atalhos e tile continuam a funcionar disfarçados. -->
+        <activity-alias
+            android:name=".LauncherReal"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherCalculadora"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_calc"
+            android:label="@string/disg_calc"
+            android:roundIcon="@drawable/ic_disg_calc"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherMeteorologia"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_weather"
+            android:label="@string/disg_weather"
+            android:roundIcon="@drawable/ic_disg_weather"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherNotas"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_notes"
+            android:label="@string/disg_notes"
+            android:roundIcon="@drawable/ic_disg_notes"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherRelogio"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_clock"
+            android:label="@string/disg_clock"
+            android:roundIcon="@drawable/ic_disg_clock"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherContactos"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_contacts"
+            android:label="@string/disg_contacts"
+            android:roundIcon="@drawable/ic_disg_contacts"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherMusica"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_disg_music"
+            android:label="@string/disg_music"
+            android:roundIcon="@drawable/ic_disg_music"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Modo Guardião: sentinela 24/7 — Power ×4 + agitação + registo de
+             testemunhas BLE mesmo com a app fechada -->
         <service
             android:name=".GuardianService"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse|connectedDevice">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Sentinela de pânico: detecta gatilhos de emergência (padrão do botão power, agitação forte) para avisar contactos de emergência em caso de roubo ou sequestro" />
@@ -108,4 +209,17 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- Impedir OEMs (Xiaomi/Samsung) de adormecer a sentinela -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Registo de testemunhas: scan BLE pela sentinela (MAC nunca sai do
+         aparelho em claro — apenas hash). neverForLocation: sem GPS a partir
+         do BLE; em Android <12 é exigida localização para scan → FINE maxSdk 30 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <!-- Android <12: scan BLE exige localização — ACCESS_FINE_LOCATION já declarada acima -->
+    <!-- Scan BLE a partir do serviço foreground (Android 14+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>
