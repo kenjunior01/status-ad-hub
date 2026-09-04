@@ -914,8 +914,7 @@ $$;
 
 -- Agenda via pg_cron se disponível (a cada hora)
 -- NOTA: bloco externo usa tag $do$ para permitir $$ (ou plicas) dentro sem conflito.
-do $do$
-begin
+do $do$ begin
   if to_regclass('cron.job') is not null then
     perform cron.unschedule('expire-statusads-subscriptions')
     where exists (select 1 from cron.job where jobname = 'expire-statusads-subscriptions');
