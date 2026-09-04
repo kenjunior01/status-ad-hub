@@ -9,7 +9,8 @@
 --   3. No fim, troca o email no bloco final para o TEU email de admin
 --      e corre só esse bloco (ver PUBLICAR.md passo 3)
 --
--- Este ficheiro consolida as migrations 003 a 014:
+-- Este ficheiro consolida as migrations 003 a 015 + helpers base:
+--   helpers base (update_updated_at — vivia na migration 001/schema.sql)
 --   003 auto notify on emergency | 004 settings | 005 check-in
 --   006 smart glasses | 007 anti-coercion | 008 device activation
 --   009 pagamentos + assinaturas + admin | 010 ficha médica
@@ -18,6 +19,7 @@
 --   013 código de admin + gravações na nuvem (bucket evidence-audio)
 --   014 códigos de activação + promoções + blindagem de segurança
 --        (rate limiting, auditoria, admin_generate_codes, promo_codes)
+--   015 radar bluetooth/wifi (testemunhas no SOS)
 --
 -- DEPOIS DE CORRER:
 --   · Painel Admin → Saúde do Servidor deve ficar 100% verde
@@ -28,6 +30,25 @@
 -- correspondente abaixo e remove-o antes de correr (ou ignora os erros
 -- "already exists" — os objectos existentes não são recriados).
 -- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ═════════════════════════════════════════════════════════════════════
+-- HELPERS BASE (auto-suficiência do ficheiro)
+-- A função abaixo vivia na migration base (001/schema.sql) que este
+-- ficheiro não consolida — sem ela os triggers updated_at falham com
+-- "function public.update_updated_at() does not exist" (erro 42883).
+-- CREATE OR REPLACE: inofensivo se já existir na tua base.
+-- ═════════════════════════════════════════════════════════════════════
+
+create or replace function public.update_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
 
 
 -- ═════════════════════════════════════════════════════════════════════
