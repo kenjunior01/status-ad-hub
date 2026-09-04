@@ -148,7 +148,7 @@ export function GlassesSOSOverlay({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   transition={{ delay: 0.4 }}
-                  className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-auto"
+                  className="absolute top-4 inset-x-0 mx-auto w-fit pointer-events-auto"
                 >
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-red-500/20">
                     <motion.div

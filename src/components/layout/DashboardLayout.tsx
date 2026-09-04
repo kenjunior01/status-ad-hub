@@ -1,17 +1,11 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Bluetooth, Users, History, Settings,
-  Shield, Bell, LogOut, Menu, X, ChevronRight, ShieldAlert,
-  WifiOff, CloudOff, RefreshCw, Database, Activity, ShieldCheck,
-  Glasses, Zap, Radar, EyeOff, Fingerprint, Map, Clock, Navigation,
-  MoreHorizontal, User, CircleDot, CreditCard, Crown, Archive, HeartPulse,
-  PersonStanding, PhoneIncoming, Lightbulb, Package, BookOpen,
+  Shield, Bell, Menu, ChevronRight, ShieldAlert,
+  WifiOff, RefreshCw, Database,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
 import { NoiseTexture } from '@/components/effects'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
 import { useBackgroundTracking } from '@/hooks/useBackgroundTracking'
@@ -20,83 +14,20 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { OnboardingWizard } from '@/components/OnboardingWizard'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { useDashboardStats } from '@/hooks/useHistory'
-import { useNavigate } from 'react-router-dom'
-import { useIsAdmin } from '@/hooks/useAdmin'
 import { FallDetectionOverlay, useFallDetectionKeepAlive, registerFallSosHandler } from '@/hooks/useFallDetection'
 import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
 import { FeatureTour } from '@/components/FeatureTour'
 import { useEmergency } from '@/hooks/useEmergency'
-import { useEffect } from 'react'
+import { bottomNav } from '@/lib/dashboard-nav'
+import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
 
-/* ── Navigation Config ── */
-const sidebarSections = [
-  {
-    title: 'Principal',
-    items: [
-      { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
-      { to: '/dashboard/accoes', label: 'Accoes Rapidas', icon: Zap },
-      { to: '/dashboard/emergency', label: 'Emergencia', icon: ShieldAlert, badge: true },
-    ],
-  },
-  {
-    title: 'Dispositivos',
-    items: [
-      { to: '/dashboard/devices', label: 'Meus Dispositivos', icon: Bluetooth },
-      { to: '/dashboard/bellvion', label: 'Dispositivos BELLVION', icon: Package },
-      { to: '/dashboard/oculos', label: 'Oculos Inteligentes', icon: Glasses },
-      { to: '/dashboard/checkin', label: 'Check-in', icon: ShieldCheck },
-    ],
-  },
-  {
-    title: 'Seguranca',
-    items: [
-      { to: '/dashboard/contacts', label: 'Contactos de Emergencia', icon: Users },
-      { to: '/dashboard/queda', label: 'Deteccao de Queda', icon: PersonStanding },
-      { to: '/dashboard/evidencias', label: 'Cofre de Evidencias', icon: Archive },
-      { to: '/dashboard/ficha-medica', label: 'Ficha Medica', icon: HeartPulse },
-      { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
-      { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
-      { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
-      { to: '/dashboard/dicas', label: 'Dicas de Seguranca', icon: Lightbulb },
-    ],
-  },
-  {
-    title: 'Privacidade',
-    items: [
-      { to: '/dashboard/discreto', label: 'Modo Discreto', icon: Fingerprint },
-      { to: '/dashboard/camuflar', label: 'Camuflagem', icon: EyeOff },
-      { to: '/dashboard/camuflagem-pwa', label: 'Camuflagem na PWA', icon: BookOpen },
-      { to: '/dashboard/chamada-falsa', label: 'Chamada Falsa', icon: PhoneIncoming },
-    ],
-  },
-  {
-    title: 'Sistema',
-    items: [
-      { to: '/dashboard/assinatura', label: 'Assinatura e Pagamentos', icon: CreditCard },
-      { to: '/dashboard/history', label: 'Historico', icon: History },
-      { to: '/dashboard/timeline', label: 'Timeline de Incidentes', icon: Clock },
-      { to: '/dashboard/diagnostics', label: 'Diagnostico', icon: Activity },
-      { to: '/dashboard/settings', label: 'Configuracoes', icon: Settings },
-    ],
-  },
-]
-
-/* Bottom nav: 5 items for quick access on mobile */
-const bottomNav = [
-  { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
-  { to: '/dashboard/devices', label: 'Dispositivos', icon: Bluetooth },
-  { to: '/dashboard/contacts', label: 'Contactos', icon: Users },
-  { to: '/dashboard/emergency', label: 'SOS', icon: ShieldAlert, isSOS: true },
-  { to: '/dashboard/settings', label: 'Mais', icon: MoreHorizontal },
-]
+/* ── Navigation Config ── movida para src/lib/dashboard-nav.ts (partilhada com o Dashboard) ── */
 
 export default function DashboardLayout() {
-  const { user, signOut } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { isAdmin } = useIsAdmin()
   const isActive = (path: string) => location.pathname === path
   const { activeEmergency } = useEmergencyAlerts()
   useBackgroundTracking()
@@ -146,114 +77,8 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-background relative">
       <NoiseTexture opacity={0.01} />
 
-      {/* ── MOBILE SIDEBAR OVERLAY ── */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-            />
-            <motion.aside
-              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-[300px] max-w-[85vw] bg-card border-r border-white/[0.06] z-50 flex flex-col overflow-hidden"
-            >
-              {/* Sidebar Header with user info */}
-              <div className="relative px-5 pt-5 pb-4">
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-brand/[0.05] to-transparent" />
-                <div className="relative flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center">
-                      <Shield className="h-4 w-4 text-brand" />
-                    </div>
-                    <span className="font-display font-bold text-white text-base">Status<span className="text-brand">Ads</span></span>
-                  </div>
-                  <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl hover:bg-white/10 transition">
-                    <X className="h-5 w-5 text-white/50" />
-                  </button>
-                </div>
-                <div className="relative flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand to-amber-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
-                    {(user?.user_metadata as any)?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">{(user?.user_metadata as any)?.full_name || 'Utilizador'}</p>
-                    <p className="text-[11px] text-white/25 truncate font-mono">{user?.email || ''}</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-brand shrink-0" />
-                </div>
-              </div>
-
-              {/* Sidebar Navigation */}
-              <nav className="flex-1 overflow-y-auto px-3 pb-3">
-                {sidebarSections.map((section) => (
-                  <div key={section.title} className="mb-3">
-                    <p className="px-3 mb-1.5 text-[10px] font-semibold text-white/20 uppercase tracking-wider">{section.title}</p>
-                    <div className="space-y-0.5">
-                      {section.items.map((item) => {
-                        const IconComp = item.icon
-                        const active = isActive(item.to)
-                        return (
-                          <NavLink
-                            key={item.to}
-                            to={item.to}
-                            onClick={() => setSidebarOpen(false)}
-                            className={cn(
-                              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
-                              active
-                                ? 'text-brand bg-brand/[0.08]'
-                                : 'text-white/40 active:text-white/60 hover:text-white/60 hover:bg-white/[0.03]'
-                            )}
-                          >
-                            <IconComp className="h-[18px] w-[18px] shrink-0" strokeWidth={active ? 2 : 1.5} />
-                            <span className="flex-1">{item.label}</span>
-                            {item.badge && hasAlerts && (
-                              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">{alertCount}</span>
-                            )}
-                          </NavLink>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-                {isAdmin && (
-                  <div className="mb-3">
-                    <p className="px-3 mb-1.5 text-[10px] font-semibold text-brand/50 uppercase tracking-wider">Administração</p>
-                    <div className="space-y-0.5">
-                      <NavLink
-                        to="/dashboard/admin"
-                        onClick={() => setSidebarOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
-                          location.pathname.startsWith('/dashboard/admin')
-                            ? 'text-brand bg-brand/[0.08]'
-                            : 'text-white/40 active:text-white/60 hover:text-white/60 hover:bg-white/[0.03]'
-                        )}
-                      >
-                        <Crown className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
-                        <span className="flex-1">Painel Admin</span>
-                      </NavLink>
-                    </div>
-                  </div>
-                )}
-              </nav>
-
-              {/* Sidebar Footer */}
-              <div className="px-3 pb-4 border-t border-white/[0.04] pt-3">
-                <button
-                  onClick={() => { signOut(); setSidebarOpen(false) }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-white/30 hover:text-red-400 hover:bg-red-500/[0.06] transition-all"
-                >
-                  <LogOut className="h-[18px] w-[18px]" />
-                  Sair da Conta
-                </button>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* ── MOBILE SIDEBAR OVERLAY ── componente partilhado (usado também pela página Dashboard) ── */}
+      <DashboardSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex flex-col min-h-screen">
@@ -352,7 +177,8 @@ export default function DashboardLayout() {
         </main>
       </div>
 
-      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      {/* ── MOBILE BOTTOM NAVIGATION ── escondida na página /dashboard (ela tem a sua própria barra de acções + menu próprio) ── */}
+      {location.pathname !== '/dashboard' && (
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
         {/* Safe area spacer for iOS */}
         <div className="bg-background/95 backdrop-blur-2xl border-t border-white/[0.06]">
@@ -394,6 +220,7 @@ export default function DashboardLayout() {
           </div>
         </div>
       </nav>
+      )}
 
       <OnboardingWizard />
       <FeatureTour />
