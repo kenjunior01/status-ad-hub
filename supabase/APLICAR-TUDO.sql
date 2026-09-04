@@ -913,7 +913,8 @@ end;
 $$;
 
 -- Agenda via pg_cron se disponível (a cada hora)
-do $$
+-- NOTA: bloco externo usa tag $do$ para permitir $$ (ou plicas) dentro sem conflito.
+do $do$
 begin
   if to_regclass('cron.job') is not null then
     perform cron.unschedule('expire-statusads-subscriptions')
@@ -921,10 +922,10 @@ begin
     perform cron.schedule(
       'expire-statusads-subscriptions',
       '0 * * * *',
-      $$select public.expire_subscriptions()$$
+      'select public.expire_subscriptions()'
     );
   end if;
-end $$;
+end $do$;
 
 -- ------------------------------------------------------------
 -- 9. UPDATED_AT triggers
