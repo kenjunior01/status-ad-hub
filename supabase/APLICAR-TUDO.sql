@@ -321,13 +321,20 @@ CREATE TABLE IF NOT EXISTS public.checkins (
 ALTER TABLE public.checkin_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.checkins ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Users can read own checkin config" on public.checkin_configs;
 CREATE POLICY "Users can read own checkin config" ON public.checkin_configs FOR SELECT USING (user_id = auth.uid());
+drop policy if exists "Users can insert own checkin config" on public.checkin_configs;
 CREATE POLICY "Users can insert own checkin config" ON public.checkin_configs FOR INSERT WITH CHECK (user_id = auth.uid());
+drop policy if exists "Users can update own checkin config" on public.checkin_configs;
 CREATE POLICY "Users can update own checkin config" ON public.checkin_configs FOR UPDATE USING (user_id = auth.uid());
+drop policy if exists "Users can delete own checkin config" on public.checkin_configs;
 CREATE POLICY "Users can delete own checkin config" ON public.checkin_configs FOR DELETE USING (user_id = auth.uid());
 
+drop policy if exists "Users can read own checkins" on public.checkins;
 CREATE POLICY "Users can read own checkins" ON public.checkins FOR SELECT USING (user_id = auth.uid());
+drop policy if exists "Users can insert own checkins" on public.checkins;
 CREATE POLICY "Users can insert own checkins" ON public.checkins FOR INSERT WITH CHECK (user_id = auth.uid());
+drop policy if exists "Users can update own checkins" on public.checkins;
 CREATE POLICY "Users can update own checkins" ON public.checkins FOR UPDATE USING (user_id = auth.uid());
 
 -- Indexes
@@ -470,16 +477,25 @@ ALTER TABLE public.smart_glasses_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.glasses_tap_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audio_evidence ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Users read own glasses config" on public.smart_glasses_configs;
 CREATE POLICY "Users read own glasses config" ON public.smart_glasses_configs FOR SELECT USING (user_id = auth.uid());
+drop policy if exists "Users insert own glasses config" on public.smart_glasses_configs;
 CREATE POLICY "Users insert own glasses config" ON public.smart_glasses_configs FOR INSERT WITH CHECK (user_id = auth.uid());
+drop policy if exists "Users update own glasses config" on public.smart_glasses_configs;
 CREATE POLICY "Users update own glasses config" ON public.smart_glasses_configs FOR UPDATE USING (user_id = auth.uid());
 
+drop policy if exists "Users read own tap events" on public.glasses_tap_events;
 CREATE POLICY "Users read own tap events" ON public.glasses_tap_events FOR SELECT USING (user_id = auth.uid());
+drop policy if exists "Users insert own tap events" on public.glasses_tap_events;
 CREATE POLICY "Users insert own tap events" ON public.glasses_tap_events FOR INSERT WITH CHECK (user_id = auth.uid());
 
+drop policy if exists "Users read own audio evidence" on public.audio_evidence;
 CREATE POLICY "Users read own audio evidence" ON public.audio_evidence FOR SELECT USING (user_id = auth.uid());
+drop policy if exists "Users insert own audio evidence" on public.audio_evidence;
 CREATE POLICY "Users insert own audio evidence" ON public.audio_evidence FOR INSERT WITH CHECK (user_id = auth.uid());
+drop policy if exists "Users update own audio evidence" on public.audio_evidence;
 CREATE POLICY "Users update own audio evidence" ON public.audio_evidence FOR UPDATE USING (user_id = auth.uid());
+drop policy if exists "Users delete own audio evidence" on public.audio_evidence;
 CREATE POLICY "Users delete own audio evidence" ON public.audio_evidence FOR DELETE USING (user_id = auth.uid());
 
 -- Indexes
@@ -533,9 +549,11 @@ CREATE TABLE IF NOT EXISTS public.coercion_logs (
 -- RLS: Users can only read their own coercion logs
 ALTER TABLE public.coercion_logs ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Users can read own coercion logs" on public.coercion_logs;
 CREATE POLICY "Users can read own coercion logs" ON public.coercion_logs
   FOR SELECT USING (auth.uid() = user_id);
 
+drop policy if exists "Service role can insert coercion logs" on public.coercion_logs;
 CREATE POLICY "Service role can insert coercion logs" ON public.coercion_logs
   FOR INSERT WITH CHECK (true);
 
@@ -587,14 +605,17 @@ CREATE TABLE IF NOT EXISTS public.device_activation_codes (
 ALTER TABLE public.device_activation_codes ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can check if a code is valid (needed during activation before auth)
+drop policy if exists "Activation codes are viewable during activation" on public.device_activation_codes;
 CREATE POLICY "Activation codes are viewable during activation" ON public.device_activation_codes
   FOR SELECT USING (true);
 
 -- Only authenticated users or service role can update (mark as used)
+drop policy if exists "Only system can update activation codes" on public.device_activation_codes;
 CREATE POLICY "Only system can update activation codes" ON public.device_activation_codes
   FOR UPDATE USING (true);
 
 -- Only service role can insert
+drop policy if exists "Only service role can insert codes" on public.device_activation_codes;
 CREATE POLICY "Only service role can insert codes" ON public.device_activation_codes
   FOR INSERT WITH CHECK (true);
 
@@ -1399,11 +1420,13 @@ DROP POLICY IF EXISTS "Only service role can insert codes" ON public.device_acti
 DROP POLICY IF EXISTS "Users can view own activated codes" ON public.device_activation_codes;
 
 -- Utilizador vê apenas os códigos que ELE activou (histórico do próprio)
+drop policy if exists "Users view own activated codes" on public.device_activation_codes;
 CREATE POLICY "Users view own activated codes" ON public.device_activation_codes
   FOR SELECT TO authenticated
   USING (activated_by = auth.uid());
 
 -- Admin gere todos os códigos (listar / revogar) a partir do painel
+drop policy if exists "Admin manages activation codes" on public.device_activation_codes;
 CREATE POLICY "Admin manages activation codes" ON public.device_activation_codes
   FOR ALL TO authenticated
   USING (public.is_admin())
