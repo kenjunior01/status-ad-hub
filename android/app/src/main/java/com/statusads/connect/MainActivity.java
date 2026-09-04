@@ -12,6 +12,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(DisguisePlugin.class);
         // SOS Auto-Envio: SMS local via SIM (sem API externa, funciona offline)
         registerPlugin(SmsPlugin.class);
+        // SOS por Email: SMTP directo do Google (App Password) + anexo de áudio
+        registerPlugin(EmailPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

@@ -6,7 +6,7 @@ import {
   Crosshair, Navigation, Key, MessageSquare, Wifi, AlertTriangle, CheckCircle2,
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
-  ShieldAlert, KeyRound, Palette,
+  ShieldAlert, KeyRound, Palette, Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,15 +30,17 @@ import * as api from '@/lib/api'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useSmartGlasses } from '@/hooks/useSmartGlasses'
 import { useAntiCoercion } from '@/hooks/useAntiCoercion'
+import { getEmailConfig, setEmailConfig, clearEmailConfig, sendSmtpEmail } from '@/lib/email'
 import { useTheme, THEMES } from '@/hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'aparencia' | 'notificacoes' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
   { id: 'aparencia', title: 'Aparencia', icon: Palette },
   { id: 'notificacoes', title: 'Notificacoes', icon: Bell },
+  { id: 'email', title: 'Email de Emergencia (Gmail)', icon: Mail },
   { id: 'integracoes', title: 'Integracoes', icon: Key },
   { id: 'privacidade', title: 'Privacidade', icon: Lock },
   { id: 'plano', title: 'Plano', icon: CreditCard },
@@ -319,6 +321,179 @@ function DeleteAccountModal({
 // ============================================
 // ANTI-COERCION PASSWORD SETTINGS
 // ============================================
+
+function EmailSmtpSettings() {
+  const [user, setUser] = useState('')
+  const [pass, setPass] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [enabled, setEnabled] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [configured, setConfigured] = useState(false)
+
+  useEffect(() => {
+    const cfg = getEmailConfig()
+    if (cfg) {
+      setUser(cfg.user)
+      setEnabled(cfg.enabled)
+      setConfigured(true)
+    }
+  }, [])
+
+  const save = () => {
+    const cleanUser = user.trim().toLowerCase()
+    const cleanPass = pass.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanUser)) {
+      toast.error('Introduz um endereço Gmail válido')
+      return
+    }
+    if (cleanPass.length < 8) {
+      toast.error('A Palavra-passe de aplicação do Google tem 16 caracteres')
+      return
+    }
+    setSaving(true)
+    try {
+      setEmailConfig(cleanUser, cleanPass.replace(/\s/g, ''), true)
+      setConfigured(true)
+      setEnabled(true)
+      toast.success('Email de emergência configurado', {
+        description: 'No SOS, os contactos com email recebem o alerta + o áudio em anexo.',
+      })
+    } catch {
+      toast.error('Não foi possível guardar a configuração')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const remove = () => {
+    clearEmailConfig()
+    setConfigured(false)
+    setUser('')
+    setPass('')
+    toast.success('Configuração de email removida')
+  }
+
+  const toggleEnabled = () => {
+    const next = !enabled
+    setEnabled(next)
+    if (configured && user) {
+      const cfg = getEmailConfig()
+      if (cfg) setEmailConfig(cfg.user, cfg.pass, next)
+    }
+  }
+
+  const test = async () => {
+    if (!configured) {
+      toast.error('Configura e guarda o email primeiro')
+      return
+    }
+    setTesting(true)
+    try {
+      const r = await sendSmtpEmail(
+        [user.trim().toLowerCase()],
+        'StatusAds Connect — email de teste',
+        [
+          'Este é um email de teste do StatusAds Connect.',
+          '',
+          'Se recebeste esta mensagem, o envio por email (SMTP do Google) está',
+          'funcionando. Num SOS real, este remetente envia automaticamente:',
+          ' - o alerta com localização + testemunhas BT/WiFi',
+          ' - a gravação de áudio em anexo',
+          '',
+          '— StatusAds Connect',
+        ].join('\n')
+      )
+      if (r.sent > 0) {
+        toast.success('Email de teste enviado!', { description: `Verifica a caixa de entrada de ${user}` })
+      } else if (r.skipped) {
+        toast.info('Envio por email só está disponível na app Android (APK)')
+      } else {
+        toast.error('Falhou o envio de teste', { description: r.errors?.[0] || 'Verifica o endereço e a App Password' })
+      }
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/50 leading-relaxed">
+            Envia os SOS por email com <span className="text-brand">áudio em anexo</span> usando o
+            SMTP do Google — grátis, global, sem serviços pagos. Funciona com internet (o SMS
+            local cobre quando está offline).
+          </p>
+          <Toggle enabled={enabled && configured} onToggle={configured ? toggleEnabled : () => {}} />
+        </div>
+        <ol className="text-[11px] text-white/35 leading-relaxed space-y-1 list-decimal list-inside">
+          <li>Cria uma conta Gmail (ideal: conta dedicada só para a app)</li>
+          <li>Activa a Verificação em 2 passos: <span className="text-white/50 font-mono">myaccount.google.com/security</span></li>
+          <li>Gera a Palavra-passe de aplicação: <span className="text-white/50 font-mono">myaccount.google.com/apppasswords</span></li>
+          <li>Cola aqui os 16 caracteres e testa o envio</li>
+        </ol>
+      </div>
+
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-[11px] text-white/40">Conta Gmail remetente</Label>
+          <Input
+            type="email"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            placeholder="statusads.alertas@gmail.com"
+            className="bg-white/[0.03] border-white/[0.08] rounded-xl text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] text-white/40">Palavra-passe de aplicação (16 caracteres)</Label>
+          <div className="relative">
+            <Input
+              type={showPass ? 'text' : 'password'}
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              placeholder="xxxx xxxx xxxx xxxx"
+              className="bg-white/[0.03] border-white/[0.08] rounded-xl text-sm pr-10 font-mono"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+            >
+              {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={save} disabled={saving} className="flex-1 bg-brand hover:bg-brand-dark text-black gap-2 rounded-xl font-semibold text-sm">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            {configured ? 'Actualizar' : 'Guardar'}
+          </Button>
+          <Button onClick={test} disabled={testing || !configured} variant="outline" className="flex-1 border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] gap-2 rounded-xl text-sm">
+            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Testar envio
+          </Button>
+        </div>
+        {configured && (
+          <Button onClick={remove} variant="ghost" className="w-full text-red-400/60 hover:text-red-400 hover:bg-red-500/[0.06] rounded-xl text-xs">
+            <Trash2 className="h-3.5 w-3.5" /> Remover configuração
+          </Button>
+        )}
+      </div>
+
+      <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] p-3">
+        <p className="text-[11px] text-white/30 leading-relaxed">
+          {configured ? (
+            <>Configurado como <span className="text-brand/80 font-mono">{user}</span> {enabled ? '(activo)' : '(desactivado)'}. No SOS real, os contactos com email recebem o alerta detalhado e, ~2 min depois, o áudio em anexo.</>
+          ) : (
+            <>Sem configuração, o SOS usa apenas SMS local (SIM) e notificações push — ambos independentes de qualquer serviço externo.</>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 function AntiCoercionSettings() {
   const { isConfigured, setPanicPassword, removePanicPassword, verifyPanicPassword } = useAntiCoercion()
@@ -1094,6 +1269,7 @@ export default function Settings() {
                             </div>
                           </div>
                         )}
+                        {section.id === 'email' && <EmailSmtpSettings />}
                         {section.id === 'integracoes' && (
                           <div className="space-y-4">
                             {/* Integration status header */}
@@ -1680,7 +1856,7 @@ export default function Settings() {
                         )}
                         {section.id === 'sobre' && (
                           <div className="space-y-3">
-                            {[{ l: 'Versao', r: '2.9.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (
+                            {[{ l: 'Versao', r: '3.12.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (
                               <div key={item.l} className="flex items-center justify-between py-1">
                                 <span className="text-sm text-white/40">{item.l}</span>
                                 {item.link ? <button className="text-sm text-brand/70 flex items-center gap-1 hover:text-brand hover:underline"><span>Ver</span><ExternalLink className="h-3 w-3" /></button> : <span className="text-sm text-white/60 font-mono">{item.r}</span>}

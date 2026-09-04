@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { isSilentPanic, readWitnessSnapshot } from '@/lib/guardian'
 import { dispatchSosSms, buildSosSmsMessage, buildAudioSmsMessage, cacheContactPhones, getCachedContactPhones, mergePhones } from '@/lib/sos-sms'
 import { sendLocalSms } from '@/lib/sms'
+import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmailBody, cacheContactEmails, getCachedContactEmails, mergeEmails, getEmailConfig } from '@/lib/email'
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { toast } from 'sonner'
 
@@ -87,6 +88,8 @@ export function useEmergency() {
   const autoRecordUntilRef = useRef(0)
   const audioSavedRef = useRef(true)
   const lastPhonesRef = useRef<string[]>([])
+  const lastEmailsRef = useRef<string[]>([])
+  const sosAtRef = useRef<Date | null>(null)
 
   const startAutoRecord = () => {
     if (isPanicChainActive()) return // o Modo Pânico já grava por conta própria
@@ -101,7 +104,8 @@ export function useEmergency() {
   }
 
   // Quando a gravação termina (auto-stop aos 120 s ou desmontagem),
-  // guardar no cofre e avisar os contactos com o link do áudio.
+  // guardar no cofre, avisar os contactos com o link do áudio por SMS e
+  // enviar por EMAIL o ficheiro em anexo (SMTP do Google — v3.12.0).
   useEffect(() => {
     const blob = audio.blob
     if (!blob || audioSavedRef.current) return
@@ -120,6 +124,17 @@ export function useEmergency() {
             sendLocalSms(phones, buildAudioSmsMessage(signedUrl)).catch(() => {})
           }
         }
+        // EMAIL com o áudio EM ANEXO aos contactos com email (v3.12.0)
+        const emails = lastEmailsRef.current
+        if (emails.length > 0) {
+          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl
+          sendSmtpEmail(
+            emails,
+            'StatusAds: evidência de áudio da emergência',
+            buildAudioEmailBody(duration, sosAtRef.current || undefined),
+            [{ filename: 'sos-evidencia-audio.webm', mime: 'audio/webm', base64 }]
+          ).catch(() => {})
+        }
       } catch { /* evidência fica no fallback local (syncLocalEvidence apanha depois) */ }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,6 +150,15 @@ export function useEmergency() {
       const phones = contactsNotified.length > 0 ? contactsNotified : getCachedContactPhones()
       if (contactsNotified.length > 0) cacheContactPhones(contactsNotified)
       lastPhonesRef.current = phones
+      sosAtRef.current = new Date()
+
+      // 0b. Emails dos contactos (alert_enabled) → cache p/ follow-up do áudio
+      const contactEmails = (contactsData || [])
+        .filter((c) => c.alert_enabled !== false && (c.email || '').includes('@'))
+        .map((c) => c.email as string)
+      if (contactEmails.length > 0) cacheContactEmails(contactEmails)
+      const emails = getEmailConfig()?.enabled ? mergeEmails(contactEmails, getCachedContactEmails()) : []
+      lastEmailsRef.current = emails
 
       // 1. Sound the emergency alarm (siren + vibration) — EXCEPTO em pânico silencioso
       //    (Guardião em modo roubo: nada de sirene que entregue a vítima)
@@ -170,6 +194,26 @@ export function useEmergency() {
           toast.success(`SMS de emergencia enviado para ${localSms.sent} contacto(s)`, { duration: 5_000 })
         }
       } catch { /* SMS é best-effort — a emergência continua */ }
+
+      // 4c. EMAIL SOS (v3.12.0) — SMTP do Google, corpo detalhado (GPS +
+      //     testemunhas completas). O áudio segue em anexo quando a
+      //     gravação terminar (ver efeito do useAudioRecorder).
+      if (emails.length > 0) {
+        snapPromise.then((snap) => {
+          sendSmtpEmail(
+            emails,
+            buildSosEmailSubject({ name: userNameForSos(user) }),
+            buildSosEmailBody({
+              name: userNameForSos(user),
+              lat: vars.latitude,
+              lng: vars.longitude,
+              witness: snap,
+              recording: true,
+              at: sosAtRef.current || undefined,
+            })
+          ).catch(() => {})
+        })
+      }
 
       // 4b. Fallback: edge function (gateway Twilio) — só se o SMS local
       //     não chegou a ninguém (web/PWA, permissão negada, sem SIM)
