@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -23,6 +24,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -40,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,8 +70,10 @@ public class GuardianService extends Service implements SensorEventListener {
     private static final String PREFS = "guardian_prefs";
     private static final String CH_STATUS = "guardian_status";
     private static final String CH_ALERT = "guardian_alert";
+    private static final String CH_WARN = "guardian_warn";
     private static final int NOTIF_STATUS = 4001;
     private static final int NOTIF_ALERT = 4002;
+    private static final int NOTIF_WARN = 4003;
 
     // Power ×4 (idêntico ao antigo detector do PanicPlugin)
     private static final int REQUIRED_EVENTS = 4;
@@ -81,11 +86,20 @@ public class GuardianService extends Service implements SensorEventListener {
     private static final int REQUIRED_SPIKES = 3;
     private static final long SHAKE_COOLDOWN_MS = 120_000;
 
-    // Registo de testemunhas (scan BLE periódico enquanto armado)
+    // Registo de testemunhas (scan BLE + WiFi periódico enquanto armado)
     private static final long WITNESS_SCAN_INTERVAL_MS = 45_000; // janela a cada 45s
     private static final long WITNESS_SCAN_WINDOW_MS = 4_000;    // scan de 4s
     private static final long WITNESS_TTL_MS = 3 * 60 * 60 * 1000L; // memória de 3h
     private static final int WITNESS_MAX_ENTRIES = 150;
+
+    // Detector de perseguidor: dispositivo que reaparece após longo intervalo
+    private static final long FOLLOWER_GAP_MS = 20 * 60 * 1000L;   // reapareceu após ≥20 min fora
+    private static final int FOLLOWER_MIN_GAPS = 2;                // ≥2 reaparições espaçadas
+    private static final int FOLLOWER_MIN_HITS = 6;                // e visto ≥6 vezes no total
+    private static final long FOLLOWER_COOLDOWN_MS = 60 * 60 * 1000L; // máx. 1 alerta/hora
+
+    // Fio de segurança BT: dispositivo confiado desligou → SOS após graça
+    private static final long BT_DROP_GRACE_MS = 15_000;
 
     private SharedPreferences prefs;
     private BroadcastReceiver powerReceiver;
@@ -102,16 +116,33 @@ public class GuardianService extends Service implements SensorEventListener {
     // testemunhas
     private Handler witnessHandler;
     private BluetoothAdapter bluetoothAdapter;
+    private WifiManager wifiManager;
     private boolean scanningNow = false;
     private final HashMap<String, WitnessDevice> witnessLog = new HashMap<>();
 
-    /** Dispositivo BLE visto perto do utilizador (MAC só em hash). */
+    // fio de segurança BT (dispositivo confiado)
+    private BroadcastReceiver btdropReceiver;
+    private boolean btdropPending = false;
+    private final Runnable btdropFire = new Runnable() {
+        @Override
+        public void run() {
+            if (btdropPending && prefs.getBoolean("armed", false)
+                    && prefs.getBoolean("trusted_bt_enabled", false)) {
+                btdropPending = false;
+                triggerPanic("btdrop");
+            }
+        }
+    };
+
+    /** Dispositivo BLE ou rede WiFi visto perto do utilizador (MAC/BSSID só em hash). */
     private static class WitnessDevice {
-        String name;       // nome anunciado ou null
+        String name;       // nome anunciado / SSID ou null
+        String type = "b"; // "b" = BLE, "w" = WiFi
         int bestRssi;
         long firstSeen;
         long lastSeen;
         int hits;
+        int gaps;          // reaparições após intervalo longo (padrão de perseguidor)
     }
 
     @Override
@@ -121,6 +152,7 @@ public class GuardianService extends Service implements SensorEventListener {
         createChannels();
         startForegroundCompat();
         registerPowerReceiver();
+        registerBtdropReceiver();
         startShakeSensor();
         loadWitnessLog();
         witnessHandler = new Handler(Looper.getMainLooper());
@@ -151,6 +183,15 @@ public class GuardianService extends Service implements SensorEventListener {
             }
             powerReceiver = null;
         }
+        if (btdropReceiver != null) {
+            try {
+                unregisterReceiver(btdropReceiver);
+            } catch (Exception ignored) {
+            }
+            btdropReceiver = null;
+        }
+        if (witnessHandler != null) witnessHandler.removeCallbacks(btdropFire);
+        btdropPending = false;
         stopShakeSensor();
         stopWitnessScanner();
         super.onDestroy();
@@ -288,7 +329,7 @@ public class GuardianService extends Service implements SensorEventListener {
                 if (result == null || result.getDevice() == null) return;
                 String mac = result.getDevice().getAddress();
                 if (mac == null || mac.isEmpty()) return;
-                String hash = sha12(mac);
+                String hash = sha12("B:" + mac);
 
                 String name = null;
                 try {
@@ -301,18 +342,7 @@ public class GuardianService extends Service implements SensorEventListener {
                 }
                 int rssi = result.getRssi();
 
-                WitnessDevice d = witnessLog.get(hash);
-                if (d == null) {
-                    d = new WitnessDevice();
-                    d.firstSeen = System.currentTimeMillis();
-                    d.hits = 0;
-                    d.bestRssi = -127;
-                    witnessLog.put(hash, d);
-                }
-                if (name != null && !name.isEmpty()) d.name = name;
-                if (rssi > d.bestRssi) d.bestRssi = rssi;
-                d.lastSeen = System.currentTimeMillis();
-                d.hits++;
+                recordWitness(hash, name, rssi, "b");
             } catch (Exception ignored) {
             }
         }
@@ -322,6 +352,68 @@ public class GuardianService extends Service implements SensorEventListener {
             scanningNow = false;
         }
     };
+
+    /**
+     * Regista/actualiza uma observação no log de testemunhas (BLE ou WiFi).
+     * Detecta o padrão de PERSEGUIDOR: dispositivo que reaparece após intervalos
+     * longos fora de alcance (≥20 min) repetidas vezes — notifica com moderação.
+     */
+    private void recordWitness(String hash, String name, int rssi, String type) {
+        long now = System.currentTimeMillis();
+        WitnessDevice d = witnessLog.get(hash);
+        if (d == null) {
+            d = new WitnessDevice();
+            d.firstSeen = now;
+            d.hits = 0;
+            d.bestRssi = -127;
+            d.type = type;
+            witnessLog.put(hash, d);
+        } else if (now - d.lastSeen > FOLLOWER_GAP_MS) {
+            d.gaps++; // reapareceu depois de muito tempo fora de alcance
+        }
+        if (name != null && !name.isEmpty()) d.name = name;
+        if (rssi > d.bestRssi) d.bestRssi = rssi;
+        d.lastSeen = now;
+        d.hits++;
+
+        if (d.gaps >= FOLLOWER_MIN_GAPS && d.hits >= FOLLOWER_MIN_HITS) {
+            followerAlert(d.name);
+        }
+    }
+
+    /** Alerta discreto "possível perseguidor" — máx. 1 por hora, só armado. */
+    private void followerAlert(String name) {
+        if (!prefs.getBoolean("armed", false)) return;
+        long now = System.currentTimeMillis();
+        if (now - prefs.getLong("follower_last_alert", 0L) < FOLLOWER_COOLDOWN_MS) return;
+        try {
+            prefs.edit().putLong("follower_last_alert", now).apply();
+
+            Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("com.statusads.connect://guardiao"));
+            open.setComponent(new ComponentName(this, MainActivity.class));
+            PendingIntent pi = PendingIntent.getActivity(
+                    this, 30, open,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Notification.Builder b = Build.VERSION.SDK_INT >= 26
+                    ? new Notification.Builder(this, CH_WARN)
+                    : new Notification.Builder(this);
+            b.setSmallIcon(R.drawable.ic_sos_shortcut)
+                    .setContentTitle(getString(R.string.follower_notif_title))
+                    .setContentText(getString(R.string.follower_notif_text))
+                    .setStyle(new Notification.BigTextStyle()
+                            .bigText(getString(R.string.follower_notif_text)))
+                    .setContentIntent(pi)
+                    .setAutoCancel(true);
+            if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_DEFAULT);
+
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.notify(NOTIF_WARN, b.build());
+        } catch (SecurityException e) {
+            // POST_NOTIFICATIONS recusada — sem alerta (log continua a registar)
+        } catch (Exception ignored) {
+        }
+    }
 
     private void startWitnessWindow() {
         if (!prefs.getBoolean("witness_enabled", true)) return;
@@ -337,6 +429,11 @@ public class GuardianService extends Service implements SensorEventListener {
             hasPerm = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         }
         if (!hasPerm) return;
+
+        // Testemunhas WiFi: routers são infraestrutura FIXA — ancoram o LUGAR do
+        // incidente (prova de localização mesmo sem GPS). Lê a cache do sistema
+        // (sem scan activo — sem throttling) e mistura no mesmo log.
+        scanWifiWitnesses();
 
         try {
             if (bluetoothAdapter == null) {
@@ -369,6 +466,29 @@ public class GuardianService extends Service implements SensorEventListener {
         } catch (Exception e) {
             scanningNow = false;
             android.util.Log.w("GuardianService", "scan testemunhas: " + e.getMessage());
+        }
+    }
+
+    /** Redes WiFi visíveis na cache do sistema → mesmo registo de testemunhas (tipo "w"). */
+    private void scanWifiWitnesses() {
+        try {
+            if (wifiManager == null) {
+                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            }
+            if (wifiManager == null) return;
+            // android.net.wifi.ScanResult qualificado — colide com o ScanResult BLE
+            List<android.net.wifi.ScanResult> results = wifiManager.getScanResults();
+            if (results == null) return;
+            for (android.net.wifi.ScanResult r : results) {
+                if (r == null || r.BSSID == null || r.BSSID.isEmpty()) continue;
+                String ssid = r.SSID != null ? r.SSID.replace("\"", "").trim() : "";
+                if (ssid.isEmpty() || "<unknown ssid>".equalsIgnoreCase(ssid)) ssid = null;
+                recordWitness(sha12("W:" + r.BSSID), ssid, r.level, "w");
+            }
+        } catch (SecurityException se) {
+            // ACCESS_FINE_LOCATION recusada — testemunhas WiFi ficam de fora
+        } catch (Exception e) {
+            android.util.Log.w("GuardianService", "wifi testemunhas: " + e.getMessage());
         }
     }
 
@@ -416,10 +536,12 @@ public class GuardianService extends Service implements SensorEventListener {
                 JSONObject o = arr.getJSONObject(i);
                 WitnessDevice d = new WitnessDevice();
                 d.name = o.has("n") && !o.isNull("n") ? o.getString("n") : null;
+                d.type = o.optString("t", "b");
                 d.bestRssi = o.optInt("r", -127);
                 d.firstSeen = o.optLong("f", 0L);
                 d.lastSeen = o.optLong("s", 0L);
                 d.hits = o.optInt("c", 0);
+                d.gaps = o.optInt("g", 0);
                 witnessLog.put(o.getString("h"), d);
             }
             pruneWitnessLog();
@@ -435,10 +557,12 @@ public class GuardianService extends Service implements SensorEventListener {
                 JSONObject o = new JSONObject();
                 o.put("h", e.getKey());
                 if (d.name != null) o.put("n", d.name);
+                o.put("t", d.type);
                 o.put("r", d.bestRssi);
                 o.put("f", d.firstSeen);
                 o.put("s", d.lastSeen);
                 o.put("c", d.hits);
+                o.put("g", d.gaps);
                 arr.put(o);
             }
             prefs.edit().putString("witness_log", arr.toString()).apply();
@@ -459,6 +583,7 @@ public class GuardianService extends Service implements SensorEventListener {
                 JSONObject o = new JSONObject();
                 o.put("h", e.getKey());
                 if (d.name != null) o.put("n", d.name);
+                o.put("t", d.type);
                 o.put("r", d.bestRssi);
                 o.put("s", d.lastSeen);
                 o.put("c", d.hits);
@@ -479,6 +604,64 @@ public class GuardianService extends Service implements SensorEventListener {
             return sb.toString();
         } catch (Exception e) {
             return mac.replaceAll(":", ""); // fallback improvável
+        }
+    }
+
+    // ── Fio de segurança Bluetooth (dispositivo confiado) ─────────────────────
+    // Enquanto armado: se o dispositivo confiado (auscultador/relógio/carro) se
+    // desligar de repente — roubo do telemóvel da mão, arrancaram com ele — a
+    // sentinela espera 15s (glitches/entrou no bolso) e dispara o SOS completo.
+    // Reconexão dentro da graça cancela. BT desligado pelo utilizador cancela.
+
+    private void registerBtdropReceiver() {
+        if (btdropReceiver != null) return;
+        btdropReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                try {
+                    String action = intent.getAction();
+                    if (action == null || witnessHandler == null) return;
+                    if (!prefs.getBoolean("trusted_bt_enabled", false)) return;
+                    String trusted = prefs.getString("trusted_bt_addr", null);
+                    if (trusted == null || trusted.isEmpty()) return;
+
+                    if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+                        int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+                        if (state == BluetoothAdapter.STATE_OFF || state == BluetoothAdapter.STATE_TURNING_OFF) {
+                            // Utilizador desligou o BT — nunca disparar por isso
+                            btdropPending = false;
+                            witnessHandler.removeCallbacks(btdropFire);
+                        }
+                        return;
+                    }
+
+                    BluetoothDevice dev = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    if (dev == null || dev.getAddress() == null) return;
+                    boolean isTrusted = trusted.equalsIgnoreCase(dev.getAddress());
+
+                    if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action) && isTrusted) {
+                        // Reconectou dentro da graça — cancela
+                        btdropPending = false;
+                        witnessHandler.removeCallbacks(btdropFire);
+                    } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action) && isTrusted
+                            && prefs.getBoolean("armed", false)) {
+                        btdropPending = true;
+                        witnessHandler.postDelayed(btdropFire, BT_DROP_GRACE_MS);
+                    }
+                } catch (SecurityException se) {
+                    // BLUETOOTH_CONNECT em falta — extras indisponíveis
+                } catch (Exception ignored) {
+                }
+            }
+        };
+        IntentFilter f = new IntentFilter();
+        f.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        f.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        try {
+            registerReceiver(btdropReceiver, f);
+        } catch (Exception e) {
+            android.util.Log.w("GuardianService", "btdrop receiver: " + e.getMessage());
         }
     }
 
@@ -586,6 +769,13 @@ public class GuardianService extends Service implements SensorEventListener {
                 NotificationManager.IMPORTANCE_HIGH);  // heads-up / full-screen
         alert.setDescription(getString(R.string.guardian_channel_alert));
         nm.createNotificationChannel(alert);
+
+        NotificationChannel warn = new NotificationChannel(
+                CH_WARN,
+                getString(R.string.guardian_channel_warn),
+                NotificationManager.IMPORTANCE_DEFAULT); // discreto — "dispositivo recorrente"
+        warn.setDescription(getString(R.string.guardian_channel_warn));
+        nm.createNotificationChannel(warn);
     }
 
     private void startForegroundCompat() {

@@ -159,6 +159,9 @@ CREATE TABLE IF NOT EXISTS public.emergency_alerts (
   location          GEOMETRY(Point, 4326),
   contacts_notified TEXT[] DEFAULT '{}',
   share_token       TEXT UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
+  -- Radar BT/WiFi (v3.10.0): testemunhas congeladas no momento do SOS
+  witness_count     INTEGER,
+  witness_snapshot  JSONB,
   resolved_at       TIMESTAMPTZ,
   resolve_reason    TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -258,7 +261,15 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.emergency_alerts;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.location_events;
 
 -- ============================================
--- 9. HELPER FUNCTIONS
+-- 9. MIGRAÇÃO v3.10.0 — RADAR BLUETOOTH/WIFI
+-- Testemunhas (BLE + WiFi, endereços em hash) congeladas no SOS.
+-- Idempotente: segura correr em BDs que já tenham o CREATE TABLE acima.
+-- ============================================
+ALTER TABLE public.emergency_alerts ADD COLUMN IF NOT EXISTS witness_count INTEGER;
+ALTER TABLE public.emergency_alerts ADD COLUMN IF NOT EXISTS witness_snapshot JSONB;
+
+-- ============================================
+-- 10. HELPER FUNCTIONS
 -- ============================================
 
 -- Get dashboard stats for a user

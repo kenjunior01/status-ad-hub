@@ -221,5 +221,7 @@
     <!-- Android <12: scan BLE exige localização — ACCESS_FINE_LOCATION já declarada acima -->
     <!-- Scan BLE a partir do serviço foreground (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Radar Bluetooth/WiFi: resultados de redes próximas para o registo de testemunhas -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>

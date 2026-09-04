@@ -8,7 +8,7 @@ import { showEmergencyOfflineWarning } from '@/hooks/useNetworkStatus'
 import * as api from '@/lib/api'
 import { sendEmergencyPush } from '@/lib/web-push'
 import { supabase } from '@/lib/supabase'
-import { isSilentPanic } from '@/lib/guardian'
+import { isSilentPanic, readWitnessSnapshot } from '@/lib/guardian'
 import { toast } from 'sonner'
 
 /**
@@ -107,6 +107,17 @@ export function useEmergency() {
         `Emergencia activada! GPS: ${vars.latitude.toFixed(4)}, ${vars.longitude.toFixed(4)}`,
         { alertId, latitude: vars.latitude, longitude: vars.longitude }
       )
+
+      // 6. Anexar snapshot de testemunhas (BLE + WiFi, endereços em hash) ao
+      //    alerta na nuvem — "quem estava perto" fica guardado para a
+      //    investigação mesmo que o telemóvel seja perdido/destruído
+      readWitnessSnapshot()
+        .then((snap) => {
+          if (snap && Array.isArray(snap.devices) && snap.devices.length > 0) {
+            api.saveWitnessSnapshot(alertId, snap).catch(() => {})
+          }
+        })
+        .catch(() => {})
     },
     onError: async (error, vars) => {
       // Security enhancement: auto-retry with exponential backoff

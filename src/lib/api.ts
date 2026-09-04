@@ -238,6 +238,27 @@ export async function triggerEmergency(
   }
 }
 
+/**
+ * Anexa o snapshot de testemunhas (BLE + WiFi, endereços em hash) ao alerta
+ * de emergência — a lista "quem estava perto" fica disponível para a
+ * investigação mesmo que o telemóvel seja perdido/destruído. v3.10.0
+ */
+export async function saveWitnessSnapshot(
+  alertId: string,
+  snapshot: { capturedAt: number; devices: unknown[] }
+): Promise<void> {
+  if (!isValidUUID(alertId)) throw new Error('Invalid alert ID')
+  if (!snapshot || !Array.isArray(snapshot.devices) || snapshot.devices.length === 0) return
+  const { error } = await supabase
+    .from('emergency_alerts')
+    .update({
+      witness_snapshot: snapshot,
+      witness_count: snapshot.devices.length,
+    })
+    .eq('id', alertId)
+  if (error) throw error
+}
+
 /** Get the currently active emergency for a user (if any) */
 export async function getActiveEmergency(userId: string): Promise<EmergencyAlert | null> {
   const { data, error } = await supabase

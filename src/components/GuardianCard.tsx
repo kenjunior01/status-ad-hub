@@ -16,13 +16,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, ShieldOff, Mic, VolumeX, Smartphone, Vibrate,
   ChevronDown, Hand, Power, Link as LinkIcon, Loader2, BellRing,
-  BatteryWarning, ChevronRight, Users,
+  BatteryWarning, ChevronRight, Users, Headphones, Check,
 } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { useGuardian } from '@/hooks/useGuardian'
 import { requestMotionPermission } from '@/lib/shake'
 import {
   getNativePanic, countRecentWitnessDevices, hasWitnessPermissions, requestWitnessPermissions,
+  getBondedDevices, TrustedDeviceOption,
 } from '@/lib/guardian'
 import { haptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
@@ -250,12 +251,21 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
 
 /** Lista de gatilhos + opções (compartilhada entre variantes) */
 function GuardianDetails({ config, update }: {
-  config: { autoRecord: boolean; silent: boolean; shakeEnabled: boolean; witnessLog: boolean; armed: boolean }
-  update: (patch: { autoRecord?: boolean; silent?: boolean; shakeEnabled?: boolean; witnessLog?: boolean }) => void
+  config: {
+    autoRecord: boolean; silent: boolean; shakeEnabled: boolean; witnessLog: boolean
+    btTether: boolean; btTetherAddress: string | null; btTetherName: string | null
+    armed: boolean
+  }
+  update: (patch: {
+    autoRecord?: boolean; silent?: boolean; shakeEnabled?: boolean; witnessLog?: boolean
+    btTether?: boolean; btTetherAddress?: string | null; btTetherName?: string | null
+  }) => void
 }) {
   const isAndroid = Capacitor.getPlatform() === 'android'
   const [batteryExempt, setBatteryExempt] = useState<boolean | null>(null)
   const [witnessCount, setWitnessCount] = useState<number | null>(null)
+  const [bonded, setBonded] = useState<TrustedDeviceOption[] | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   // Estado da bateria (só Android — a sentinela pode ser "adormecida" por OEMs)
   useEffect(() => {
@@ -295,9 +305,51 @@ function GuardianDetails({ config, update }: {
     }
   }, [])
 
+  // ── Fio de segurança Bluetooth ──────────────────────────────────────────────
+  const openPicker = useCallback(async () => {
+    const list = await getBondedDevices()
+    setBonded(list)
+    setPickerOpen(true)
+    if (list.length === 0) {
+      toast.info('Nenhum dispositivo emparelhado', {
+        description: 'Emparelhe primeiro o auscultador/relógio nas Definições Bluetooth do telemóvel.',
+        duration: 6000,
+      })
+    }
+  }, [])
+
+  const toggleBtTether = useCallback(() => {
+    const next = !config.btTether
+    if (next && !config.btTetherAddress) {
+      void openPicker() // sem dispositivo escolhido — abre o selector
+      return
+    }
+    update({ btTether: next })
+    if (next) {
+      toast.success('Fio de segurança activo', {
+        description: `Se o seu ${config.btTetherName || 'dispositivo'} desligar de repente, o SOS sai sozinho.`,
+      })
+    }
+  }, [config.btTether, config.btTetherAddress, config.btTetherName, update, openPicker])
+
+  const pickDevice = useCallback((d: TrustedDeviceOption) => {
+    update({ btTether: true, btTetherAddress: d.address, btTetherName: d.name })
+    setPickerOpen(false)
+    toast.success(`Fio de segurança: ${d.name}`, {
+      description: 'Se este dispositivo desligar de repente com o Guardião armado, o SOS sai automático.',
+      duration: 6000,
+    })
+  }, [update])
+
   const toggles = [
     { key: 'shakeEnabled' as const, icon: Vibrate, label: 'Agitação forte ×3', desc: 'Agarraram-lhe o braço — agite o telemóvel', action: undefined as (() => void) | undefined },
-    { key: 'witnessLog' as const, icon: Users, label: 'Registo de testemunhas', desc: 'Guarda dispositivos vistos perto de si para identificar testemunhas', action: toggleWitness },
+    { key: 'witnessLog' as const, icon: Users, label: 'Registo de testemunhas', desc: 'Guarda dispositivos e redes perto de si para identificar testemunhas', action: toggleWitness },
+    // Fio de segurança BT só existe na sentinela nativa (Android)
+    ...(isAndroid ? [{
+      key: 'btTether' as const, icon: Headphones, label: 'Fio de segurança Bluetooth',
+      desc: 'Se o seu auscultador/relógio desligar de repente, SOS automático',
+      action: toggleBtTether,
+    }] : []),
     { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: 'Áudio + fotos disfarçadas ao disparar', action: undefined as (() => void) | undefined },
     { key: 'silent' as const, icon: VolumeX, label: 'Modo silencioso', desc: 'Sem sirene — o ladrão não percebe', action: undefined as (() => void) | undefined },
   ]
@@ -306,6 +358,7 @@ function GuardianDetails({ config, update }: {
     { icon: LinkIcon, text: 'Long-press no ícone da app → SOS' },
     { icon: Smartphone, text: 'Atalho rápido "SOS" (barra do Android)' },
     { icon: Power, text: 'Botão Power ×4 com o ecrã apagado' },
+    ...(isAndroid && config.btTether ? [{ icon: Headphones, text: `Fio de segurança: o seu ${config.btTetherName || 'auscultador'} desligar` }] : []),
   ]
 
   return (
@@ -372,6 +425,58 @@ function GuardianDetails({ config, update }: {
             </button>
           ))}
         </div>
+        {/* Fio de segurança BT: dispositivo actual + selector (só Android) */}
+        {isAndroid && config.btTether && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5 p-2 rounded-xl border border-emerald-400/[0.15] bg-emerald-500/[0.04]">
+              <Headphones className="h-3.5 w-3.5 text-emerald-400/80 shrink-0" />
+              <p className="flex-1 min-w-0 text-[10px] text-white/50 leading-relaxed">
+                A vigiar <b className="text-white/75">{config.btTetherName || 'dispositivo'}</b> — se desligar de
+                repente com o Guardião armado, o SOS sai após 15s de graça.
+              </p>
+              <button
+                onClick={() => void openPicker()}
+                className="shrink-0 text-[10px] font-semibold text-emerald-300/80 hover:text-emerald-200 px-2 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] transition-colors"
+              >
+                Trocar
+              </button>
+            </div>
+            <p className="text-[9px] text-white/30 px-1 leading-relaxed">
+              Desligue o fio de segurança antes de deixar o auscultador para trás (ou desligue o BT) — senão o SOS sai sozinho.
+            </p>
+            {pickerOpen && bonded !== null && (
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
+                <p className="text-[9px] font-bold tracking-wider text-white/40 px-2.5 pt-2 pb-1">
+                  ESCOLHA O DISPOSITIVO CONFIADO
+                </p>
+                {bonded.length === 0 && (
+                  <p className="text-[10px] text-white/35 px-2.5 pb-2.5">
+                    Nenhum dispositivo emparelhado. Emparelhe primeiro nas Definições Bluetooth.
+                  </p>
+                )}
+                <div className="max-h-40 overflow-y-auto">
+                  {bonded.map(d => (
+                    <button
+                      key={d.address}
+                      onClick={() => pickDevice(d)}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-white/[0.05] transition-colors"
+                    >
+                      <Headphones className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                      <span className="flex-1 min-w-0 text-[11px] text-white/70 truncate">{d.name}</span>
+                      {config.btTetherAddress === d.address && <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setPickerOpen(false)}
+                  className="w-full py-1.5 text-[10px] text-white/40 hover:text-white/60 border-t border-white/[0.06] transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {/* Testemunhas: contador vivo (só Android, feature ligada) */}
         {isAndroid && config.witnessLog && witnessCount !== null && (
           <div className="flex items-center gap-2.5 p-2 rounded-xl border border-white/[0.05] bg-white/[0.02]">

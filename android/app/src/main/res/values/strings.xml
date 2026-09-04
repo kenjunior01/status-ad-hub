@@ -19,6 +19,11 @@
     <string name="guardian_alert_title">SOS Guardião</string>
     <string name="guardian_alert_text">Gatilho de emergência detectado — toque para abrir</string>
 
+    <!-- Radar BT/WiFi: alerta de dispositivo recorrente (possível perseguidor) -->
+    <string name="guardian_channel_warn">Alertas do Guardião</string>
+    <string name="follower_notif_title">Dispositivo recorrente perto de si</string>
+    <string name="follower_notif_text">Esteve perto de si antes e voltou. Se desconfia que está a ser seguido, dispare o SOS.</string>
+
     <!-- Camuflagem do launcher (activity-alias) — ícone e nome disfarçados -->
     <string name="disg_calc">Calculadora</string>
     <string name="disg_weather">Meteorologia</string>

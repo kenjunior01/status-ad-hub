@@ -1945,3 +1945,18 @@ GRANT EXECUTE ON FUNCTION public.security_audit() TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.security_audit() FROM anon;
 
 -- FIM DA MIGRATION 014
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION 015 — RADAR BLUETOOTH/WIFI (app v3.10.0)
+-- Testemunhas (dispositivos BLE + redes WiFi, endereços SEMPRE em hash)
+-- congeladas no momento do SOS e anexadas ao alerta de emergência.
+-- Idempotente: pode correr várias vezes sem erro.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE public.emergency_alerts ADD COLUMN IF NOT EXISTS witness_count INTEGER;
+ALTER TABLE public.emergency_alerts ADD COLUMN IF NOT EXISTS witness_snapshot JSONB;
+
+COMMENT ON COLUMN public.emergency_alerts.witness_snapshot IS
+  'Radar BT/WiFi: dispositivos/redes vistos perto da vítima (hashes SHA-256 truncados, sem MAC/BSSID em claro) congelados no momento do SOS — ajuda a identificar testemunhas.';
+
+-- FIM DA MIGRATION 015

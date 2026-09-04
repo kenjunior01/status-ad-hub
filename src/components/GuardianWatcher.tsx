@@ -92,6 +92,7 @@ export function GuardianWatcher() {
           let source: PanicSource = 'shortcut'
           if (u.includes('t=power')) source = 'power'
           else if (u.includes('t=shake')) source = 'shake'
+          else if (u.includes('t=btdrop')) source = 'btdrop'
           requestPanicCountdown(source)
         }
       } catch {

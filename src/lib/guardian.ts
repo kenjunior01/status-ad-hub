@@ -32,12 +32,19 @@ export interface GuardianConfig {
   silent: boolean
   /** Gesto de agitação armado (default ON) */
   shakeEnabled: boolean
-  /** Registo de testemunhas: dispositivos BLE vistos perto de si (default ON)
-   *  Ajuda a identificar testemunhas de um roubo/sequestro. MAC só em hash. */
+  /** Registo de testemunhas: dispositivos BLE + WiFi vistos perto de si (default ON)
+   *  Ajuda a identificar testemunhas de um roubo/sequestro. MAC/BSSID só em hash. */
   witnessLog: boolean
+  /** Fio de segurança Bluetooth: se o dispositivo confiado desligar de repente,
+   *  a sentinela dispara o SOS (roubo do telemóvel da mão). Default OFF. */
+  btTether: boolean
+  /** MAC do dispositivo confiado (auscultador/relógio/carro) */
+  btTetherAddress: string | null
+  /** Nome do dispositivo confiado (para mostrar na UI) */
+  btTetherName: string | null
 }
 
-export type PanicSource = 'shake' | 'shortcut' | 'tile' | 'power' | 'manual'
+export type PanicSource = 'shake' | 'shortcut' | 'tile' | 'power' | 'btdrop' | 'manual'
 
 export const DEFAULT_GUARDIAN: GuardianConfig = {
   armed: false,
@@ -46,6 +53,9 @@ export const DEFAULT_GUARDIAN: GuardianConfig = {
   silent: true,
   shakeEnabled: true,
   witnessLog: true,
+  btTether: false,
+  btTetherAddress: null,
+  btTetherName: null,
 }
 
 const KEY = 'statusads-guardian'
@@ -56,6 +66,7 @@ export const COUNTDOWN_SECONDS: Record<PanicSource, number> = {
   shortcut: 2,
   tile: 2,
   power: 3,
+  btdrop: 3,
   manual: 0,
 }
 
@@ -64,6 +75,7 @@ export const SOURCE_LABEL: Record<PanicSource, string> = {
   shortcut: 'Atalho SOS no ícone',
   tile: 'Atalho rápido SOS',
   power: 'Botão Power ×4',
+  btdrop: 'Fio de segurança Bluetooth',
   manual: 'Botão SOS',
 }
 
@@ -182,26 +194,47 @@ interface PanicNativeInterface {
   batteryStatus(): Promise<{ exempt: boolean }>
   /** Abre o diálogo do sistema "Permitir sem optimizações de bateria". */
   requestBatteryExemption(): Promise<void>
-  /** Permissões de BLE para o registo de testemunhas. */
+  /** Permissões de BLE + localização para o registo de testemunhas. */
   hasWitnessPermissions(): Promise<{ granted: boolean }>
   requestWitnessPermissions(): Promise<void>
-  /** Log vivo de dispositivos vistos nas últimas 3h. */
+  /** Log vivo de dispositivos/redes vistos nas últimas 3h. */
   getWitnessLog(): Promise<{ devices: WitnessEntry[] }>
   /** Snapshot congelado no momento do disparo (vem com o SOS). */
   getWitnessSnapshot(): Promise<{ snapshot: WitnessSnapshot | null }>
+  /** Dispositivos já emparelhados (selector do fio de segurança BT). */
+  getBondedDevices(): Promise<{ devices: TrustedDeviceOption[] }>
+  /** Define/limpa o dispositivo confiado do fio de segurança BT. */
+  setTrustedDevice(cfg: { address: string | null; name: string | null; enabled: boolean }): Promise<void>
+  /** Dispositivo confiado actual (restaurar a UI). */
+  getTrustedDevice(): Promise<TrustedDeviceState>
 }
 
 export interface WitnessEntry {
-  h: string      // hash do MAC (privacidade — MAC nunca sai do aparelho)
-  n?: string     // nome anunciado (se existir)
+  h: string      // hash do MAC/BSSID (privacidade — endereço nunca sai do aparelho)
+  n?: string     // nome anunciado / SSID (se existir)
+  t?: 'b' | 'w'  // tipo: b = dispositivo BLE, w = rede WiFi (routers = lugar fixo)
   r: number      // melhor RSSI (sinal — quanto mais perto de 0, mais perto estava)
   s: number      // última vez visto (epoch ms)
   c: number      // nº de vezes visto
+  g?: number     // reaparições após intervalo longo (padrão de perseguidor)
 }
 
 export interface WitnessSnapshot {
   capturedAt: number
   devices: WitnessEntry[]
+}
+
+/** Opção do selector de dispositivo confiado (BT já emparelhado no telemóvel). */
+export interface TrustedDeviceOption {
+  address: string
+  name: string
+}
+
+/** Estado do fio de segurança BT guardado no lado nativo. */
+export interface TrustedDeviceState {
+  address: string | null
+  name: string | null
+  enabled: boolean
 }
 
 let nativePanic: PanicNativeInterface | null = null
@@ -229,6 +262,11 @@ function syncNative(cfg: GuardianConfig): void {
   if (!panic) return
   panic
     .setGuardian({ armed: cfg.armed, shakeEnabled: cfg.shakeEnabled, silent: cfg.silent, witnessLog: cfg.witnessLog })
+    .catch(() => {})
+  // Fio de segurança BT: estado do dispositivo confiado (a sentinela lê
+  // diretamente das prefs — o receiver fica activo enquanto o serviço existir)
+  panic
+    .setTrustedDevice({ address: cfg.btTetherAddress, name: cfg.btTetherName, enabled: cfg.btTether })
     .catch(() => {})
 }
 
@@ -290,6 +328,32 @@ export async function hasWitnessPermissions(): Promise<boolean> {
   try {
     const { granted } = await panic.hasWitnessPermissions()
     return !!granted
+  } catch {
+    return false
+  }
+}
+
+// ── Fio de segurança Bluetooth (dispositivo confiado) ─────────────────────
+
+/** Dispositivos BT já emparelhados no telemóvel (para o selector). */
+export async function getBondedDevices(): Promise<TrustedDeviceOption[]> {
+  const panic = getNativePanic()
+  if (!panic) return []
+  try {
+    const { devices } = await panic.getBondedDevices()
+    return devices || []
+  } catch {
+    return []
+  }
+}
+
+/** Guarda o dispositivo confiado (a sentinela nativa passa a vigiá-lo). */
+export async function setTrustedDevice(cfg: { address: string | null; name: string | null; enabled: boolean }): Promise<boolean> {
+  const panic = getNativePanic()
+  if (!panic) return false
+  try {
+    await panic.setTrustedDevice(cfg)
+    return true
   } catch {
     return false
   }
