@@ -1,20 +1,28 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useEmergencyAlarm } from '@/hooks/useEmergencyAlarm'
 import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 import { showEmergencyOfflineWarning } from '@/hooks/useNetworkStatus'
+import { useContacts } from '@/hooks/useContacts'
+import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { isPanicChainActive } from '@/hooks/usePanicMode'
 import * as api from '@/lib/api'
 import { sendEmergencyPush } from '@/lib/web-push'
 import { supabase } from '@/lib/supabase'
 import { isSilentPanic, readWitnessSnapshot } from '@/lib/guardian'
+import { dispatchSosSms, buildSosSmsMessage, buildAudioSmsMessage, cacheContactPhones, getCachedContactPhones, mergePhones } from '@/lib/sos-sms'
+import { sendLocalSms } from '@/lib/sms'
+import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { toast } from 'sonner'
 
 /**
  * Notify emergency contacts via the notify-contacts edge function.
  * Sends SMS to all contacts and Web Push to the user's other devices.
- * Called after trigger_emergency RPC succeeds.
+ * Called after trigger_emergency RPC succeeds — APENAS como fallback
+ * quando o SMS local (SIM do telefone) não está disponível (web/PWA ou
+ * permissão negada). O SMS local é o primário desde a v3.11.0.
  */
 async function notifyContactsViaEdgeFunction(
   userId: string,
@@ -47,6 +55,16 @@ async function notifyContactsViaEdgeFunction(
   }
 }
 
+/** Nome amigável de quem pede socorro (user_metadata ou prefixo do email). */
+function userNameForSos(user: { user_metadata?: Record<string, any>; email?: string } | null): string | null {
+  if (!user) return null
+  const meta = user.user_metadata || {}
+  const name = (meta.name || meta.full_name || meta.display_name) as string | undefined
+  if (name && name.trim()) return name.trim()
+  if (user.email) return user.email.split('@')[0]
+  return null
+}
+
 export function useEmergency() {
   const { user } = useAuth()
   const userId = user?.id
@@ -57,8 +75,55 @@ export function useEmergency() {
     vibrate: true,
   })
   const { queueEmergency, pendingCount: offlinePending, isSyncing: offlineSyncing } = useOfflineQueue()
+  const { contacts: contactsData } = useContacts()
   const retryCountRef = useRef(0)
   const MAX_RETRIES = 3
+
+  // ── v3.11.0: SOS Auto-Envio — gravação automática de áudio ──────────────
+  // No SOS simples (fora do Modo Pânico) grava 120 s de áudio ambiente e
+  // guarda no cofre de evidências; se subir para a nuvem, envia um SMS
+  // de follow-up com o link assinado (2h) para os contactos notificados.
+  const audio = useAudioRecorder(120)
+  const autoRecordUntilRef = useRef(0)
+  const audioSavedRef = useRef(true)
+  const lastPhonesRef = useRef<string[]>([])
+
+  const startAutoRecord = () => {
+    if (isPanicChainActive()) return // o Modo Pânico já grava por conta própria
+    if (Date.now() < autoRecordUntilRef.current) return // já a gravar nesta janela
+    autoRecordUntilRef.current = Date.now() + 130_000
+    audioSavedRef.current = false
+    audio.startRecording().then((ok) => {
+      if (!ok) audioSavedRef.current = true // sem microfone — não insiste
+    }).catch(() => {
+      audioSavedRef.current = true
+    })
+  }
+
+  // Quando a gravação termina (auto-stop aos 120 s ou desmontagem),
+  // guardar no cofre e avisar os contactos com o link do áudio.
+  useEffect(() => {
+    const blob = audio.blob
+    if (!blob || audioSavedRef.current) return
+    audioSavedRef.current = true
+    ;(async () => {
+      try {
+        const duration = audio.duration || 0
+        const dataUrl = await audio.getBase64()
+        if (!dataUrl) return
+        const res = await saveEvidenceRecording(dataUrl, duration)
+        if (res.storagePath) {
+          const signedUrl = await resolveEvidenceSource({ storage_path: res.storagePath })
+          const phones = lastPhonesRef.current
+          if (signedUrl && phones.length > 0) {
+            // Fire & forget — o link do áudio é o "enviar as gravações" prometido
+            sendLocalSms(phones, buildAudioSmsMessage(signedUrl)).catch(() => {})
+          }
+        }
+      } catch { /* evidência fica no fallback local (syncLocalEvidence apanha depois) */ }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.blob])
 
   const triggerMutation = useMutation({
     mutationFn: ({ latitude, longitude }: { latitude: number; longitude: number }) =>
@@ -66,12 +131,17 @@ export function useEmergency() {
     onSuccess: async (result, vars) => {
       const { alertId, contactsNotified } = result
 
+      // 0. Contactos a avisar: RPC → cache local (última lista conhecida)
+      const phones = contactsNotified.length > 0 ? contactsNotified : getCachedContactPhones()
+      if (contactsNotified.length > 0) cacheContactPhones(contactsNotified)
+      lastPhonesRef.current = phones
+
       // 1. Sound the emergency alarm (siren + vibration) — EXCEPTO em pânico silencioso
       //    (Guardião em modo roubo: nada de sirene que entregue a vítima)
       if (!isSilentPanic()) triggerAlarm()
 
       // 2. Show success toast
-      toast.success(`Emergencia activada! ${contactsNotified.length} contacto(s) serao notificados via SMS.`, {
+      toast.success(`Emergencia activada! ${phones.length} contacto(s) vao receber o alerta.`, {
         duration: 8_000,
         action: {
           label: isSounding ? 'Silenciar' : 'Ver',
@@ -81,8 +151,29 @@ export function useEmergency() {
         },
       })
 
-      // 3. Send SMS to emergency contacts via edge function
-      if (userId && contactsNotified.length > 0) {
+      // 3. Snapshot de testemunhas lido UMA vez (nuvem + SMS partilham)
+      const snapPromise = readWitnessSnapshot().catch(() => null)
+
+      // 4. SMS LOCAL (v3.11.0) — sai pelo SIM do telefone, sem API externa,
+      //    funciona MESMO SEM INTERNET. GPS + testemunhas BT/WiFi + áudio.
+      let localSms = { sent: 0, failed: 0 }
+      try {
+        const snap = await snapPromise
+        localSms = await dispatchSosSms(phones, buildSosSmsMessage({
+          name: userNameForSos(user),
+          lat: vars.latitude,
+          lng: vars.longitude,
+          witness: snap,
+          recording: true,
+        }))
+        if (localSms.sent > 0) {
+          toast.success(`SMS de emergencia enviado para ${localSms.sent} contacto(s)`, { duration: 5_000 })
+        }
+      } catch { /* SMS é best-effort — a emergência continua */ }
+
+      // 4b. Fallback: edge function (gateway Twilio) — só se o SMS local
+      //     não chegou a ninguém (web/PWA, permissão negada, sem SIM)
+      if (localSms.sent === 0 && userId && contactsNotified.length > 0) {
         notifyContactsViaEdgeFunction(userId, alertId, vars.latitude, vars.longitude, contactsNotified).then(
           (smsResult) => {
             if (smsResult.sent > 0) {
@@ -94,30 +185,31 @@ export function useEmergency() {
         })
       }
 
-      // 4. Send Web Push to user's own other devices
+      // 5. Send Web Push to user's own other devices
       if (userId) {
         sendEmergencyPush(userId, alertId, vars.latitude, vars.longitude).catch(() => {
           // Push failure is non-critical
         })
       }
 
-      // 5. Local notification (foreground)
+      // 6. Local notification (foreground)
       notifyEmergency(
         'EMERGENCIA — StatusAds Connect',
         `Emergencia activada! GPS: ${vars.latitude.toFixed(4)}, ${vars.longitude.toFixed(4)}`,
         { alertId, latitude: vars.latitude, longitude: vars.longitude }
       )
 
-      // 6. Anexar snapshot de testemunhas (BLE + WiFi, endereços em hash) ao
+      // 7. Anexar snapshot de testemunhas (BLE + WiFi, endereços em hash) ao
       //    alerta na nuvem — "quem estava perto" fica guardado para a
       //    investigação mesmo que o telemóvel seja perdido/destruído
-      readWitnessSnapshot()
-        .then((snap) => {
-          if (snap && Array.isArray(snap.devices) && snap.devices.length > 0) {
-            api.saveWitnessSnapshot(alertId, snap).catch(() => {})
-          }
-        })
-        .catch(() => {})
+      snapPromise.then((snap) => {
+        if (snap && Array.isArray(snap.devices) && snap.devices.length > 0) {
+          api.saveWitnessSnapshot(alertId, snap).catch(() => {})
+        }
+      })
+
+      // 8. Gravação automática de áudio (evidência + SMS com link quando subir)
+      startAutoRecord()
     },
     onError: async (error, vars) => {
       // Security enhancement: auto-retry with exponential backoff
@@ -146,6 +238,32 @@ export function useEmergency() {
         // All retries exhausted — queue for offline sync
         await queueEmergency(vars.latitude, vars.longitude)
         showEmergencyOfflineWarning()
+
+        // v3.11.0: OFFLINE é quando o SMS local mais importa — sem internet,
+        // o SIM é o único canal que sai do aparelho. Usa os contactos em cache.
+        try {
+          const offlinePhones = mergePhones(
+            (contactsData || [])
+              .filter((c) => c.alert_enabled !== false && (c.phone || '').length >= 7)
+              .map((c) => c.phone),
+            getCachedContactPhones()
+          )
+          if (offlinePhones.length > 0) {
+            lastPhonesRef.current = offlinePhones
+            const snap = await readWitnessSnapshot().catch(() => null)
+            await dispatchSosSms(offlinePhones, buildSosSmsMessage({
+              name: userNameForSos(user),
+              lat: vars.latitude,
+              lng: vars.longitude,
+              witness: snap,
+              recording: true,
+            }))
+          }
+        } catch { /* best-effort */ }
+
+        // Gravação de áudio também no caminho offline (evidência local,
+        // sincronizada depois pelo Cofre)
+        startAutoRecord()
 
         // Local notification with enriched metadata
         notifyEmergency(

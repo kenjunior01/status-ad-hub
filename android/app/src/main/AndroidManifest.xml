@@ -189,6 +189,9 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
+    <!-- SOS Auto-Envio: SMS local via SIM do telefone (sem API externa, funciona offline) -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
     <!-- Deteccao de queda (acelerometro de alta frequencia no Android 12+) -->
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
 

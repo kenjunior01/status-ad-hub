@@ -25,6 +25,7 @@ import {
   getNativePanic, countRecentWitnessDevices, hasWitnessPermissions, requestWitnessPermissions,
   getBondedDevices, TrustedDeviceOption,
 } from '@/lib/guardian'
+import { hasSmsPermission, requestSmsPermission } from '@/lib/sms'
 import { haptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -88,6 +89,20 @@ export function GuardianCard({ variant = 'panel' }: GuardianCardProps) {
         await requestWitnessPermissions()
         toast.info('Autorize o Bluetooth para registar testemunhas', {
           description: 'É o que permite identificar quem estava perto se houver SOS.',
+          duration: 6000,
+        })
+      }
+    }
+    // SOS Auto-Envio: permissão SEND_SMS para o alarme sair pelo SIM
+    // (sem gateway externo e mesmo sem internet) — pedir já ao armar
+    if (Capacitor.getPlatform() === 'android') {
+      const smsOk = await hasSmsPermission()
+      if (!smsOk) {
+        const smsGranted = await requestSmsPermission()
+        toast.info(smsGranted ? 'SMS de emergência activado' : 'Autorize o SMS para o envio automático', {
+          description: smsGranted
+            ? 'No SOS, os contactos recebem SMS directo do teu SIM — funciona até sem internet.'
+            : 'Sem esta permissão, o SOS envia avisos só quando houver internet.',
           duration: 6000,
         })
       }

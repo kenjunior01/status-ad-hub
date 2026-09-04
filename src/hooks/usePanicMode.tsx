@@ -49,6 +49,16 @@ const initialState: PanicModeState = {
   isScreenLocked: false,
 }
 
+/**
+ * Flag de módulo: a cadeia Modo Pânico está activa? Lida por useEmergency
+ * para NÃO iniciar a gravação automática de áudio do SOS (o Pânico já
+ * grava por conta própria — dois MediaRecorders disputariam o microfone).
+ */
+let panicChainActive = false
+export function isPanicChainActive(): boolean {
+  return panicChainActive
+}
+
 const PanicModeContext = createContext<PanicModeContextValue>({
   state: initialState,
   activate: () => {},
@@ -151,6 +161,7 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
     if (state.isActive) return
     const silent = opts?.silent ?? false
 
+    panicChainActive = true
     const now = new Date().toISOString()
     setState(prev => ({ ...prev, isActive: true, activatedAt: now, isScreenLocked: true }))
 
@@ -224,6 +235,7 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
       toast.error('PIN incorrecto')
       return false
     }
+    panicChainActive = false
 
     // Stop audio recording and save evidence
     if (audioRecorder.isRecording) {
