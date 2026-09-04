@@ -3,6 +3,7 @@ package com.statusads.connect;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -11,6 +12,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -31,6 +33,48 @@ import java.util.Iterator;
  */
 @CapacitorPlugin(name = "Disguise")
 public class DisguisePlugin extends Plugin {
+
+    /** Instância activa — usada pelo gatilho estático de teclas de volume. */
+    private static DisguisePlugin instance;
+
+    /** Buffer do padrão Volume SOS (true = DOWN, false = UP). */
+    private static final ArrayList<Boolean> volumeBuffer = new ArrayList<>();
+    private static long lastVolumeAt = 0L;
+    private static final long VOLUME_WINDOW_MS = 3000L;
+
+    @Override
+    public void load() {
+        instance = this;
+    }
+
+    /**
+     * Volume SOS (v3.13.0): a MainActivity encaminha as teclas físicas de
+     * volume; o padrão "UP UP DOWN DOWN" dentro de 3s dispara o evento JS
+     * "volumeSos" (SOS silencioso com a app disfarçada). As teclas NÃO são
+     * consumidas — o volume continua a mudar normalmente, sem pistas
+     * visíveis de que é um gatilho de emergência.
+     *
+     * @param isDown true = KEYCODE_VOLUME_DOWN, false = KEYCODE_VOLUME_UP
+     */
+    public static void onVolumeKey(boolean isDown) {
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastVolumeAt > VOLUME_WINDOW_MS) volumeBuffer.clear();
+        lastVolumeAt = now;
+        volumeBuffer.add(isDown);
+        while (volumeBuffer.size() > 4) volumeBuffer.remove(0);
+        if (volumeBuffer.size() == 4) {
+            boolean[] expected = { false, false, true, true }; // UP, UP, DOWN, DOWN
+            boolean pattern = true;
+            for (int i = 0; i < 4; i++) {
+                if (volumeBuffer.get(i) != expected[i]) { pattern = false; break; }
+            }
+            if (pattern) {
+                volumeBuffer.clear();
+                DisguisePlugin inst = instance;
+                if (inst != null) inst.notifyListeners("volumeSos", new JSObject());
+            }
+        }
+    }
 
     /** id → classe do alias. O id "real" é o ícone verdadeiro da app. */
     private static final String[][] ALIASES = {

@@ -142,7 +142,7 @@ export default function DisguiseSelector() {
     void haptic('medium')
     activate()
     toast.success('Camuflagem activa — a app agora parece outra coisa', {
-      description: 'Long-press 2s no canto superior esquerdo + PIN para voltar',
+      description: 'Fica activa mesmo se fechar a app. Long-press 2s no canto superior esquerdo + PIN para voltar',
       duration: 5000,
     })
   }

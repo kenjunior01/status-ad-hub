@@ -73,6 +73,7 @@ export default function DiscreetModeSettings() {
           <div className="text-sm text-purple-200/80">
             <p className="font-medium text-purple-200 mb-1">Como funciona?</p>
             <p>Quando activado, a app transforma-se numa app inofensiva à escolha. O sistema de segurança continua a funcionar em background. Para voltar à app real, faça <strong>long-press no canto superior esquerdo</strong> e digite o PIN.</p>
+            <p className="mt-1 text-purple-200/60">A camuflagem <strong>mantém-se activa</strong> mesmo que feche a app, a deslize da lista de recentes ou reinicie o telemóvel — quem abrir a app vê sempre o disfarce até introduzir o PIN correcto.</p>
           </div>
         </div>
       </div>

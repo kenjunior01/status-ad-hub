@@ -42,10 +42,10 @@ export function CalculatorDisguise({ onSOS }: { onSOS: () => void }) {
         <div className="text-right text-4xl font-light text-gray-800 dark:text-white truncate">{display.length>12?parseFloat(display).toExponential(6):display}</div>
         {prev!==null&&op&&<div className="text-right text-sm text-gray-400">{prev} {op}</div>}
       </div>
-      <div className="grid grid-cols-4 gap-2 flex-1">
+      <div className="grid grid-cols-4 grid-rows-5 gap-2 flex-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {['C','±','%','÷','7','8','9','×','4','5','6','-','1','2','3','+','0','.','='].map(btn=>(
           <button key={btn} onClick={()=>{if(btn==='C')handleClear();else if(btn==='=')handleEquals();else if(['+','-','×','÷'].includes(btn))handleOp(btn);else if(btn==='±')setDisplay(p=>String(-parseFloat(p)));else if(btn==='%')setDisplay(p=>String(parseFloat(p)/100));else handleDigit(btn)}}
-            className={cn('rounded-2xl text-xl font-medium flex items-center justify-center transition-colors active:scale-95',['÷','×','-','+','='].includes(btn)?'bg-amber-400 dark:bg-amber-500 text-white':['C','±','%'].includes(btn)?'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white':'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm')}>{btn}</button>
+            className={cn('rounded-2xl h-full min-h-[3rem] text-xl font-medium flex items-center justify-center transition-colors active:scale-95',btn==='='&&'col-span-2',['÷','×','-','+','='].includes(btn)?'bg-amber-400 dark:bg-amber-500 text-white':['C','±','%'].includes(btn)?'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white':'bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm')}>{btn}</button>
         ))}
       </div>
     </div>

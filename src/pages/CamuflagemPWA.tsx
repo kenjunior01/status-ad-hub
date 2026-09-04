@@ -24,7 +24,7 @@ const STEPS = [
   {
     icon: Smartphone,
     title: '3. Activar',
-    body: 'Ao activar, o disfarce ocupa todo o ecrã por cima da app. Quem pegar no telemóvel vê apenas a app falsa — nada de segurança fica visível.',
+    body: 'Ao activar, o disfarce ocupa todo o ecrã por cima da app. Quem pegar no telemóvel vê apenas a app falsa — nada de segurança fica visível. O disfarce mantém-se activo mesmo depois de fechar e reabrir a app.',
   },
   {
     icon: ShieldAlert,

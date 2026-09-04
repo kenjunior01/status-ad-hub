@@ -1856,7 +1856,7 @@ export default function Settings() {
                         )}
                         {section.id === 'sobre' && (
                           <div className="space-y-3">
-                            {[{ l: 'Versao', r: '3.12.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (
+                            {[{ l: 'Versao', r: '3.13.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (
                               <div key={item.l} className="flex items-center justify-between py-1">
                                 <span className="text-sm text-white/40">{item.l}</span>
                                 {item.link ? <button className="text-sm text-brand/70 flex items-center gap-1 hover:text-brand hover:underline"><span>Ver</span><ExternalLink className="h-3 w-3" /></button> : <span className="text-sm text-white/60 font-mono">{item.r}</span>}

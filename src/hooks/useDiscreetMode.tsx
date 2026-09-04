@@ -11,11 +11,38 @@
  */
 
 import { useState, useCallback, createContext, useContext, useEffect, useRef } from 'react'
+import { Capacitor, registerPlugin } from '@capacitor/core'
+import type { PluginListenerHandle } from '@capacitor/core'
 import { useAuth } from '@/hooks/useAuth'
 import { usePanicMode } from '@/hooks/usePanicMode'
 import { useEmergency } from '@/hooks/useEmergency'
 import type { DiscreetModeType, DiscreetModeConfig } from '@/lib/types'
 import { toast } from 'sonner'
+
+/** Sessão de camuflagem: sobrevive a fechos/reinícios da app (dispositivo real). */
+const DISGUISE_SESSION_KEY = 'statusads-disguise-session'
+const VALID_DISGUISE_TYPES: DiscreetModeType[] = [
+  'calculator', 'weather', 'notes', 'clock', 'contacts', 'settings_app',
+  'music_player', 'currency', 'flashlight', 'sms_chat', 'photo_gallery',
+]
+
+function readDisguiseSession(): { active: boolean; type: DiscreetModeType } {
+  try {
+    const raw = localStorage.getItem(DISGUISE_SESSION_KEY)
+    if (raw) {
+      const s = JSON.parse(raw)
+      if (s && VALID_DISGUISE_TYPES.includes(s.t)) return { active: true, type: s.t as DiscreetModeType }
+    }
+  } catch { /* storage indisponível */ }
+  return { active: false, type: 'calculator' }
+}
+
+/** Ponte nativa (Android): evento volumeSos do DisguisePlugin (teclas físicas). */
+interface DisguiseNativeInterface {
+  addListener: (eventName: 'volumeSos', listenerFunc: () => void) => Promise<PluginListenerHandle>
+  current(): Promise<{ id: string }>
+  apply(opts: { id: string }): Promise<{ applied: string }>
+}
 
 interface DiscreetModeContextValue {
   isActive: boolean
@@ -72,8 +99,10 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
   const { user } = useAuth()
   const { activate: activatePanic } = usePanicMode()
   const { triggerEmergency } = useEmergency()
-  const [isActive, setIsActive] = useState(false)
-  const [disguiseType, setDisguiseType] = useState<DiscreetModeType>('calculator')
+  // Sessão restaurada de forma síncrona durante o 1.º render — sem flash da app real
+  const restoredRef = useRef(readDisguiseSession())
+  const [isActive, setIsActive] = useState(restoredRef.current.active)
+  const [disguiseType, setDisguiseType] = useState<DiscreetModeType>(restoredRef.current.type)
   const [config, setConfig] = useState<DiscreetModeConfig | null>(null)
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastShakeRef = useRef(0)
@@ -81,6 +110,8 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
   const wrongAttemptsRef = useRef(0)
   const volumeBufferRef = useRef<string[]>([])
   const volumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activeRef = useRef(restoredRef.current.active)
+  const disguiseTypeRef = useRef(restoredRef.current.type)
 
   // Load saved config
   useEffect(() => {
@@ -90,7 +121,8 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
       try {
         const cfg: DiscreetModeConfig = { ...defaultConfig, ...JSON.parse(saved), user_id: user.id }
         setConfig(cfg)
-        setDisguiseType(cfg.disguise_type)
+        // Com camuflagem activa (sessão restaurada), o tipo de disfarce em curso tem prioridade
+        if (!activeRef.current) setDisguiseType(cfg.disguise_type)
       } catch {}
     } else {
       const fresh = { ...defaultConfig, user_id: user.id }
@@ -221,6 +253,37 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
     )
   }, [triggerEmergency])
 
+  // Sincroniza refs usados por callbacks estáveis
+  useEffect(() => { activeRef.current = isActive }, [isActive])
+  useEffect(() => { disguiseTypeRef.current = disguiseType }, [disguiseType])
+
+  // Botão back do Android: com a camuflagem activa, o back é consumido —
+  // não navega para fora nem fecha a app à vista de quem estiver a ver.
+  useEffect(() => {
+    if (!isActive || !Capacitor.isNativePlatform()) return
+    let handle: PluginListenerHandle | null = null
+    const App = registerPlugin<{ addListener: (eventName: 'backButton', listenerFunc: () => void) => Promise<PluginListenerHandle> }>('App')
+    App.addListener('backButton', () => { /* consumido — o disfarce mantém-se */ })
+      .then(h => { handle = h })
+      .catch(() => { /* plugin indisponível */ })
+    return () => { void handle?.remove() }
+  }, [isActive])
+
+  // Volume SOS nativo (Android): teclas físicas chegam via DisguisePlugin
+  // (padrão "up-up-down-down" — o WebView não emite keydown para teclas físicas)
+  useEffect(() => {
+    if (!config?.volume_sos_enabled) return
+    if (!Capacitor.isNativePlatform()) return
+    let handle: PluginListenerHandle | null = null
+    const Disguise = registerPlugin<DisguiseNativeInterface>('Disguise')
+    Disguise.addListener('volumeSos', () => {
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100])
+      triggerSilentSOS()
+      toast.error('SOS por Volume activado', { duration: 3000 })
+    }).then(h => { handle = h }).catch(() => { /* plugin indisponível */ })
+    return () => { void handle?.remove() }
+  }, [config?.volume_sos_enabled, triggerSilentSOS])
+
   const saveConfig = useCallback((cfg: Partial<DiscreetModeConfig>) => {
     if (!user) return
     const current = config || { ...defaultConfig, user_id: user.id }
@@ -231,7 +294,10 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
 
   const activate = useCallback(() => {
     setIsActive(true)
+    activeRef.current = true
     wrongAttemptsRef.current = 0
+    // Sessão persistente: mesmo que a app seja fechada/reaberta, o disfarce mantém-se
+    try { localStorage.setItem(DISGUISE_SESSION_KEY, JSON.stringify({ t: disguiseTypeRef.current, at: Date.now() })) } catch { /* storage indisponível */ }
     if (navigator.vibrate) navigator.vibrate(100)
   }, [])
 
@@ -243,6 +309,8 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
     if (duressPin && enteredPin === duressPin) {
       // Opens the app normally but triggers silent SOS in background
       setIsActive(false)
+      activeRef.current = false
+      try { localStorage.removeItem(DISGUISE_SESSION_KEY) } catch { /* storage indisponível */ }
       triggerSilentSOS()
       if (navigator.vibrate) navigator.vibrate([50, 50, 50])
       toast.info('App aberta', { duration: 1000 }) // Looks normal to onlookers
@@ -252,6 +320,8 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
     // Check normal PIN
     if (enteredPin === currentPin) {
       setIsActive(false)
+      activeRef.current = false
+      try { localStorage.removeItem(DISGUISE_SESSION_KEY) } catch { /* storage indisponível */ }
       wrongAttemptsRef.current = 0
       if (navigator.vibrate) navigator.vibrate([50, 50, 50])
       return { success: true, isDuress: false }
@@ -274,6 +344,11 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
 
   const changeDisguise = useCallback((type: DiscreetModeType) => {
     setDisguiseType(type)
+    disguiseTypeRef.current = type
+    // Com a camuflagem activa, a sessão persistente acompanha o novo disfarce
+    if (activeRef.current) {
+      try { localStorage.setItem(DISGUISE_SESSION_KEY, JSON.stringify({ t: type, at: Date.now() })) } catch { /* storage indisponível */ }
+    }
     saveConfig({ disguise_type: type })
   }, [saveConfig])
 
@@ -298,6 +373,10 @@ export function DiscreetModeProvider({ children }: { children: React.ReactNode }
     const fresh = { ...defaultConfig, user_id: user.id }
     setConfig(fresh)
     setDisguiseType('calculator')
+    disguiseTypeRef.current = 'calculator'
+    if (activeRef.current) {
+      try { localStorage.setItem(DISGUISE_SESSION_KEY, JSON.stringify({ t: 'calculator', at: Date.now() })) } catch { /* storage indisponível */ }
+    }
     localStorage.setItem(`discreet-mode-${user.id}`, JSON.stringify(fresh))
   }, [user])
 
