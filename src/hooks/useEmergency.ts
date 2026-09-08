@@ -14,8 +14,10 @@ import { supabase } from '@/lib/supabase'
 import { isSilentPanic, readWitnessSnapshot } from '@/lib/guardian'
 import { dispatchSosSms, buildSosSmsMessage, buildAudioSmsMessage, cacheContactPhones, getCachedContactPhones, mergePhones } from '@/lib/sos-sms'
 import { sendLocalSms } from '@/lib/sms'
+import type { SmsSendResult } from '@/lib/sms'
 import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmailBody, cacheContactEmails, getCachedContactEmails, mergeEmails, getEmailConfig } from '@/lib/email'
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
+import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
 import { toast } from 'sonner'
 
 /**
@@ -121,7 +123,9 @@ export function useEmergency() {
           const phones = lastPhonesRef.current
           if (signedUrl && phones.length > 0) {
             // Fire & forget — o link do áudio é o "enviar as gravações" prometido
-            sendLocalSms(phones, buildAudioSmsMessage(signedUrl)).catch(() => {})
+            sendLocalSms(phones, buildAudioSmsMessage(signedUrl)).then((r) => {
+              if (r.sent > 0) patchSosReport({ audio: { started: true, smsLink: true } })
+            }).catch(() => {})
           }
         }
         // EMAIL com o áudio EM ANEXO aos contactos com email (v3.12.0)
@@ -133,7 +137,9 @@ export function useEmergency() {
             'StatusAds: evidência de áudio da emergência',
             buildAudioEmailBody(duration, sosAtRef.current || undefined),
             [{ filename: 'sos-evidencia-audio.webm', mime: 'audio/webm', base64 }]
-          ).catch(() => {})
+          ).then((r) => {
+            if (r.sent > 0) patchSosReport({ audio: { started: true, emailAnexo: true } })
+          }).catch(() => {})
         }
       } catch { /* evidência fica no fallback local (syncLocalEvidence apanha depois) */ }
     })()
@@ -151,6 +157,13 @@ export function useEmergency() {
       if (contactsNotified.length > 0) cacheContactPhones(contactsNotified)
       lastPhonesRef.current = phones
       sosAtRef.current = new Date()
+
+      // v3.14.0: relatório de entrega — todos os canais consolidados num só lugar
+      const report = startSosReport({
+        alertId,
+        name: userNameForSos(user),
+        location: { lat: vars.latitude, lng: vars.longitude },
+      })
 
       // 0b. Emails dos contactos (alert_enabled) → cache p/ follow-up do áudio
       const contactEmails = (contactsData || [])
@@ -180,18 +193,43 @@ export function useEmergency() {
 
       // 4. SMS LOCAL (v3.11.0) — sai pelo SIM do telefone, sem API externa,
       //    funciona MESMO SEM INTERNET. GPS + testemunhas BT/WiFi + áudio.
-      let localSms = { sent: 0, failed: 0 }
+      let localSms: SmsSendResult = { sent: 0, failed: 0 }
       try {
         const snap = await snapPromise
-        localSms = await dispatchSosSms(phones, buildSosSmsMessage({
+        if (snap) {
+          patchSosReport({ witnesses: {
+            total: snap.devices.length,
+            bt: snap.devices.filter((d) => d.t === 'b').length,
+            wifi: snap.devices.filter((d) => d.t === 'w').length,
+          } })
+        }
+        const sosMsg = buildSosSmsMessage({
           name: userNameForSos(user),
           lat: vars.latitude,
           lng: vars.longitude,
           witness: snap,
           recording: true,
-        }))
+        })
+        localSms = await dispatchSosSms(phones, sosMsg)
+        patchSosReport({ channels: { smsLocal: { ...localSms, at: new Date().toISOString() } } })
         if (localSms.sent > 0) {
           toast.success(`SMS de emergencia enviado para ${localSms.sent} contacto(s)`, { duration: 5_000 })
+        }
+        // v3.14.0: RETRY automático dos números que falharam (excluindo falta
+        // de permissão, em que repetir não ajuda) — 2.ª tentativa aos 8 s
+        const retryable = (localSms.failures || []).filter(
+          (f) => f.phone && !f.error.includes('permissão')
+        )
+        if (retryable.length > 0) {
+          const retryPhones = Array.from(new Set(retryable.map((f) => f.phone as string)))
+          setTimeout(() => {
+            sendLocalSms(retryPhones, sosMsg).then((res) => {
+              patchSosReport({ channels: { smsRetry: { ...res, at: new Date().toISOString() } } })
+              if (res.sent > 0) {
+                toast.success(`2.ª tentativa: SMS chegou a +${res.sent} contacto(s)`, { duration: 5_000 })
+              }
+            }).catch(() => { /* best-effort */ })
+          }, 8_000)
         }
       } catch { /* SMS é best-effort — a emergência continua */ }
 
@@ -211,7 +249,11 @@ export function useEmergency() {
               recording: true,
               at: sosAtRef.current || undefined,
             })
-          ).catch(() => {})
+          ).then((res) => {
+            patchSosReport({ channels: { email: { ...res, at: new Date().toISOString() } } })
+          }).catch((err) => {
+            patchSosReport({ channels: { email: { sent: 0, failed: emails.length, error: String(err), at: new Date().toISOString() } } })
+          })
         })
       }
 
@@ -220,19 +262,24 @@ export function useEmergency() {
       if (localSms.sent === 0 && userId && contactsNotified.length > 0) {
         notifyContactsViaEdgeFunction(userId, alertId, vars.latitude, vars.longitude, contactsNotified).then(
           (smsResult) => {
+            patchSosReport({ channels: { twilio: { ...smsResult, at: new Date().toISOString() } } })
             if (smsResult.sent > 0) {
               toast.success(`SMS enviado para ${smsResult.sent} contacto(s)`, { duration: 5_000 })
             }
           }
-        ).catch(() => {
-          // SMS failure is logged but not shown to user during emergency
+        ).catch((err) => {
+          patchSosReport({ channels: { twilio: { sent: 0, failed: contactsNotified.length, error: String(err), at: new Date().toISOString() } } })
         })
+      } else if (localSms.sent > 0) {
+        patchSosReport({ channels: { twilio: { sent: 0, failed: 0, skipped: true } } })
       }
 
       // 5. Send Web Push to user's own other devices
       if (userId) {
-        sendEmergencyPush(userId, alertId, vars.latitude, vars.longitude).catch(() => {
-          // Push failure is non-critical
+        sendEmergencyPush(userId, alertId, vars.latitude, vars.longitude).then(() => {
+          patchSosReport({ channels: { pushOk: true } })
+        }).catch(() => {
+          patchSosReport({ channels: { pushOk: false } })
         })
       }
 
@@ -254,6 +301,18 @@ export function useEmergency() {
 
       // 8. Gravação automática de áudio (evidência + SMS com link quando subir)
       startAutoRecord()
+      patchSosReport({ audio: { started: !isPanicChainActive() } })
+
+      // v3.14.0: registo do relatório de entrega na nuvem (Eventos) — 15 s
+      // depois, para já incluir o retry dos SMS. O Admin passa a ver a
+      // fiabilidade real de cada canal (SMS/email/Twilio/push).
+      setTimeout(() => {
+        const r = patchSosReport()
+        if (r && !r.loggedToCloud && userId) {
+          patchSosReport({ loggedToCloud: true })
+          api.logEvent(userId, 'emergency', `Entrega SOS: ${summarizeReport(r)}`, undefined, vars.latitude, vars.longitude).catch(() => {})
+        }
+      }, 15_000)
     },
     onError: async (error, vars) => {
       // Security enhancement: auto-retry with exponential backoff
@@ -292,22 +351,45 @@ export function useEmergency() {
               .map((c) => c.phone),
             getCachedContactPhones()
           )
+          startSosReport({
+            name: userNameForSos(user),
+            location: { lat: vars.latitude, lng: vars.longitude },
+            offline: true,
+          })
           if (offlinePhones.length > 0) {
             lastPhonesRef.current = offlinePhones
             const snap = await readWitnessSnapshot().catch(() => null)
-            await dispatchSosSms(offlinePhones, buildSosSmsMessage({
+            if (snap) {
+              patchSosReport({ witnesses: {
+                total: snap.devices.length,
+                bt: snap.devices.filter((d) => d.t === 'b').length,
+                wifi: snap.devices.filter((d) => d.t === 'w').length,
+              } })
+            }
+            const res = await dispatchSosSms(offlinePhones, buildSosSmsMessage({
               name: userNameForSos(user),
               lat: vars.latitude,
               lng: vars.longitude,
               witness: snap,
               recording: true,
             }))
+            patchSosReport({ channels: { smsLocal: { ...res, at: new Date().toISOString() } } })
           }
         } catch { /* best-effort */ }
 
         // Gravação de áudio também no caminho offline (evidência local,
         // sincronizada depois pelo Cofre)
         startAutoRecord()
+        patchSosReport({ audio: { started: !isPanicChainActive() } })
+
+        // v3.14.0: relatório de entrega do caminho offline → Eventos (15 s)
+        setTimeout(() => {
+          const r = patchSosReport()
+          if (r && !r.loggedToCloud && userId) {
+            patchSosReport({ loggedToCloud: true })
+            api.logEvent(userId, 'emergency', `Entrega SOS (offline): ${summarizeReport(r)}`, undefined, vars.latitude, vars.longitude).catch(() => {})
+          }
+        }, 15_000)
 
         // Local notification with enriched metadata
         notifyEmergency(

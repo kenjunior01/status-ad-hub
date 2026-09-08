@@ -30,7 +30,133 @@ import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useMedicalProfile, isMedicalEmpty } from '@/hooks/useMedicalProfile'
 import { reverseGeocode, shortAddress } from '@/lib/free-apis'
+import { getLastSosReport } from '@/lib/sos-report'
+import type { SosDispatchReport } from '@/lib/sos-report'
 import { pt } from 'date-fns/locale'
+
+// ============================================
+// v3.14.0 — Relatório de Entrega do último SOS
+// ============================================
+
+function AttemptLine({ label, sent, failed, skipped, detail }: { label: string; sent: number; failed: number; skipped?: boolean; detail?: string }) {
+  const ok = sent > 0
+  const none = skipped || (sent === 0 && failed === 0)
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={cn(
+          'w-1.5 h-1.5 rounded-full shrink-0',
+          ok ? 'bg-emerald-400' : none ? 'bg-white/20' : 'bg-red-400'
+        )} />
+        <span className="text-xs text-white/60">{label}</span>
+      </div>
+      <span className={cn(
+        'text-[11px] font-mono shrink-0',
+        ok ? 'text-emerald-300' : none ? 'text-white/25' : 'text-red-300'
+      )}>
+        {none ? 'não usado' : ok ? `${sent} enviado${sent > 1 ? 's' : ''}${failed > 0 ? ` · ${failed} falhou` : ''}` : `falhou (${failed})`}
+      </span>
+    </div>
+  )
+}
+
+function SosDeliveryReportCard() {
+  const [report, setReport] = useState<SosDispatchReport | null>(() => getLastSosReport())
+  const [expanded, setExpanded] = useState(false)
+
+  // Actualiza quando se volta a esta página após um SOS
+  useEffect(() => {
+    const t = setInterval(() => setReport(getLastSosReport()), 5_000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (!report) return null
+
+  const ch = report.channels || {}
+  const smsOk = (ch.smsLocal?.sent || 0) + (ch.smsRetry?.sent || 0)
+  const smsTotal = smsOk + (ch.smsLocal?.failed || 0)
+  const emailOk = ch.email?.sent || 0
+  const emailTotal = emailOk + (ch.email?.failed || 0)
+  const allOk = smsTotal === 0 || (smsOk === smsTotal && (emailTotal === 0 || emailOk === emailTotal))
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+      <SpotlightCard className="p-4">
+        <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-3">
+            <div className={cn('p-2 rounded-xl border shrink-0', allOk ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20')}>
+              <Radio className={cn('h-4 w-4', allOk ? 'text-emerald-400' : 'text-amber-400')} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Relatório de Envio do SOS</p>
+              <p className="text-[10px] text-white/35 mt-0.5">
+                {new Date(report.at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {report.offline && ' · modo offline'}
+              </p>
+            </div>
+          </div>
+          {expanded ? <ChevronUp className="h-4 w-4 text-white/30" /> : <ChevronDown className="h-4 w-4 text-white/30" />}
+        </button>
+
+        {expanded && (
+          <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-3">
+            <div className="space-y-0.5">
+              <AttemptLine label="SMS local (SIM)" sent={ch.smsLocal?.sent || 0} failed={ch.smsLocal?.failed || 0} skipped={ch.smsLocal?.skipped} />
+              {(ch.smsRetry?.sent || 0) > 0 && (
+                <AttemptLine label="↳ 2.ª tentativa" sent={ch.smsRetry?.sent || 0} failed={ch.smsRetry?.failed || 0} />
+              )}
+              {(ch.email?.sent || 0) > 0 || (ch.email?.failed || 0) > 0 || !ch.email?.skipped ? (
+                <AttemptLine label="Email (Gmail)" sent={ch.email?.sent || 0} failed={ch.email?.failed || 0} skipped={ch.email?.skipped} />
+              ) : null}
+              {ch.twilio && !ch.twilio.skipped && (
+                <AttemptLine label="Fallback Twilio" sent={ch.twilio.sent} failed={ch.twilio.failed} />
+              )}
+              {ch.pushOk !== undefined && (
+                <div className="flex items-center justify-between py-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={cn('w-1.5 h-1.5 rounded-full', ch.pushOk ? 'bg-emerald-400' : 'bg-red-400')} />
+                    <span className="text-xs text-white/60">Push (outros dispositivos)</span>
+                  </div>
+                  <span className={cn('text-[11px] font-mono', ch.pushOk ? 'text-emerald-300' : 'text-red-300')}>
+                    {ch.pushOk ? 'enviado' : 'falhou'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Falhas detalhadas por número/email */}
+            {(ch.smsLocal?.failures?.length || 0) > 0 && (
+              <div className="rounded-xl bg-red-500/[0.06] border border-red-500/15 p-2.5">
+                <p className="text-[10px] font-semibold text-red-300 mb-1">SMS não entregues:</p>
+                {ch.smsLocal!.failures!.slice(0, 5).map((f, i) => (
+                  <p key={i} className="text-[10px] text-red-200/60 font-mono truncate">• {f.phone} — {f.error}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {report.witnesses && report.witnesses.total > 0 && (
+                <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/50">
+                  Testemunhas: {report.witnesses.total} disp ({report.witnesses.bt} BT, {report.witnesses.wifi} WiFi)
+                </span>
+              )}
+              {report.audio?.started && (
+                <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/50">
+                  Áudio {report.audio.emailAnexo ? 'enviado em anexo' : report.audio.smsLink ? 'link enviado' : 'a gravar'}
+                </span>
+              )}
+              {report.location && (
+                <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/50 font-mono">
+                  GPS {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </SpotlightCard>
+    </motion.div>
+  )
+}
 
 // ============================================
 // Map helpers
@@ -612,6 +738,9 @@ export default function Emergency() {
             </div>
           </motion.div>
         )}
+
+        {/* v3.14.0: Relatório de entrega do último SOS (SMS/email/canais) */}
+        <SosDeliveryReportCard />
 
         {/* Emergency details card (shown when active or resolved recently) */}
         {activeEmergency && (

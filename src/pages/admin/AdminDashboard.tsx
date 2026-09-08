@@ -31,6 +31,9 @@ export default function AdminDashboard() {
   const chart = buildRevenueChart(payments)
   const recentPayments = payments.slice(0, 6)
   const activeEvents = events.filter((e) => e.status === 'active')
+  // v3.14.0: SOS nos últimos 7 dias — fiabilidade e uso real do pânico
+  const weekAgoMs = Date.now() - 7 * 24 * 3600 * 1000
+  const sos7d = events.filter((e) => new Date(e.created_at).getTime() > weekAgoMs).length
 
   return (
     <div className="space-y-5">
@@ -38,8 +41,9 @@ export default function AdminDashboard() {
       <ServerHealth />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Kpi icon={Users} label="Utilizadores" value={String(stats.totalUsers)} sub={`${stats.newUsers7d} novos (7d)`} trend={stats.newUsers7d > 0 ? 'up' : 'flat'} />
+        <Kpi icon={ShieldAlert} label="SOS (7 dias)" value={String(sos7d)} sub={`${activeEvents.length} activa(s) agora`} alert={activeEvents.length > 0} />
         <Kpi icon={CalendarClock} label="Assinaturas activas" value={String(stats.activeSubs)} sub={`${Math.round((stats.activeSubs / Math.max(1, stats.totalUsers)) * 100)}% da base`} />
         <Kpi icon={DollarSign} label="Receita mensal (MRR)" value={formatMzn(stats.mrrMzn)} sub={`${formatMzn(stats.revenue30dMzn)} nos últimos 30d`} gold />
         <Kpi icon={CreditCard} label="Pagamentos hoje" value={String(stats.paymentsToday)} sub={`${stats.pendingPayments} pendentes`} alert={stats.pendingPayments > 0} />
