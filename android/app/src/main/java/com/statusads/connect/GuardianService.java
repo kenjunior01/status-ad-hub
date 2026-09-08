@@ -35,6 +35,11 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
 
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -134,7 +139,10 @@ public class GuardianService extends Service implements SensorEventListener {
         }
     };
 
-    /** Dispositivo BLE ou rede WiFi visto perto do utilizador (MAC/BSSID só em hash). */
+    /** Dispositivo BLE ou rede WiFi visto perto do utilizador.
+     *  v3.15.0: MAC real + ID de fabricante + tipo agora guardados (para
+     *  investigação — saem com o SOS para ajudar a localizar). O hash
+     *  continua a ser a chave interna (dedupe/estatística). */
     private static class WitnessDevice {
         String name;       // nome anunciado / SSID ou null
         String type = "b"; // "b" = BLE, "w" = WiFi
@@ -143,6 +151,9 @@ public class GuardianService extends Service implements SensorEventListener {
         long lastSeen;
         int hits;
         int gaps;          // reaparições após intervalo longo (padrão de perseguidor)
+        String mac;        // v3.15.0: MAC real (BLE) — investigação
+        int mfr = -1;      // v3.15.0: ID de fabricante (SIG)
+        String kind;       // v3.15.0: tipo classificado (Telemóvel, Carro, ...)
     }
 
     @Override
@@ -342,7 +353,17 @@ public class GuardianService extends Service implements SensorEventListener {
                 }
                 int rssi = result.getRssi();
 
-                recordWitness(hash, name, rssi, "b");
+                // v3.15.0: fabricante + tipo — reutiliza a extracção do BleRadar
+                int mfr = -1;
+                String kind = null;
+                try {
+                    JSObject dev = BleRadarPlugin.buildDeviceJson(result, mac);
+                    mfr = dev.has("m") ? dev.optInt("m", -1) : -1;
+                    kind = dev.has("k") ? dev.optString("k", null) : null;
+                } catch (Exception ignored) {
+                }
+
+                recordWitness(hash, name, rssi, "b", mac, mfr, kind);
             } catch (Exception ignored) {
             }
         }
@@ -359,6 +380,11 @@ public class GuardianService extends Service implements SensorEventListener {
      * longos fora de alcance (≥20 min) repetidas vezes — notifica com moderação.
      */
     private void recordWitness(String hash, String name, int rssi, String type) {
+        recordWitness(hash, name, rssi, type, null, -1, null);
+    }
+
+    private void recordWitness(String hash, String name, int rssi, String type,
+                               String mac, int mfr, String kind) {
         long now = System.currentTimeMillis();
         WitnessDevice d = witnessLog.get(hash);
         if (d == null) {
@@ -373,6 +399,9 @@ public class GuardianService extends Service implements SensorEventListener {
         }
         if (name != null && !name.isEmpty()) d.name = name;
         if (rssi > d.bestRssi) d.bestRssi = rssi;
+        if (mac != null && !mac.isEmpty()) d.mac = mac;
+        if (mfr >= 0) d.mfr = mfr;
+        if (kind != null && !kind.isEmpty()) d.kind = kind;
         d.lastSeen = now;
         d.hits++;
 
@@ -542,6 +571,9 @@ public class GuardianService extends Service implements SensorEventListener {
                 d.lastSeen = o.optLong("s", 0L);
                 d.hits = o.optInt("c", 0);
                 d.gaps = o.optInt("g", 0);
+                d.mac = o.has("mac") && !o.isNull("mac") ? o.optString("mac", null) : null;
+                d.mfr = o.optInt("m", -1);
+                d.kind = o.has("k") && !o.isNull("k") ? o.optString("k", null) : null;
                 witnessLog.put(o.getString("h"), d);
             }
             pruneWitnessLog();
@@ -563,6 +595,10 @@ public class GuardianService extends Service implements SensorEventListener {
                 o.put("s", d.lastSeen);
                 o.put("c", d.hits);
                 o.put("g", d.gaps);
+                // v3.15.0: detalhes de investigação (locais + snapshot)
+                if (d.mac != null) o.put("mac", d.mac);
+                if (d.mfr >= 0) o.put("m", d.mfr);
+                if (d.kind != null) o.put("k", d.kind);
                 arr.put(o);
             }
             prefs.edit().putString("witness_log", arr.toString()).apply();
@@ -587,6 +623,11 @@ public class GuardianService extends Service implements SensorEventListener {
                 o.put("r", d.bestRssi);
                 o.put("s", d.lastSeen);
                 o.put("c", d.hits);
+                // v3.15.0: investigação completa vai com o SOS (MAC real,
+                // fabricante e tipo — ajuda a localizar/reconstituir)
+                if (d.mac != null) o.put("mac", d.mac);
+                if (d.mfr >= 0) o.put("m", d.mfr);
+                if (d.kind != null) o.put("k", d.kind);
                 arr.put(o);
             }
             snap.put("devices", arr);

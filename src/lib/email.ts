@@ -22,6 +22,8 @@
 
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import type { WitnessSnapshot } from '@/lib/guardian'
+import type { BleRadarSnapshot, BleTrailPoint } from '@/lib/ble-radar'
+import { formatBleDeviceLine } from '@/lib/ble-radar'
 
 export interface EmailAttachment {
   filename: string
@@ -199,11 +201,52 @@ function witnessDetail(snap?: WitnessSnapshot | null): string {
   return lines.join('\n')
 }
 
+/** Secção RADAR BLUETOOTH do email — rastro completo com GPS. */
+function bleRadarDetail(ble?: BleRadarSnapshot | null): string {
+  if (!ble || ble.observations === 0) {
+    return 'RADAR BLUETOOTH (rastro): sem dados — o Radar não estava activo ou nenhum dispositivo foi visto perto.'
+  }
+  const lines: string[] = [
+    `RADAR BLUETOOTH (RASTRO) — ${ble.observations} detecções de ${ble.uniqueDevices} dispositivos únicos em ${ble.points} ponto(s) com GPS:`,
+  ]
+  // dispositivos mais próximos (todos os pontos recentes, ordenados por RSSI)
+  const flat = ble.recentPoints.flatMap((p) => p.d || [])
+  flat.sort((a, b) => (b.r || -127) - (a.r || -127))
+  const deduped: typeof flat = []
+  const seenMacs = new Set<string>()
+  for (const d of flat) {
+    if (seenMacs.has(d.mac)) continue
+    seenMacs.add(d.mac)
+    deduped.push(d)
+    if (deduped.length >= 12) break
+  }
+  lines.push('Dispositivos mais próximos (MAC real — para reportar/investigar):')
+  for (const d of deduped) lines.push(formatBleDeviceLine(d))
+  if (seenMacs.size > deduped.length) {
+    lines.push(`  ... e mais ${seenMacs.size - deduped.length} dispositivos (lista completa na nuvem).`)
+  }
+  // pontos do rastro: onde/ quando
+  if (ble.recentPoints.length > 0) {
+    lines.push('Rastro (últimos pontos — onde a vítima esteve, mais recentes no fim):')
+    for (const p of ble.recentPoints) {
+      const when = new Date(p.t).toLocaleString('pt-PT')
+      if (typeof p.lat === 'number' && typeof p.lng === 'number') {
+        lines.push(`  - ${when} — https://maps.google.com/?q=${p.lat.toFixed(5)},${p.lng.toFixed(5)} — ${p.n} disp (${p.u} únicos)`)  
+      } else {
+        lines.push(`  - ${when} — sem GPS — ${p.n} disp (${p.u} únicos)`)
+      }
+    }
+  }
+  return lines.join('\n')
+}
+
 export interface SosEmailOptions {
   name?: string | null
   lat: number
   lng: number
   witness?: WitnessSnapshot | null
+  /** Rastro BLE do Radar (v3.15.0) — secção completa no email */
+  bleRadar?: BleRadarSnapshot | null
   recording?: boolean
   /** hora local do disparo (legível) */
   at?: Date
@@ -230,6 +273,8 @@ export function buildSosEmailBody(opts: SosEmailOptions): string {
     `  Coordenadas: ${opts.lat.toFixed(6)}, ${opts.lng.toFixed(6)}`,
     ``,
     witnessDetail(opts.witness),
+    ``,
+    bleRadarDetail(opts.bleRadar),
     ``,
     opts.recording
       ? `GRAVAÇÃO DE ÁUDIO: activada — segue em anexo assim que estiver disponível (ou disponível no cofre de evidências).`

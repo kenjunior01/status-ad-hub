@@ -12,6 +12,8 @@
 
 import { sendLocalSms, type SmsSendResult } from '@/lib/sms'
 import type { WitnessSnapshot } from '@/lib/guardian'
+import type { BleRadarSnapshot } from '@/lib/ble-radar'
+import { bleRadarSmsSummary } from '@/lib/ble-radar'
 
 /** Cache dos telefones dos contactos (para o caminho offline) */
 const CONTACTS_CACHE_KEY = 'statusads-last-contacts'
@@ -66,6 +68,8 @@ export interface SosSmsOptions {
   lng: number
   /** Snapshot de testemunhas BT/WiFi (v3.10.0 Radar) — contagem entra no SMS */
   witness?: WitnessSnapshot | null
+  /** Rastro BLE do Radar (v3.15.0) — top dispositivos entram no SMS */
+  bleRadar?: BleRadarSnapshot | null
   /** Indica que a gravação de áudio foi activada */
   recording?: boolean
 }
@@ -89,6 +93,7 @@ export function buildSosSmsMessage(opts: SosSmsOptions): string {
     ? `SOS StatusAds: ${who} precisa de ajuda agora. Local: ${maps}`
     : `SOS StatusAds: pedido de socorro! Local: ${maps}`
   msg += witnessSummary(opts.witness)
+  msg += bleRadarSmsSummary(opts.bleRadar)
   if (opts.recording) msg += ' Audio a gravar.'
   return msg.trim()
 }

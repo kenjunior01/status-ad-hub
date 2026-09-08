@@ -44,6 +44,7 @@ const CheckIn = lazy(() => import('@/pages/CheckIn'))
 const SmartGlasses = lazy(() => import('@/pages/SmartGlasses'))
 const QuickActions = lazy(() => import('@/pages/QuickActions'))
 const CommunityRadar = lazy(() => import('@/pages/CommunityRadar'))
+const BleRadar = lazy(() => import('@/pages/BleRadar'))
 const DiscreetModeSettings = lazy(() => import('@/pages/DiscreetModeSettings'))
 const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
 const BellvionDevices = lazy(() => import('@/pages/BellvionDevices'))
@@ -64,6 +65,7 @@ const AdminPlans = lazy(() => import('@/pages/admin/AdminPlans'))
 const AdminConfiguracoes = lazy(() => import('@/pages/admin/AdminConfiguracoes'))
 const AdminCodigos = lazy(() => import('@/pages/admin/AdminCodigos'))
 const AdminSeguranca = lazy(() => import('@/pages/admin/AdminSeguranca'))
+const AdminBleRadar = lazy(() => import('@/pages/admin/AdminBleRadar'))
 const EvidenceVault = lazy(() => import('@/pages/EvidenceVault'))
 const MedicalProfile = lazy(() => import('@/pages/MedicalProfile'))
 const FallDetection = lazy(() => import('@/pages/FallDetection'))
@@ -116,6 +118,7 @@ function AppRoutes() {
         <Route path="oculos" element={<WithErrorBoundary context="smart-glasses"><SmartGlasses /></WithErrorBoundary>} />
         <Route path="accoes" element={<WithErrorBoundary context="quick-actions"><QuickActions /></WithErrorBoundary>} />
         <Route path="radar" element={<WithErrorBoundary context="community-radar"><CommunityRadar /></WithErrorBoundary>} />
+        <Route path="ble" element={<WithErrorBoundary context="ble-radar"><BleRadar /></WithErrorBoundary>} />
         <Route path="discreto" element={<WithErrorBoundary context="discreet-settings"><DiscreetModeSettings /></WithErrorBoundary>} />
         <Route path="camuflar" element={<WithErrorBoundary context="disguise-selector"><DisguiseSelector /></WithErrorBoundary>} />
         <Route path="camuflagem-pwa" element={<WithErrorBoundary context="camuflagem-pwa"><CamuflagemPWA /></WithErrorBoundary>} />
@@ -139,6 +142,7 @@ function AppRoutes() {
           <Route path="configuracoes" element={<AdminConfiguracoes />} />
           <Route path="codigos" element={<AdminCodigos />} />
           <Route path="seguranca" element={<AdminSeguranca />} />
+          <Route path="ble-radar" element={<AdminBleRadar />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

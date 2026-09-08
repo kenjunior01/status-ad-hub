@@ -140,6 +140,13 @@ function SosDeliveryReportCard() {
                   Testemunhas: {report.witnesses.total} disp ({report.witnesses.bt} BT, {report.witnesses.wifi} WiFi)
                 </span>
               )}
+              {/* v3.15.0: rastro BLE do Radar */}
+              {report.bleRadar && report.bleRadar.devices > 0 && (
+                <span className="text-[10px] px-2 py-1 rounded-lg bg-brand/[0.08] border border-brand/20 text-brand">
+                  Radar BLE: {report.bleRadar.devices} detecções · {report.bleRadar.points} ponto(s) GPS
+                  {report.bleRadar.top && report.bleRadar.top.length > 0 ? ` · ${report.bleRadar.top.slice(0, 2).join(', ')}` : ''}
+                </span>
+              )}
               {report.audio?.started && (
                 <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/50">
                   Áudio {report.audio.emailAnexo ? 'enviado em anexo' : report.audio.smsLink ? 'link enviado' : 'a gravar'}

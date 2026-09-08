@@ -39,6 +39,8 @@ export interface SosDispatchReport {
     pushOk?: boolean
   }
   witnesses?: { total: number; bt: number; wifi: number }
+  /** Rastro BLE do Radar (v3.15.0) — pontos GPS + dispositivos únicos */
+  bleRadar?: { points: number; devices: number; unique: number; top?: string[] }
   audio?: { started?: boolean; smsLink?: boolean; emailAnexo?: boolean }
   offline?: boolean
   loggedToCloud?: boolean
@@ -136,6 +138,7 @@ export function summarizeReport(r: SosDispatchReport): string {
   parts.push(`Twilio ${tw.skipped ? 'skip' : `${tw.sent}/${tw.sent + tw.failed}`}`)
   if (r.channels.pushOk !== undefined) parts.push(`Push ${r.channels.pushOk ? 'ok' : 'falha'}`)
   if (r.witnesses && r.witnesses.total > 0) parts.push(`Testemunhas ${r.witnesses.total}`)
+  if (r.bleRadar && r.bleRadar.devices > 0) parts.push(`BLE ${r.bleRadar.devices}/${r.bleRadar.points}pt`)
   if (r.audio?.started) parts.push(`Audio${r.audio.emailAnexo ? ' anexo' : r.audio.smsLink ? ' link' : ''}`)
   if (r.offline) parts.push('OFFLINE')
   return parts.join(' · ')

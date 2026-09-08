@@ -276,12 +276,12 @@ function HowItWorks() {
 /* ════════════════════════════════════════════════ */
 function FeaturesGrid() {
   const features = [
+    { title: 'Radar Bluetooth (sem emparelhar)', desc: 'Captura MAC, nome, fabricante e distância de TODOS os dispositivos próximos — um rastro digital que ajuda a polícia a seguir o rasto em sequestros e roubos.', Icon: Radar },
     { title: 'Rastreamento Tempo Real', desc: 'Veja a localização exacta do seu dispositivo BLE a cada segundo no mapa interactivo.', Icon: MapPin },
     { title: 'Gravação de Áudio', desc: 'Grava automaticamente o ambiente quando o alerta é activado, para uso como prova forense.', Icon: Mic },
     { title: 'Alerta Silencioso', desc: 'Notifique contactos de emergência sem que o agressor perceba — zero som, zero vibração.', Icon: BellOff },
-    { title: 'Geofencing Inteligente', desc: 'Crie zonas seguras e receba alertas instantâneos ao entrar ou sair dessas áreas.', Icon: Crosshair },
-    { title: 'Rede de Dispositivos', desc: 'Aproveite outros dispositivos próximos para ampliar o alcance do sinal BLE.', Icon: Wifi },
-    { title: 'Partilha com Autoridades', desc: 'Envie dados de localização e áudio directamente para a Polícia com um toque.', Icon: ShieldCheck },
+    { title: 'Rastro Quem/Onde/Quando', desc: 'A cada minuto, um ponto GPS + os Bluetooth por perto. No SOS, a trilha sai por SMS e email automaticamente.', Icon: Crosshair },
+    { title: 'Partilha com Autoridades', desc: 'Envie localização, áudio, testemunhas e o rastro Bluetooth directamente para a Polícia com um toque.', Icon: ShieldCheck },
   ]
   return (
     <Section id="funcionalidades" className="relative py-28 overflow-hidden">
@@ -436,8 +436,8 @@ function TrustStats() {
 function Pricing() {
   const plans = [
     { name: 'Grátis', price: '0 MT', period: '', usd: null as string | null, features: ['Botão SOS instantâneo', '2 contactos de emergência', 'Check-in programado', 'Histórico de 7 dias'], cta: 'Começar Grátis', popular: false },
-    { name: 'Família', price: '249 MT', period: '/mês', usd: '≈ $3.99 via PayPal', features: ['6 contactos de emergência', 'Rastreamento de viagens', 'Modo discreto (3 disfarces)', 'Alertas por SMS', 'Rota segura com GPS', '3 dispositivos BLE'], cta: 'Assinar Agora', popular: true },
-    { name: 'Premium', price: '499 MT', period: '/mês', usd: '≈ $7.99 via PayPal', features: ['Contactos ilimitados', '11 disfarces de camuflagem', 'Gravação automática de evidências', 'Óculos e anéis inteligentes', 'Radar comunitário', 'Resposta 24/7'], cta: 'Assinar Premium', popular: false },
+    { name: 'Família', price: '249 MT', period: '/mês', usd: '≈ $3.99 via PayPal', features: ['6 contactos de emergência', 'Radar Bluetooth (MAC + fabricante)', 'Rastreamento de viagens', 'Modo discreto (3 disfarces)', 'Alertas por SMS', 'Rota segura com GPS'], cta: 'Assinar Agora', popular: true },
+    { name: 'Premium', price: '499 MT', period: '/mês', usd: '≈ $7.99 via PayPal', features: ['Contactos ilimitados', 'Rastro Bluetooth com GPS (1 min)', '11 disfarces de camuflagem', 'Gravação automática de evidências', 'Óculos e anéis inteligentes', 'Radar comunitário + resposta 24/7'], cta: 'Assinar Premium', popular: false },
   ]
   return (
     <Section id="precos" className="py-28">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check, Shield, Sparkles, Heart, Star, CreditCard, Smartphone, Globe, Lock, ArrowLeft, BadgeCheck, Watch, KeyRound, Loader2 } from 'lucide-react'
+import { Check, Shield, Sparkles, Heart, Star, CreditCard, Smartphone, Globe, Lock, ArrowLeft, BadgeCheck, Watch, KeyRound, Loader2, Radar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -111,7 +111,19 @@ export default function Pricing() {
 
         {/* Compatibilidade BLE universal */}
         <div className="pb-16 -mt-6">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
+          <div className="rounded-2xl border border-brand/15 bg-brand/[0.04] p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Radar className="h-4 w-4 text-brand" />
+              <h3 className="font-display font-semibold text-sm">Novo: Radar Bluetooth — segurança sem hardware extra</h3>
+            </div>
+            <p className="text-xs text-white/40 max-w-2xl leading-relaxed">
+              A app agora captura <span className="text-white/70 font-semibold">todos os dispositivos Bluetooth próximos sem emparelhar</span> —
+              telemóveis, carros, auscultadores, localizadores — com MAC, fabricante e distância. O rastro
+              "Quem/Onde/Quando" sai automaticamente com o SOS (SMS + email) e fica na nuvem para investigação.
+              <span className="text-brand"> Todos à volta de si tornam-se testemunhas.</span>
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6 mt-4">
             <div className="flex items-center gap-2 mb-2">
               <Watch className="h-4 w-4 text-brand" />
               <h3 className="font-display font-semibold text-sm">Funciona com o seu dispositivo — qualquer que seja</h3>

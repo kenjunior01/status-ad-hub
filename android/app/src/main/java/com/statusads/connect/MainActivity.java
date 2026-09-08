@@ -15,6 +15,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SmsPlugin.class);
         // SOS por Email: SMTP directo do Google (App Password) + anexo de áudio
         registerPlugin(EmailPlugin.class);
+        // BLE Radar: scan Bluetooth sem emparelhar + rastro GPS (v3.15.0)
+        registerPlugin(BleRadarPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

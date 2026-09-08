@@ -18,6 +18,7 @@ import type { SmsSendResult } from '@/lib/sms'
 import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmailBody, cacheContactEmails, getCachedContactEmails, mergeEmails, getEmailConfig } from '@/lib/email'
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
+import { readBleRadarSnapshot, type BleRadarSnapshot } from '@/lib/ble-radar'
 import { toast } from 'sonner'
 
 /**
@@ -190,6 +191,8 @@ export function useEmergency() {
 
       // 3. Snapshot de testemunhas lido UMA vez (nuvem + SMS partilham)
       const snapPromise = readWitnessSnapshot().catch(() => null)
+      // 3b. v3.15.0: rastro BLE do Radar lido UMA vez (SMS + email + nuvem)
+      const blePromise: Promise<BleRadarSnapshot | null> = readBleRadarSnapshot().catch(() => null)
 
       // 4. SMS LOCAL (v3.11.0) — sai pelo SIM do telefone, sem API externa,
       //    funciona MESMO SEM INTERNET. GPS + testemunhas BT/WiFi + áudio.
@@ -203,11 +206,21 @@ export function useEmergency() {
             wifi: snap.devices.filter((d) => d.t === 'w').length,
           } })
         }
+        const ble = await blePromise
+        if (ble && ble.observations > 0) {
+          patchSosReport({ bleRadar: {
+            points: ble.points,
+            devices: ble.observations,
+            unique: ble.uniqueDevices,
+            top: ble.topNames,
+          } })
+        }
         const sosMsg = buildSosSmsMessage({
           name: userNameForSos(user),
           lat: vars.latitude,
           lng: vars.longitude,
           witness: snap,
+          bleRadar: ble,
           recording: true,
         })
         localSms = await dispatchSosSms(phones, sosMsg)
@@ -237,7 +250,7 @@ export function useEmergency() {
       //     testemunhas completas). O áudio segue em anexo quando a
       //     gravação terminar (ver efeito do useAudioRecorder).
       if (emails.length > 0) {
-        snapPromise.then((snap) => {
+        Promise.all([snapPromise, blePromise]).then(([snap, ble]) => {
           sendSmtpEmail(
             emails,
             buildSosEmailSubject({ name: userNameForSos(user) }),
@@ -246,6 +259,7 @@ export function useEmergency() {
               lat: vars.latitude,
               lng: vars.longitude,
               witness: snap,
+              bleRadar: ble,
               recording: true,
               at: sosAtRef.current || undefined,
             })
@@ -290,12 +304,20 @@ export function useEmergency() {
         { alertId, latitude: vars.latitude, longitude: vars.longitude }
       )
 
-      // 7. Anexar snapshot de testemunhas (BLE + WiFi, endereços em hash) ao
-      //    alerta na nuvem — "quem estava perto" fica guardado para a
-      //    investigação mesmo que o telemóvel seja perdido/destruído
+      // 7. Anexar snapshot de testemunhas (BLE + WiFi) ao alerta na nuvem —
+      //    "quem estava perto" fica guardado para a investigação mesmo que o
+      //    telemóvel seja perdido/destruído. v3.15.0: MAC real + fabricante.
       snapPromise.then((snap) => {
         if (snap && Array.isArray(snap.devices) && snap.devices.length > 0) {
           api.saveWitnessSnapshot(alertId, snap).catch(() => {})
+        }
+      })
+
+      // 7b. v3.15.0: RASTRO BLE completo para a nuvem (ble_trails) —
+      //     pontos GPS + dispositivos. Sobrevive à destruição do telemóvel.
+      blePromise.then((ble) => {
+        if (userId && ble && (ble.observations > 0 || ble.recentPoints.length > 0)) {
+          api.saveBleTrail(userId, ble.recentPoints, alertId).catch(() => {})
         }
       })
 
@@ -366,11 +388,21 @@ export function useEmergency() {
                 wifi: snap.devices.filter((d) => d.t === 'w').length,
               } })
             }
+            const ble = await readBleRadarSnapshot().catch(() => null)
+            if (ble && ble.observations > 0) {
+              patchSosReport({ bleRadar: {
+                points: ble.points,
+                devices: ble.observations,
+                unique: ble.uniqueDevices,
+                top: ble.topNames,
+              } })
+            }
             const res = await dispatchSosSms(offlinePhones, buildSosSmsMessage({
               name: userNameForSos(user),
               lat: vars.latitude,
               lng: vars.longitude,
               witness: snap,
+              bleRadar: ble,
               recording: true,
             }))
             patchSosReport({ channels: { smsLocal: { ...res, at: new Date().toISOString() } } })

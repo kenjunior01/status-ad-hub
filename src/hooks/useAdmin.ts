@@ -483,3 +483,68 @@ export function useUpdatePlan() {
     },
   })
 }
+
+// ── BLE Radar: rastros dos utilizadores (v3.15.0) ──
+
+export interface AdminBleTrail {
+  id: string
+  user_name: string | null
+  user_email: string | null
+  device_count: number
+  unique_devices: number
+  sos_alert_id: string | null
+  created_at: string
+  points: Array<{
+    t: number
+    lat?: number
+    lng?: number
+    n?: number
+    u?: number
+    d?: Array<{ mac: string; n?: string | null; r: number; k?: string; mf?: string }>
+  }>
+}
+
+export function useAdminBleTrails() {
+  const demo = useDemoMode()
+  return useQuery<AdminBleTrail[]>({
+    queryKey: ['admin-ble-trails', demo.data],
+    queryFn: async () => {
+      if (demo.data) {
+        const now = Date.now()
+        const dev = (mac: string, n: string, r: number, k: string, mf: string) => ({ mac, n, r, k, mf })
+        return [
+          {
+            id: 'demo-trail-1', user_name: 'Ana Machava', user_email: 'ana@demo.mz',
+            device_count: 14, unique_devices: 6, sos_alert_id: 'demo-ev-2',
+            created_at: new Date(now - 1_700_000).toISOString(),
+            points: [
+              { t: now - 1_800_000, lat: -25.9692, lng: 32.5732, n: 3, u: 3, d: [dev('A4:83:E7:AA:12:9C', 'Carro de Joao', -58, 'Carro', 'ID 0x004C')] },
+              { t: now - 1_740_000, lat: -25.9685, lng: 32.5741, n: 2, u: 2, d: [dev('8C:29:37:5F:44:01', 'Galaxy Buds2', -61, 'Auscultadores', 'Samsung')] },
+            ],
+          },
+          {
+            id: 'demo-trail-2', user_name: 'Jorge Mabjaia', user_email: 'jorge@demo.mz',
+            device_count: 9, unique_devices: 5, sos_alert_id: null,
+            created_at: new Date(now - 6_500_000).toISOString(),
+            points: [
+              { t: now - 6_600_000, lat: -25.9708, lng: 32.5799, n: 4, u: 4, d: [dev('D0:E7:82:9B:C3:15', null, -72, 'Telemóvel', 'Xiaomi')] },
+            ],
+          },
+        ]
+      }
+      const { getBleTrails } = await import('@/lib/api')
+      const rows = await getBleTrails(50)
+      return rows.map((t) => ({
+        id: t.id,
+        user_name: t.user_name ?? null,
+        user_email: t.user_email ?? null,
+        device_count: t.device_count,
+        unique_devices: t.unique_devices,
+        sos_alert_id: t.sos_alert_id,
+        created_at: t.created_at,
+        points: (t.points || []) as AdminBleTrail['points'],
+      }))
+    },
+    refetchInterval: 60_000,
+  })
+}

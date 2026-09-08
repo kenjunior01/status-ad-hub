@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import {
   LayoutDashboard, Users, CreditCard, CalendarClock, ShieldAlert,
   Settings2, Lock, ArrowLeft, Loader2, FlaskConical, SlidersHorizontal,
-  KeyRound, Crown, Package, ShieldCheck,
+  KeyRound, Crown, Package, ShieldCheck, Radar,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,7 @@ const tabs = [
   { to: '/dashboard/admin/pagamentos', label: 'Pagamentos', icon: CreditCard },
   { to: '/dashboard/admin/assinaturas', label: 'Assinaturas', icon: CalendarClock },
   { to: '/dashboard/admin/eventos', label: 'Eventos SOS', icon: ShieldAlert },
+  { to: '/dashboard/admin/ble-radar', label: 'Rastros Bluetooth', icon: Radar },
   { to: '/dashboard/admin/planos', label: 'Planos', icon: Settings2 },
   { to: '/dashboard/admin/codigos', label: 'Códigos & Promoções', icon: Package },
   { to: '/dashboard/admin/seguranca', label: 'Segurança', icon: ShieldCheck },

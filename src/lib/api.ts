@@ -560,3 +560,85 @@ export async function logGlassesTapEvent(
     timestamp: new Date().toISOString(),
   })
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// BLE Radar — rastro de dispositivos Bluetooth (v3.15.0)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface BleTrailRow {
+  id: string
+  user_id: string
+  sos_alert_id: string | null
+  points: unknown[]
+  device_count: number
+  unique_devices: number
+  created_at: string
+  user_name?: string | null
+  user_email?: string | null
+}
+
+/**
+ * Guarda o rastro BLE na nuvem (tabela ble_trails) — pontos GPS +
+ * dispositivos. Chamado no SOS (com sos_alert_id) e pela sincronização
+ * manual da página do Radar. Sobrevive à destruição do telemóvel.
+ */
+export async function saveBleTrail(
+  userId: string,
+  points: unknown[],
+  sosAlertId?: string | null
+): Promise<void> {
+  if (!isValidUUID(userId)) throw new Error('Invalid user ID')
+  if (!points || points.length === 0) return
+  // conta observações e MACs únicos para estatística rápida no admin
+  let deviceCount = 0
+  const macs = new Set<string>()
+  for (const p of points as Array<{ d?: Array<{ mac?: string }> }>) {
+    for (const d of p?.d || []) {
+      deviceCount++
+      if (d?.mac) macs.add(d.mac)
+    }
+  }
+  const { error } = await supabase.from('ble_trails').insert({
+    user_id: userId,
+    sos_alert_id: sosAlertId && isValidUUID(sosAlertId) ? sosAlertId : null,
+    points,
+    device_count: deviceCount,
+    unique_devices: macs.size,
+  })
+  if (error) throw error
+}
+
+/** Admin: últimos rastros BLE com o nome do utilizador. */
+export async function getBleTrails(limit = 50): Promise<BleTrailRow[]> {
+  const { data, error } = await supabase
+    .from('ble_trails')
+    .select('id, user_id, sos_alert_id, points, device_count, unique_devices, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  const rows = (data || []) as Omit<BleTrailRow, 'user_name' | 'user_email'>[]
+
+  // nomes/emails dos utilizadores (profiles usa user_id, sem FK directa)
+  const userIds = Array.from(new Set(rows.map((r) => r.user_id)))
+  const people = new Map<string, { full_name?: string; email?: string }>()
+  if (userIds.length > 0) {
+    try {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds)
+      for (const p of (profs || []) as Array<{ user_id: string; full_name?: string; email?: string }>) {
+        people.set(p.user_id, p)
+      }
+    } catch { /* nomes ficam em branco — não bloqueia */ }
+  }
+
+  return rows.map((row) => {
+    const p = people.get(row.user_id) || {}
+    return {
+      ...row,
+      user_name: p.full_name || null,
+      user_email: p.email || null,
+    }
+  })
+}

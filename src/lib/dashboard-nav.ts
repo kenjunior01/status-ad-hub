@@ -47,6 +47,7 @@ export const sidebarSections: DashboardNavSection[] = [
       { to: '/dashboard/evidencias', label: 'Cofre de Evidencias', icon: Archive },
       { to: '/dashboard/ficha-medica', label: 'Ficha Medica', icon: HeartPulse },
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
+      { to: '/dashboard/ble', label: 'Radar Bluetooth', icon: Bluetooth },
       { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
       { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
       { to: '/dashboard/dicas', label: 'Dicas de Seguranca', icon: Lightbulb },
