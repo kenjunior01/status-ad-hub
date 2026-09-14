@@ -19,6 +19,7 @@ import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmail
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
 import { readBleRadarSnapshot, type BleRadarSnapshot } from '@/lib/ble-radar'
+import { readNetRadarSnapshot, netGetTrail, type NetRadarSnapshot } from '@/lib/net-radar'
 import { toast } from 'sonner'
 
 /**
@@ -193,6 +194,8 @@ export function useEmergency() {
       const snapPromise = readWitnessSnapshot().catch(() => null)
       // 3b. v3.15.0: rastro BLE do Radar lido UMA vez (SMS + email + nuvem)
       const blePromise: Promise<BleRadarSnapshot | null> = readBleRadarSnapshot().catch(() => null)
+      // 3c. v3.16.0: ambiente Wi-Fi/Redes lido UMA vez (SMS + email + nuvem)
+      const netPromise: Promise<NetRadarSnapshot | null> = readNetRadarSnapshot().catch(() => null)
 
       // 4. SMS LOCAL (v3.11.0) — sai pelo SIM do telefone, sem API externa,
       //    funciona MESMO SEM INTERNET. GPS + testemunhas BT/WiFi + áudio.
@@ -215,12 +218,23 @@ export function useEmergency() {
             top: ble.topNames,
           } })
         }
+        const net = await netPromise
+        if (net && (net.visibleNetworks > 0 || net.operator)) {
+          patchSosReport({ netRadar: {
+            visible: net.visibleNetworks,
+            registry: net.registrySize,
+            threats: net.threats,
+            operator: net.operator,
+            towers: net.towers,
+          } })
+        }
         const sosMsg = buildSosSmsMessage({
           name: userNameForSos(user),
           lat: vars.latitude,
           lng: vars.longitude,
           witness: snap,
           bleRadar: ble,
+          netRadar: net,
           recording: true,
         })
         localSms = await dispatchSosSms(phones, sosMsg)
@@ -250,7 +264,7 @@ export function useEmergency() {
       //     testemunhas completas). O áudio segue em anexo quando a
       //     gravação terminar (ver efeito do useAudioRecorder).
       if (emails.length > 0) {
-        Promise.all([snapPromise, blePromise]).then(([snap, ble]) => {
+        Promise.all([snapPromise, blePromise, netPromise]).then(([snap, ble, net]) => {
           sendSmtpEmail(
             emails,
             buildSosEmailSubject({ name: userNameForSos(user) }),
@@ -260,6 +274,7 @@ export function useEmergency() {
               lng: vars.longitude,
               witness: snap,
               bleRadar: ble,
+              netRadar: net,
               recording: true,
               at: sosAtRef.current || undefined,
             })
@@ -318,6 +333,18 @@ export function useEmergency() {
       blePromise.then((ble) => {
         if (userId && ble && (ble.observations > 0 || ble.recentPoints.length > 0)) {
           api.saveBleTrail(userId, ble.recentPoints, alertId).catch(() => {})
+        }
+      })
+
+      // 7c. v3.16.0: RASTRO WI-FI/REDES completo para a nuvem (net_trails) —
+      //     pontos GPS + redes visíveis + torres. Sobrevive à destruição.
+      netPromise.then(async (net) => {
+        if (!userId) return
+        const hasNet = net && (net.visibleNetworks > 0 || net.operator)
+        if (!hasNet) return
+        const { points } = await netGetTrail().catch(() => ({ points: [] }))
+        if (points.length > 0) {
+          api.saveNetTrail(userId, points.slice(-20), alertId, net?.threats.length ?? 0).catch(() => {})
         }
       })
 
@@ -397,12 +424,23 @@ export function useEmergency() {
                 top: ble.topNames,
               } })
             }
+            const net = await readNetRadarSnapshot().catch(() => null)
+            if (net && (net.visibleNetworks > 0 || net.operator)) {
+              patchSosReport({ netRadar: {
+                visible: net.visibleNetworks,
+                registry: net.registrySize,
+                threats: net.threats,
+                operator: net.operator,
+                towers: net.towers,
+              } })
+            }
             const res = await dispatchSosSms(offlinePhones, buildSosSmsMessage({
               name: userNameForSos(user),
               lat: vars.latitude,
               lng: vars.longitude,
               witness: snap,
               bleRadar: ble,
+              netRadar: net,
               recording: true,
             }))
             patchSosReport({ channels: { smsLocal: { ...res, at: new Date().toISOString() } } })

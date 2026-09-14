@@ -642,3 +642,86 @@ export async function getBleTrails(limit = 50): Promise<BleTrailRow[]> {
     }
   })
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Radar Wi-Fi/Redes — rastro de redes + torres celulares (v3.16.0)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface NetTrailRow {
+  id: string
+  user_id: string
+  sos_alert_id: string | null
+  points: unknown[]
+  network_count: number
+  unique_networks: number
+  threats: number
+  created_at: string
+  user_name?: string | null
+  user_email?: string | null
+}
+
+/**
+ * Guarda o rastro Wi-Fi/celular na nuvem (tabela net_trails) — pontos GPS +
+ * redes visíveis + torres. Chamado no SOS (com sos_alert_id) e pela
+ * sincronização manual do Radar de Redes. Sobrevive à destruição do telemóvel.
+ */
+export async function saveNetTrail(
+  userId: string,
+  points: unknown[],
+  sosAlertId?: string | null,
+  threats = 0
+): Promise<void> {
+  if (!isValidUUID(userId)) throw new Error('Invalid user ID')
+  if (!points || points.length === 0) return
+  let networkCount = 0
+  const bssids = new Set<string>()
+  for (const p of points as Array<{ w?: Array<{ b?: string }> }>) {
+    for (const n of p?.w || []) {
+      networkCount++
+      if (n?.b) bssids.add(n.b)
+    }
+  }
+  const { error } = await supabase.from('net_trails').insert({
+    user_id: userId,
+    sos_alert_id: sosAlertId && isValidUUID(sosAlertId) ? sosAlertId : null,
+    points,
+    network_count: networkCount,
+    unique_networks: bssids.size,
+    threats,
+  })
+  if (error) throw error
+}
+
+/** Admin: últimos rastros Wi-Fi com o nome do utilizador. */
+export async function getNetTrails(limit = 50): Promise<NetTrailRow[]> {
+  const { data, error } = await supabase
+    .from('net_trails')
+    .select('id, user_id, sos_alert_id, points, network_count, unique_networks, threats, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  const rows = (data || []) as Omit<NetTrailRow, 'user_name' | 'user_email'>[]
+
+  const userIds = Array.from(new Set(rows.map((r) => r.user_id)))
+  const people = new Map<string, { full_name?: string; email?: string }>()
+  if (userIds.length > 0) {
+    try {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds)
+      for (const p of (profs || []) as Array<{ user_id: string; full_name?: string; email?: string }>) {
+        people.set(p.user_id, p)
+      }
+    } catch { /* nomes ficam em branco — não bloqueia */ }
+  }
+
+  return rows.map((row) => {
+    const p = people.get(row.user_id) || {}
+    return {
+      ...row,
+      user_name: p.full_name || null,
+      user_email: p.email || null,
+    }
+  })
+}

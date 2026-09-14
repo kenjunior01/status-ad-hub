@@ -226,5 +226,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <!-- Radar Bluetooth/WiFi: resultados de redes próximas para o registo de testemunhas -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Radar Wi-Fi (v3.16.0): scan activo de TODAS as redes próximas sem se ligar -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>

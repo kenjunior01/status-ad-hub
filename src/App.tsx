@@ -45,6 +45,7 @@ const SmartGlasses = lazy(() => import('@/pages/SmartGlasses'))
 const QuickActions = lazy(() => import('@/pages/QuickActions'))
 const CommunityRadar = lazy(() => import('@/pages/CommunityRadar'))
 const BleRadar = lazy(() => import('@/pages/BleRadar'))
+const NetRadar = lazy(() => import('@/pages/NetRadar'))
 const DiscreetModeSettings = lazy(() => import('@/pages/DiscreetModeSettings'))
 const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
 const BellvionDevices = lazy(() => import('@/pages/BellvionDevices'))
@@ -119,6 +120,7 @@ function AppRoutes() {
         <Route path="accoes" element={<WithErrorBoundary context="quick-actions"><QuickActions /></WithErrorBoundary>} />
         <Route path="radar" element={<WithErrorBoundary context="community-radar"><CommunityRadar /></WithErrorBoundary>} />
         <Route path="ble" element={<WithErrorBoundary context="ble-radar"><BleRadar /></WithErrorBoundary>} />
+        <Route path="net-radar" element={<WithErrorBoundary context="net-radar"><NetRadar /></WithErrorBoundary>} />
         <Route path="discreto" element={<WithErrorBoundary context="discreet-settings"><DiscreetModeSettings /></WithErrorBoundary>} />
         <Route path="camuflar" element={<WithErrorBoundary context="disguise-selector"><DisguiseSelector /></WithErrorBoundary>} />
         <Route path="camuflagem-pwa" element={<WithErrorBoundary context="camuflagem-pwa"><CamuflagemPWA /></WithErrorBoundary>} />

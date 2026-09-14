@@ -17,6 +17,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(EmailPlugin.class);
         // BLE Radar: scan Bluetooth sem emparelhar + rastro GPS (v3.15.0)
         registerPlugin(BleRadarPlugin.class);
+        // Wifi Radar: scan Wi-Fi + registo de redes + info celular + rastro (v3.16.0)
+        registerPlugin(WifiRadarPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

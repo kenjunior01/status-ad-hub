@@ -14,6 +14,8 @@ import { sendLocalSms, type SmsSendResult } from '@/lib/sms'
 import type { WitnessSnapshot } from '@/lib/guardian'
 import type { BleRadarSnapshot } from '@/lib/ble-radar'
 import { bleRadarSmsSummary } from '@/lib/ble-radar'
+import type { NetRadarSnapshot } from '@/lib/net-radar'
+import { netRadarSmsSummary } from '@/lib/net-radar'
 
 /** Cache dos telefones dos contactos (para o caminho offline) */
 const CONTACTS_CACHE_KEY = 'statusads-last-contacts'
@@ -70,6 +72,8 @@ export interface SosSmsOptions {
   witness?: WitnessSnapshot | null
   /** Rastro BLE do Radar (v3.15.0) — top dispositivos entram no SMS */
   bleRadar?: BleRadarSnapshot | null
+  /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — redes + operadora no SMS */
+  netRadar?: NetRadarSnapshot | null
   /** Indica que a gravação de áudio foi activada */
   recording?: boolean
 }
@@ -94,6 +98,7 @@ export function buildSosSmsMessage(opts: SosSmsOptions): string {
     : `SOS StatusAds: pedido de socorro! Local: ${maps}`
   msg += witnessSummary(opts.witness)
   msg += bleRadarSmsSummary(opts.bleRadar)
+  msg += netRadarSmsSummary(opts.netRadar)
   if (opts.recording) msg += ' Audio a gravar.'
   return msg.trim()
 }

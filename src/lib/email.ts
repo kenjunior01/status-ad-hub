@@ -24,6 +24,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 import type { WitnessSnapshot } from '@/lib/guardian'
 import type { BleRadarSnapshot, BleTrailPoint } from '@/lib/ble-radar'
 import { formatBleDeviceLine } from '@/lib/ble-radar'
+import type { NetRadarSnapshot } from '@/lib/net-radar'
 
 export interface EmailAttachment {
   filename: string
@@ -240,6 +241,30 @@ function bleRadarDetail(ble?: BleRadarSnapshot | null): string {
   return lines.join('\n')
 }
 
+/** Secção RADAR WI-FI/REDES do email (v3.16.0) — ambiente + ameaças. */
+function netRadarDetail(net?: NetRadarSnapshot | null): string {
+  if (!net || (net.visibleNetworks === 0 && !net.operator)) {
+    return 'RADAR WI-FI/REDES: sem dados — o Radar não estava activo ou nenhuma rede foi vista perto.'
+  }
+  const lines: string[] = [
+    `RADAR WI-FI/REDES — ambiente de rede no momento do alerta:`,
+  ]
+  if (net.visibleNetworks > 0) {
+    lines.push(`  - ${net.visibleNetworks} redes Wi-Fi visíveis (${net.registrySize} no registo histórico)`)
+  }
+  if (net.topSsids.length > 0) {
+    lines.push(`  - SSIDs mais próximas: ${net.topSsids.join(', ')}`)
+  }
+  if (net.operator) {
+    lines.push(`  - Operadora móvel: ${net.operator}${net.towers ? ` (${net.towers} torre(s) celular(es) visível(is))` : ''}`)
+  }
+  if (net.threats.length > 0) {
+    lines.push('  Avisos de segurança do ambiente:')
+    for (const t of net.threats) lines.push(`    * ${t}`)
+  }
+  return lines.join('\n')
+}
+
 export interface SosEmailOptions {
   name?: string | null
   lat: number
@@ -247,6 +272,8 @@ export interface SosEmailOptions {
   witness?: WitnessSnapshot | null
   /** Rastro BLE do Radar (v3.15.0) — secção completa no email */
   bleRadar?: BleRadarSnapshot | null
+  /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — secção completa no email */
+  netRadar?: NetRadarSnapshot | null
   recording?: boolean
   /** hora local do disparo (legível) */
   at?: Date
@@ -275,6 +302,8 @@ export function buildSosEmailBody(opts: SosEmailOptions): string {
     witnessDetail(opts.witness),
     ``,
     bleRadarDetail(opts.bleRadar),
+    ``,
+    netRadarDetail(opts.netRadar),
     ``,
     opts.recording
       ? `GRAVAÇÃO DE ÁUDIO: activada — segue em anexo assim que estiver disponível (ou disponível no cofre de evidências).`

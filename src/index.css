@@ -500,3 +500,220 @@ select:focus {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  TEMA TÁTICO HUD — design EXCLUSIVO da versão APK (v3.16.0)     */
+/*  Estética militar/sonar: verde-radar + ciano sobre carvão,      */
+/*  tipografia mono, brackets de canto, varrimento de radar.       */
+/*  Aplicado APENAS quando a app corre nativa (Capacitor Android). */
+/* ══════════════════════════════════════════════════════════════ */
+
+.tactical {
+  --tac-bg: #070c0a;
+  --tac-panel: #0b1410;
+  --tac-line: rgba(52, 211, 153, 0.16);
+  --tac-green: #34d399;
+  --tac-cyan: #22d3ee;
+  --tac-amber: #fbbf24;
+  --tac-red: #f87171;
+}
+
+.tactical {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(52, 211, 153, 0.06), transparent),
+    var(--tac-bg);
+  color: #d1fae5;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* grelha de fundo tipo radar */
+.tactical::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(52, 211, 153, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black, transparent 85%);
+  z-index: 0;
+}
+
+/* painel HUD com brackets de canto */
+.tac-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.05), rgba(11, 20, 16, 0.9));
+  border: 1px solid var(--tac-line);
+  border-radius: 4px;
+  clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.tac-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(52, 211, 153, 0.55);
+  font-weight: 600;
+}
+
+.tac-value {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: #ecfdf5;
+  font-weight: 700;
+}
+
+/* varrimento do radar (conic sweep) */
+.tac-sweep {
+  position: relative;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, rgba(52, 211, 153, 0.5), rgba(52, 211, 153, 0.06) 60deg, transparent 90deg, transparent),
+    radial-gradient(circle, rgba(52, 211, 153, 0.08) 0%, transparent 70%);
+  overflow: hidden;
+}
+
+.tac-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(52, 211, 153, 0.22), transparent);
+  animation: tac-rotate 3.2s linear infinite;
+}
+
+@keyframes tac-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* anéis de ping do radar */
+.tac-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  animation: tac-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.tac-ping:nth-child(2) { animation-delay: 0.8s; }
+.tac-ping:nth-child(3) { animation-delay: 1.6s; }
+
+@keyframes tac-ping {
+  0% { transform: scale(0.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* linha de scan vertical */
+.tac-scanline {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.35), transparent);
+  animation: tac-scan 5.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes tac-scan {
+  0%, 100% { top: 6%; opacity: 0; }
+  10% { opacity: 1; }
+  50% { top: 88%; opacity: 1; }
+  90% { opacity: 1; }
+}
+
+/* barra de estado HUD */
+.tac-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(52, 211, 153, 0.07);
+  border: 1px solid var(--tac-line);
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(52, 211, 153, 0.8);
+}
+
+.tac-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tac-green);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
+  animation: tac-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes tac-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* botão tático */
+.tac-btn {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  color: #022c22;
+  background: linear-gradient(180deg, #34d399, #10b981);
+  border: none;
+  border-radius: 3px;
+  clip-path: polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px));
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.tac-btn:active:not(:disabled) { transform: scale(0.97); }
+.tac-btn:disabled { filter: grayscale(0.6) brightness(0.6); }
+
+.tac-btn-ghost {
+  background: rgba(52, 211, 153, 0.08);
+  color: var(--tac-green);
+  border: 1px solid var(--tac-line);
+  clip-path: none;
+}
+
+/* linha de rede tática */
+.tac-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px dashed rgba(52, 211, 153, 0.12);
+  transition: background 0.15s ease;
+}
+
+.tac-row:hover { background: rgba(52, 211, 153, 0.04); }
+
+/* badge de segurança tático */
+.tac-badge {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.tac-badge-danger { background: rgba(248, 113, 113, 0.15); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.35); }
+.tac-badge-warn { background: rgba(251, 191, 36, 0.12); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.3); }
+.tac-badge-ok { background: rgba(34, 211, 238, 0.1); color: #67e8f9; border: 1px solid rgba(34, 211, 238, 0.3); }
+.tac-badge-good { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.35); }
+
+/* medidor de risco */
+.tac-meter {
+  height: 6px;
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tac-meter > div {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.4s ease;
+}

@@ -41,6 +41,8 @@ export interface SosDispatchReport {
   witnesses?: { total: number; bt: number; wifi: number }
   /** Rastro BLE do Radar (v3.15.0) — pontos GPS + dispositivos únicos */
   bleRadar?: { points: number; devices: number; unique: number; top?: string[] }
+  /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — redes + ameaças + operadora */
+  netRadar?: { visible: number; registry: number; threats: string[]; operator?: string | null; towers?: number }
   audio?: { started?: boolean; smsLink?: boolean; emailAnexo?: boolean }
   offline?: boolean
   loggedToCloud?: boolean

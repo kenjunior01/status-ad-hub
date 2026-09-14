@@ -3,7 +3,7 @@ import {
   ShieldAlert, Zap, ShieldCheck, Glasses, Radar, Navigation,
   Map, Clock, Activity, EyeOff, Fingerprint, PhoneIncoming,
   Lightbulb, Package, BookOpen, PersonStanding, CreditCard,
-  Archive, HeartPulse, MoreHorizontal,
+  Archive, HeartPulse, MoreHorizontal, Wifi,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -48,6 +48,7 @@ export const sidebarSections: DashboardNavSection[] = [
       { to: '/dashboard/ficha-medica', label: 'Ficha Medica', icon: HeartPulse },
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
       { to: '/dashboard/ble', label: 'Radar Bluetooth', icon: Bluetooth },
+      { to: '/dashboard/net-radar', label: 'Radar Wi-Fi e Redes', icon: Wifi },
       { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
       { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
       { to: '/dashboard/dicas', label: 'Dicas de Seguranca', icon: Lightbulb },
