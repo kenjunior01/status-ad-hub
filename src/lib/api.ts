@@ -725,3 +725,100 @@ export async function getNetTrails(limit = 50): Promise<NetTrailRow[]> {
     }
   })
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// CENTRAL DE SEGURANÇA (v3.17.0) — nuvem para o registo Wi-Fi e o diário
+// de eventos de segurança. Sobrevive à perda/destruição do telemóvel.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Linha do registo Wi-Fi sincronizado (tabela wifi_registry). */
+export interface WifiRegistryRow {
+  bssid: string
+  ssid: string
+  sec?: string
+  freq?: number
+  best_rssi?: number
+  first_seen?: string
+  last_seen?: string
+  seen_count?: number
+  lat?: number
+  lng?: number
+}
+
+/**
+ * Envia (upsert) o registo Wi-Fi local para a nuvem. Chave única:
+ * (user_id, bssid) — re-sincronizar actualiza contadores sem duplicar.
+ */
+export async function saveWifiRegistry(userId: string, entries: Array<{
+  bssid: string; ssid: string; sec?: string; freq?: number; rssi?: number;
+  firstSeen?: number; lastSeen?: number; seen?: number; lat?: number; lng?: number
+}>): Promise<number> {
+  if (!isValidUUID(userId) || !entries.length) return 0
+  const rows = entries.slice(0, 400).map((e) => ({
+    user_id: userId,
+    bssid: e.bssid || e.ssid,
+    ssid: e.ssid,
+    sec: e.sec || null,
+    freq: e.freq ?? null,
+    best_rssi: e.rssi ?? null,
+    first_seen: e.firstSeen ? new Date(e.firstSeen).toISOString() : new Date().toISOString(),
+    last_seen: e.lastSeen ? new Date(e.lastSeen).toISOString() : new Date().toISOString(),
+    seen_count: e.seen ?? 1,
+    lat: e.lat ?? null,
+    lng: e.lng ?? null,
+  }))
+  const { error } = await supabase
+    .from('wifi_registry')
+    .upsert(rows, { onConflict: 'user_id,bssid' })
+  if (error) throw error
+  return rows.length
+}
+
+/** Admin/utilizador: registo Wi-Fi guardado na nuvem. */
+export async function getWifiRegistry(userId: string, limit = 400): Promise<WifiRegistryRow[]> {
+  if (!isValidUUID(userId)) return []
+  const { data, error } = await supabase
+    .from('wifi_registry')
+    .select('bssid, ssid, sec, freq, best_rssi, first_seen, last_seen, seen_count, lat, lng')
+    .eq('user_id', userId)
+    .order('last_seen', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data || []) as WifiRegistryRow[]
+}
+
+/** Evento do diário de segurança (tabela security_events). */
+export async function saveSecurityEvents(userId: string, events: Array<{
+  id?: string; ts: number; kind: string; severity: string; title: string; detail?: string; meta?: Record<string, unknown>
+}>): Promise<number> {
+  if (!isValidUUID(userId) || !events.length) return 0
+  const rows = events.slice(0, 100).map((e) => ({
+    user_id: userId,
+    client_id: e.id || null,
+    ts: new Date(e.ts || Date.now()).toISOString(),
+    kind: e.kind,
+    severity: e.severity,
+    title: e.title,
+    detail: e.detail || null,
+    meta: e.meta || null,
+  }))
+  const { error } = await supabase
+    .from('security_events')
+    .insert(rows)
+  if (error) throw error
+  return rows.length
+}
+
+/** Lê os eventos de segurança da nuvem (investigação/admin). */
+export async function getSecurityEvents(userId: string, limit = 100): Promise<Array<{
+  ts: string; kind: string; severity: string; title: string; detail: string | null
+}>> {
+  if (!isValidUUID(userId)) return []
+  const { data, error } = await supabase
+    .from('security_events')
+    .select('ts, kind, severity, title, detail')
+    .eq('user_id', userId)
+    .order('ts', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data || []
+}

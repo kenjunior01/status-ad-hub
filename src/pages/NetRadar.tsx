@@ -25,11 +25,12 @@
  * registo da ligação actual e explica como activar o radar completo no APK.
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ShieldAlert, Info, Radio, Signal, Bluetooth, ScanLine, Gauge,
   Network, Smartphone, ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle,
+  History, Search, Download,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -37,14 +38,15 @@ import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useNetRadar } from '@/hooks/useNetRadar'
 import { useAuth } from '@/hooks/useAuth'
-import { saveNetTrail, saveBleTrail } from '@/lib/api'
+import { saveNetTrail, saveBleTrail, saveWifiRegistry } from '@/lib/api'
+import { exportWifiRegistry } from '@/lib/export-data'
 import { isNative } from '@/lib/native'
 import {
   securityLevel, securityLabel, wifiDistanceLabel, wifiRssiBars, wifiRssiToMeters,
   bleScanNowSafe, type BleQuickDevice,
 } from '@/components/net/net-shared'
 import TacticalNetRadar from '@/components/net/TacticalNetRadar'
-import type { WifiRadarNetwork } from '@/lib/net-radar'
+import type { WifiRadarNetwork, WifiRegistryEntry } from '@/lib/net-radar'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -550,11 +552,171 @@ function NetRadarWeb() {
           </div>
         )}
       </div>
+      {/* Registo Wi-Fi — histórico completo (v3.17.0) */}
+      <WifiRegistryPanel
+        registry={registry}
+        onClear={() => { clearRegistry(); toast.info('Registo de redes apagado') }}
+      />
     </div>
   )
 }
 
-/** Linha de uma rede Wi-Fi (design web). */
+/**
+ * Painel do registo Wi-Fi (v3.17.0): busca por nome/BSSID, filtro de
+ * segurança, detalhe (1.ª vez, última vez, nº de vezes, GPS), exportação
+ * CSV/JSON e sincronização na nuvem (tabela wifi_registry).
+ */
+function WifiRegistryPanel({ registry, onClear }: {
+  registry: WifiRegistryEntry[]
+  onClear: () => void
+}) {
+  const { user } = useAuth()
+  const [query, setQuery] = useState('')
+  const [secFilter, setSecFilter] = useState<'all' | 'risk' | 'open'>('all')
+  const [exporting, setExporting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return registry
+      .filter((e) => {
+        if (q && !(e.ssid?.toLowerCase().includes(q) || e.bssid?.toLowerCase().includes(q))) return false
+        if (secFilter === 'open') return securityLevel(e.sec) === 0
+        if (secFilter === 'risk') return securityLevel(e.sec) <= 2
+        return true
+      })
+      .sort((a, b) => b.lastSeen - a.lastSeen)
+      .slice(0, 120)
+  }, [registry, query, secFilter])
+
+  const handleSync = async () => {
+    if (!user || registry.length === 0) return
+    setSyncing(true)
+    try {
+      const n = await saveWifiRegistry(user.id, registry)
+      toast.success(`${n} redes sincronizadas na nuvem`, { description: 'O histórico sobrevive à perda do telemóvel.' })
+    } catch {
+      toast.error('Falha ao sincronizar (sem internet?)')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const handleExport = async (format: 'csv' | 'json') => {
+    setExporting(true)
+    try { await exportWifiRegistry(registry, format) } finally { setExporting(false) }
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl flex items-center justify-center border bg-white/[0.03] border-white/[0.06]">
+          <History className="h-4.5 w-4.5 text-brand" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-semibold text-sm text-white">Registo de redes já vistas</p>
+          <p className="text-[11px] text-white/30">
+            {registry.length} rede(s) no histórico · 1.ª vez, última vez, nº de vezes e GPS
+          </p>
+        </div>
+      </div>
+
+      {/* barra de ferramentas */}
+      <div className="px-5 py-3 border-b border-white/[0.05] space-y-2.5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nome ou BSSID…"
+            className="w-full h-9 pl-9 pr-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[12px] text-white placeholder:text-white/20 outline-none focus:border-brand/40"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            { v: 'all', label: 'Todas' },
+            { v: 'risk', label: 'Risco (WEP/WPA/abertas)' },
+            { v: 'open', label: 'Só abertas' },
+          ] as const).map((f) => (
+            <button
+              key={f.v}
+              onClick={() => setSecFilter(f.v)}
+              className={cn(
+                'px-2.5 py-1 rounded-lg text-[10px] font-medium border transition',
+                secFilter === f.v
+                  ? 'bg-brand/15 text-brand border-brand/30'
+                  : 'bg-white/[0.03] text-white/35 border-white/[0.06] hover:text-white/60'
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+          <span className="flex-1" />
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => handleExport('csv')}
+            disabled={exporting || registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06] gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => handleExport('json')}
+            disabled={exporting || registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06]"
+          >
+            JSON
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={handleSync}
+            disabled={syncing || !user || registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-brand/80 hover:bg-brand/10 rounded-lg border border-brand/20 gap-1.5"
+          >
+            <CloudUpload className="h-3.5 w-3.5" />
+            {syncing ? 'A enviar…' : 'Nuvem'}
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={onClear}
+            disabled={registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-amber-400/70 hover:bg-amber-500/10 rounded-lg border border-amber-500/15 gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* lista do registo */}
+      <div className="divide-y divide-white/[0.04] max-h-[360px] overflow-y-auto">
+        {filtered.length === 0 && (
+          <p className="px-5 py-8 text-center text-xs text-white/25">
+            {registry.length === 0
+              ? 'Sem redes registadas ainda — escanee para começar o histórico'
+              : 'Nenhuma rede corresponde à busca/filtro'}
+          </p>
+        )}
+        {filtered.map((e) => (
+          <div key={e.bssid || e.ssid} className="px-5 py-3 flex items-center gap-3">
+            <SecBadge sec={e.sec} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-white font-medium truncate">{e.ssid}</p>
+              <p className="text-[10px] text-white/30 font-mono truncate">
+                {e.bssid || 'BSSID desconhecido'}
+                {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
+              </p>
+            </div>
+            <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
+              <p>{e.seen}×</p>
+              <p className="text-white/20">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 function WifiRow({ net: n }: { net: WifiRadarNetwork }) {
   const label = securityLabel(n.sec)
   const lvl = securityLevel(n.sec)

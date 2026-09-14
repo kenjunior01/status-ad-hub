@@ -19,7 +19,8 @@ import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmail
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
 import { readBleRadarSnapshot, type BleRadarSnapshot } from '@/lib/ble-radar'
-import { readNetRadarSnapshot, netGetTrail, type NetRadarSnapshot } from '@/lib/net-radar'
+import { readNetRadarSnapshot, netGetTrail, wifiGetRegistry, type NetRadarSnapshot } from '@/lib/net-radar'
+import { logSecurityEvent } from '@/lib/security-events'
 import { toast } from 'sonner'
 
 /**
@@ -159,6 +160,15 @@ export function useEmergency() {
       if (contactsNotified.length > 0) cacheContactPhones(contactsNotified)
       lastPhonesRef.current = phones
       sosAtRef.current = new Date()
+
+      // v3.17.0: SOS entra no diário de segurança (auditoria local + nuvem)
+      logSecurityEvent(
+        'sos', 'high',
+        `SOS activado — ${phones.length} contacto(s) notificado(s)`,
+        `GPS ${vars.latitude.toFixed(5)}, ${vars.longitude.toFixed(5)}`,
+        { alertId, contacts: phones.length },
+        0,
+      )
 
       // v3.14.0: relatório de entrega — todos os canais consolidados num só lugar
       const report = startSosReport({
@@ -346,6 +356,12 @@ export function useEmergency() {
         if (points.length > 0) {
           api.saveNetTrail(userId, points.slice(-20), alertId, net?.threats.length ?? 0).catch(() => {})
         }
+        // v3.17.0: registo Wi-Fi completo sai com o SOS (wifi_registry) —
+        // histórico "onde/quando" de todas as redes já capturadas
+        try {
+          const reg = await wifiGetRegistry()
+          if (reg.length > 0) await api.saveWifiRegistry(userId, reg)
+        } catch { /* melhor esforço — não bloqueia o SOS */ }
       })
 
       // 8. Gravação automática de áudio (evidência + SMS com link quando subir)

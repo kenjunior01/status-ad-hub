@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  wifiScanNow, wifiGetNetworks, wifiGetRegistry, wifiClearRegistry,
+  wifiScanNow, wifiGetNetworks, wifiGetRegistry, wifiClearRegistry, wifiRecordMany,
   netStartTrail, netStopTrail, netGetTrail, netClearTrail,
   onWifiNetwork, onNetTrailPoint, isWifiRadarAvailable,
   wifiHasPermissions, wifiRequestPermissions, readNetEnvironment,
@@ -17,6 +17,8 @@ import {
   type WifiRadarNetwork, type WifiRegistryEntry, type NetTrailPoint,
   type NetThreat, type NetEnvironmentInfo,
 } from '@/lib/net-radar'
+import { geoGetCurrent } from '@/lib/native'
+import { logThreatsToSecurityLog } from '@/lib/security-events'
 
 export interface UseNetRadarState {
   /** plugin nativo disponível (só APK Android) */
@@ -131,8 +133,18 @@ export function useNetRadar() {
       const reg = await wifiGetRegistry()
       setRegistry(reg)
       setNetworks(sortNets(list))
-      setThreats(analyzeNetworkThreats(list, reg))
-      setRiskScore(environmentRiskScore(analyzeNetworkThreats(list, reg), list))
+      const threats = analyzeNetworkThreats(list, reg)
+      setThreats(threats)
+      setRiskScore(environmentRiskScore(threats, list))
+      // v3.17.0 — auto-registo das redes capturadas (web) + diário de
+      // segurança + posição GPS aproximada anexada ao registo
+      if (list.length > 0) {
+        const pos = await geoGetCurrent(8_000).catch(() => null)
+        await wifiRecordMany(list, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
+        const reg2 = await wifiGetRegistry()
+        setRegistry(reg2)
+        logThreatsToSecurityLog(threats)
+      }
     } catch (err) {
       setLastError(err instanceof Error ? err.message : 'Falha no scan Wi-Fi')
     } finally {

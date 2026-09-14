@@ -20,18 +20,19 @@ import { useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle, Radio, Signal,
-  Bluetooth, ScanLine, ShieldAlert, CircleDashed,
+  Bluetooth, ScanLine, ShieldAlert, CircleDashed, Download, History, Search, SearchX,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useNetRadar } from '@/hooks/useNetRadar'
 import { useAuth } from '@/hooks/useAuth'
-import { saveNetTrail, saveBleTrail } from '@/lib/api'
+import { saveNetTrail, saveBleTrail, saveWifiRegistry } from '@/lib/api'
+import { exportWifiRegistry } from '@/lib/export-data'
 import {
   securityLevel, wifiDistanceLabel, wifiRssiBars, wifiRssiToMeters,
   bleScanNowSafe, type BleQuickDevice,
 } from './net-shared'
-import type { WifiRadarNetwork, NetTrailPoint } from '@/lib/net-radar'
+import type { WifiRadarNetwork, WifiRegistryEntry, NetTrailPoint } from '@/lib/net-radar'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -145,7 +146,7 @@ export default function TacticalNetRadar() {
       {/* ── Cabeçalho HUD ─────────────────────────────────────────── */}
       <div className="relative z-10 pt-2 flex items-start justify-between gap-3">
         <div>
-          <p className="tac-label mb-1">Signal Surveillance Grid · v3.16</p>
+          <p className="tac-label mb-1">Signal Surveillance Grid · v3.17</p>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Radar className="w-5 h-5" style={{ color: 'var(--tac-green)' }} />
             <span className="tracking-[0.18em]">RADAR DE REDES</span>
@@ -441,9 +442,112 @@ export default function TacticalNetRadar() {
         )}
       </div>
 
+      {/* ── Registo de redes já vistas (v3.17.0) ─────────────────── */}
+      <TacRegistryPanel registry={registry} onClear={() => { clearRegistry(); toast.info('Registo de redes apagado') }} />
+
       <p className="relative z-10 mt-5 text-center text-[9px] tracking-[0.25em] text-emerald-100/25">
         STATUSADS TACTICAL GRID · CAPTAÇÃO PASSIVA SEM LIGAÇÃO A REDES
       </p>
+    </div>
+  )
+}
+
+/** Painel tático do registo Wi-Fi: busca, filtro, exportação e nuvem (v3.17.0). */
+function TacRegistryPanel({ registry, onClear }: {
+  registry: WifiRegistryEntry[]
+  onClear: () => void
+}) {
+  const { user } = useAuth()
+  const [query, setQuery] = useState('')
+  const [syncing, setSyncing] = useState(false)
+
+  const q = query.trim().toLowerCase()
+  const filtered = registry
+    .filter((e) => !q || e.ssid?.toLowerCase().includes(q) || e.bssid?.toLowerCase().includes(q))
+    .sort((a, b) => b.lastSeen - a.lastSeen)
+    .slice(0, 60)
+
+  const handleSync = async () => {
+    if (!user || registry.length === 0) return
+    setSyncing(true)
+    try {
+      const n = await saveWifiRegistry(user.id, registry)
+      toast.success(`NUVEM: ${n} REDES REGISTADAS`, { description: 'Histórico sobrevive à perda do aparelho.' })
+    } catch {
+      toast.error('FALHA NA SINCRONIZAÇÃO')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  return (
+    <div className="tac-panel relative z-10 mt-4 overflow-hidden">
+      <div className="px-4 py-3 border-b flex items-center gap-2.5" style={{ borderColor: 'var(--tac-line)' }}>
+        <History className="h-4 w-4" style={{ color: 'var(--tac-green)' }} />
+        <div className="flex-1 min-w-0">
+          <p className="tac-value text-[13px] tracking-wider">REGISTO DE REDES · {registry.length}</p>
+          <p className="tac-label">TODAS AS REDES JÁ CAPTURADAS · 1A/ULTIMA VEZ · GPS</p>
+        </div>
+        <button
+          onClick={() => void exportWifiRegistry(registry, 'csv')}
+          disabled={registry.length === 0}
+          className="tac-btn tac-btn-ghost !px-2.5 !py-1.5"
+          title="Exportar CSV"
+        >
+          <Download className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={handleSync}
+          disabled={syncing || !user || registry.length === 0}
+          className="tac-btn tac-btn-ghost !px-2.5 !py-1.5"
+          title="Sincronizar na nuvem"
+        >
+          {syncing ? <ScanLine className="h-3.5 w-3.5 animate-spin" /> : <CloudUpload className="h-3.5 w-3.5" />}
+        </button>
+        <button
+          onClick={onClear}
+          disabled={registry.length === 0}
+          className="tac-btn tac-btn-ghost !px-2.5 !py-1.5"
+          style={{ color: '#fcd34d', borderColor: 'rgba(251,191,36,0.25)' }}
+          title="Apagar registo"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--tac-line)' }}>
+        <Search className="h-3.5 w-3.5 opacity-30" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="FILTRAR POR SSID OU BSSID…"
+          className="flex-1 bg-transparent border-none outline-none text-[11px] tracking-wider text-emerald-50 placeholder:text-emerald-100/20 font-mono"
+        />
+      </div>
+
+      <div className="max-h-[300px] overflow-y-auto">
+        {filtered.length === 0 ? (
+          <p className="px-4 py-6 text-center text-[10px] tracking-widest text-emerald-100/25 flex items-center justify-center gap-2">
+            <SearchX className="h-3.5 w-3.5" />
+            {registry.length === 0 ? 'SEM REDES REGISTADAS' : 'SEM CORRESPONDÊNCIAS'}
+          </p>
+        ) : filtered.map((e) => (
+          <div key={e.bssid || e.ssid} className="tac-row">
+            <span className={securityBadgeClass(e.sec)}>{e.sec}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold text-emerald-50 truncate">{e.ssid}</p>
+              <p className="text-[9px] text-emerald-100/30 font-mono truncate">
+                {e.bssid || 'BSSID ?'}
+                {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="tac-value text-[12px]">{e.seen}×</p>
+              <p className="text-[9px] text-emerald-100/25">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

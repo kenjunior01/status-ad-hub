@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.16.0
+# 🛡️ StatusAds Connect v3.17.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -26,14 +26,25 @@ gateways de pagamento ou SMS.
 
 ### Protecção activa
 - **Deteção de ameaças** — sensores analisam padrões anómalos (movimento, isolamento, sinal)
+- **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
+  ambiente, rastreadores detectados, checklist de prontidão e **diário de
+  eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
+  nuvem e exportação CSV. Na APK veste o design exclusivo "Tactical HUD"
+- **Vigilância Contínua (v3.17.0)** — sentinela que escana Wi-Fi + BLE a cada
+  45s, alimenta os registos, classifica o risco ao longo do tempo (sparkline)
+  e escreve tudo no diário — retoma-se sozinha ao reabrir a app
 - **Radar Wi-Fi & Redes (v3.16.0)** — captura e regista TODAS as redes Wi-Fi próximas
   SEM SE LIGAR a elas (BSSID, SSID, sinal, canal, banda, segurança) + operadora móvel
   e torres celulares visíveis. Análise de segurança integrada: redes abertas, WEP/WPA
   quebradas, **evil twins** (mesmo SSID com vários BSSID), honeypots de nome suspeito,
   redes novas no ambiente e índice de risco do local. Registo persistente de todas as
   redes já vistas (1.ª vez, última vez, nº de vezes, GPS aproximado) + rastro automático
-  que sai com o SOS e sincroniza na nuvem
-- **Radar Bluetooth** — dispositivos BLE próximos sem emparelhar (MAC, fabricante, distância)
+  que sai com o SOS e sincroniza na nuvem. **Novo v3.17:** busca/filtro no registo,
+  exportação CSV/JSON e sync do registo na nuvem (tabela `wifi_registry`)
+- **Radar Bluetooth** — dispositivos BLE próximos sem emparelhar (MAC, fabricante, distância).
+  **Novo v3.17:** registo persistente de todos os dispositivos já vistos + **detecção de
+  rastreadores/perseguidores** (AirTag, SmartTag, Tile, Chipolo e padrão "quem te segue"),
+  exportação CSV/JSON e descoberta manual via Web Bluetooth na web
 - **Design exclusivo na APK** — "Tactical Grid": HUD militar verde-radar com varrimento
   de sonar, só existe na versão nativa; a web mantém a identidade dourada
 - **Rastreamento de viagem** — partilha a localização em tempo real durante trajetos
@@ -127,6 +138,10 @@ supabase functions deploy send-sms notify-contacts web-push notify-missed-checki
 - [x] v3.16 — Radar Wi-Fi & Redes: captura de todas as redes próximas + análise
       de segurança (evil twins, honeypots, redes abertas) + torres celulares +
       design exclusivo "Tactical Grid" na APK + tabela `net_trails` na nuvem
+- [x] v3.17 — Central de Segurança + Vigilância Contínua + registo BLE com
+      detecção de rastreadores/perseguidores + diário de segurança na nuvem
+      (`security_events`) + registo Wi-Fi na nuvem (`wifi_registry`) +
+      exportação CSV/JSON de tudo o que o radar captura
 - [ ] APK publicado na Play Store
 - [ ] Notificações SMS ilimitadas (edge functions activas)
 - [ ] Radar comunitário colaborativo entre operadoras

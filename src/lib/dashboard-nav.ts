@@ -3,7 +3,7 @@ import {
   ShieldAlert, Zap, ShieldCheck, Glasses, Radar, Navigation,
   Map, Clock, Activity, EyeOff, Fingerprint, PhoneIncoming,
   Lightbulb, Package, BookOpen, PersonStanding, CreditCard,
-  Archive, HeartPulse, MoreHorizontal, Wifi,
+  Archive, HeartPulse, MoreHorizontal, Wifi, Shield,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -42,6 +42,7 @@ export const sidebarSections: DashboardNavSection[] = [
   {
     title: 'Seguranca',
     items: [
+      { to: '/dashboard/seguranca', label: 'Central de Seguranca', icon: Shield },
       { to: '/dashboard/contacts', label: 'Contactos de Emergencia', icon: Users },
       { to: '/dashboard/queda', label: 'Deteccao de Queda', icon: PersonStanding },
       { to: '/dashboard/evidencias', label: 'Cofre de Evidencias', icon: Archive },

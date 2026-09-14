@@ -15,6 +15,7 @@ import {
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
   MessageSquare, Volume2, Radio, CheckCircle2, AlertCircle, Navigation,
   Mic, Skull, Radar, Timer, Activity, Lightbulb, ArrowRight, Menu,
+  ShieldCheck, ChevronRight,
 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
@@ -882,6 +883,18 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          {/* v3.17.0 — atalho para a Central de Segurança */}
+          <button
+            onClick={() => navigate('/dashboard/seguranca')}
+            className="mt-4 w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-brand/[0.05] border border-brand/15 hover:bg-brand/[0.1] transition group"
+          >
+            <ShieldCheck className="h-4.5 w-4.5 text-brand shrink-0" />
+            <div className="flex-1 text-left">
+              <p className="text-[12px] font-semibold text-white">Central de Seguranca</p>
+              <p className="text-[10px] text-white/35">Score, sentinel Wi-Fi/BLE, rastreadores e diario</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-brand/50 group-hover:text-brand transition" />
+          </button>
         </SpotlightCard>
       </motion.div>
       )}

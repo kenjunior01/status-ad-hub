@@ -473,12 +473,14 @@ export async function wifiRegisterManual(entry: Partial<WifiRegistryEntry> & { b
       e.seen = (e.seen || 0) + 1
       if (typeof entry.rssi === 'number' && (e.rssi == null || entry.rssi > e.rssi)) e.rssi = entry.rssi
       if (entry.sec) e.sec = entry.sec
+      if (entry.freq) e.freq = entry.freq
       list[idx] = e
     } else {
       list.unshift({
         bssid: entry.bssid || '',
         ssid: entry.ssid,
         sec: entry.sec || 'DESCONHECIDA',
+        freq: entry.freq,
         rssi: entry.rssi,
         firstSeen: now,
         lastSeen: now,
@@ -488,6 +490,33 @@ export async function wifiRegisterManual(entry: Partial<WifiRegistryEntry> & { b
     while (list.length > WEB_REGISTRY_MAX) list.pop()
     localStorage.setItem(WEB_REGISTRY_KEY, JSON.stringify(list))
   } catch { /* quota — segue */ }
+}
+
+/**
+ * Regista automaticamente um lote de redes capturadas pelo scan (v3.17.0).
+ * Na APK o registo é nativo (o plugin faz isto sozinho); na web este
+ * método alimenta o registo local a partir dos scans da página — assim o
+ * histórico "redes já vistas" funciona nas duas versões.
+ */
+export async function wifiRecordMany(nets: WifiRadarNetwork[], pos?: { lat?: number; lng?: number }): Promise<number> {
+  if (plugin) return 0 // nativo: registo feito no lado Java
+  let n = 0
+  for (const net of nets || []) {
+    if (!net || !net.ssid) continue
+    try {
+      await wifiRegisterManual({
+        bssid: net.bssid,
+        ssid: net.ssid,
+        sec: net.sec,
+        freq: net.freq,
+        rssi: net.rssi,
+        lat: pos?.lat,
+        lng: pos?.lng,
+      })
+      n++
+    } catch { /* segue */ }
+  }
+  return n
 }
 
 export async function wifiClearRegistry(): Promise<void> {

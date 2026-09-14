@@ -16,11 +16,12 @@
  * instalem a app.
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, MapPin,
   Smartphone, Car, Headphones, Watch, Navigation, Info, ShieldAlert,
   Bluetooth, BluetoothOff, Activity, ChevronDown, ChevronUp, Clock,
+  Siren, Download, History, Search, Plus,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { saveBleTrail } from '@/lib/api'
 import { rssiBars, distanceLabel } from '@/lib/ble-radar'
 import type { BleRadarDevice, BleTrailPoint } from '@/lib/ble-radar'
+import { exportBleRegistry } from '@/lib/export-data'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -70,8 +72,8 @@ function SignalBars({ rssi }: { rssi: number }) {
 
 export default function BleRadar() {
   const {
-    available, permissions, scanning, devices, trailRunning, trail,
-    trailIntervalSec, lastError, scan, startTrail, stopTrail, clearTrail, requestPerms, refresh,
+    available, permissions, scanning, devices, registry, trackers, trailRunning, trail,
+    trailIntervalSec, lastError, scan, startTrail, stopTrail, clearTrail, clearRegistry, requestPerms, refresh,
   } = useBleRadar()
   const { user } = useAuth()
   const [intervalSel, setIntervalSel] = useState(trailIntervalSec)
@@ -153,9 +155,27 @@ export default function BleRadar() {
           <BluetoothOff className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
           <div className="text-[13px] text-white/50 leading-relaxed">
             <p className="font-semibold text-amber-300 mb-1">Disponível na app Android (APK)</p>
-            O navegador não permite scan Bluetooth sem emparelhar. Instale o APK
+            O navegador não permite scan Bluetooth passivo. Instale o APK
             StatusAds para ligar o Radar completo: MAC real, fabricante, distância e
-            rastro automático com GPS.
+            rastro automático com GPS. Na web pode ainda registar um dispositivo
+            manualmente via Web Bluetooth (Chrome/Edge).
+          </div>
+        </div>
+      )}
+
+      {/* Alerta de rastreador/perseguidor (v3.17.0) */}
+      {trackers.length > 0 && (
+        <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] p-4 flex gap-3">
+          <Siren className="h-5 w-5 text-red-400 shrink-0 mt-0.5 animate-pulse" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-red-300">
+              {trackers.length === 1 ? 'Possível rastreador detectado' : `${trackers.length} possíveis rastreadores/perseguidores`}
+            </p>
+            {trackers.slice(0, 3).map((t) => (
+              <p key={t.mac} className="text-[11px] text-white/50 mt-1 leading-snug">
+                <b className="text-white/70">{t.kind === 'known-tracker' ? 'RASTREADOR' : 'PERSEGUIDOR'} · {t.name || t.mac}</b> — {t.reason}
+              </p>
+            ))}
           </div>
         </div>
       )}
@@ -343,6 +363,150 @@ export default function BleRadar() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Registo de dispositivos já vistos (v3.17.0) */}
+      <BleRegistryPanel
+        registry={registry}
+        onClear={() => { clearRegistry(); toast.info('Registo Bluetooth apagado') }}
+      />
+    </div>
+  )
+}
+
+/**
+ * Painel do registo BLE (v3.17.0): histórico persistente de dispositivos
+ * vistos (1.ª/última vez, nº de vezes, melhor sinal), busca, exportação
+ * CSV/JSON e, na web, descoberta manual via Web Bluetooth (Chrome/Edge).
+ */
+function BleRegistryPanel({ registry, onClear }: {
+  registry: ReturnType<typeof useBleRadar>['registry']
+  onClear: () => void
+}) {
+  const [query, setQuery] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [webBusy, setWebBusy] = useState(false)
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return registry
+      .filter((e) => !q || e.name?.toLowerCase().includes(q) || e.mac.toLowerCase().includes(q) || e.kind?.toLowerCase().includes(q))
+      .slice(0, 100)
+  }, [registry, query])
+
+  /** Web Bluetooth: escolher um dispositivo próximo e registá-lo. */
+  const handleWebBluetooth = async () => {
+    const nav = navigator as unknown as { bluetooth?: { requestDevice(opts?: unknown): Promise<{ id?: string; name?: string | null }> } }
+    if (!nav.bluetooth?.requestDevice) {
+      toast.error('Web Bluetooth indisponível neste navegador', { description: 'Use Chrome/Edge no desktop ou Android.' })
+      return
+    }
+    setWebBusy(true)
+    try {
+      const dev = await nav.bluetooth.requestDevice({ acceptAllDevices: true })
+      if (dev?.id) {
+        // registo manual: o id do browser serve de identificador de sessão
+        const { bleRecordObservation } = await import('@/lib/radar-registry')
+        bleRecordObservation({ mac: dev.id, n: dev.name || null, r: -60, k: 'Web Bluetooth' })
+        toast.success('Dispositivo registado', { description: dev.name || dev.id })
+      }
+    } catch {
+      toast.info('Nenhum dispositivo seleccionado')
+    } finally {
+      setWebBusy(false)
+    }
+  }
+
+  const handleExport = async (format: 'csv' | 'json') => {
+    setExporting(true)
+    try { await exportBleRegistry(registry, format) } finally { setExporting(false) }
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl flex items-center justify-center border bg-white/[0.03] border-white/[0.06]">
+          <History className="h-4.5 w-4.5 text-brand" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-semibold text-sm text-white">Registo de dispositivos já vistos</p>
+          <p className="text-[11px] text-white/30">
+            {registry.length} no histórico · 1.ª vez, última vez, nº de vezes e melhor sinal
+          </p>
+        </div>
+      </div>
+
+      <div className="px-5 py-3 border-b border-white/[0.05] space-y-2.5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nome, MAC ou tipo…"
+            className="w-full h-9 pl-9 pr-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[12px] text-white placeholder:text-white/20 outline-none focus:border-brand/40"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => handleExport('csv')}
+            disabled={exporting || registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06] gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => handleExport('json')}
+            disabled={exporting || registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06]"
+          >
+            JSON
+          </Button>
+          <span className="flex-1" />
+          <Button
+            variant="ghost" size="sm"
+            onClick={handleWebBluetooth}
+            disabled={webBusy}
+            className="h-8 px-2.5 text-[11px] text-cyan-400/80 hover:bg-cyan-500/10 rounded-lg border border-cyan-500/20 gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {webBusy ? 'A escolher…' : 'Web Bluetooth'}
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={onClear}
+            disabled={registry.length === 0}
+            className="h-8 px-2.5 text-[11px] text-amber-400/70 hover:bg-amber-500/10 rounded-lg border border-amber-500/15"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="divide-y divide-white/[0.04] max-h-[340px] overflow-y-auto">
+        {filtered.length === 0 && (
+          <p className="px-5 py-8 text-center text-xs text-white/25">
+            {registry.length === 0
+              ? 'Sem dispositivos registados — escanee para começar o histórico'
+              : 'Nenhum dispositivo corresponde à busca'}
+          </p>
+        )}
+        {filtered.map((e) => (
+          <div key={e.mac} className="px-5 py-3 flex items-center gap-3">
+            <SignalBars rssi={e.bestRssi ?? -100} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-white font-medium truncate">{e.name || e.kind || 'Dispositivo sem nome'}</p>
+              <p className="text-[10px] text-white/30 font-mono truncate">
+                {e.mac}{e.kind && e.name ? ` · ${e.kind}` : ''}{e.mfr ? ` · ${e.mfr}` : ''}
+              </p>
+            </div>
+            <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
+              <p>{e.seen}×</p>
+              <p className="text-white/20">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

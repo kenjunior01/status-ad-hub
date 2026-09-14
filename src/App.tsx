@@ -7,7 +7,7 @@ import { NotificationProvider } from '@/hooks/useNotifications'
 import { OfflineQueueProvider } from '@/hooks/useOfflineQueue'
 import { PWAProvider } from '@/hooks/usePWA'
 import { useGlobalErrorHandlers, getReactQueryDefaults } from '@/hooks/useGlobalErrorHandlers'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Shield, Loader2 } from 'lucide-react'
 import { NoiseTexture, MorphingBlob, Shimmer } from '@/components/effects'
 import { ErrorBoundary, WithErrorBoundary } from '@/components/ErrorBoundary'
@@ -27,6 +27,7 @@ import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
 import { PanicModeOverlay } from '@/components/PanicModeOverlay'
 import { GuardianWatcher } from '@/components/GuardianWatcher'
 import { GuardianSOSOverlay } from '@/components/GuardianSOSOverlay'
+import { resumeWatchIfEnabled } from '@/hooks/useRadarWatch'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
@@ -46,6 +47,7 @@ const QuickActions = lazy(() => import('@/pages/QuickActions'))
 const CommunityRadar = lazy(() => import('@/pages/CommunityRadar'))
 const BleRadar = lazy(() => import('@/pages/BleRadar'))
 const NetRadar = lazy(() => import('@/pages/NetRadar'))
+const SecurityCenter = lazy(() => import('@/pages/SecurityCenter'))
 const DiscreetModeSettings = lazy(() => import('@/pages/DiscreetModeSettings'))
 const DisguiseSelector = lazy(() => import('@/pages/DisguiseSelector'))
 const BellvionDevices = lazy(() => import('@/pages/BellvionDevices'))
@@ -121,6 +123,7 @@ function AppRoutes() {
         <Route path="radar" element={<WithErrorBoundary context="community-radar"><CommunityRadar /></WithErrorBoundary>} />
         <Route path="ble" element={<WithErrorBoundary context="ble-radar"><BleRadar /></WithErrorBoundary>} />
         <Route path="net-radar" element={<WithErrorBoundary context="net-radar"><NetRadar /></WithErrorBoundary>} />
+        <Route path="seguranca" element={<WithErrorBoundary context="security-center"><SecurityCenter /></WithErrorBoundary>} />
         <Route path="discreto" element={<WithErrorBoundary context="discreet-settings"><DiscreetModeSettings /></WithErrorBoundary>} />
         <Route path="camuflar" element={<WithErrorBoundary context="disguise-selector"><DisguiseSelector /></WithErrorBoundary>} />
         <Route path="camuflagem-pwa" element={<WithErrorBoundary context="camuflagem-pwa"><CamuflagemPWA /></WithErrorBoundary>} />
@@ -198,6 +201,8 @@ function GlassesOverlayWrapper() {
  */
 function InnerApp() {
   useGlobalErrorHandlers()
+  // v3.17.0 — retoma a vigilância contínua se estava activa antes de fechar
+  useEffect(() => { resumeWatchIfEnabled() }, [])
 
   return (
     <BrowserRouter>
