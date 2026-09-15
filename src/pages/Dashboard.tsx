@@ -22,6 +22,7 @@ import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
 import { ProximityPanel } from '@/components/ProximityPanel'
 import { ReadinessRings, CoachCard } from '@/components/ReadinessRings'
 import { GuardianCard } from '@/components/GuardianCard'
+import AegisBriefingCard from '@/components/ai/AegisBriefingCard'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -883,6 +884,8 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          {/* AEGIS · BRIEFING IA (v3.19.0) */}
+          <AegisBriefingCard />
           {/* v3.17.0 — atalho para a Central de Segurança */}
           <button
             onClick={() => navigate('/dashboard/seguranca')}
@@ -898,6 +901,9 @@ export default function Dashboard() {
         </SpotlightCard>
       </motion.div>
       )}
+
+      {/* AEGIS · BRIEFING IA compacto — faixa flutuante mobile sobre a bottom bar (v3.19.0) */}
+      {isReady && <AegisBriefingCard compact />}
 
       {/* BOTTOM BAR */}
       <motion.div

@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.18.0
+# 🛡️ StatusAds Connect v3.19.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -26,6 +26,28 @@ gateways de pagamento ou SMS.
 
 ### Protecção activa
 - **Deteção de ameaças** — sensores analisam padrões anómalos (movimento, isolamento, sinal)
+- **Copiloto AEGIS · IA (v3.19.0)** — analista de segurança conversacional
+  que lê os dados REAIS da app (redes, rastreadores, locais, eventos, score)
+  e responde em linguagem natural: "como estou protegido?", "o que
+  melhorar?", "há rastreadores perto de mim?". Duas fontes de
+  inteligência, sem furo de serviço:
+  · **IA na nuvem** — edge function `ai-analyst` (LLM compatível OpenAI:
+  OpenAI, z.ai/GLM, DeepSeek, Groq, OpenRouter…) activa com o secret
+  `AI_API_KEY` no Supabase (rate-limit 20/h por utilizador, contexto
+  anonimizado no cliente — MACs truncados, sem GPS)
+  · **Analista Local** — motor de regras expert OFFLINE no dispositivo:
+  funciona sempre, sem chave, sem enviar nada para fora; é o fallback
+  automático quando a nuvem não responde. A web tem o chat dourado na
+  Central de Segurança; a APK tem a **consola tática exclusiva**
+  (verde-radar, typewriter, comandos BRIEFING/AMEACAS/RASTREADORES/
+  CONSELHO). O Dashboard ganhou o **Briefing AEGIS** (faixa flutuante no
+  telemóvel + card no painel do desktop)
+- **APK Nativa Premium (v3.19.0)** — a versão Android agora comporta-se
+  como uma app verdadeiramente nativa: **dock flutuante** (pill com blur,
+  SOS elevado com anel de emissão, pílula dourada no item activo),
+  **háptica leve a cada mudança de ecrã**, **transições suaves entre
+  páginas**, **splash animada** no arranque (logo + anéis + barra de
+  progresso) e respeito pela safe-area da status bar
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na

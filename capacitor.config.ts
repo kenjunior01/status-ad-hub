@@ -39,6 +39,27 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
   },
+  // v3.19.0 — comportamento NATIVO PREMIUM:
+  //  · splash nativa some logo (a NativeSplash.tsx assume o arranque
+  //    com a animação dourada — sem flash branco nem ecrã preto)
+  //  · initNativeChrome() aplica a status bar escura dourada
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,      // some de imediato — a splash animada é em JS
+      launchAutoHide: true,
+      backgroundColor: '#0C0B08',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      // initNativeChrome() aplica Style.Dark + fundo dourado-escuro no arranque
+      style: 'DARK',
+      backgroundColor: '#0C0B08',
+      overlaysWebView: false,
+    },
+  },
 }
 
 export default config

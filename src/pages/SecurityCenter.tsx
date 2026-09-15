@@ -49,6 +49,7 @@ import {
   type AmbientVerdict,
 } from '@/lib/net-intel'
 import TacticalSecurityCenter from '@/components/tactical/TacticalSecurityCenter'
+import AiCopilotPanel from '@/components/ai/AiCopilotPanel'
 import { toast } from 'sonner'
 
 export default function SecurityCenter() {
@@ -227,9 +228,12 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.18
+          v3.19
         </span>
       </div>
+
+      {/* COPILOTO AEGIS · IA (v3.19.0) */}
+      <AiCopilotPanel securityScore={securityScore} />
 
       {/* Score + vigilância */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 flex flex-col sm:flex-row items-center gap-6">

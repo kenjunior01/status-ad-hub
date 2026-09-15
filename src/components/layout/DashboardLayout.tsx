@@ -24,6 +24,36 @@ import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
 
 /* ── Navigation Config ── movida para src/lib/dashboard-nav.ts (partilhada com o Dashboard) ── */
 
+/**
+ * NativeSplash — splash animada da APK (v3.19.0).
+ * Aparece SÓ na app nativa, cobrindo o arranque com a identidade
+ * dourada da app enquanto o WebView monta — faz a APK parecer
+ * verdadeiramente nativa em vez de "página a carregar".
+ */
+function NativeSplash() {
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    if (!isNative()) return
+    const t = setTimeout(() => setDone(true), 1500)
+    return () => clearTimeout(t)
+  }, [])
+  if (!isNative() || done) return null
+  return (
+    <div className="aegis-splash">
+      <div className="aegis-splash-logo">
+        <span className="aegis-splash-ring" />
+        <span className="aegis-splash-ring" />
+        <Shield className="h-10 w-10 text-[#d4af37]" strokeWidth={1.6} />
+      </div>
+      <div className="text-center">
+        <p className="text-[15px] font-bold text-white tracking-wide">Status<span className="text-[#d4af37]">Ads</span> Connect</p>
+        <p className="text-[9px] text-white/30 tracking-[0.3em] uppercase mt-1">Segurança pessoal</p>
+      </div>
+      <div className="aegis-splash-bar"><div /></div>
+    </div>
+  )
+}
+
 export default function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -70,20 +100,26 @@ export default function DashboardLayout() {
     }
   }, [])
 
+  // v3.19.0 — háptica leve sempre que muda de ecrã (só nativo; web usa vibrate)
+  useEffect(() => {
+    void haptic('light')
+  }, [location.pathname])
+
   // Mantém o motor de queda activo se o utilizador o tiver ligado
   useFallDetectionKeepAlive()
 
   return (
     <div className="min-h-screen bg-background relative">
       <NoiseTexture opacity={0.01} />
+      <NativeSplash />
 
       {/* ── MOBILE SIDEBAR OVERLAY ── componente partilhado (usado também pela página Dashboard) ── */}
       <DashboardSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex flex-col min-h-screen">
-        {/* Top Header Bar - Mobile First */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 backdrop-blur-2xl bg-background/80 border-b border-white/[0.04]">
+        {/* Top Header Bar - Mobile First (safe-area para a status bar da APK) */}
+        <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 backdrop-blur-2xl bg-background/80 border-b border-white/[0.04] pt-[env(safe-area-inset-top,0px)]">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/5 active:bg-white/10 transition">
               <Menu className="h-5 w-5 text-white/60" />
@@ -171,53 +207,45 @@ export default function DashboardLayout() {
           )}
         </AnimatePresence>
 
-        {/* Page Content */}
-        <main className="flex-1 pb-24 lg:pb-6">
-          <Outlet />
+        {/* Page Content — transição nativa entre ecrãs (v3.19.0) */}
+        <main className="flex-1 pb-28 lg:pb-6">
+          <div key={location.pathname} className="screen-enter">
+            <Outlet />
+          </div>
         </main>
       </div>
 
-      {/* ── MOBILE BOTTOM NAVIGATION ── escondida na página /dashboard (ela tem a sua própria barra de acções + menu próprio) ── */}
+      {/* ── DOCK FLUTUANTE NATIVO (v3.19.0) ── pill flutuante com blur, SOS elevado e pílula dourada activa.
+           Escondida na página /dashboard (ela tem a sua própria barra de acções + menu próprio). ── */}
       {location.pathname !== '/dashboard' && (
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-        {/* Safe area spacer for iOS */}
-        <div className="bg-background/95 backdrop-blur-2xl border-t border-white/[0.06]">
-          <div className="flex items-center justify-around h-[68px] px-1 pb-[env(safe-area-inset-bottom,0px)]">
-            {bottomNav.map((item) => {
-              const IconComp = item.icon
-              const active = isActive(item.to)
-              if (item.isSOS) {
-                return (
-                  <NavLink key={item.to} to={item.to} className="relative flex flex-col items-center gap-0.5 -mt-4">
-                    <div className="relative">
-                      {/* anel de emissão contínuo — o SOS nunca passa despercebido */}
-                      <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-red-500/60 sos-ring" />
-                      <div className={cn(
-                        'relative h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg',
-                        active
-                          ? 'bg-red-500 shadow-[0_0_24px_rgba(239,68,68,0.55)]'
-                          : 'bg-gradient-to-b from-red-500 to-red-600 shadow-[0_0_18px_rgba(239,68,68,0.35)] active:scale-95'
-                      )}>
-                        <ShieldAlert className="h-5 w-5 text-white" strokeWidth={2} />
-                      </div>
-                    </div>
-                    <span className={cn('text-[9px] font-bold tracking-widest', active ? 'text-red-400' : 'text-red-400/70')}>SOS</span>
-                  </NavLink>
-                )
-              }
+      <nav className="aegis-dock lg:hidden" aria-label="Navegação principal">
+        <div className="aegis-dock-inner">
+          {bottomNav.map((item) => {
+            const IconComp = item.icon
+            const active = isActive(item.to)
+            if (item.isSOS) {
               return (
-                <NavLink key={item.to} to={item.to} className="flex flex-col items-center gap-0.5 py-1.5 px-3 transition-all duration-150">
-                  <div className="relative">
-                    <IconComp className={cn('h-5 w-5 transition-colors', active ? 'text-brand gold-glow' : 'text-white/25')} strokeWidth={active ? 2 : 1.5} />
-                    {active && (
-                      <motion.div layoutId="bottom-nav-dot" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-brand shadow-[0_0_8px_rgba(212,175,55,0.7)]" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
-                    )}
+                <NavLink key={item.to} to={item.to} className="aegis-dock-sos">
+                  <div className="aegis-dock-sos-btn">
+                    {/* anel de emissão contínuo — o SOS nunca passa despercebido */}
+                    <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-red-500/60 sos-ring" />
+                    <ShieldAlert className="h-6 w-6 text-white" strokeWidth={2.2} />
                   </div>
-                  <span className={cn('text-[10px] font-medium', active ? 'text-brand' : 'text-white/25')}>{item.label}</span>
+                  <span className={cn('text-[9px] font-bold tracking-widest mt-1', active ? 'text-red-400' : 'text-red-400/70')}>SOS</span>
                 </NavLink>
               )
-            })}
-          </div>
+            }
+            return (
+              <NavLink key={item.to} to={item.to} className="aegis-dock-item">
+                {active && <span className="aegis-dock-pill" />}
+                <IconComp
+                  className={cn('h-[22px] w-[22px] transition-colors duration-200', active ? 'text-brand gold-glow' : 'text-white/30')}
+                  strokeWidth={active ? 2.1 : 1.6}
+                />
+                <span className={cn('text-[9.5px] font-medium transition-colors', active ? 'text-brand' : 'text-white/30')}>{item.label}</span>
+              </NavLink>
+            )
+          })}
         </div>
       </nav>
       )}

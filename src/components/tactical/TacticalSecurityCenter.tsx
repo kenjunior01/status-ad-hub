@@ -34,6 +34,7 @@ import {
 import { exportSecurityEvents, exportPlaces } from '@/lib/export-data'
 import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
 import { getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor } from '@/lib/net-intel'
+import TacticalAiCopilot from '@/components/tactical/TacticalAiCopilot'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -159,7 +160,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.18 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.19 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -228,6 +229,9 @@ export default function TacticalSecurityCenter() {
             <p className="tac-label mt-2">OCUPACAO DO ESPECTRO: {watch.congestion.congestionPct}%{watch.congestion.best2g != null ? ` · MELHOR CH ${watch.congestion.best2g}` : ''}</p>
           )}
         </div>
+
+        {/* CONSULTOR AEGIS · IA (v3.19.0) — consola exclusiva da APK */}
+        <TacticalAiCopilot securityScore={securityScore} />
 
         {/* Alertas de rastreador */}
         {ble.trackers.length > 0 && (
