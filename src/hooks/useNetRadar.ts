@@ -18,7 +18,8 @@ import {
   type NetThreat, type NetEnvironmentInfo,
 } from '@/lib/net-radar'
 import { geoGetCurrent } from '@/lib/native'
-import { logThreatsToSecurityLog } from '@/lib/security-events'
+import { logThreatsToSecurityLog, logSecurityEvent } from '@/lib/security-events'
+import { recordRssiSamples, placeCheckIn, assessPlaceAnomaly } from '@/lib/net-intel'
 
 export interface UseNetRadarState {
   /** plugin nativo disponível (só APK Android) */
@@ -144,6 +145,13 @@ export function useNetRadar() {
         const reg2 = await wifiGetRegistry()
         setRegistry(reg2)
         logThreatsToSecurityLog(threats)
+        // v3.18.0 — inteligência: histórico de sinal + check-in de local
+        recordRssiSamples(list)
+        const place = placeCheckIn(list, pos ? { lat: pos.latitude, lng: pos.longitude } : null)
+        const anomaly = assessPlaceAnomaly(place)
+        if (anomaly.anomaly) {
+          logSecurityEvent('threat', 'high', anomaly.title, anomaly.detail, { hash: place.current?.hash }, 60 * 60_000)
+        }
       }
     } catch (err) {
       setLastError(err instanceof Error ? err.message : 'Falha no scan Wi-Fi')

@@ -255,6 +255,13 @@ function netRadarDetail(net?: NetRadarSnapshot | null): string {
   if (net.topSsids.length > 0) {
     lines.push(`  - SSIDs mais próximas: ${net.topSsids.join(', ')}`)
   }
+  // v3.18.0 — local pela impressão digital de BSSIDs
+  if (net.placeLabel) {
+    lines.push(`  - Local (impressão digital Wi-Fi): ${net.placeLabel}${net.placeIsNew ? ' — LOCAL NUNCA ANTES FREQUENTADO (atenção)' : ' — local habitual'}`)
+  }
+  if (typeof net.congestionPct === 'number' && net.visibleNetworks > 0) {
+    lines.push(`  - Densidade do ambiente de redes: ${net.congestionPct}%`)
+  }
   if (net.operator) {
     lines.push(`  - Operadora móvel: ${net.operator}${net.towers ? ` (${net.towers} torre(s) celular(es) visível(is))` : ''}`)
   }

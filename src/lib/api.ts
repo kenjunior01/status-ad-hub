@@ -822,3 +822,58 @@ export async function getSecurityEvents(userId: string, limit = 100): Promise<Ar
   if (error) throw error
   return data || []
 }
+
+// INTELIGÊNCIA DE AMBIENTE (v3.18.0) — nuvem para os locais conhecidos
+
+export interface PlaceFingerprintRow {
+  hash: string
+  label: string
+  first_seen: string
+  last_seen: string
+  seen_count: number
+  lat: number | null
+  lng: number | null
+  sample: { s?: string[] } | null
+}
+
+/**
+ * Guarda/sincroniza os LOCAIS CONHECIDOS (impressão digital Wi-Fi) na
+ * nuvem — upsert por (user_id, hash) na tabela place_fingerprints
+ * (migration 019). Usado pelo botão "Nuvem" do painel de locais.
+ */
+export async function savePlaceFingerprints(userId: string, places: Array<{
+  hash: string; label: string; firstSeen?: number; lastSeen?: number;
+  seenCount?: number; lat?: number; lng?: number; sampleSsids?: string[]
+}>): Promise<number> {
+  if (!isValidUUID(userId) || !places.length) return 0
+  const now = new Date().toISOString()
+  const rows = places.slice(0, 100).map((p) => ({
+    user_id: userId,
+    hash: p.hash,
+    label: p.label || 'Local',
+    first_seen: p.firstSeen ? new Date(p.firstSeen).toISOString() : now,
+    last_seen: p.lastSeen ? new Date(p.lastSeen).toISOString() : now,
+    seen_count: p.seenCount ?? 1,
+    lat: p.lat ?? null,
+    lng: p.lng ?? null,
+    sample: p.sampleSsids ? { s: p.sampleSsids.slice(0, 4) } : null,
+  }))
+  const { error } = await supabase
+    .from('place_fingerprints')
+    .upsert(rows, { onConflict: 'user_id,hash' })
+  if (error) throw error
+  return rows.length
+}
+
+/** Lê os locais conhecidos da nuvem (ordenados por última visita). */
+export async function getPlaceFingerprints(userId: string, limit = 100): Promise<PlaceFingerprintRow[]> {
+  if (!isValidUUID(userId)) return []
+  const { data, error } = await supabase
+    .from('place_fingerprints')
+    .select('hash, label, first_seen, last_seen, seen_count, lat, lng, sample')
+    .eq('user_id', userId)
+    .order('last_seen', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data || []) as PlaceFingerprintRow[]
+}

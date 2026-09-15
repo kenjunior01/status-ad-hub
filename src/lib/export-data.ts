@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import type { WifiRegistryEntry } from '@/lib/net-radar'
 import type { BleRegistryEntry } from '@/lib/radar-registry'
 import type { SecurityEvent } from '@/lib/security-events'
+import type { PlaceFingerprint } from '@/lib/net-intel'
 
 // ── Serialização ──────────────────────────────────────────────────────────
 
@@ -112,6 +113,24 @@ export function bleRegistryToJson(entries: BleRegistryEntry[]): string {
   return JSON.stringify({ exportedAt: new Date().toISOString(), type: 'ble-registry', count: entries.length, entries }, null, 2)
 }
 
+// ── Locais conhecidos (v3.18.0) ───────────────────────────────────────────
+
+export function placesToCsv(places: PlaceFingerprint[]): string {
+  return toCsv(
+    ['etiqueta', 'hash', 'primeira_vez', 'ultima_vez', 'n_visitas', 'lat', 'lng', 'redes_exemplo'],
+    places.map((p) => [
+      p.label, p.hash,
+      fmtDate(p.firstSeen), fmtDate(p.lastSeen), p.seenCount ?? '',
+      p.lat ?? '', p.lng ?? '',
+      (p.sampleSsids || []).join(' | '),
+    ]),
+  )
+}
+
+export function placesToJson(places: PlaceFingerprint[]): string {
+  return JSON.stringify({ exportedAt: new Date().toISOString(), type: 'place-fingerprints', count: places.length, places }, null, 2)
+}
+
 // ── Eventos de segurança ──────────────────────────────────────────────────
 
 export function securityEventsToCsv(events: SecurityEvent[]): string {
@@ -160,5 +179,16 @@ export async function exportSecurityEvents(events: SecurityEvent[]): Promise<boo
   }
   const ok = await deliverFile(`statusads-seguranca-${stamp()}.csv`, securityEventsToCsv(events))
   if (ok) toast.success(`Diário exportado (${events.length} eventos)`)
+  return ok
+}
+
+export async function exportPlaces(places: PlaceFingerprint[], format: 'csv' | 'json' = 'csv'): Promise<boolean> {
+  if (!places.length) {
+    toast.info('Sem locais registados — nada para exportar')
+    return false
+  }
+  const content = format === 'csv' ? placesToCsv(places) : placesToJson(places)
+  const ok = await deliverFile(`statusads-locais-${stamp()}.${format}`, content, format === 'csv' ? 'text/csv' : 'application/json')
+  if (ok) toast.success(`Locais exportados (${places.length})`)
   return ok
 }

@@ -1,6 +1,6 @@
 /**
  * TacticalNetRadar — RADAR DE REDES com design EXCLUSIVO da versão APK
- * (v3.16.0).
+ * (v3.16.0, inteligência v3.18.0).
  *
  * Estética militar/sonar única: verde-radar + ciano sobre carvão, tipografia
  * mono, brackets de canto, varrimento de radar em tempo real e linha de
@@ -14,6 +14,8 @@
  *  · Registo persistente de todas as redes já vistas (1.ª/última vez)
  *  · Rastro automático GPS + redes (sai com o SOS e sincroniza na nuvem)
  *  · Testemunhas BLE integradas (mesmo motor do Radar Bluetooth)
+ *  · v3.18: congestionamento de canais, fabricante por OUI, classificação
+ *    de redes e perfil do local por impressão digital de BSSIDs
  */
 
 import { useState } from 'react'
@@ -21,6 +23,7 @@ import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle, Radio, Signal,
   Bluetooth, ScanLine, ShieldAlert, CircleDashed, Download, History, Search, SearchX,
+  BarChart3, Fingerprint,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -33,6 +36,11 @@ import {
   bleScanNowSafe, type BleQuickDevice,
 } from './net-shared'
 import type { WifiRadarNetwork, WifiRegistryEntry, NetTrailPoint } from '@/lib/net-radar'
+import {
+  analyzeChannelCongestion, classifyWifiNetwork, wifiVendor, topChannels,
+  getKnownPlaces, getPlaceState,
+  type ChannelCongestion,
+} from '@/lib/net-intel'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -90,6 +98,10 @@ export default function TacticalNetRadar() {
   const risk = riskLabel(riskScore)
   const uniqueBssids = new Set(networks.map((n) => n.bssid)).size
   const towerCount = environment?.towers?.length ?? 0
+  // v3.18.0 — inteligência do ambiente
+  const congestion: ChannelCongestion | null = networks.length > 0 ? analyzeChannelCongestion(networks) : null
+  const place = getPlaceState()
+  const knownPlaces = getKnownPlaces()
 
   const handleTrailToggle = async (on: boolean) => {
     if (on) {
@@ -146,7 +158,7 @@ export default function TacticalNetRadar() {
       {/* ── Cabeçalho HUD ─────────────────────────────────────────── */}
       <div className="relative z-10 pt-2 flex items-start justify-between gap-3">
         <div>
-          <p className="tac-label mb-1">Signal Surveillance Grid · v3.17</p>
+          <p className="tac-label mb-1">Signal Surveillance Grid · v3.18</p>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Radar className="w-5 h-5" style={{ color: 'var(--tac-green)' }} />
             <span className="tracking-[0.18em]">RADAR DE REDES</span>
@@ -248,6 +260,43 @@ export default function TacticalNetRadar() {
           </div>
         )}
       </div>
+
+      {/* ── Perfil do local (v3.18.0) ──────────────────────────── */}
+      <div className="relative z-10 mt-4 tac-panel px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Fingerprint className="h-3.5 w-3.5" style={{ color: 'var(--tac-cyan)' }} />
+          <p className="tac-label flex-1">perfil do local · impressão digital wi-fi</p>
+          {place.current && (
+            <span className="tac-badge" style={{
+              background: place.current.seenCount > 1 ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.12)',
+              color: place.current.seenCount > 1 ? '#6ee7b7' : '#fcd34d',
+              border: `1px solid ${place.current.seenCount > 1 ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'}`,
+            }}>
+              {place.current.seenCount > 1 ? 'HABITUAL' : 'NOVO'}
+            </span>
+          )}
+        </div>
+        {place.current ? (
+          <>
+            <div className="flex items-baseline gap-3 mt-2">
+              <p className="tac-value text-xl" style={{ color: 'var(--tac-green)' }}>{place.current.label}</p>
+              <p className="tac-label">{place.current.seenCount} visita(s) · {knownPlaces.length} local(is) conhecido(s)</p>
+            </div>
+            {place.current.sampleSsids.length > 0 && (
+              <p className="text-[10px] text-emerald-100/40 font-mono mt-1 truncate">
+                {place.current.sampleSsids.join(' · ')}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-[10px] text-emerald-100/30 mt-2 tracking-wider">
+            SEM DADOS — ESCANEE PARA IDENTIFICAR O LOCAL PELO PADRÃO DE REDES
+          </p>
+        )}
+      </div>
+
+      {/* ── Congestionamento de canais (v3.18.0) ───────────────── */}
+      <TacCongestionPanel congestion={congestion} />
 
       {/* ── Permissões ───────────────────────────────────────────── */}
       {needsPerms && (
@@ -531,22 +580,26 @@ function TacRegistryPanel({ registry, onClear }: {
             <SearchX className="h-3.5 w-3.5" />
             {registry.length === 0 ? 'SEM REDES REGISTADAS' : 'SEM CORRESPONDÊNCIAS'}
           </p>
-        ) : filtered.map((e) => (
-          <div key={e.bssid || e.ssid} className="tac-row">
-            <span className={securityBadgeClass(e.sec)}>{e.sec}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold text-emerald-50 truncate">{e.ssid}</p>
-              <p className="text-[9px] text-emerald-100/30 font-mono truncate">
-                {e.bssid || 'BSSID ?'}
-                {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
-              </p>
+        ) : filtered.map((e) => {
+          const vendor = classifyWifiNetwork({ bssid: e.bssid, ssid: e.ssid, rssi: e.rssi ?? -100, freq: e.freq ?? 0, ch: 0, band: '', sec: e.sec }).vendor
+          return (
+            <div key={e.bssid || e.ssid} className="tac-row">
+              <span className={securityBadgeClass(e.sec)}>{e.sec}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-bold text-emerald-50 truncate">{e.ssid}</p>
+                <p className="text-[9px] text-emerald-100/30 font-mono truncate">
+                  {e.bssid || 'BSSID ?'}
+                  {vendor ? ` · ${vendor}` : ''}
+                  {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="tac-value text-[12px]">{e.seen}×</p>
+                <p className="text-[9px] text-emerald-100/25">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
+              </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className="tac-value text-[12px]">{e.seen}×</p>
-              <p className="text-[9px] text-emerald-100/25">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -555,6 +608,9 @@ function TacRegistryPanel({ registry, onClear }: {
 /** Linha de uma rede Wi-Fi (estilo tático). */
 function NetRow({ net: n }: { net: WifiRadarNetwork }) {
   const lvl = securityLevel(n.sec)
+  // v3.18.0 — fabricante + classificação
+  const cls = classifyWifiNetwork(n)
+  const vendor = cls.vendor || wifiVendor(n.bssid)
   return (
     <div className="tac-row">
       <TacBars rssi={n.rssi} />
@@ -562,10 +618,15 @@ function NetRow({ net: n }: { net: WifiRadarNetwork }) {
         <div className="flex items-center gap-2">
           <p className="text-[12px] font-bold text-emerald-50 truncate">{n.ssid}</p>
           <span className={securityBadgeClass(n.sec)}>{n.sec}</span>
+          {cls.kind !== 'router' && cls.kind !== 'unknown' && (
+            <span className="tac-badge" style={{ background: 'rgba(34,211,238,0.08)', color: '#67e8f9', border: '1px solid rgba(34,211,238,0.25)' }}>
+              {cls.kind === 'hidden' ? 'OCULTA' : cls.kind === 'enterprise' ? 'ENTERPRISE' : cls.kind === 'hotspot' ? 'HOTSPOT' : 'MESH'}
+            </span>
+          )}
           {lvl === 0 && <AlertTriangle className="h-3 w-3 shrink-0" style={{ color: 'var(--tac-red)' }} />}
         </div>
         <p className="text-[9px] text-emerald-100/35 font-mono mt-0.5 truncate">
-          {n.bssid} · CH {n.ch} · {n.band} · {wifiRssiToMeters(n.rssi)}m
+          {n.bssid}{vendor ? ` · ${vendor}` : ''} · CH {n.ch} · {n.band} · {wifiRssiToMeters(n.rssi)}m
         </p>
       </div>
       <div className="text-right shrink-0">
@@ -633,6 +694,53 @@ function NetTrailRow({ point: p, expanded, onToggle }: {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/** Painel tático de CONGESTIONAMENTO DE CANAIS (v3.18.0). */
+function TacCongestionPanel({ congestion }: { congestion: ChannelCongestion | null }) {
+  if (!congestion) return null
+  const top = topChannels(congestion, 8)
+  const maxCount = Math.max(...top.map((c) => c.count), 1)
+  const color = congestion.congestionPct >= 70 ? '#f87171' : congestion.congestionPct >= 40 ? '#fbbf24' : '#34d399'
+  return (
+    <div className="relative z-10 mt-4 tac-panel overflow-hidden">
+      <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--tac-line)' }}>
+        <BarChart3 className="h-3.5 w-3.5" style={{ color: 'var(--tac-cyan)' }} />
+        <p className="tac-label">ocupação do espectro</p>
+        <span className="tac-value text-sm ml-auto" style={{ color }}>{congestion.congestionPct}%</span>
+      </div>
+      <div className="px-4 py-3">
+        <div className="tac-meter mb-3">
+          <div style={{ width: `${Math.max(congestion.congestionPct, 3)}%`, background: color }} />
+        </div>
+        <div className="flex items-end gap-1.5 h-12">
+          {top.map((c) => (
+            <div key={c.ch} className="flex-1 flex flex-col items-center gap-1" title={`Canal ${c.ch}: ${c.count} rede(s)`}>
+              <div
+                className="w-full rounded-t-sm"
+                style={{
+                  height: `${Math.max(6, (c.count / maxCount) * 38)}px`,
+                  background: c.ch === congestion.worstCh ? 'rgba(248,113,113,0.75)' : 'rgba(34,211,238,0.45)',
+                }}
+              />
+              <span className="text-[8px] text-emerald-100/35 font-mono">{c.ch}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {congestion.best2g != null && (
+            <span className="tac-badge tac-badge-good">MELHOR 2.4G: CH {congestion.best2g}</span>
+          )}
+          {congestion.best5g != null && (
+            <span className="tac-badge tac-badge-ok">MELHOR 5G: CH {congestion.best5g}</span>
+          )}
+          {congestion.worstCh != null && (
+            <span className="tac-badge tac-badge-danger">POLUÍDO: CH {congestion.worstCh}</span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

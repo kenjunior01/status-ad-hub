@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.17.0
+# 🛡️ StatusAds Connect v3.18.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -33,6 +33,18 @@ gateways de pagamento ou SMS.
 - **Vigilância Contínua (v3.17.0)** — sentinela que escana Wi-Fi + BLE a cada
   45s, alimenta os registos, classifica o risco ao longo do tempo (sparkline)
   e escreve tudo no diário — retoma-se sozinha ao reabrir a app
+- **Inteligência de Ambiente (v3.18.0)** — a camada que correlaciona TUDO:
+  veredicto do ambiente (calmo/elevado/crítico) combinando rede + Bluetooth +
+  local; **locais conhecidos por impressão digital Wi-Fi** (hash estável dos
+  BSSIDs dominantes — casa, trabalho, etc. ficam etiquetados sem revelar
+  endereço) com **detecção de deslocamento abrupto para local desconhecido**
+  (sinal clássico de rapto/coação — entra no diário com severidade ALTA e no
+  SMS/email do SOS); **congestionamento de canais** com recomendação do
+  melhor canal (1/6/11 em 2.4 GHz); **fabricante por OUI** (Samsung, TP-Link,
+  Huawei…); classificação router/hotspot/mesh/enterprise/oculta; tendência de
+  sinal por rede (a aproximar-se? a afastar-se?); classificação BLE
+  (rastreador/telemóvel/áudio/vestível/veículo) também na web; locais
+  sincronizam na nuvem (tabela `place_fingerprints`) e exportam em CSV/JSON
 - **Radar Wi-Fi & Redes (v3.16.0)** — captura e regista TODAS as redes Wi-Fi próximas
   SEM SE LIGAR a elas (BSSID, SSID, sinal, canal, banda, segurança) + operadora móvel
   e torres celulares visíveis. Análise de segurança integrada: redes abertas, WEP/WPA
@@ -138,6 +150,10 @@ supabase functions deploy send-sms notify-contacts web-push notify-missed-checki
 - [x] v3.16 — Radar Wi-Fi & Redes: captura de todas as redes próximas + análise
       de segurança (evil twins, honeypots, redes abertas) + torres celulares +
       design exclusivo "Tactical Grid" na APK + tabela `net_trails` na nuvem
+- [x] v3.18 — Inteligência de Ambiente: locais conhecidos por impressão
+      digital Wi-Fi + detecção de deslocamento abrupto (anti-rapto),
+      veredicto correlacionado, congestionamento de canais, fabricante por
+      OUI, classificação de redes/BLE e tabela `place_fingerprints`
 - [x] v3.17 — Central de Segurança + Vigilância Contínua + registo BLE com
       detecção de rastreadores/perseguidores + diário de segurança na nuvem
       (`security_events`) + registo Wi-Fi na nuvem (`wifi_registry`) +

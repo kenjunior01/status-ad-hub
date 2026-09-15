@@ -1,5 +1,5 @@
 /**
- * BleRadar — RADAR BLUETOOTH SEM EMPARELHAR (v3.15.0).
+ * BleRadar — RADAR BLUETOOTH SEM EMPARELHAR (v3.15.0, classificação v3.18.0).
  *
  * Puxa TODA a informação dos dispositivos Bluetooth próximos SEM emparelhar:
  * MAC real, nome, sinal (distância aproximada), fabricante e tipo
@@ -33,6 +33,7 @@ import { saveBleTrail } from '@/lib/api'
 import { rssiBars, distanceLabel } from '@/lib/ble-radar'
 import type { BleRadarDevice, BleTrailPoint } from '@/lib/ble-radar'
 import { exportBleRegistry } from '@/lib/export-data'
+import { classifyBleDevice, bleKindLabel } from '@/lib/net-intel'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -498,7 +499,10 @@ function BleRegistryPanel({ registry, onClear }: {
             <div className="flex-1 min-w-0">
               <p className="text-[13px] text-white font-medium truncate">{e.name || e.kind || 'Dispositivo sem nome'}</p>
               <p className="text-[10px] text-white/30 font-mono truncate">
-                {e.mac}{e.kind && e.name ? ` · ${e.kind}` : ''}{e.mfr ? ` · ${e.mfr}` : ''}
+                {e.mac}
+                {e.kind && e.name ? ` · ${e.kind}` : ''}
+                {!e.kind && classifyBleDevice(e.name) !== 'unknown' ? ` · ${bleKindLabel(classifyBleDevice(e.name))}` : ''}
+                {e.mfr ? ` · ${e.mfr}` : ''}
               </p>
             </div>
             <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
@@ -526,6 +530,7 @@ function DeviceRow({ device: d }: { device: BleRadarDevice }) {
         <p className="text-[10px] text-white/30 font-mono truncate">
           {d.mac}
           {d.k && d.n ? ` · ${d.k}` : ''}
+          {!d.k && classifyBleDevice(d.n) !== 'unknown' ? ` · ${bleKindLabel(classifyBleDevice(d.n))}` : ''}
           {d.mf ? ` · ${d.mf}` : ''}
         </p>
       </div>

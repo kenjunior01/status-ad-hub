@@ -1,9 +1,17 @@
 /**
- * useRadarWatch — VIGILÂNCIA CONTÍNUA (v3.17.0).
+ * useRadarWatch — VIGILÂNCIA CONTÍNUA (v3.17.0, inteligência v3.18.0).
  *
  * Modo "sentinela": enquanto activo, faz auto-scan do ambiente a cada
  * ciclo (Wi-Fi + BLE na APK; rede actual na web), alimenta os registos
  * persistentes, analisa ameaças e escreve tudo no diário de segurança.
+ *
+ * v3.18.0 — cada ciclo também:
+ *   · guarda o HISTÓRICO DE SINAL por rede (sparklines no Radar)
+ *   · faz CHECK-IN DE LOCAL (impressão digital de BSSIDs) e detecta
+ *     DESLOCAMENTOS ABRUPTOS para locais desconhecidos (sinal de
+ *     rapto/coação → evento high no diário + entra na correlação)
+ *   · calcula o CONGESTIONAMENTO de canais do ambiente
+ *   · expõe o VEREDICTO correlacionado (calmo/elevado/crítico)
  *
  * Também mantém o HISTÓRICO DE RISCO (últimos 120 pontos) para a Central
  * de Segurança desenhar a evolução do ambiente ao longo do tempo.
@@ -16,9 +24,14 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { wifiScanNow, wifiGetRegistry, analyzeNetworkThreats, environmentRiskScore, isWifiRadarAvailable } from '@/lib/net-radar'
 import { bleScanNowSafe } from '@/components/net/net-shared'
 import { isBleRadarAvailable } from '@/lib/ble-radar'
-import { bleRecordMany, detectTrackers } from '@/lib/radar-registry'
+import { bleRecordMany, detectTrackers, type TrackerAlert } from '@/lib/radar-registry'
 import { logSecurityEvent, logThreatsToSecurityLog } from '@/lib/security-events'
 import { geoGetCurrent } from '@/lib/native'
+import {
+  recordRssiSamples, placeCheckIn, getPlaceState, assessPlaceAnomaly,
+  analyzeChannelCongestion, correlateEnvironment,
+  type ChannelCongestion, type PlaceState as IntelPlaceState, type AmbientVerdict,
+} from '@/lib/net-intel'
 
 // ── Estado singleton ──────────────────────────────────────────────────────
 
@@ -35,6 +48,15 @@ export interface RadarWatchState {
   riskHistory: Array<{ t: number; r: number }>
   /** erro do último ciclo */
   lastError: string | null
+  // ── v3.18.0 — inteligência de ambiente ─────────────────────────
+  /** local actual (impressão digital de BSSIDs) */
+  place: IntelPlaceState
+  /** true quando o último ciclo detectou deslocamento abrupto para local novo */
+  placeAnomaly: boolean
+  /** congestionamento de canais do último ciclo */
+  congestion: ChannelCongestion | null
+  /** veredicto correlacionado (Wi-Fi + BLE + local) */
+  verdict: AmbientVerdict | null
 }
 
 const WATCH_KEY = 'statusads-radar-watch'
@@ -49,6 +71,10 @@ let state: RadarWatchState = {
   riskScore: 0,
   riskHistory: readHistory(),
   lastError: null,
+  place: getPlaceState(),
+  placeAnomaly: false,
+  congestion: null,
+  verdict: null,
 }
 
 const listeners = new Set<() => void>()
@@ -96,6 +122,11 @@ async function runCycle(): Promise<void> {
   try {
     let risk = 0
     let err: string | null = null
+    let threats: ReturnType<typeof analyzeNetworkThreats> = []
+    let trackers: TrackerAlert[] = []
+    let congestion: ChannelCongestion | null = null
+    let place = getPlaceState()
+    let placeAnomaly = false
 
     // 1. Wi-Fi (APK: scan real; web: sem scan — usa cache/ambiente)
     if (isWifiRadarAvailable()) {
@@ -103,9 +134,20 @@ async function runCycle(): Promise<void> {
         const nets = await wifiScanNow()
         if (nets.length > 0) {
           const reg = await wifiGetRegistry()
-          const threats = analyzeNetworkThreats(nets, reg)
+          threats = analyzeNetworkThreats(nets, reg)
           risk = Math.max(risk, environmentRiskScore(threats, nets))
           logThreatsToSecurityLog(threats)
+          // v3.18.0 — histórico de sinal + congestionamento + check-in de local
+          recordRssiSamples(nets)
+          congestion = analyzeChannelCongestion(nets)
+          const pos = await geoGetCurrent(8_000).catch(() => null)
+          place = placeCheckIn(nets, pos ? { lat: pos.latitude, lng: pos.longitude } : null)
+          const anomaly = assessPlaceAnomaly(place)
+          placeAnomaly = anomaly.anomaly
+          if (anomaly.anomaly) {
+            logSecurityEvent('threat', 'high', anomaly.title, anomaly.detail, { hash: place.current?.hash }, 60 * 60_000)
+            risk = Math.max(risk, 75)
+          }
         }
       } catch (e) {
         err = 'Falha no scan Wi-Fi'
@@ -119,8 +161,8 @@ async function runCycle(): Promise<void> {
         if (devs.length > 0) {
           const pos = await geoGetCurrent(8_000).catch(() => null)
           bleRecordMany(devs, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
-          const alerts = detectTrackers()
-          for (const a of alerts) {
+          trackers = detectTrackers()
+          for (const a of trackers) {
             logSecurityEvent(
               'tracker',
               a.severity === 'high' ? 'high' : 'medium',
@@ -131,8 +173,8 @@ async function runCycle(): Promise<void> {
               { mac: a.mac, kind: a.kind },
             )
           }
-          if (alerts.some((a) => a.severity === 'high')) risk = Math.max(risk, 85)
-          else if (alerts.length > 0) risk = Math.max(risk, 55)
+          if (trackers.some((a) => a.severity === 'high')) risk = Math.max(risk, 85)
+          else if (trackers.length > 0) risk = Math.max(risk, 55)
         }
       } catch {
         err = err ? `${err} · BLE` : 'Falha no scan BLE'
@@ -145,7 +187,11 @@ async function runCycle(): Promise<void> {
       logSecurityEvent('system', 'low', 'Sem ligação à rede', 'A app está offline — o SOS usa SMS local.', undefined, 30 * 60_000)
     }
 
-    // 4. histórico de risco
+    // 4. v3.18.0 — veredicto correlacionado (Wi-Fi + BLE + local)
+    const verdict = correlateEnvironment(threats, trackers, place)
+    if (verdict.level === 'critical') risk = Math.max(risk, Math.max(risk, 90))
+
+    // 5. histórico de risco
     const history = [...state.riskHistory, { t: Date.now(), r: risk }].slice(-HISTORY_MAX)
     persistHistory()
 
@@ -155,6 +201,10 @@ async function runCycle(): Promise<void> {
       riskScore: risk,
       riskHistory: history,
       lastError: err,
+      place,
+      placeAnomaly,
+      congestion,
+      verdict,
     })
   } finally {
     cycling = false

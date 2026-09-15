@@ -28,6 +28,7 @@
  */
 
 import { Capacitor, registerPlugin } from '@capacitor/core'
+import { getPlaceState, analyzeChannelCongestion } from '@/lib/net-intel'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────
 
@@ -616,6 +617,13 @@ export interface NetRadarSnapshot {
   towers?: number
   /** rastro estava activo no momento do SOS */
   running: boolean
+  // ── v3.18.0 — inteligência de ambiente ───────────────────────
+  /** etiqueta do local actual (impressão digital Wi-Fi) */
+  placeLabel?: string
+  /** true se o local actual nunca tinha sido visto antes */
+  placeIsNew?: boolean
+  /** congestionamento do ambiente (0-100) */
+  congestionPct?: number
 }
 
 /**
@@ -648,6 +656,9 @@ export async function readNetRadarSnapshot(): Promise<NetRadarSnapshot> {
         if (top.length >= 4) break
       }
     }
+    // v3.18.0 — local actual (leitura local, barata, sem scan)
+    const placeState = getPlaceState()
+    const place = placeState.current
     return {
       visibleNetworks: nets.length,
       registrySize: registry.length,
@@ -656,6 +667,9 @@ export async function readNetRadarSnapshot(): Promise<NetRadarSnapshot> {
       operator: env?.operator ?? null,
       towers: env?.towers?.length ?? 0,
       running: trail.running,
+      placeLabel: place?.label,
+      placeIsNew: place ? place.seenCount <= 1 : undefined,
+      congestionPct: analyzeChannelCongestion(nets)?.congestionPct,
     }
   } catch {
     return empty
@@ -670,6 +684,8 @@ export function netRadarSmsSummary(snap: NetRadarSnapshot | null): string {
   const parts: string[] = []
   if (snap.visibleNetworks > 0) parts.push(`${snap.visibleNetworks} redes WiFi`)
   if (snap.operator) parts.push(`${snap.operator}${snap.towers ? ` (${snap.towers} torres)` : ''}`)
+  // v3.18.0 — local pela impressão digital (socorristas sabem o padrão)
+  if (snap.placeLabel) parts.push(`${snap.placeLabel}${snap.placeIsNew ? ' (NOVO)' : ''}`)
   if (parts.length === 0) return ''
   return ` Ambiente: ${parts.join(', ')}.`
 }

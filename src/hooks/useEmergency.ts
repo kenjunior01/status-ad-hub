@@ -236,6 +236,7 @@ export function useEmergency() {
             threats: net.threats,
             operator: net.operator,
             towers: net.towers,
+            place: net.placeLabel,
           } })
         }
         const sosMsg = buildSosSmsMessage({
@@ -448,6 +449,7 @@ export function useEmergency() {
                 threats: net.threats,
                 operator: net.operator,
                 towers: net.towers,
+                place: net.placeLabel,
               } })
             }
             const res = await dispatchSosSms(offlinePhones, buildSosSmsMessage({

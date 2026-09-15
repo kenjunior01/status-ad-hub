@@ -1,12 +1,16 @@
 /**
  * TacticalSecurityCenter — CENTRAL DE SEGURANÇA com design EXCLUSIVO da
- * versão APK (v3.17.0).
+ * versão APK (v3.17.0, inteligência v3.18.0).
  *
- * Estende a estética "Tactical Grid" (v3.16) ao novo módulo: HUD militar
+ * Estende a estética "Tactical Grid" (v3.16) ao módulo: HUD militar
  * verde-radar sobre carvão, tipografia mono, brackets de canto, score de
  * segurança tipo medidor de blindagem, sparkline de risco e diário de
  * eventos em formato consola. SÓ renderiza em native (Capacitor) — a web
  * usa o design dourado padrão (SecurityCenter.tsx).
+ *
+ * v3.18.0 — VEREDICTO correlacionado (Wi-Fi + BLE + local), perfil do
+ * local (impressão digital Wi-Fi) com sync na nuvem + exportação e
+ * ocupação do espectro da sentinela.
  */
 
 import { useMemo, useState } from 'react'
@@ -14,6 +18,7 @@ import { Link } from 'react-router-dom'
 import {
   ShieldCheck, Siren, Download, Trash2, CloudUpload, RefreshCw, Wifi, Bluetooth,
   Satellite, AlertTriangle, CheckCircle2, XCircle, ChevronRight, Radar as RadarIcon,
+  Fingerprint, Crosshair,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -26,8 +31,9 @@ import {
   getSecurityEvents, clearSecurityEvents, markSynced,
   EVENT_KIND_LABEL, type SecurityEvent,
 } from '@/lib/security-events'
-import { exportSecurityEvents } from '@/lib/export-data'
-import { saveSecurityEvents } from '@/lib/api'
+import { exportSecurityEvents, exportPlaces } from '@/lib/export-data'
+import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
+import { getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor } from '@/lib/net-intel'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -75,8 +81,16 @@ export default function TacticalSecurityCenter() {
 
   const [events, setEvents] = useState<SecurityEvent[]>(() => getSecurityEvents().slice(0, 60))
   const [syncing, setSyncing] = useState(false)
+  const [syncingPlaces, setSyncingPlaces] = useState(false)
 
   const reloadEvents = () => setEvents(getSecurityEvents().slice(0, 60))
+
+  // v3.18.0 — veredicto correlacionado + locais conhecidos
+  const verdict = useMemo(
+    () => watch.verdict ?? correlateEnvironment(net.threats, ble.trackers, getPlaceState()),
+    [watch.verdict, net.threats, ble.trackers],
+  )
+  const places = useMemo(() => getKnownPlaces(), [watch.place])
 
   const securityScore = useMemo(() => {
     let score = 100
@@ -88,8 +102,23 @@ export default function TacticalSecurityCenter() {
     if (!watch.watching) score -= 10
     if (net.registry.length === 0 && ble.registry.length === 0) score -= 8
     if (events.length === 0) score -= 7
+    // v3.18.0 — deslocamento abrupto para local desconhecido pesa forte
+    if (watch.placeAnomaly) score -= 25
     return Math.max(0, Math.min(100, score))
-  }, [net.riskScore, net.registry.length, ble.trackers, ble.registry.length, contacts, checkinConfig, watch.watching, events.length])
+  }, [net.riskScore, net.registry.length, ble.trackers, ble.registry.length, contacts, checkinConfig, watch.watching, watch.placeAnomaly, events.length])
+
+  const handleSyncPlaces = async () => {
+    if (!user || places.length === 0) return
+    setSyncingPlaces(true)
+    try {
+      const n = await savePlaceFingerprints(user.id, places)
+      toast.success(`${n} LOCAL(IS) NA NUVEM`)
+    } catch {
+      toast.error('Falha ao sincronizar')
+    } finally {
+      setSyncingPlaces(false)
+    }
+  }
 
   const handleSync = async () => {
     if (!user) return
@@ -130,7 +159,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.17 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.18 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -169,6 +198,37 @@ export default function TacticalSecurityCenter() {
           </div>
         </div>
 
+        {/* VEREDICTO correlacionado (v3.18.0) */}
+        <div className="tac-panel p-4" style={{ borderColor: `${ambientLevelColor(verdict.level)}55` }}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Crosshair className="h-4 w-4" style={{ color: ambientLevelColor(verdict.level) }} />
+              <p className="tac-value text-[13px] tracking-wider" style={{ color: ambientLevelColor(verdict.level) }}>
+                {verdict.label.toUpperCase()}
+              </p>
+            </div>
+            <span className="tac-badge" style={{ background: 'transparent', color: ambientLevelColor(verdict.level), border: `1px solid ${ambientLevelColor(verdict.level)}55` }}>
+              {verdict.level === 'critical' ? 'NIVEL 3' : verdict.level === 'elevated' ? 'NIVEL 2' : 'NIVEL 1'}
+            </span>
+          </div>
+          {verdict.reasons.length > 0 ? (
+            <div className="mt-2 space-y-1">
+              {verdict.reasons.slice(0, 3).map((r, i) => (
+                <p key={i} className="text-[10px] text-[rgba(209,250,229,0.6)] leading-snug border-t border-dashed py-1" style={{ borderColor: `${ambientLevelColor(verdict.level)}30` }}>
+                  &gt; {r}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-[rgba(209,250,229,0.4)] mt-2">
+              &gt; SEM SINAIS COMBINADOS — REDE, BLE E LOCAL NORMAIS
+            </p>
+          )}
+          {watch.congestion && (
+            <p className="tac-label mt-2">OCUPACAO DO ESPECTRO: {watch.congestion.congestionPct}%{watch.congestion.best2g != null ? ` · MELHOR CH ${watch.congestion.best2g}` : ''}</p>
+          )}
+        </div>
+
         {/* Alertas de rastreador */}
         {ble.trackers.length > 0 && (
           <div className="tac-panel p-4 border-[rgba(248,113,113,0.4)]">
@@ -203,6 +263,64 @@ export default function TacticalSecurityCenter() {
               <p className="tac-label mt-1.5 leading-tight">{c.label}</p>
             </Link>
           ))}
+        </div>
+
+        {/* Perfil dos locais (v3.18.0) */}
+        <div className="tac-panel overflow-hidden">
+          <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--tac-line)' }}>
+            <Fingerprint className="h-4 w-4" style={{ color: 'var(--tac-cyan)' }} />
+            <p className="tac-value text-[13px] tracking-wider flex-1">LOCAIS CONHECIDOS · {places.length}</p>
+            <button
+              onClick={() => exportPlaces(places).catch(() => {})}
+              disabled={places.length === 0}
+              className="tac-btn tac-btn-ghost !px-2.5 !py-1.5 !text-[9px]"
+              aria-label="Exportar locais"
+            >
+              <Download className="h-3 w-3" />
+            </button>
+            <button
+              onClick={handleSyncPlaces}
+              disabled={syncingPlaces || !user || places.length === 0}
+              className="tac-btn tac-btn-ghost !px-2.5 !py-1.5 !text-[9px]"
+              aria-label="Sincronizar locais"
+            >
+              {syncingPlaces ? <RefreshCw className="h-3 w-3 animate-spin" /> : <CloudUpload className="h-3 w-3" />}
+            </button>
+            <button
+              onClick={() => { clearKnownPlaces(); toast.info('LOCAIS APAGADOS') }}
+              disabled={places.length === 0}
+              className="tac-btn tac-btn-ghost !px-2.5 !py-1.5 !text-[9px] !text-[var(--tac-red)] !border-[rgba(248,113,113,0.3)]"
+              aria-label="Apagar locais"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+          {places.length === 0 ? (
+            <p className="px-4 py-4 text-center text-[10px] text-[rgba(52,211,153,0.35)] tracking-wider">
+              SEM LOCAIS — A SENTINELA REGISTA CADA SITIO PELO PADRAO DE REDES
+            </p>
+          ) : (
+            <div className="max-h-[180px] overflow-y-auto">
+              {places.slice(0, 12).map((p) => (
+                <div key={p.hash} className="px-4 py-2 flex items-center gap-2.5 border-t" style={{ borderColor: 'rgba(52,211,153,0.06)' }}>
+                  <span className="tac-badge shrink-0" style={{
+                    background: p.seenCount > 1 ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.1)',
+                    color: p.seenCount > 1 ? '#6ee7b7' : '#fcd34d',
+                    border: `1px solid ${p.seenCount > 1 ? 'rgba(52,211,153,0.25)' : 'rgba(251,191,36,0.3)'}`,
+                  }}>
+                    {p.seenCount > 1 ? 'HABITUAL' : 'NOVO'}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] text-[#ecfdf5] leading-tight">{p.label}</p>
+                    <p className="text-[9px] text-[rgba(52,211,153,0.35)] font-mono truncate">
+                      {p.sampleSsids.slice(0, 2).join(' · ') || '—'}
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-[rgba(52,211,153,0.4)] shrink-0">{p.seenCount}x</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Checklist tática */}

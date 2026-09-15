@@ -1,5 +1,5 @@
 /**
- * NetRadar — RADAR WI-FI & REDES (v3.16.0).
+ * NetRadar — RADAR WI-FI & REDES (v3.16.0, inteligência v3.18.0).
  *
  * Captura e regista TODAS as redes à sua volta SEM SE LIGAR a elas:
  *
@@ -10,6 +10,11 @@
  * ANÁLISE DE SEGURANÇA: redes abertas, encriptação quebrada (WEP/WPA),
  * evil twins (mesmo SSID, vários BSSID), honeypots de nome suspeito,
  * redes novas no ambiente + índice de risco do local.
+ *
+ * INTELIGÊNCIA (v3.18.0): fabricante por OUI, classificação
+ * router/hotspot/mesh/enterprise, congestionamento de canais com
+ * recomendação, tendência de sinal por rede (sparkline) e locais
+ * conhecidos por impressão digital de BSSIDs.
  *
  * REGISTO: todas as redes já vistas ficam com 1.ª vez, última vez, nº de
  * vezes, melhor sinal e GPS aproximado — o histórico sobrevive a
@@ -30,7 +35,7 @@ import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ShieldAlert, Info, Radio, Signal, Bluetooth, ScanLine, Gauge,
   Network, Smartphone, ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle,
-  History, Search, Download,
+  History, Search, Download, BarChart3, TrendingUp, TrendingDown, MoveRight,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -47,6 +52,10 @@ import {
 } from '@/components/net/net-shared'
 import TacticalNetRadar from '@/components/net/TacticalNetRadar'
 import type { WifiRadarNetwork, WifiRegistryEntry } from '@/lib/net-radar'
+import {
+  analyzeChannelCongestion, classifyWifiNetwork, wifiVendor, rssiTrend, topChannels,
+  type ChannelCongestion,
+} from '@/lib/net-intel'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -119,6 +128,8 @@ function NetRadarWeb() {
   const uniqueBssids = new Set(networks.map((n) => n.bssid)).size
   const towerCount = environment?.towers?.length ?? 0
   const totalNets = trail.reduce((acc, p) => acc + (p.n || 0), 0)
+  // v3.18.0 — congestionamento de canais do ambiente capturado
+  const congestion = useMemo(() => analyzeChannelCongestion(networks), [networks])
 
   const handleScan = async () => {
     if (needsPerms) {
@@ -379,6 +390,9 @@ function NetRadarWeb() {
           ))}
         </div>
       </div>
+
+      {/* INTELIGÊNCIA: congestionamento de canais (v3.18.0) */}
+      <CongestionPanel congestion={congestion} total={networks.length} />
 
       {/* Rede móvel (torres) */}
       {towerCount > 0 && (
@@ -697,22 +711,27 @@ function WifiRegistryPanel({ registry, onClear }: {
               : 'Nenhuma rede corresponde à busca/filtro'}
           </p>
         )}
-        {filtered.map((e) => (
-          <div key={e.bssid || e.ssid} className="px-5 py-3 flex items-center gap-3">
-            <SecBadge sec={e.sec} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-white font-medium truncate">{e.ssid}</p>
-              <p className="text-[10px] text-white/30 font-mono truncate">
-                {e.bssid || 'BSSID desconhecido'}
-                {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
-              </p>
+        {filtered.map((e) => {
+          const cls = classifyWifiNetwork({ bssid: e.bssid, ssid: e.ssid, rssi: e.rssi ?? -100, freq: e.freq ?? 0, ch: 0, band: '', sec: e.sec })
+          const vendor = cls.vendor || wifiVendor(e.bssid)
+          return (
+            <div key={e.bssid || e.ssid} className="px-5 py-3 flex items-center gap-3">
+              <SecBadge sec={e.sec} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] text-white font-medium truncate">{e.ssid}</p>
+                <p className="text-[10px] text-white/30 font-mono truncate">
+                  {e.bssid || 'BSSID desconhecido'}
+                  {vendor ? ` · ${vendor}` : ''}
+                  {typeof e.lat === 'number' && typeof e.lng === 'number' ? ` · ${e.lat.toFixed(3)}, ${e.lng.toFixed(3)}` : ''}
+                </p>
+              </div>
+              <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
+                <p>{e.seen}×</p>
+                <p className="text-white/20">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
+              </div>
             </div>
-            <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
-              <p>{e.seen}×</p>
-              <p className="text-white/20">{new Date(e.lastSeen).toLocaleDateString('pt-PT')}</p>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -720,6 +739,10 @@ function WifiRegistryPanel({ registry, onClear }: {
 function WifiRow({ net: n }: { net: WifiRadarNetwork }) {
   const label = securityLabel(n.sec)
   const lvl = securityLevel(n.sec)
+  // v3.18.0 — fabricante, classificação e tendência de sinal
+  const cls = classifyWifiNetwork(n)
+  const vendor = cls.vendor || wifiVendor(n.bssid)
+  const trend = rssiTrend(n.bssid)
   return (
     <div className="px-5 py-3 flex items-center gap-3">
       <div className="h-8 w-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
@@ -729,9 +752,17 @@ function WifiRow({ net: n }: { net: WifiRadarNetwork }) {
         <div className="flex items-center gap-2">
           <p className="text-[13px] font-medium text-white truncate">{n.ssid}</p>
           <SecBadge sec={n.sec} />
+          {cls.kind !== 'router' && cls.kind !== 'unknown' && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[9px] font-bold border bg-violet-500/10 text-violet-300 border-violet-500/25">
+              {cls.label}
+            </span>
+          )}
+          {trend === 'stronger' && <TrendingUp className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-label="a aproximar-se" />}
+          {trend === 'weaker' && <TrendingDown className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-label="a afastar-se" />}
+          {trend === 'stable' && <MoveRight className="h-3.5 w-3.5 text-white/20 shrink-0" aria-label="sinal estável" />}
         </div>
         <p className="text-[10px] text-white/30 font-mono truncate">
-          {n.bssid} · CH {n.ch} · {n.band}{n.caps ? ` · ${n.caps}` : ''} · {wifiRssiToMeters(n.rssi)}m
+          {n.bssid}{vendor ? ` · ${vendor}` : ''} · CH {n.ch} · {n.band}{n.caps ? ` · ${n.caps}` : ''} · {wifiRssiToMeters(n.rssi)}m
         </p>
         {(lvl === 0 || lvl === 1) && (
           <p className="text-[10px] text-red-400/70 flex items-center gap-1 mt-0.5">
@@ -743,6 +774,72 @@ function WifiRow({ net: n }: { net: WifiRadarNetwork }) {
       <div className="text-right shrink-0">
         <SignalBars rssi={n.rssi} />
         <p className="text-[9px] text-white/25 mt-0.5">{wifiDistanceLabel(n.rssi)}</p>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Painel de CONGESTIONAMENTO DE CANAIS (v3.18.0) — design web dourado.
+ * Mostra a ocupação por canal, o canal mais carregado e a recomendação
+ * do melhor canal (útil para o utilizador escolher rede/canal em casa).
+ */
+export function CongestionPanel({ congestion, total }: { congestion: ChannelCongestion | null; total: number }) {
+  if (!congestion || total === 0) return null
+  const top = topChannels(congestion, 8)
+  const maxCount = Math.max(...top.map((c) => c.count), 1)
+  const congColor =
+    congestion.congestionPct >= 70 ? 'bg-red-500' : congestion.congestionPct >= 40 ? 'bg-amber-500' : 'bg-emerald-500'
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl flex items-center justify-center border bg-white/[0.03] border-white/[0.06]">
+          <BarChart3 className="h-4.5 w-4.5 text-cyan-400" />
+        </div>
+        <div className="flex-1">
+          <p className="font-display font-semibold text-sm text-white">Congestionamento de canais</p>
+          <p className="text-[11px] text-white/30">{congestion.summary}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className={cn('text-lg font-bold leading-none', congColor.replace('bg-', 'text-'))}>{congestion.congestionPct}%</p>
+          <p className="text-[9px] text-white/25">ocupação</p>
+        </div>
+      </div>
+      <div className="px-5 py-4 space-y-3">
+        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className={cn('h-full rounded-full transition-all duration-700', congColor)} style={{ width: `${Math.max(congestion.congestionPct, 3)}%` }} />
+        </div>
+        <div className="flex items-end gap-1.5 h-16">
+          {top.map((c) => (
+            <div key={c.ch} className="flex-1 flex flex-col items-center gap-1" title={`Canal ${c.ch}: ${c.count} rede(s), sinal médio ${c.avgRssi} dBm`}>
+              <div
+                className={cn(
+                  'w-full rounded-t-sm transition-all duration-500',
+                  c.ch === congestion.worstCh ? 'bg-red-400/80' : 'bg-cyan-400/50',
+                )}
+                style={{ height: `${Math.max(8, (c.count / maxCount) * 48)}px` }}
+              />
+              <span className="text-[9px] text-white/30">{c.ch}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2 text-[10px]">
+          {congestion.best2g != null && (
+            <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              Melhor 2.4 GHz: canal {congestion.best2g}
+            </span>
+          )}
+          {congestion.best5g != null && (
+            <span className="px-2 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+              Melhor 5 GHz: canal {congestion.best5g}
+            </span>
+          )}
+          {congestion.worstCh != null && (
+            <span className="px-2 py-1 rounded-lg bg-red-500/10 text-red-300 border border-red-500/20">
+              Mais poluído: canal {congestion.worstCh}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

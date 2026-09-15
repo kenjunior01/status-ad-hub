@@ -1,5 +1,5 @@
 /**
- * SecurityCenter — CENTRAL DE SEGURANÇA (v3.17.0).
+ * SecurityCenter — CENTRAL DE SEGURANÇA (v3.17.0, inteligência v3.18.0).
  *
  * Consolida TODA a inteligência de segurança da app num só ecrã:
  *
@@ -8,6 +8,9 @@
  *     queda, PIN duress, vigilância)
  *   · VIGILÂNCIA CONTÍNUA — sentinela que escana Wi-Fi + BLE em loop
  *   · AMBIENTE — ameaças de rede activas, rastreadores detectados
+ *   · INTELIGÊNCIA DE AMBIENTE (v3.18) — veredicto correlacionado
+ *     (Wi-Fi + BLE + local), perfil do local por impressão digital de
+ *     BSSIDs, locais conhecidos com sync na nuvem e exportação
  *   · DIÁRIO DE SEGURANÇA — feed de eventos + sync na nuvem + exportar
  *   · HISTÓRICO DE RISCO — sparkline das últimas horas
  *
@@ -22,6 +25,7 @@ import {
   ShieldCheck, ShieldAlert, Radar, Bluetooth, Wifi, Users, CheckCircle2,
   XCircle, CloudUpload, Download, Trash2, Activity, ScanLine, AlertTriangle,
   Satellite, Siren, Fingerprint, Archive, RefreshCw, ChevronRight, Eye,
+  Crosshair, MapPin,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -38,8 +42,12 @@ import {
   getSecurityEvents, clearSecurityEvents, markSynced,
   EVENT_KIND_LABEL, type SecurityEvent,
 } from '@/lib/security-events'
-import { exportSecurityEvents } from '@/lib/export-data'
-import { saveSecurityEvents } from '@/lib/api'
+import { exportSecurityEvents, exportPlaces } from '@/lib/export-data'
+import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
+import {
+  getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor,
+  type AmbientVerdict,
+} from '@/lib/net-intel'
 import TacticalSecurityCenter from '@/components/tactical/TacticalSecurityCenter'
 import { toast } from 'sonner'
 
@@ -138,8 +146,16 @@ function SecurityCenterWeb() {
 
   const [events, setEvents] = useState<SecurityEvent[]>(() => getSecurityEvents().slice(0, 60))
   const [syncing, setSyncing] = useState(false)
+  const [syncingPlaces, setSyncingPlaces] = useState(false)
 
   const reloadEvents = () => setEvents(getSecurityEvents().slice(0, 60))
+
+  // v3.18.0 — veredicto correlacionado + locais conhecidos
+  const verdict: AmbientVerdict = useMemo(
+    () => watch.verdict ?? correlateEnvironment(net.threats, ble.trackers, getPlaceState()),
+    [watch.verdict, net.threats, ble.trackers],
+  )
+  const places = useMemo(() => getKnownPlaces(), [watch.place])
 
   // ── Score de segurança 0-100 ──────────────────────────────────────────
   const securityScore = useMemo(() => {
@@ -155,6 +171,8 @@ function SecurityCenterWeb() {
     if (!watch.watching) score -= 10
     if (net.registry.length === 0 && ble.registry.length === 0) score -= 8
     if (events.length === 0) score -= 7
+    // v3.18.0 — deslocamento abrupto para local desconhecido (peso 25)
+    if (watch.placeAnomaly) score -= 25
     return Math.max(0, Math.min(100, score))
   }, [net.riskScore, net.registry.length, ble.trackers, ble.registry.length, contacts, checkinConfig, watch.watching, events.length])
 
@@ -178,6 +196,19 @@ function SecurityCenterWeb() {
     }
   }
 
+  const handleSyncPlaces = async () => {
+    if (!user || places.length === 0) return
+    setSyncingPlaces(true)
+    try {
+      const n = await savePlaceFingerprints(user.id, places)
+      toast.success(`${n} local(is) sincronizado(s) na nuvem`)
+    } catch {
+      toast.error('Falha ao sincronizar (sem internet?)')
+    } finally {
+      setSyncingPlaces(false)
+    }
+  }
+
   const topThreats = net.threats.slice(0, 3)
   const highThreats = net.threats.filter((t) => t.severity === 'high').length
   const hasTrackerAlert = ble.trackers.length > 0
@@ -196,7 +227,7 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.17
+          v3.18
         </span>
       </div>
 
@@ -299,6 +330,64 @@ function SecurityCenterWeb() {
         </div>
       )}
 
+      {/* INTELIGÊNCIA DE AMBIENTE (v3.18.0) */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl flex items-center justify-center border bg-white/[0.03] border-white/[0.06]">
+            <Crosshair className="h-4.5 w-4.5" style={{ color: ambientLevelColor(verdict.level) }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-semibold text-sm text-white">Inteligência de ambiente</p>
+            <p className="text-[11px] text-white/30">Correlação de rede, Bluetooth e local — o que tudo indica em conjunto</p>
+          </div>
+          <span
+            className="shrink-0 px-2 py-1 rounded-full text-[9px] font-bold border uppercase"
+            style={{ color: ambientLevelColor(verdict.level), borderColor: `${ambientLevelColor(verdict.level)}55`, background: `${ambientLevelColor(verdict.level)}14` }}
+          >
+            {verdict.level === 'critical' ? 'CRÍTICO' : verdict.level === 'elevated' ? 'ELEVADO' : 'CALMO'}
+          </span>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <p className={cn('text-[13px] font-semibold', verdict.level === 'calm' ? 'text-emerald-300' : verdict.level === 'elevated' ? 'text-amber-300' : 'text-red-300')}>
+            {verdict.label}
+          </p>
+          {verdict.reasons.length > 0 ? (
+            <div className="space-y-1.5">
+              {verdict.reasons.slice(0, 4).map((r, i) => (
+                <div key={i} className="flex items-start gap-2 text-[11px] text-white/50">
+                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" style={{ color: ambientLevelColor(verdict.level) }} />
+                  {r}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-white/35">Rede, Bluetooth e local sem sinais combinados — tudo dentro do padrão habitual.</p>
+          )}
+          {/* Perfil do local */}
+          {watch.place.current && (
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] px-3.5 py-3 flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-brand shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] text-white/85 font-medium leading-tight">
+                  {watch.place.current.label}
+                  {watch.place.current.seenCount <= 1 && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">NOVO</span>
+                  )}
+                </p>
+                <p className="text-[10px] text-white/30 truncate">
+                  {watch.place.current.seenCount} visita(s) · {watch.place.current.sampleSsids.slice(0, 2).join(' · ') || 'sem SSIDs de exemplo'}
+                </p>
+              </div>
+              {watch.place.changedToNew && (
+                <span className="shrink-0 text-[9px] font-bold text-red-400 border border-red-500/25 bg-red-500/10 px-1.5 py-0.5 rounded-md">
+                  DESLOCAMENTO RECENTE
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Prontidão pessoal */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
         <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
@@ -324,6 +413,79 @@ function SecurityCenterWeb() {
           <Link to="/dashboard/discreto" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 hover:text-white/80 transition"><Fingerprint className="h-3.5 w-3.5" /> Modo discreto</Link>
           <Link to="/dashboard/evidencias" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 hover:text-white/80 transition"><Eye className="h-3.5 w-3.5" /> Cofre de evidências</Link>
         </div>
+      </div>
+
+      {/* Locais conhecidos (v3.18.0) */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/[0.05] flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl flex items-center justify-center border bg-white/[0.03] border-white/[0.06]">
+            <Fingerprint className={cn('h-4.5 w-4.5', places.length ? 'text-brand' : 'text-white/40')} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-semibold text-sm text-white">Locais conhecidos</p>
+            <p className="text-[11px] text-white/30">
+              {places.length} local(is) pela impressão digital Wi-Fi · onde costuma estar
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => exportPlaces(places)}
+              disabled={places.length === 0}
+              className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06]"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              onClick={handleSyncPlaces}
+              disabled={syncingPlaces || !user || places.length === 0}
+              className="h-8 px-2.5 text-[11px] text-white/60 hover:bg-white/[0.06] rounded-lg border border-white/[0.06] gap-1.5"
+            >
+              {syncingPlaces ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <CloudUpload className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">Nuvem</span>
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => { clearKnownPlaces(); toast.info('Locais apagados') }}
+              disabled={places.length === 0}
+              className="h-8 px-2.5 text-[11px] text-red-400/70 hover:bg-red-500/10 rounded-lg border border-red-500/15"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+        {places.length === 0 ? (
+          <p className="px-5 py-6 text-center text-xs text-white/25">
+            A vigilância contínua regista cada sítio pelo padrão das redes Wi-Fi — ative a sentinela para começar.
+          </p>
+        ) : (
+          <div className="divide-y divide-white/[0.04] max-h-[260px] overflow-y-auto">
+            {places.slice(0, 12).map((p) => (
+              <div key={p.hash} className="px-5 py-3 flex items-center gap-3">
+                <span
+                  className={cn(
+                    'shrink-0 px-1.5 py-0.5 rounded-md text-[9px] font-bold border',
+                    p.seenCount > 1 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25' : 'bg-amber-500/10 text-amber-400 border-amber-500/25',
+                  )}
+                >
+                  {p.seenCount > 1 ? 'HABITUAL' : 'NOVO'}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] text-white/85 font-medium leading-tight">{p.label}</p>
+                  <p className="text-[10px] text-white/30 font-mono truncate">
+                    {p.sampleSsids.slice(0, 2).join(' · ') || '—'}
+                    {typeof p.lat === 'number' && typeof p.lng === 'number' ? ` · ${p.lat.toFixed(3)}, ${p.lng.toFixed(3)}` : ''}
+                  </p>
+                </div>
+                <div className="text-right shrink-0 text-[10px] text-white/35 leading-tight">
+                  <p>{p.seenCount}×</p>
+                  <p className="text-white/20">{new Date(p.lastSeen).toLocaleDateString('pt-PT')}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Diário de segurança */}
@@ -383,12 +545,12 @@ function SecurityCenterWeb() {
       >
         <Radar className="h-4 w-4 text-brand shrink-0 mt-0.5" />
         <div className="text-[12px] text-white/45 leading-relaxed">
-          <p className="font-semibold text-white/70 mb-1">Novidades v3.17</p>
-          Registo persistente também no Bluetooth, detecção de rastreadores
-          (AirTag/SmartTag/perseguidores), vigilância contínua automática,
-          diário de segurança com sync na nuvem e exportação CSV/JSON de
-          todos os dados capturados. Na APK tudo veste o design exclusivo
-          "Tactical HUD".
+          <p className="font-semibold text-white/70 mb-1">Novidades v3.18</p>
+          Inteligência de ambiente: veredicto correlacionado (rede + Bluetooth +
+          local), locais conhecidos por impressão digital Wi-Fi com detecção de
+          deslocamento abrupto (sinal de rapto/coação), congestionamento de
+          canais com recomendação, fabricante por OUI, classificação de redes e
+          tendência de sinal por rede. Tudo também no SMS/email do SOS.
         </div>
       </motion.div>
     </div>
