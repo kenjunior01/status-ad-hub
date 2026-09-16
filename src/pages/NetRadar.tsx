@@ -30,12 +30,13 @@
  * registo da ligação actual e explica como activar o radar completo no APK.
  */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ShieldAlert, Info, Signal, Bluetooth, ScanLine, Gauge,
   Network, Smartphone, ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle,
   History, Search, Download, BarChart3, TrendingUp, TrendingDown, MoveRight,
+  Copy, Share2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -45,7 +46,7 @@ import { useNetRadar } from '@/hooks/useNetRadar'
 import { useAuth } from '@/hooks/useAuth'
 import { saveNetTrail, saveBleTrail, saveWifiRegistry } from '@/lib/api'
 import { exportWifiRegistry } from '@/lib/export-data'
-import { isNative } from '@/lib/native'
+import { isNative, haptic, nativeShare, copyText } from '@/lib/native'
 import {
   securityLevel, securityLabel, wifiDistanceLabel, wifiRssiBars, wifiRssiToMeters,
   bleScanNowSafe, type BleQuickDevice,
@@ -53,7 +54,8 @@ import {
 import TacticalNetRadar from '@/components/net/TacticalNetRadar'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { RadarSkeleton } from '@/components/net/RadarSkeleton'
-import type { WifiRadarNetwork, WifiRegistryEntry } from '@/lib/net-radar'
+import { useLongPress } from '@/components/native/native-gestures'
+import { wifiRemoveEntry, type WifiRadarNetwork, type WifiRegistryEntry } from '@/lib/net-radar'
 import {
   analyzeChannelCongestion, classifyWifiNetwork, wifiVendor, rssiTrend, topChannels,
   type ChannelCongestion,
@@ -588,10 +590,22 @@ function WifiRegistryPanel({ registry, onClear }: {
   const [secFilter, setSecFilter] = useState<'all' | 'risk' | 'open'>('all')
   const [exporting, setExporting] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  // v3.22.0 — menu de contexto por linha (long-press) + esquecidas na sessão
+  const [rowSheet, setRowSheet] = useState<WifiRegistryEntry | null>(null)
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const rowRef = useRef<WifiRegistryEntry | null>(null)
+  const openRowSheet = useCallback(() => {
+    const e = rowRef.current
+    if (!e) return
+    void haptic('medium')
+    setRowSheet(e)
+  }, [])
+  const rowPress = useLongPress(openRowSheet, { ripple: 'light' })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return registry
+      .filter((e) => !hidden.has((e.bssid || e.ssid).toLowerCase()))
       .filter((e) => {
         if (q && !(e.ssid?.toLowerCase().includes(q) || e.bssid?.toLowerCase().includes(q))) return false
         if (secFilter === 'open') return securityLevel(e.sec) === 0
@@ -600,7 +614,49 @@ function WifiRegistryPanel({ registry, onClear }: {
       })
       .sort((a, b) => b.lastSeen - a.lastSeen)
       .slice(0, 120)
-  }, [registry, query, secFilter])
+  }, [registry, query, secFilter, hidden])
+
+  /** copia um campo da rede e fecha a folha (v3.22.0) */
+  const copyField = async (text: string | undefined, msg: string) => {
+    if (!text) {
+      toast.error('Nada para copiar')
+      return
+    }
+    void haptic('light')
+    const ok = await copyText(text)
+    setRowSheet(null)
+    if (ok) toast.success(msg, { description: text })
+    else toast.error('Não foi possível copiar')
+  }
+
+  /** partilha os detalhes da rede (ficha nativa na APK; clipboard na web) */
+  const shareEntry = async (e: WifiRegistryEntry) => {
+    void haptic('light')
+    const text = [
+      `Rede Wi-Fi: ${e.ssid || '(sem nome)'}`,
+      `BSSID: ${e.bssid || '?'}`,
+      `Segurança: ${e.sec}`,
+      `Vista ${e.seen}× · última vez ${new Date(e.lastSeen).toLocaleString('pt-PT')}`,
+    ].join('\n')
+    const shared = await nativeShare('Rede Wi-Fi registada', text)
+    if (!shared) {
+      const ok = await copyText(text)
+      if (ok) toast.success('Detalhes copiados — cole onde quiser')
+      else toast.error('Partilha indisponível neste dispositivo')
+    }
+    setRowSheet(null)
+  }
+
+  /** esquece a rede: some do histórico (v3.22.0) */
+  const forgetEntry = async (e: WifiRegistryEntry) => {
+    void haptic('medium')
+    await wifiRemoveEntry(e.bssid, e.ssid)
+    setHidden((prev) => new Set(prev).add((e.bssid || e.ssid).toLowerCase()))
+    setRowSheet(null)
+    toast.success(`Rede "${e.ssid || e.bssid || '?'}" esquecida`, {
+      description: 'Deixou de aparecer no histórico deste dispositivo.',
+    })
+  }
 
   const handleSync = async () => {
     if (!user || registry.length === 0) return
@@ -629,7 +685,7 @@ function WifiRegistryPanel({ registry, onClear }: {
         <div className="flex-1 min-w-0">
           <p className="font-display font-semibold text-sm text-white">Registo de redes já vistas</p>
           <p className="text-[11px] text-white/30">
-            {registry.length} rede(s) no histórico · 1.ª vez, última vez, nº de vezes e GPS
+            {registry.length} rede(s) no histórico · manter premido numa rede para ações
           </p>
         </div>
       </div>
@@ -714,7 +770,16 @@ function WifiRegistryPanel({ registry, onClear }: {
           const cls = classifyWifiNetwork({ bssid: e.bssid, ssid: e.ssid, rssi: e.rssi ?? -100, freq: e.freq ?? 0, ch: 0, band: '', sec: e.sec })
           const vendor = cls.vendor || wifiVendor(e.bssid)
           return (
-            <div key={e.bssid || e.ssid} className="px-5 py-3 flex items-center gap-3">
+            <div
+              key={e.bssid || e.ssid}
+              className="aegis-row-press px-5 py-3 flex items-center gap-3"
+              onPointerDown={(ev) => { rowRef.current = e; rowPress.onPointerDown(ev) }}
+              onPointerMove={rowPress.onPointerMove}
+              onPointerUp={rowPress.onPointerUp}
+              onPointerCancel={rowPress.onPointerCancel}
+              onPointerLeave={rowPress.onPointerLeave}
+              aria-label={`Rede ${e.ssid} — manter premido para ações`}
+            >
               <SecBadge sec={e.sec} />
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] text-white font-medium truncate">{e.ssid}</p>
@@ -732,6 +797,83 @@ function WifiRegistryPanel({ registry, onClear }: {
           )
         })}
       </div>
+
+      {/* folha de contexto da rede (v3.22.0 — long-press numa linha) */}
+      <AnimatePresence>
+        {rowSheet && (
+          <>
+            <motion.div
+              key="wifi-row-sheet-bk"
+              className="aegis-sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRowSheet(null)}
+            />
+            <motion.div
+              key="wifi-row-sheet"
+              className="aegis-sheet"
+              role="menu"
+              aria-label={`Rede ${rowSheet.ssid || 'sem nome'} — ações`}
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '110%' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+              drag="y"
+              dragDirectionLock
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.55 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 90 || info.velocity.y > 550) {
+                  void haptic('light')
+                  setRowSheet(null)
+                }
+              }}
+            >
+              <div className="aegis-sheet-handle" />
+              <p className="text-center text-[10px] uppercase tracking-[0.25em] text-white/35 mb-2 px-4 truncate">
+                Rede · {rowSheet.ssid || 'sem nome'}
+              </p>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.ssid, 'Nome da rede copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-brand/10 border-brand/25">
+                  <Copy className="h-4.5 w-4.5 text-brand" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar nome da rede</span>
+                  <span className="block text-[10.5px] text-white/40">SSID por extenso para a área de transferência</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.bssid, 'BSSID copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Copy className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar BSSID</span>
+                  <span className="block text-[10.5px] text-white/40">Endereço físico do ponto de acesso</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void shareEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Share2 className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Partilhar detalhes</span>
+                  <span className="block text-[10.5px] text-white/40">Ficha nativa na APK · copiar na web</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void forgetEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10">
+                  <Trash2 className="h-4.5 w-4.5 text-amber-400" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Esquecer rede</span>
+                  <span className="block text-[10.5px] text-white/40">Remove do histórico deste dispositivo</span>
+                </span>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

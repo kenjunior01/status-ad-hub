@@ -16,12 +16,12 @@
  * instalem a app.
  */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, MapPin,
   Smartphone, Car, Headphones, Watch, Navigation, Info, ShieldAlert,
   Bluetooth, BluetoothOff, ChevronDown, ChevronUp, Clock,
-  Siren, Download, History, Search, Plus,
+  Siren, Download, History, Search, Plus, Copy, Share2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,9 @@ import { exportBleRegistry } from '@/lib/export-data'
 import { classifyBleDevice, bleKindLabel } from '@/lib/net-intel'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { RadarSkeleton } from '@/components/net/RadarSkeleton'
+import { useLongPress } from '@/components/native/native-gestures'
+import { haptic, nativeShare, copyText } from '@/lib/native'
+import { bleRemoveEntry, type BleRegistryEntry } from '@/lib/radar-registry'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -386,13 +389,68 @@ function BleRegistryPanel({ registry, onClear }: {
   const [query, setQuery] = useState('')
   const [exporting, setExporting] = useState(false)
   const [webBusy, setWebBusy] = useState(false)
+  // v3.22.0 — menu de contexto por linha (long-press) + esquecidos na sessão
+  const [rowSheet, setRowSheet] = useState<BleRegistryEntry | null>(null)
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const rowRef = useRef<BleRegistryEntry | null>(null)
+  const openRowSheet = useCallback(() => {
+    const e = rowRef.current
+    if (!e) return
+    void haptic('medium')
+    setRowSheet(e)
+  }, [])
+  const rowPress = useLongPress(openRowSheet, { ripple: 'light' })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return registry
+      .filter((e) => !hidden.has(e.mac.toLowerCase()))
       .filter((e) => !q || e.name?.toLowerCase().includes(q) || e.mac.toLowerCase().includes(q) || e.kind?.toLowerCase().includes(q))
       .slice(0, 100)
-  }, [registry, query])
+  }, [registry, query, hidden])
+
+  /** copia um campo do dispositivo e fecha a folha (v3.22.0) */
+  const copyField = async (text: string | undefined, msg: string) => {
+    if (!text) {
+      toast.error('Nada para copiar')
+      return
+    }
+    void haptic('light')
+    const ok = await copyText(text)
+    setRowSheet(null)
+    if (ok) toast.success(msg, { description: text })
+    else toast.error('Não foi possível copiar')
+  }
+
+  /** partilha os detalhes do dispositivo (ficha nativa na APK) */
+  const shareEntry = async (e: BleRegistryEntry) => {
+    void haptic('light')
+    const text = [
+      `Dispositivo BLE: ${e.name || e.kind || '(sem nome)'}`,
+      `MAC: ${e.mac}`,
+      e.kind ? `Tipo: ${e.kind}` : '',
+      e.mfr ? `Fabricante: ${e.mfr}` : '',
+      `Visto ${e.seen}× · última vez ${new Date(e.lastSeen).toLocaleString('pt-PT')}`,
+    ].filter(Boolean).join('\n')
+    const shared = await nativeShare('Dispositivo BLE registado', text)
+    if (!shared) {
+      const ok = await copyText(text)
+      if (ok) toast.success('Detalhes copiados — cole onde quiser')
+      else toast.error('Partilha indisponível neste dispositivo')
+    }
+    setRowSheet(null)
+  }
+
+  /** esquece o dispositivo: some do histórico (v3.22.0) */
+  const forgetEntry = async (e: BleRegistryEntry) => {
+    void haptic('medium')
+    bleRemoveEntry(e.mac)
+    setHidden((prev) => new Set(prev).add(e.mac.toLowerCase()))
+    setRowSheet(null)
+    toast.success(`Dispositivo "${e.name || e.mac}" esquecido`, {
+      description: 'Deixou de aparecer no histórico deste dispositivo.',
+    })
+  }
 
   /** Web Bluetooth: escolher um dispositivo próximo e registá-lo. */
   const handleWebBluetooth = async () => {
@@ -493,7 +551,16 @@ function BleRegistryPanel({ registry, onClear }: {
           </p>
         )}
         {filtered.map((e) => (
-          <div key={e.mac} className="px-5 py-3 flex items-center gap-3">
+          <div
+            key={e.mac}
+            className="aegis-row-press px-5 py-3 flex items-center gap-3"
+            onPointerDown={(ev) => { rowRef.current = e; rowPress.onPointerDown(ev) }}
+            onPointerMove={rowPress.onPointerMove}
+            onPointerUp={rowPress.onPointerUp}
+            onPointerCancel={rowPress.onPointerCancel}
+            onPointerLeave={rowPress.onPointerLeave}
+            aria-label={`Dispositivo ${e.name || e.mac} — manter premido para ações`}
+          >
             <SignalBars rssi={e.bestRssi ?? -100} />
             <div className="flex-1 min-w-0">
               <p className="text-[13px] text-white font-medium truncate">{e.name || e.kind || 'Dispositivo sem nome'}</p>
@@ -511,6 +578,83 @@ function BleRegistryPanel({ registry, onClear }: {
           </div>
         ))}
       </div>
+
+      {/* folha de contexto do dispositivo (v3.22.0 — long-press numa linha) */}
+      <AnimatePresence>
+        {rowSheet && (
+          <>
+            <motion.div
+              key="ble-row-sheet-bk"
+              className="aegis-sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRowSheet(null)}
+            />
+            <motion.div
+              key="ble-row-sheet"
+              className="aegis-sheet"
+              role="menu"
+              aria-label={`Dispositivo ${rowSheet.name || rowSheet.mac} — ações`}
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '110%' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+              drag="y"
+              dragDirectionLock
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.55 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 90 || info.velocity.y > 550) {
+                  void haptic('light')
+                  setRowSheet(null)
+                }
+              }}
+            >
+              <div className="aegis-sheet-handle" />
+              <p className="text-center text-[10px] uppercase tracking-[0.25em] text-white/35 mb-2 px-4 truncate">
+                Dispositivo · {rowSheet.name || rowSheet.kind || 'sem nome'}
+              </p>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.name ?? undefined, 'Nome copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-cyan-500/10 border-cyan-500/25">
+                  <Copy className="h-4.5 w-4.5 text-cyan-300" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar nome do dispositivo</span>
+                  <span className="block text-[10.5px] text-white/40">Nome anunciado por Bluetooth</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.mac, 'MAC copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Copy className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar endereço MAC</span>
+                  <span className="block text-[10.5px] text-white/40">Identificador único do aparelho</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void shareEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Share2 className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Partilhar detalhes</span>
+                  <span className="block text-[10.5px] text-white/40">Ficha nativa na APK · copiar na web</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void forgetEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10">
+                  <Trash2 className="h-4.5 w-4.5 text-amber-400" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Esquecer dispositivo</span>
+                  <span className="block text-[10.5px] text-white/40">Remove do histórico deste dispositivo</span>
+                </span>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

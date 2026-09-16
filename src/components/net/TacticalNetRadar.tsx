@@ -18,12 +18,12 @@
  *    de redes e perfil do local por impressão digital de BSSIDs
  */
 
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
   ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle, Radio, Signal,
   Bluetooth, ScanLine, ShieldAlert, CircleDashed, Download, History, Search, SearchX,
-  BarChart3, Fingerprint,
+  BarChart3, Fingerprint, Copy, Share2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -36,6 +36,7 @@ import {
   bleScanNowSafe, type BleQuickDevice,
 } from './net-shared'
 import type { WifiRadarNetwork, WifiRegistryEntry, NetTrailPoint } from '@/lib/net-radar'
+import { wifiRemoveEntry } from '@/lib/net-radar'
 import {
   analyzeChannelCongestion, classifyWifiNetwork, wifiVendor, topChannels,
   getKnownPlaces, getPlaceState,
@@ -44,6 +45,8 @@ import {
 import { toast } from 'sonner'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { RadarSkeleton } from '@/components/net/RadarSkeleton'
+import { useLongPress } from '@/components/native/native-gestures'
+import { haptic, nativeShare, copyText } from '@/lib/native'
 
 const INTERVALS = [
   { value: 30, label: '30S' },
@@ -160,7 +163,7 @@ export default function TacticalNetRadar() {
       {/* ── Cabeçalho HUD ─────────────────────────────────────────── */}
       <div className="relative z-10 pt-2 flex items-start justify-between gap-3">
         <div>
-          <p className="tac-label mb-1">Signal Surveillance Grid · v3.21</p>
+          <p className="tac-label mb-1">Signal Surveillance Grid · v3.22</p>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Radar className="w-5 h-5" style={{ color: 'var(--tac-green)' }} />
             <span className="tracking-[0.18em]">RADAR DE REDES</span>
@@ -514,12 +517,66 @@ function TacRegistryPanel({ registry, onClear }: {
   const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [syncing, setSyncing] = useState(false)
+  // v3.22.0 — menu de contexto por linha (long-press) + esquecidas na sessão
+  const [rowSheet, setRowSheet] = useState<WifiRegistryEntry | null>(null)
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const rowRef = useRef<WifiRegistryEntry | null>(null)
+  const openRowSheet = useCallback(() => {
+    const e = rowRef.current
+    if (!e) return
+    void haptic('medium')
+    setRowSheet(e)
+  }, [])
+  const rowPress = useLongPress(openRowSheet)
 
   const q = query.trim().toLowerCase()
   const filtered = registry
+    .filter((e) => !hidden.has((e.bssid || e.ssid).toLowerCase()))
     .filter((e) => !q || e.ssid?.toLowerCase().includes(q) || e.bssid?.toLowerCase().includes(q))
     .sort((a, b) => b.lastSeen - a.lastSeen)
     .slice(0, 60)
+
+  /** copia um campo da rede (v3.22.0) */
+  const copyField = async (text: string | undefined, msg: string) => {
+    if (!text) {
+      toast.error('NADA PARA COPIAR')
+      return
+    }
+    void haptic('light')
+    const ok = await copyText(text)
+    setRowSheet(null)
+    if (ok) toast.success(msg, { description: text })
+    else toast.error('FALHA AO COPIAR')
+  }
+
+  /** partilha os detalhes da rede (v3.22.0) */
+  const shareEntry = async (e: WifiRegistryEntry) => {
+    void haptic('light')
+    const text = [
+      `Rede Wi-Fi: ${e.ssid || '(sem nome)'}`,
+      `BSSID: ${e.bssid || '?'}`,
+      `Segurança: ${e.sec}`,
+      `Vista ${e.seen}× · última vez ${new Date(e.lastSeen).toLocaleString('pt-PT')}`,
+    ].join('\n')
+    const shared = await nativeShare('Rede Wi-Fi registada', text)
+    if (!shared) {
+      const ok = await copyText(text)
+      if (ok) toast.success('DETALHES COPIADOS')
+      else toast.error('PARTILHA INDISPONÍVEL')
+    }
+    setRowSheet(null)
+  }
+
+  /** esquece a rede: some do histórico (v3.22.0) */
+  const forgetEntry = async (e: WifiRegistryEntry) => {
+    void haptic('medium')
+    await wifiRemoveEntry(e.bssid, e.ssid)
+    setHidden((prev) => new Set(prev).add((e.bssid || e.ssid).toLowerCase()))
+    setRowSheet(null)
+    toast.success(`REDE ESQUECIDA: ${e.ssid || e.bssid || '?'}`, {
+      description: 'Deixou de aparecer no histórico deste dispositivo.',
+    })
+  }
 
   const handleSync = async () => {
     if (!user || registry.length === 0) return
@@ -588,7 +645,16 @@ function TacRegistryPanel({ registry, onClear }: {
         ) : filtered.map((e) => {
           const vendor = classifyWifiNetwork({ bssid: e.bssid, ssid: e.ssid, rssi: e.rssi ?? -100, freq: e.freq ?? 0, ch: 0, band: '', sec: e.sec }).vendor
           return (
-            <div key={e.bssid || e.ssid} className="tac-row">
+            <div
+              key={e.bssid || e.ssid}
+              className="tac-row aegis-row-press"
+              onPointerDown={(ev) => { rowRef.current = e; rowPress.onPointerDown(ev) }}
+              onPointerMove={rowPress.onPointerMove}
+              onPointerUp={rowPress.onPointerUp}
+              onPointerCancel={rowPress.onPointerCancel}
+              onPointerLeave={rowPress.onPointerLeave}
+              aria-label={`Rede ${e.ssid} — manter premido para ações`}
+            >
               <span className={securityBadgeClass(e.sec)}>{e.sec}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-bold text-emerald-50 truncate">{e.ssid}</p>
@@ -606,6 +672,83 @@ function TacRegistryPanel({ registry, onClear }: {
           )
         })}
       </div>
+
+      {/* folha de contexto da rede (v3.22.0 — long-press numa linha) */}
+      <AnimatePresence>
+        {rowSheet && (
+          <>
+            <motion.div
+              key="tac-row-sheet-bk"
+              className="aegis-sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRowSheet(null)}
+            />
+            <motion.div
+              key="tac-row-sheet"
+              className="aegis-sheet"
+              role="menu"
+              aria-label={`Rede ${rowSheet.ssid || 'sem nome'} — ações`}
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '110%' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+              drag="y"
+              dragDirectionLock
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.55 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 90 || info.velocity.y > 550) {
+                  void haptic('light')
+                  setRowSheet(null)
+                }
+              }}
+            >
+              <div className="aegis-sheet-handle" />
+              <p className="text-center text-[10px] uppercase tracking-[0.25em] text-emerald-100/40 mb-2 px-4 truncate">
+                ALVO · {rowSheet.ssid || 'SEM NOME'}
+              </p>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.ssid, 'SSID copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border" style={{ borderColor: 'rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.10)' }}>
+                  <Copy className="h-4.5 w-4.5" style={{ color: 'var(--tac-green, #34d399)' }} />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar SSID</span>
+                  <span className="block text-[10.5px] text-white/40">Nome da rede para a área de transferência</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void copyField(rowSheet.bssid, 'BSSID copiado')}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Copy className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Copiar BSSID</span>
+                  <span className="block text-[10.5px] text-white/40">Endereço físico do ponto de acesso</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void shareEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                  <Share2 className="h-4.5 w-4.5 text-white/60" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Partilhar ficha do alvo</span>
+                  <span className="block text-[10.5px] text-white/40">SSID, BSSID, segurança e histórico</span>
+                </span>
+              </button>
+              <button type="button" className="aegis-sheet-row" onClick={() => void forgetEntry(rowSheet)}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl border" style={{ borderColor: 'rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.10)' }}>
+                  <Trash2 className="h-4.5 w-4.5 text-amber-400" />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[13px] font-semibold text-white">Esquecer alvo</span>
+                  <span className="block text-[10.5px] text-white/40">Remove do registo deste dispositivo</span>
+                </span>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -437,12 +437,30 @@ export async function readNetEnvironment(): Promise<NetEnvironmentInfo> {
 const WEB_REGISTRY_KEY = 'statusads-wifi-registry'
 const WEB_REGISTRY_TTL_MS = 14 * 24 * 60 * 60 * 1000 // 14 dias
 const WEB_REGISTRY_MAX = 400
+const WEB_HIDDEN_KEY = 'statusads-wifi-hidden'
+
+/** BSSIDs "esquecidos" pelo utilizador (v3.22.0) — escondidos mesmo na APK,
+ *  onde o registo vive no plugin nativo e não tem remoção por entrada. */
+function readHiddenWifi(): Set<string> {
+  try {
+    const raw = localStorage.getItem(WEB_HIDDEN_KEY)
+    const arr = raw ? (JSON.parse(raw) as unknown) : []
+    return new Set(Array.isArray(arr) ? arr.map((v) => String(v)) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function wifiHiddenKey(e: { bssid?: string; ssid: string }): string {
+  return (e.bssid || e.ssid || '').toLowerCase()
+}
 
 export async function wifiGetRegistry(): Promise<WifiRegistryEntry[]> {
+  const hidden = readHiddenWifi()
   if (plugin) {
     try {
       const res = await plugin.getRegistry()
-      return res?.entries || []
+      return (res?.entries || []).filter((e: WifiRegistryEntry) => !hidden.has(wifiHiddenKey(e)))
     } catch {
       return []
     }
@@ -454,7 +472,9 @@ export async function wifiGetRegistry(): Promise<WifiRegistryEntry[]> {
     const arr = JSON.parse(raw)
     if (!Array.isArray(arr)) return []
     const cutoff = Date.now() - WEB_REGISTRY_TTL_MS
-    return (arr as WifiRegistryEntry[]).filter((e) => (e.lastSeen || 0) >= cutoff)
+    return (arr as WifiRegistryEntry[]).filter(
+      (e) => (e.lastSeen || 0) >= cutoff && !hidden.has(wifiHiddenKey(e))
+    )
   } catch {
     return []
   }
@@ -526,6 +546,35 @@ export async function wifiClearRegistry(): Promise<void> {
     return
   }
   try { localStorage.removeItem(WEB_REGISTRY_KEY) } catch { /* segue */ }
+}
+
+/**
+ * "Esquecer" uma rede específica do histórico (v3.22.0).
+ * Web: remove a entrada do registo local. APK: o registo vive no plugin
+ * nativo (sem remoção por entrada) — a rede entra na lista de ocultos que
+ * o wifiGetRegistry respeita. Em ambas as plataformas o efeito imediato é
+ * a rede desaparecer do histórico.
+ */
+export async function wifiRemoveEntry(bssid: string, ssid?: string): Promise<void> {
+  const key = (bssid || ssid || '').toLowerCase()
+  if (!key) return
+  if (!plugin) {
+    try {
+      const raw = localStorage.getItem(WEB_REGISTRY_KEY)
+      if (raw) {
+        const arr = JSON.parse(raw) as WifiRegistryEntry[]
+        localStorage.setItem(
+          WEB_REGISTRY_KEY,
+          JSON.stringify(arr.filter((e) => wifiHiddenKey(e) !== key))
+        )
+      }
+    } catch { /* segue */ }
+  }
+  try {
+    const hidden = readHiddenWifi()
+    hidden.add(key)
+    localStorage.setItem(WEB_HIDDEN_KEY, JSON.stringify(Array.from(hidden).slice(-300)))
+  } catch { /* segue */ }
 }
 
 // ══════════════════════════════════════════════════════════════════════════

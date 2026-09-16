@@ -21,6 +21,7 @@ import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
 import { FeatureTour } from '@/components/FeatureTour'
 import { useRadarWatch } from '@/hooks/useRadarWatch'
+import { useRipple } from '@/components/native/native-gestures'
 import { shareLocation } from '@/lib/share'
 import { startEmergencyAlarm, stopEmergencyAlarm, isAlarmPlaying } from '@/lib/emergency-alarm'
 import { useEmergency } from '@/hooks/useEmergency'
@@ -80,6 +81,9 @@ export default function DashboardLayout() {
   const suppressNextClick = useRef(false)
   const radarWatch = useRadarWatch()
   const [alarmOn, setAlarmOn] = useState(false)
+  // v3.22.0 — ink ripple táctil (Material) nos alvos principais
+  const dockRipple = useRipple<HTMLAnchorElement>('gold')
+  const sheetRipple = useRipple<HTMLButtonElement>('gold')
 
   const clearPress = () => {
     if (pressTimer.current) {
@@ -405,6 +409,7 @@ export default function DashboardLayout() {
                 key={item.to}
                 to={item.to}
                 className="aegis-dock-item"
+                onPointerDown={dockRipple}
                 onTouchStart={startPress(item.label, 'nav', item.to)}
                 onTouchEnd={clearPress}
                 onTouchMove={clearPress}
@@ -451,6 +456,17 @@ export default function DashboardLayout() {
               animate={{ y: 0 }}
               exit={{ y: '110%' }}
               transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+              drag="y"
+              dragDirectionLock
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.55 }}
+              onDragEnd={(_, info) => {
+                // gesto nativo: arrastar para baixo fecha a folha (v3.22.0)
+                if (info.offset.y > 90 || info.velocity.y > 550) {
+                  void haptic('light')
+                  closeSheet()
+                }
+              }}
             >
               <div className="aegis-sheet-handle" />
               <p className="text-center text-[10px] uppercase tracking-[0.25em] text-white/35 mb-2">
@@ -458,7 +474,7 @@ export default function DashboardLayout() {
               </p>
               {sheet.kind === 'sos' ? (
                 <>
-                  <button type="button" className="aegis-sheet-row" onClick={call112}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={call112}>
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/25 bg-red-500/10">
                       <Phone className="h-4.5 w-4.5 text-red-400" />
                     </span>
@@ -468,7 +484,7 @@ export default function DashboardLayout() {
                     </span>
                     <ChevronRight className="h-4 w-4 text-white/20" />
                   </button>
-                  <button type="button" className="aegis-sheet-row" onClick={toggleAlarm}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={toggleAlarm}>
                     <span className={cn(
                       'flex h-9 w-9 items-center justify-center rounded-xl border',
                       alarmOn ? 'border-red-500/30 bg-red-500/15' : 'bg-white/[0.04] border-white/[0.07]'
@@ -481,7 +497,7 @@ export default function DashboardLayout() {
                     </span>
                     {alarmOn && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
                   </button>
-                  <button type="button" className="aegis-sheet-row" onClick={() => void shareNow()}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={() => void shareNow()}>
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
                       <Share2 className="h-4.5 w-4.5 text-white/60" />
                     </span>
@@ -494,7 +510,7 @@ export default function DashboardLayout() {
                 </>
               ) : (
                 <>
-                  <button type="button" className="aegis-sheet-row" onClick={() => { void haptic('light'); closeSheet(); navigate(sheet.to ?? '/dashboard') }}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={() => { void haptic('light'); closeSheet(); navigate(sheet.to ?? '/dashboard') }}>
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-brand/10 border-brand/25">
                       <ArrowUpRight className="h-4.5 w-4.5 text-brand" />
                     </span>
@@ -504,7 +520,7 @@ export default function DashboardLayout() {
                     </span>
                     <ChevronRight className="h-4 w-4 text-white/20" />
                   </button>
-                  <button type="button" className="aegis-sheet-row" onClick={toggleSentinel}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={toggleSentinel}>
                     <span className={cn(
                       'flex h-9 w-9 items-center justify-center rounded-xl border',
                       radarWatch.watching ? 'border-emerald-500/25 bg-emerald-500/10' : 'bg-white/[0.04] border-white/[0.07]'
@@ -517,7 +533,7 @@ export default function DashboardLayout() {
                     </span>
                     {radarWatch.watching && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
                   </button>
-                  <button type="button" className="aegis-sheet-row" onClick={() => void verifyNow()}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={() => void verifyNow()}>
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
                       <Radar className="h-4.5 w-4.5 text-white/60" />
                     </span>
@@ -527,7 +543,7 @@ export default function DashboardLayout() {
                     </span>
                     <ChevronRight className="h-4 w-4 text-white/20" />
                   </button>
-                  <button type="button" className="aegis-sheet-row" onClick={() => { void haptic('light'); closeSheet(); navigate('/dashboard/seguranca') }}>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={() => { void haptic('light'); closeSheet(); navigate('/dashboard/seguranca') }}>
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
                       <Shield className="h-4.5 w-4.5 text-white/60" />
                     </span>

@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.21.0
+# 🛡️ StatusAds Connect v3.22.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -77,6 +77,22 @@ gateways de pagamento ou SMS.
   (dedupe por sessão / 10 min)
   · **Pull-to-refresh na Central de Segurança** (web + tática) — puxar
   recarrega o diário e sincroniza eventos pendentes na nuvem
+- **Folha Nativa & Micro-interacções (v3.22.0)** — os detalhes que fazem
+  "parecer app de verdade":
+  · **Arrastar para fechar a folha** — a folha de ações rápidas (dock e
+  registos) segue o dedo com amortecimento e fecha com um deslize para
+  baixo (> 90px ou com velocidade), como uma bottom-sheet do Android
+  · **Ink ripple estilo Material** — onda tátil no ponto exacto do toque
+  nos itens da dock, nas linhas das folhas e nas linhas dos registos
+  (dourado na dock, branco nos registos; desligado com "reduzir movimento")
+  · **Long-press nas linhas do registo Wi-Fi** (web + tática) — abrir o
+  menu de contexto de cada rede: copiar SSID, copiar BSSID, partilhar a
+  ficha completa (ficha nativa na APK) e **esquecer rede** (some do
+  histórico — na APK via lista de ocultos, pois o registo vive no plugin)
+  · **Long-press nas linhas do registo BLE** (web) — copiar nome, copiar
+  MAC, partilhar detalhes e esquecer dispositivo
+  · **copyText() robusto** — clipboard assíncrono com fallback clássico
+  (funciona na WebView da APK e em browsers restritos)
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
