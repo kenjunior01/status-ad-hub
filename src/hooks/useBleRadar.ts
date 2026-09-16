@@ -21,7 +21,7 @@ import {
   bleGetRegistry, bleClearRegistry, bleRecordMany, detectTrackers,
   type BleRegistryEntry, type TrackerAlert,
 } from '@/lib/radar-registry'
-import { geoGetCurrent } from '@/lib/native'
+import { geoGetCurrent, haptic } from '@/lib/native'
 import { logSecurityEvent } from '@/lib/security-events'
 
 export interface BleRadarState {
@@ -44,6 +44,9 @@ export interface BleRadarState {
   trailIntervalSec: number
   lastError: string | null
 }
+
+/** rastreadores que já dispararam háptica nesta sessão (evita repetição) */
+const alertedTrackers = new Set<string>()
 
 export function useBleRadar() {
   const [available] = useState(isBleRadarAvailable())
@@ -110,6 +113,10 @@ export function useBleRadar() {
         bleRecordMany(res, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
         refreshRegistry()
         const fresh = detectTrackers(bleGetRegistry())
+        // v3.21.0 — háptica de alerta só para rastreadores NOVOS (não repetir)
+        const novos = fresh.filter((a) => !alertedTrackers.has(a.mac))
+        novos.forEach((a) => alertedTrackers.add(a.mac))
+        if (novos.length > 0) void haptic('heavy')
         for (const a of fresh) {
           logSecurityEvent(
             'tracker',

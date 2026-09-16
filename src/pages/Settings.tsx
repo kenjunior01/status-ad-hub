@@ -6,8 +6,10 @@ import {
   Crosshair, Navigation, Key, MessageSquare, Wifi, AlertTriangle, CheckCircle2,
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
-  ShieldAlert, KeyRound, Palette, Mail,
+  ShieldAlert, KeyRound, Palette, Mail, Vibrate, Hand,
 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { haptic, hapticsEnabled, setHapticsEnabled, swipeNavEnabled, setSwipeNavEnabled } from '@/lib/native'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,11 +36,12 @@ import { getEmailConfig, setEmailConfig, clearEmailConfig, sendSmtpEmail } from 
 import { useTheme, THEMES } from '@/hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'aparencia' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
   { id: 'aparencia', title: 'Aparencia', icon: Palette },
+  { id: 'interacao', title: 'Interaccao Tatil', icon: Vibrate },
   { id: 'notificacoes', title: 'Notificacoes', icon: Bell },
   { id: 'email', title: 'Email de Emergencia (Gmail)', icon: Mail },
   { id: 'integracoes', title: 'Integracoes', icon: Key },
@@ -764,6 +767,59 @@ function ThemeSection() {
   )
 }
 
+/** Secção Interacção Tátil (v3.21.0) — háptica e swipe, por dispositivo */
+function InteractionSection() {
+  const [hap, setHap] = useState(hapticsEnabled())
+  const [swipe, setSwipe] = useState(swipeNavEnabled())
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 border border-brand/20">
+            <Vibrate className="h-4.5 w-4.5 text-brand" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/85">Vibração háptica</p>
+            <p className="text-[11px] text-white/30 mt-0.5 leading-snug">
+              Tacto real nas acções, navegação, SOS e alertas de rastreador.
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={hap}
+          onCheckedChange={(v) => { setHap(v); setHapticsEnabled(v); if (v) void haptic('medium') }}
+          aria-label="Vibração háptica"
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            <Hand className="h-4.5 w-4.5 text-white/60" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/85">Navegação por swipe</p>
+            <p className="text-[11px] text-white/30 mt-0.5 leading-snug">
+              Deslize para os lados em qualquer ecrã para trocar de aba — como numa app nativa.
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={swipe}
+          onCheckedChange={(v) => { setSwipe(v); setSwipeNavEnabled(v); if (v) void haptic('light') }}
+          aria-label="Navegação por swipe"
+        />
+      </div>
+
+      <p className="text-[11px] text-white/20 flex items-center gap-1.5 px-1 pt-1">
+        <Vibrate className="h-3 w-3" />
+        As preferências ficam guardadas neste dispositivo.
+      </p>
+    </div>
+  )
+}
+
 export default function Settings() {
   const { user, signOut } = useAuth()
   const { profile, loading: profileLoading, updateProfile, isUpdating } = useProfile()
@@ -1161,6 +1217,7 @@ export default function Settings() {
                         {section.id === 'aparencia' && (
                           <ThemeSection />
                         )}
+                        {section.id === 'interacao' && <InteractionSection />}
                         {section.id === 'notificacoes' && (
                           <div className="space-y-4">
                             {/* Web Push status card */}

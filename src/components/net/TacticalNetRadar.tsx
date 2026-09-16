@@ -160,7 +160,7 @@ export default function TacticalNetRadar() {
       {/* ── Cabeçalho HUD ─────────────────────────────────────────── */}
       <div className="relative z-10 pt-2 flex items-start justify-between gap-3">
         <div>
-          <p className="tac-label mb-1">Signal Surveillance Grid · v3.20</p>
+          <p className="tac-label mb-1">Signal Surveillance Grid · v3.21</p>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Radar className="w-5 h-5" style={{ color: 'var(--tac-green)' }} />
             <span className="tracking-[0.18em]">RADAR DE REDES</span>

@@ -35,6 +35,7 @@ import { exportSecurityEvents, exportPlaces } from '@/lib/export-data'
 import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
 import { getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor } from '@/lib/net-intel'
 import TacticalAiCopilot from '@/components/tactical/TacticalAiCopilot'
+import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -149,8 +150,25 @@ export default function TacticalSecurityCenter() {
     { ok: net.registry.length + ble.registry.length > 0, label: 'HISTORICO DO AMBIENTE', to: '/dashboard/net-radar' },
   ]
 
+  // v3.21.0 — pull-to-refresh tático: recarrega diário + sincroniza pendentes
+  const handlePullRefresh = async () => {
+    reloadEvents()
+    if (!user) return
+    const pending = getSecurityEvents().filter((e) => !e.synced)
+    if (pending.length > 0) {
+      try {
+        await saveSecurityEvents(user.id, pending)
+        markSynced(pending.map((e) => e.id))
+        reloadEvents()
+        toast.success(`${pending.length} EVENTO(S) NA NUVEM`)
+      } catch {
+        toast.error('SEM INTERNET — LOG FICA NA FILA')
+      }
+    }
+  }
+
   return (
-    <div className="tactical min-h-screen pb-10 relative">
+    <PullToRefresh onRefresh={handlePullRefresh} className="tactical min-h-screen pb-10 relative">
       <div className="tac-scanline" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 pt-5 space-y-4">
 
@@ -160,7 +178,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.20 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.21 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -407,6 +425,6 @@ export default function TacticalSecurityCenter() {
           </div>
         </div>
       </div>
-    </div>
+    </PullToRefresh>
   )
 }

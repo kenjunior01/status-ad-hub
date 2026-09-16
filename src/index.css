@@ -982,9 +982,26 @@ select:focus {
   animation: screen-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* v3.21.0 — transição direcional: avançar entra da direita,
+   recuar entra da esquerda (push/pop estilo app nativa) */
+.screen-fwd {
+  animation: screen-fwd 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.screen-bwd {
+  animation: screen-bwd 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes screen-in {
   from { opacity: 0; transform: translateY(10px) scale(0.995); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes screen-fwd {
+  from { opacity: 0; transform: translateX(26px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes screen-bwd {
+  from { opacity: 0; transform: translateX(-26px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* ── Pull-to-refresh (v3.20.0) ───────────────────────────────── */
@@ -1145,6 +1162,8 @@ select:focus {
 /* respeita preferência por menos movimento */
 @media (prefers-reduced-motion: reduce) {
   .screen-enter,
+  .screen-fwd,
+  .screen-bwd,
   .aegis-splash-logo,
   .aegis-splash-ring,
   .aegis-splash-bar > div,

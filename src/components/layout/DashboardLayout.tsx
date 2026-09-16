@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent } from 'react'
+import { useState, useEffect, useRef, type MouseEvent, type TouchEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -24,7 +24,8 @@ import { useRadarWatch } from '@/hooks/useRadarWatch'
 import { shareLocation } from '@/lib/share'
 import { startEmergencyAlarm, stopEmergencyAlarm, isAlarmPlaying } from '@/lib/emergency-alarm'
 import { useEmergency } from '@/hooks/useEmergency'
-import { bottomNav } from '@/lib/dashboard-nav'
+import { bottomNav, sidebarSections } from '@/lib/dashboard-nav'
+import { swipeNavEnabled } from '@/lib/native'
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
 
 /* ── Navigation Config ── movida para src/lib/dashboard-nav.ts (partilhada com o Dashboard) ── */
@@ -168,6 +169,56 @@ export default function DashboardLayout() {
     window.location.href = 'tel:112'
   }
 
+  // ── v3.21.0 — TRANSIÇÃO DIRECCIONAL: avançar desliza da direita, recuar da esquerda ──
+  const navFlatOrder = useRef<string[]>(
+    sidebarSections.flatMap((s) => s.items.map((i) => i.to))
+  )
+  const prevPathRef = useRef(location.pathname)
+  const [dir, setDir] = useState<'fwd' | 'bwd'>('fwd')
+  if (prevPathRef.current !== location.pathname) {
+    const a = navFlatOrder.current.indexOf(prevPathRef.current)
+    const b = navFlatOrder.current.indexOf(location.pathname)
+    setDir(a === -1 || b === -1 || b >= a ? 'fwd' : 'bwd')
+    prevPathRef.current = location.pathname
+  }
+
+  // ── v3.21.0 — SWIPE HORIZONTAL entre abas da dock (gesto nativo) ──
+  const swipeOrder = useRef<string[]>(bottomNav.filter((i) => !i.isSOS).map((i) => i.to))
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
+
+  const onSwipeStart = (e: TouchEvent) => {
+    const t = e.touches[0]
+    swipeStart.current = { x: t.clientX, y: t.clientY }
+  }
+
+  const onSwipeEnd = (e: TouchEvent) => {
+    const st = swipeStart.current
+    swipeStart.current = null
+    if (!st || !swipeNavEnabled() || sheet || sidebarOpen) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - st.x
+    const dy = t.clientY - st.y
+    // tem de ser claramente horizontal e longo o suficiente
+    if (Math.abs(dx) < 90 || Math.abs(dy) > 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return
+    // não navega se o toque foi num campo ou num scroller horizontal
+    const el = e.target as HTMLElement | null
+    if (el?.closest('input, textarea, select, [contenteditable="true"], [data-no-swipe]')) return
+    let n: HTMLElement | null = el
+    while (n && n !== document.body) {
+      if (n.scrollWidth > n.clientWidth + 8) {
+        const ox = window.getComputedStyle(n).overflowX
+        if (ox === 'auto' || ox === 'scroll') return
+      }
+      n = n.parentElement
+    }
+    const cur = swipeOrder.current.indexOf(location.pathname)
+    if (cur === -1) return
+    const next = dx < 0 ? cur + 1 : cur - 1
+    if (next < 0 || next >= swipeOrder.current.length) return
+    void haptic('light')
+    navigate(swipeOrder.current[next])
+  }
+
   // Liga a deteção de queda ao motor de emergência global.
   // A queda dispara SOS real (GPS + SMS + push) exactamente como o botão.
   // Na APK usa o plugin nativo de GPS (mais fiável) + háptico SOS.
@@ -307,9 +358,14 @@ export default function DashboardLayout() {
           )}
         </AnimatePresence>
 
-        {/* Page Content — transição nativa entre ecrãs (v3.19.0) */}
+        {/* Page Content — transição direcional nativa (v3.21.0) */}
         <main className="flex-1 pb-28 lg:pb-6">
-          <div key={location.pathname} className="screen-enter">
+          <div
+            key={location.pathname}
+            className={dir === 'bwd' ? 'screen-bwd' : 'screen-fwd'}
+            onTouchStart={onSwipeStart}
+            onTouchEnd={onSwipeEnd}
+          >
             <Outlet />
           </div>
         </main>

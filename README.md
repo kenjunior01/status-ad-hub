@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.20.0
+# 🛡️ StatusAds Connect v3.21.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -64,6 +64,19 @@ gateways de pagamento ou SMS.
   · **Pílula da dock com física spring** — o indicador dourado desliza
   suavemente entre itens (layout animation) e os itens afundam ao toque
   (press tátil estilo Material)
+- **Gestos & Preferências (v3.21.0)** — a camada final de sensação nativa:
+  · **Transições direcionais** — avançar desliza da direita, recuar da
+  esquerda (push/pop de app nativa), calculado pela ordem de navegação
+  · **Swipe horizontal entre abas** — deslize para os lados em qualquer
+  ecrã para trocar de secção da dock (com guarda: não dispara sobre
+  campos, tabelas com scroll horizontal ou folhas abertas)
+  · **Interacção Tátil nas Configurações** — liga/desliga a vibração
+  háptica e o swipe por dispositivo
+  · **Háptica de ameaça** — rastreador novo detectado ou deslocamento
+  abrupto para local desconhecido vibra forte (heavy), sem repetir
+  (dedupe por sessão / 10 min)
+  · **Pull-to-refresh na Central de Segurança** (web + tática) — puxar
+  recarrega o diário e sincroniza eventos pendentes na nuvem
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na

@@ -40,6 +40,48 @@ export function platform(): string {
 
 let chromeInitialised = false
 
+// ── Preferências de interacção (v3.21.0) ─────────────────────────
+// Háptica e navegação por swipe são opcionais: guardadas por dispositivo.
+
+const HAPTICS_KEY = 'aegis_haptics'
+const SWIPE_KEY = 'aegis_swipe_nav'
+
+/** TRUE se a vibração háptica está activa (por omissão, está) */
+export function hapticsEnabled(): boolean {
+  try {
+    return localStorage.getItem(HAPTICS_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+/** Liga/desliga a vibração háptica neste dispositivo */
+export function setHapticsEnabled(on: boolean): void {
+  try {
+    localStorage.setItem(HAPTICS_KEY, on ? '1' : '0')
+  } catch {
+    /* segue */
+  }
+}
+
+/** TRUE se o swipe horizontal entre abas da dock está activo */
+export function swipeNavEnabled(): boolean {
+  try {
+    return localStorage.getItem(SWIPE_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+/** Liga/desliga a navegação por swipe neste dispositivo */
+export function setSwipeNavEnabled(on: boolean): void {
+  try {
+    localStorage.setItem(SWIPE_KEY, on ? '1' : '0')
+  } catch {
+    /* segue */
+  }
+}
+
 /**
  * Aplica o "chrome" nativo dourado UMA vez no arranque:
  * status bar escura com fundo #0C0B08 e splash screen com fade-out.
@@ -118,6 +160,8 @@ export async function geoGetCurrent(timeoutMs = 12_000): Promise<UnifiedPosition
  * kind: 'light' | 'medium' | 'heavy' | 'sos'
  */
 export async function haptic(kind: 'light' | 'medium' | 'heavy' | 'sos' = 'medium'): Promise<void> {
+  // preferência do utilizador (Configurações → Interacção Tátil)
+  if (!hapticsEnabled()) return
   if (isNative()) {
     try {
       const style =

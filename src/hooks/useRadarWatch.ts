@@ -26,7 +26,7 @@ import { bleScanNowSafe } from '@/components/net/net-shared'
 import { isBleRadarAvailable } from '@/lib/ble-radar'
 import { bleRecordMany, detectTrackers, type TrackerAlert } from '@/lib/radar-registry'
 import { logSecurityEvent, logThreatsToSecurityLog } from '@/lib/security-events'
-import { geoGetCurrent } from '@/lib/native'
+import { geoGetCurrent, haptic } from '@/lib/native'
 import {
   recordRssiSamples, placeCheckIn, getPlaceState, assessPlaceAnomaly,
   analyzeChannelCongestion, correlateEnvironment,
@@ -147,6 +147,11 @@ async function runCycle(): Promise<void> {
           if (anomaly.anomaly) {
             logSecurityEvent('threat', 'high', anomaly.title, anomaly.detail, { hash: place.current?.hash }, 60 * 60_000)
             risk = Math.max(risk, 75)
+            // v3.21.0 — háptica de alerta no deslocamento abrupto (máx. 1x/10min)
+            if (Date.now() - lastAnomalyHaptic > 10 * 60_000) {
+              lastAnomalyHaptic = Date.now()
+              void haptic('heavy')
+            }
           }
         }
       } catch (e) {
@@ -162,6 +167,10 @@ async function runCycle(): Promise<void> {
           const pos = await geoGetCurrent(8_000).catch(() => null)
           bleRecordMany(devs, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
           trackers = detectTrackers()
+          // v3.21.0 — háptica só para rastreadores novos nesta sessão
+          const novosTrackers = trackers.filter((a) => !alertedWatchTrackers.has(a.mac))
+          novosTrackers.forEach((a) => alertedWatchTrackers.add(a.mac))
+          if (novosTrackers.length > 0) void haptic('heavy')
           for (const a of trackers) {
             logSecurityEvent(
               'tracker',
@@ -210,6 +219,11 @@ async function runCycle(): Promise<void> {
     cycling = false
   }
 }
+
+/** rastreadores que já dispararam háptica na sentinela (por sessão) */
+const alertedWatchTrackers = new Set<string>()
+/** último háptico de deslocamento abrupto (evita repetição a cada ciclo) */
+let lastAnomalyHaptic = 0
 
 function startWatch(): void {
   if (timer) return

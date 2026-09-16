@@ -43,6 +43,7 @@ import {
   EVENT_KIND_LABEL, type SecurityEvent,
 } from '@/lib/security-events'
 import { exportSecurityEvents, exportPlaces } from '@/lib/export-data'
+import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
 import {
   getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor,
@@ -214,8 +215,25 @@ function SecurityCenterWeb() {
   const highThreats = net.threats.filter((t) => t.severity === 'high').length
   const hasTrackerAlert = ble.trackers.length > 0
 
+  // v3.21.0 — pull-to-refresh: recarrega diário + sincroniza pendentes (sem toast se nada a fazer)
+  const handlePullRefresh = async () => {
+    reloadEvents()
+    if (!user) return
+    const pending = getSecurityEvents().filter((e) => !e.synced)
+    if (pending.length > 0) {
+      try {
+        await saveSecurityEvents(user.id, pending)
+        markSynced(pending.map((e) => e.id))
+        reloadEvents()
+        toast.success(`${pending.length} evento(s) sincronizado(s)`)
+      } catch {
+        toast.error('Sem internet — eventos ficam na fila')
+      }
+    }
+  }
+
   return (
-    <div className="min-h-screen space-y-6 pb-8">
+    <PullToRefresh onRefresh={handlePullRefresh} className="min-h-screen space-y-6 pb-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -228,7 +246,7 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.20
+          v3.21
         </span>
       </div>
 
@@ -557,6 +575,6 @@ function SecurityCenterWeb() {
           tendência de sinal por rede. Tudo também no SMS/email do SOS.
         </div>
       </motion.div>
-    </div>
+    </PullToRefresh>
   )
 }
