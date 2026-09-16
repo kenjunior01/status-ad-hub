@@ -165,6 +165,19 @@
             </intent-filter>
         </service>
 
+        <!-- Widget "Aegis SOS" (v3.24.0): SOS do Guardião no ecrã inicial -->
+        <receiver
+            android:name=".AegisWidgetProvider"
+            android:exported="false"
+            android:label="@string/tile_sos_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/aegis_widget_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

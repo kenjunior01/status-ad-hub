@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Aegis SOS" (v3.24.0): 2x1 escuro com botão vermelho de pânico -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_bg"
+    android:paddingStart="14dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <!-- Identidade -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_title"
+            android:textColor="#D4AF37"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/widget_subtitle"
+            android:textColor="#9CA3AF"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Botão SOS -->
+    <TextView
+        android:id="@+id/widget_sos_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/widget_sos_bg"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:text="@string/widget_sos"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.12" />
+</LinearLayout>

@@ -16,7 +16,8 @@
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Delete, Fingerprint, PhoneCall, ShieldCheck } from 'lucide-react'
+import { Delete, Fingerprint, PhoneCall, ShieldCheck, Siren } from 'lucide-react'
+import { requestPanicCountdown } from '@/lib/guardian'
 import {
   appLockEvents,
   authenticateBiometric,
@@ -34,6 +35,8 @@ import { cn } from '@/lib/utils'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_MS = 15_000
+/** Duração do gesto SOS secreto (long-press no escudo) — ms */
+const SOS_GESTURE_MS = 3_000
 
 /** Assina o estado global do bloqueio (eventos + visibilidade). */
 function useLockState(): boolean {
@@ -91,6 +94,8 @@ function LockScreen({
   const [now, setNow] = useState(Date.now())
   const [bioOk, setBioOk] = useState(false)
   const shakeTimer = useRef<number | null>(null)
+  const [guardHint, setGuardHint] = useState<string | null>(null)
+  const guardHintTimer = useRef<number | null>(null)
 
   const lockoutLeft = Math.max(0, lockoutUntil - now)
   const lockoutSecs = Math.ceil(lockoutLeft / 1000)
@@ -182,6 +187,62 @@ function LockScreen({
 
   const disabled = checking || lockoutLeft > 0
 
+  /* ── SOS secreto: long-press 3s no escudo ────────────────────
+     Progresso com anel SVG + háptica crescente (light→medium→heavy).
+     Com o Guardião armado dispara a contagem (o overlay de pânico
+     aparece POR CIMA do bloqueio). Sem armamento: avisa e vibra. */
+  const [sosProgress, setSosProgress] = useState(0)
+  const sosRaf = useRef<number | null>(null)
+  const sosHapticStep = useRef(0)
+  const showGuardHint = useCallback((msg: string) => {
+    setGuardHint(msg)
+    if (guardHintTimer.current) window.clearTimeout(guardHintTimer.current)
+    guardHintTimer.current = window.setTimeout(() => setGuardHint(null), 3600)
+  }, [])
+
+  const cancelSosGesture = useCallback(() => {
+    if (sosRaf.current !== null) {
+      window.cancelAnimationFrame(sosRaf.current)
+      sosRaf.current = null
+    }
+    sosHapticStep.current = 0
+    setSosProgress(0)
+  }, [])
+
+  const startSosGesture = useCallback(() => {
+    if (lockoutLeft > 0) return
+    cancelSosGesture()
+    const start = performance.now()
+    const step = () => {
+      const p = Math.min(1, (performance.now() - start) / SOS_GESTURE_MS)
+      setSosProgress(p)
+      if (p >= 0.3 && sosHapticStep.current < 1) {
+        sosHapticStep.current = 1
+        void haptic('light')
+      } else if (p >= 0.65 && sosHapticStep.current < 2) {
+        sosHapticStep.current = 2
+        void haptic('medium')
+      }
+      if (p >= 1) {
+        sosRaf.current = null
+        sosHapticStep.current = 0
+        setSosProgress(0)
+        void haptic('heavy')
+        const fired = requestPanicCountdown('shortcut')
+        if (!fired) showGuardHint('Guardião não armado — activa o Modo Guardião para o SOS por gesto')
+        return
+      }
+      sosRaf.current = window.requestAnimationFrame(step)
+    }
+    sosRaf.current = window.requestAnimationFrame(step)
+  }, [cancelSosGesture, showGuardHint, lockoutLeft])
+
+  // limpa o gesto se o ecrã de bloqueio sair de cena
+  useEffect(() => cancelSosGesture, [cancelSosGesture])
+
+  const SOS_RING_R = 35
+  const SOS_RING_C = 2 * Math.PI * SOS_RING_R
+
   const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
   return (
@@ -200,15 +261,57 @@ function LockScreen({
         <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-brand/[0.04] blur-3xl" />
       </div>
 
-      {/* cabeçalho */}
+      {/* cabeçalho com gesto SOS: long-press 3s no escudo */}
       <motion.div
         initial={{ y: -12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.05 }}
-        className="relative flex flex-col items-center gap-3 mb-8"
+        className="relative flex flex-col items-center gap-3 mb-6"
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-brand/10 border border-brand/25 shadow-[0_0_40px_-10px_rgba(212,175,55,0.4)]">
-          <ShieldCheck className="h-8 w-8 text-brand" strokeWidth={1.5} />
+        <div
+          className="relative h-[86px] w-[86px] flex items-center justify-center touch-none select-none"
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return
+            startSosGesture()
+          }}
+          onPointerUp={cancelSosGesture}
+          onPointerCancel={cancelSosGesture}
+          onPointerLeave={cancelSosGesture}
+          role="button"
+          aria-label="SOS do Guardião — manter premido 3 segundos"
+        >
+          {/* anel de progresso do gesto */}
+          <svg viewBox="0 0 86 86" className="absolute inset-0 h-full w-full -rotate-90">
+            <circle cx="43" cy="43" r={SOS_RING_R} fill="none" stroke="rgba(212,175,55,0.12)" strokeWidth="3" />
+            <circle
+              cx="43"
+              cy="43"
+              r={SOS_RING_R}
+              fill="none"
+              stroke="#EF4444"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeDasharray={SOS_RING_C}
+              strokeDashoffset={SOS_RING_C * (1 - sosProgress)}
+              style={{ opacity: sosProgress > 0.02 ? 1 : 0.35, transition: 'opacity .2s' }}
+            />
+          </svg>
+          <div
+            className={cn(
+              'flex h-16 w-16 items-center justify-center rounded-3xl border transition-all duration-200',
+              sosProgress > 0.02
+                ? 'bg-red-500/15 border-red-500/40 shadow-[0_0_44px_-8px_rgba(239,68,68,0.55)] scale-[1.04]'
+                : 'bg-brand/10 border-brand/25 shadow-[0_0_40px_-10px_rgba(212,175,55,0.4)]',
+            )}
+          >
+            <ShieldCheck
+              className={cn(
+                'h-8 w-8 transition-colors duration-200',
+                sosProgress > 0.02 ? 'text-red-400' : 'text-brand',
+              )}
+              strokeWidth={1.5}
+            />
+          </div>
         </div>
         <div className="text-center">
           <h1 className="text-lg font-semibold text-white/90">Aegis bloqueada</h1>
@@ -217,8 +320,26 @@ function LockScreen({
               ? `Aguarda ${lockoutSecs}s…`
               : 'Introduz o PIN para continuar'}
           </p>
+          <p className="text-[10px] text-white/20 mt-1">
+            SOS secreto: mantém o escudo premido 3s
+          </p>
         </div>
       </motion.div>
+
+      {/* dica contextual (Guardião não armado, biometria removida, SOS disparado) */}
+      <AnimatePresence>
+        {guardHint && (
+          <motion.p
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="relative -mt-6 mb-4 flex items-center gap-1.5 text-[11px] text-amber-300/90 max-w-[300px] text-center leading-snug"
+          >
+            <Siren className="h-3.5 w-3.5 shrink-0" />
+            {guardHint}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* pontos do PIN */}
       <motion.div

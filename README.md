@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.23.0
+# 🛡️ StatusAds Connect v3.24.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -110,6 +110,19 @@ gateways de pagamento ou SMS.
   · **Emergência sempre acessível** — botão 112 no próprio ecrã de
   bloqueio; os overlays Guardião, Chamada Falsa, Pânico e Discreto
   continuam por cima do bloqueio, nunca presos atrás dele
+- **Widget Nativo & SOS por Gesto (v3.24.0)** — a app salta para fora do
+  ecrã, à maneira Android:
+  · **Widget "Aegis SOS" no ecrã inicial** (APK) — 2×1 escuro com contorno
+  dourado e botão vermelho de pânico: um toque dispara a cadeia completa
+  do Guardião (contagem → contactos + SMS + GPS), a mesma do tile e do
+  atalho do ícone; o resto do widget abre a app (respeita a camuflagem).
+  Estático — zero bateria, nenhum dado sai do widget
+  · **SOS secreto no ecrã de bloqueio** — manter o escudo premido 3s:
+  anel vermelho de progresso, escudo fica vermelho, háptica crescente
+  (light → medium → heavy) e a contagem do Guardião abre POR CIMA do
+  bloqueio; sem Guardião armado, avisa sem disparar
+  · **Biometria auto-diagnosticada** — se a impressão digital for removida
+  nas definições do sistema, as Configurações avisam e sugerem re-enrolar
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na

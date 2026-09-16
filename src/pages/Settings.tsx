@@ -996,6 +996,16 @@ function AppLockSection() {
             />
           </div>
 
+          {/* biometria enrolada mas o sistema já não a tem (dedo apagado, etc.) */}
+          {cfg.biometric && !!cfg.biometricCredentialId && !bioAvail && (
+            <p className="flex items-start gap-1.5 text-[11px] text-amber-400/90 leading-snug px-1">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+              A biometria deixou de estar disponível (impressão digital removida
+              nas definições do sistema?). O PIN continua a funcionar — volta a
+              activar a biometria para re-enrolar.
+            </p>
+          )}
+
           {/* auto-lock ao sair da app */}
           <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
             <div className="flex items-start gap-3 min-w-0">
