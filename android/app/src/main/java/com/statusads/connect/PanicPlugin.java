@@ -71,6 +71,9 @@ public class PanicPlugin extends Plugin {
             } else {
                 getContext().stopService(new Intent(getContext(), GuardianService.class));
             }
+
+            // Widget "Aegis SOS" (v3.25.0): reflecte o estado em tempo real
+            AegisWidgetProvider.updateAll(getContext());
             call.resolve();
         } catch (Exception e) {
             call.reject("Falha ao sincronizar o Guardião: " + e.getMessage());

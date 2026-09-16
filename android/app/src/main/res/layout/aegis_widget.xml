@@ -20,15 +20,17 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/widget_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/widget_title"
-            android:textColor="#D4AF37"
+            android:text="@string/widget_status_off"
+            android:textColor="#9CA3AF"
             android:textSize="13sp"
             android:textStyle="bold"
             android:letterSpacing="0.08" />
 
         <TextView
+            android:id="@+id/widget_status_sub"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"

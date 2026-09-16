@@ -11,10 +11,11 @@
     <string name="shortcut_sos_disabled">SOS indisponível</string>
     <string name="tile_sos_label">SOS Guardião</string>
 
-    <!-- Widget "Aegis SOS" (v3.24.0) -->
-    <string name="widget_title">AEGIS · GUARDIÃO</string>
+    <!-- Widget "Aegis SOS" (v3.24.0, dinâmico v3.25.0) -->
+    <string name="widget_status_off">GUARDIÃO INACTIVO</string>
     <string name="widget_subtitle">Toque no SOS para disparar protecção</string>
     <string name="widget_sos">SOS</string>
+    <string name="widget_label">Aegis SOS</string>
     <string name="widget_desc">SOS do Guardião no ecrã inicial — contagem decrescente num toque</string>
 
     <!-- Modo Guardião: sentinela 24/7 (GuardianService) -->

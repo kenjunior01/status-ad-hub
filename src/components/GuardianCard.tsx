@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, ShieldOff, Mic, VolumeX, Smartphone, Vibrate,
   ChevronDown, Hand, Power, Link as LinkIcon, Loader2, BellRing,
-  BatteryWarning, ChevronRight, Users, Headphones, Check,
+  BatteryWarning, ChevronRight, Users, Headphones, Check, LayoutGrid,
 } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { useGuardian } from '@/hooks/useGuardian'
@@ -394,6 +394,15 @@ function GuardianDetails({ config, update }: {
                 A notificação discreta <b className="text-white/70">«Protecção activa»</b> mantém a sentinela
                 viva 24/7 — <b className="text-white/70">funciona mesmo com a app fechada</b> e religa-se
                 sozinha ao reiniciar o telemóvel. Não a deslize.
+              </p>
+            </div>
+            {/* Widget dinâmico (v3.25.0): dica de descoberta, só APK */}
+            <div className="flex items-start gap-2.5 p-2 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <LayoutGrid className="h-3.5 w-3.5 text-brand/80 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-white/50 leading-relaxed">
+                <b className="text-white/70">Widget «Aegis SOS»</b>: adiciona-o ao ecrã inicial
+                (long-press no fundo → Widgets) — mostra o estado do Guardião em tempo
+                real e dispara o SOS num toque.
               </p>
             </div>
             {batteryExempt === false && (
