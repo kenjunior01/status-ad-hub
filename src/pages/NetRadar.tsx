@@ -33,7 +33,7 @@
 import { useMemo, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, Wifi, WifiOff,
-  ShieldAlert, Info, Radio, Signal, Bluetooth, ScanLine, Gauge,
+  ShieldAlert, Info, Signal, Bluetooth, ScanLine, Gauge,
   Network, Smartphone, ChevronDown, ChevronUp, MapPin, Clock, AlertTriangle,
   History, Search, Download, BarChart3, TrendingUp, TrendingDown, MoveRight,
 } from 'lucide-react'
@@ -51,6 +51,8 @@ import {
   bleScanNowSafe, type BleQuickDevice,
 } from '@/components/net/net-shared'
 import TacticalNetRadar from '@/components/net/TacticalNetRadar'
+import { PullToRefresh } from '@/components/native/PullToRefresh'
+import { RadarSkeleton } from '@/components/net/RadarSkeleton'
 import type { WifiRadarNetwork, WifiRegistryEntry } from '@/lib/net-radar'
 import {
   analyzeChannelCongestion, classifyWifiNetwork, wifiVendor, rssiTrend, topChannels,
@@ -188,7 +190,7 @@ function NetRadarWeb() {
   }
 
   return (
-    <div className="min-h-screen space-y-6 pb-8">
+    <PullToRefresh onRefresh={handleScan} className="min-h-screen space-y-6 pb-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -380,10 +382,7 @@ function NetRadarWeb() {
             </p>
           )}
           {networks.length === 0 && scanning && (
-            <p className="px-5 py-8 text-center text-xs text-white/40">
-              <Radio className="h-4 w-4 inline mr-1.5 text-brand animate-pulse" />
-              A capturar pacotes de beacon…
-            </p>
+            <RadarSkeleton rows={6} />
           )}
           {networks.map((n) => (
             <WifiRow key={n.bssid} net={n} />
@@ -571,7 +570,7 @@ function NetRadarWeb() {
         registry={registry}
         onClear={() => { clearRegistry(); toast.info('Registo de redes apagado') }}
       />
-    </div>
+    </PullToRefresh>
   )
 }
 

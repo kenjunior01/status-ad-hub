@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Bell, Menu, ChevronRight, ShieldAlert,
   WifiOff, RefreshCw, Database,
+  Phone, Volume2, VolumeX, Share2, Radar, ShieldCheck, ArrowUpRight,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { NoiseTexture } from '@/components/effects'
 import { useEmergencyAlerts } from '@/hooks/useEmergencyAlerts'
@@ -18,6 +20,9 @@ import { FallDetectionOverlay, useFallDetectionKeepAlive, registerFallSosHandler
 import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
 import { FeatureTour } from '@/components/FeatureTour'
+import { useRadarWatch } from '@/hooks/useRadarWatch'
+import { shareLocation } from '@/lib/share'
+import { startEmergencyAlarm, stopEmergencyAlarm, isAlarmPlaying } from '@/lib/emergency-alarm'
 import { useEmergency } from '@/hooks/useEmergency'
 import { bottomNav } from '@/lib/dashboard-nav'
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
@@ -67,6 +72,101 @@ export default function DashboardLayout() {
   const offlineQueue = useOfflineQueue()
   const hasAlerts = alertCount > 0
   const hasActiveEmergency = activeEmergency?.status === 'active'
+
+  // ── v3.20.0 — LONG-PRESS NA DOCK = ações rápidas (estilo app nativa) ──
+  const [sheet, setSheet] = useState<{ title: string; kind: 'nav' | 'sos'; to?: string } | null>(null)
+  const pressTimer = useRef<number | null>(null)
+  const suppressNextClick = useRef(false)
+  const radarWatch = useRadarWatch()
+  const [alarmOn, setAlarmOn] = useState(false)
+
+  const clearPress = () => {
+    if (pressTimer.current) {
+      window.clearTimeout(pressTimer.current)
+      pressTimer.current = null
+    }
+  }
+
+  /** inicia o temporizador de long-press (450ms) → abre a folha de ações */
+  const startPress = (title: string, kind: 'nav' | 'sos', to?: string) => () => {
+    suppressNextClick.current = false
+    clearPress()
+    pressTimer.current = window.setTimeout(() => {
+      suppressNextClick.current = true
+      void haptic('medium')
+      if (kind === 'sos') setAlarmOn(isAlarmPlaying())
+      setSheet({ title, kind, to })
+    }, 450)
+  }
+
+  /** ignora o clique que se segue a um long-press (para não navegar) */
+  const clickGuard = (e: MouseEvent) => {
+    if (suppressNextClick.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      suppressNextClick.current = false
+    }
+  }
+
+  const closeSheet = () => setSheet(null)
+
+  const toggleSentinel = () => {
+    const next = radarWatch.toggle()
+    void haptic('light')
+    toast.success(next ? 'Sentinela ACTIVADA — vigilância contínua' : 'Sentinela desactivada', {
+      description: next ? 'A app escaneia o ambiente a cada 45s.' : undefined,
+    })
+    closeSheet()
+  }
+
+  const verifyNow = async () => {
+    void haptic('light')
+    closeSheet()
+    toast.info('A verificar o ambiente…')
+    try {
+      await radarWatch.runOnce()
+      toast.success('Verificação concluída — diário de segurança actualizado')
+    } catch {
+      toast.error('Não foi possível verificar o ambiente agora')
+    }
+  }
+
+  const shareNow = async () => {
+    void haptic('light')
+    closeSheet()
+    toast.info('A obter a localização…')
+    const pos = await geoGetCurrent(8_000).catch(() => null)
+    if (!pos) {
+      toast.error('Sem GPS disponível — tente ao ar livre')
+      return
+    }
+    const ok = await shareLocation({
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      accuracy: pos.accuracy,
+      deviceName: 'StatusAds Connect',
+    })
+    if (!ok) toast.error('Não foi possível partilhar a localização')
+  }
+
+  const toggleAlarm = () => {
+    if (alarmOn) {
+      stopEmergencyAlarm()
+      setAlarmOn(false)
+      toast.success('Sirene desligada')
+    } else {
+      startEmergencyAlarm()
+      setAlarmOn(true)
+      void haptic('heavy')
+      toast.success('Sirene de emergência ACTIVA')
+    }
+  }
+
+  const call112 = () => {
+    void haptic('heavy')
+    closeSheet()
+    window.location.href = 'tel:112'
+  }
 
   // Liga a deteção de queda ao motor de emergência global.
   // A queda dispara SOS real (GPS + SMS + push) exactamente como o botão.
@@ -225,7 +325,16 @@ export default function DashboardLayout() {
             const active = isActive(item.to)
             if (item.isSOS) {
               return (
-                <NavLink key={item.to} to={item.to} className="aegis-dock-sos">
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="aegis-dock-sos"
+                  onTouchStart={startPress(item.label, 'sos', item.to)}
+                  onTouchEnd={clearPress}
+                  onTouchMove={clearPress}
+                  onClickCapture={clickGuard}
+                  aria-label="SOS — toque para emergências, manter premido para ações"
+                >
                   <div className="aegis-dock-sos-btn">
                     {/* anel de emissão contínuo — o SOS nunca passa despercebido */}
                     <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-red-500/60 sos-ring" />
@@ -236,8 +345,23 @@ export default function DashboardLayout() {
               )
             }
             return (
-              <NavLink key={item.to} to={item.to} className="aegis-dock-item">
-                {active && <span className="aegis-dock-pill" />}
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="aegis-dock-item"
+                onTouchStart={startPress(item.label, 'nav', item.to)}
+                onTouchEnd={clearPress}
+                onTouchMove={clearPress}
+                onClickCapture={clickGuard}
+                aria-label={`${item.label} — toque para abrir, manter premido para ações`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="aegis-dock-pill"
+                    className="aegis-dock-pill"
+                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                  />
+                )}
                 <IconComp
                   className={cn('h-[22px] w-[22px] transition-colors duration-200', active ? 'text-brand gold-glow' : 'text-white/30')}
                   strokeWidth={active ? 2.1 : 1.6}
@@ -249,6 +373,120 @@ export default function DashboardLayout() {
         </div>
       </nav>
       )}
+
+      {/* ── FOLHA DE AÇÕES RÁPIDAS (v3.20.0) — aberta por long-press na dock ── */}
+      <AnimatePresence>
+        {sheet && (
+          <>
+            <motion.div
+              key="aegis-sheet-backdrop"
+              className="aegis-sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeSheet}
+            />
+            <motion.div
+              key="aegis-sheet"
+              className="aegis-sheet"
+              role="menu"
+              aria-label={`Ações rápidas — ${sheet.title}`}
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '110%' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+            >
+              <div className="aegis-sheet-handle" />
+              <p className="text-center text-[10px] uppercase tracking-[0.25em] text-white/35 mb-2">
+                Ações rápidas · {sheet.title}
+              </p>
+              {sheet.kind === 'sos' ? (
+                <>
+                  <button type="button" className="aegis-sheet-row" onClick={call112}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/25 bg-red-500/10">
+                      <Phone className="h-4.5 w-4.5 text-red-400" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Ligar 112</span>
+                      <span className="block text-[10.5px] text-white/40">Emergência nacional — chamada direta</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
+                  <button type="button" className="aegis-sheet-row" onClick={toggleAlarm}>
+                    <span className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-xl border',
+                      alarmOn ? 'border-red-500/30 bg-red-500/15' : 'bg-white/[0.04] border-white/[0.07]'
+                    )}>
+                      {alarmOn ? <VolumeX className="h-4.5 w-4.5 text-red-400" /> : <Volume2 className="h-4.5 w-4.5 text-white/60" />}
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">{alarmOn ? 'Desligar sirene' : 'Sirene de emergência'}</span>
+                      <span className="block text-[10.5px] text-white/40">{alarmOn ? 'A tocar — toque para parar' : 'Som alto para afastar agressores'}</span>
+                    </span>
+                    {alarmOn && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+                  </button>
+                  <button type="button" className="aegis-sheet-row" onClick={() => void shareNow()}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                      <Share2 className="h-4.5 w-4.5 text-white/60" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Partilhar localização</span>
+                      <span className="block text-[10.5px] text-white/40">Enviar GPS actual a quem confia</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="aegis-sheet-row" onClick={() => { void haptic('light'); closeSheet(); navigate(sheet.to ?? '/dashboard') }}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-brand/10 border-brand/25">
+                      <ArrowUpRight className="h-4.5 w-4.5 text-brand" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Abrir {sheet.title}</span>
+                      <span className="block text-[10.5px] text-white/40">Ir directamente para o ecrã</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
+                  <button type="button" className="aegis-sheet-row" onClick={toggleSentinel}>
+                    <span className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-xl border',
+                      radarWatch.watching ? 'border-emerald-500/25 bg-emerald-500/10' : 'bg-white/[0.04] border-white/[0.07]'
+                    )}>
+                      <ShieldCheck className={cn('h-4.5 w-4.5', radarWatch.watching ? 'text-emerald-400' : 'text-white/60')} />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">{radarWatch.watching ? 'Sentinela ACTIVA — desactivar' : 'Activar Sentinela'}</span>
+                      <span className="block text-[10.5px] text-white/40">Vigilância Wi-Fi + BLE a cada 45s</span>
+                    </span>
+                    {radarWatch.watching && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
+                  </button>
+                  <button type="button" className="aegis-sheet-row" onClick={() => void verifyNow()}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                      <Radar className="h-4.5 w-4.5 text-white/60" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Verificar ambiente agora</span>
+                      <span className="block text-[10.5px] text-white/40">Scan único + análise de ameaças</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
+                  <button type="button" className="aegis-sheet-row" onClick={() => { void haptic('light'); closeSheet(); navigate('/dashboard/seguranca') }}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] border-white/[0.07]">
+                      <Shield className="h-4.5 w-4.5 text-white/60" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Central de Segurança</span>
+                      <span className="block text-[10.5px] text-white/40">Diário, locais conhecidos e veredicto</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <OnboardingWizard />
       <FeatureTour />

@@ -42,6 +42,8 @@ import {
   type ChannelCongestion,
 } from '@/lib/net-intel'
 import { toast } from 'sonner'
+import { PullToRefresh } from '@/components/native/PullToRefresh'
+import { RadarSkeleton } from '@/components/net/RadarSkeleton'
 
 const INTERVALS = [
   { value: 30, label: '30S' },
@@ -151,14 +153,14 @@ export default function TacticalNetRadar() {
   }
 
   return (
-    <div className="tactical relative min-h-screen pb-10 -mx-4 px-4 sm:-mx-6 sm:px-6">
+    <PullToRefresh onRefresh={scan} className="tactical relative min-h-screen pb-10 -mx-4 px-4 sm:-mx-6 sm:px-6">
       {/* linha de scan global */}
       <div className="tac-scanline" />
 
       {/* ── Cabeçalho HUD ─────────────────────────────────────────── */}
       <div className="relative z-10 pt-2 flex items-start justify-between gap-3">
         <div>
-          <p className="tac-label mb-1">Signal Surveillance Grid · v3.18</p>
+          <p className="tac-label mb-1">Signal Surveillance Grid · v3.20</p>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Radar className="w-5 h-5" style={{ color: 'var(--tac-green)' }} />
             <span className="tracking-[0.18em]">RADAR DE REDES</span>
@@ -353,9 +355,12 @@ export default function TacticalNetRadar() {
           <Radio className="h-3.5 w-3.5" style={{ color: 'var(--tac-green)' }} />
           <p className="tac-label">espectro wi-fi · {networks.length} redes</p>
         </div>
-        {networks.length === 0 && (
+        {networks.length === 0 && scanning && (
+          <RadarSkeleton rows={6} variant="tac" />
+        )}
+        {networks.length === 0 && !scanning && (
           <p className="px-4 py-8 text-center text-[11px] text-emerald-100/30 tracking-wider">
-            {scanning ? 'A CAPTURAR PACOTES DE BEACON…' : 'PRIMA ESCANEAR PARA MAPEAR O AMBIENTE'}
+            PRIMA ESCANEAR PARA MAPEAR O AMBIENTE
           </p>
         )}
         <div className="max-h-[380px] overflow-y-auto">
@@ -497,7 +502,7 @@ export default function TacticalNetRadar() {
       <p className="relative z-10 mt-5 text-center text-[9px] tracking-[0.25em] text-emerald-100/25">
         STATUSADS TACTICAL GRID · CAPTAÇÃO PASSIVA SEM LIGAÇÃO A REDES
       </p>
-    </div>
+    </PullToRefresh>
   )
 }
 

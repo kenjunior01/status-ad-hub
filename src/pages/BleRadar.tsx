@@ -20,7 +20,7 @@ import { useMemo, useState } from 'react'
 import {
   Radar, Play, Square, Trash2, CloudUpload, Satellite, MapPin,
   Smartphone, Car, Headphones, Watch, Navigation, Info, ShieldAlert,
-  Bluetooth, BluetoothOff, Activity, ChevronDown, ChevronUp, Clock,
+  Bluetooth, BluetoothOff, ChevronDown, ChevronUp, Clock,
   Siren, Download, History, Search, Plus,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -34,6 +34,8 @@ import { rssiBars, distanceLabel } from '@/lib/ble-radar'
 import type { BleRadarDevice, BleTrailPoint } from '@/lib/ble-radar'
 import { exportBleRegistry } from '@/lib/export-data'
 import { classifyBleDevice, bleKindLabel } from '@/lib/net-intel'
+import { PullToRefresh } from '@/components/native/PullToRefresh'
+import { RadarSkeleton } from '@/components/net/RadarSkeleton'
 import { toast } from 'sonner'
 
 const INTERVALS = [
@@ -127,7 +129,7 @@ export default function BleRadar() {
   const uniqueMacs = new Set(trail.flatMap((p) => (p.d || []).map((d) => d.mac))).size
 
   return (
-    <div className="min-h-screen space-y-6 pb-8">
+    <PullToRefresh onRefresh={scan} className="min-h-screen space-y-6 pb-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -254,10 +256,7 @@ export default function BleRadar() {
             </p>
           )}
           {devices.length === 0 && scanning && (
-            <p className="px-5 py-8 text-center text-xs text-white/40 animate-pulse">
-              <Activity className="h-4 w-4 inline mr-1.5 text-brand" />
-              À escuta de sinais Bluetooth…
-            </p>
+            <RadarSkeleton rows={6} />
           )}
           {devices.map((d) => (
             <DeviceRow key={d.mac} device={d} />
@@ -371,7 +370,7 @@ export default function BleRadar() {
         registry={registry}
         onClear={() => { clearRegistry(); toast.info('Registo Bluetooth apagado') }}
       />
-    </div>
+    </PullToRefresh>
   )
 }
 

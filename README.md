@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.19.0
+# 🛡️ StatusAds Connect v3.20.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -48,6 +48,22 @@ gateways de pagamento ou SMS.
   **háptica leve a cada mudança de ecrã**, **transições suaves entre
   páginas**, **splash animada** no arranque (logo + anéis + barra de
   progresso) e respeito pela safe-area da status bar
+- **Gestos nativos (v3.20.0)** — a app agora responde como um app nativa
+  de topo:
+  · **Pull-to-refresh** nos radares Wi-Fi e BLE — puxa para baixo para
+  re-escanear o ambiente, com anel dourado, háptica ao cruzar o limiar e
+  refresh confirmado com vibração (funciona também na web mobile)
+  · **Long-press na dock = ações rápidas** — manter premido qualquer item
+  da barra flutuante abre uma bottom-sheet com atalhos reais: Sentinela
+  ON/OFF, verificação imediata do ambiente, Central de Segurança; no SOS:
+  **Ligar 112**, **sirene de emergência** (liga/desliga) e **partilhar
+  localização GPS** — tudo com háptica e transição spring nativa
+  · **Skeleton de radar** — enquanto o scan captura pacotes de beacon, a
+  lista mostra linhas fantasma com shimmer no ritmo do radar (dourado na
+  web, verde-tático na APK) em vez de texto parado
+  · **Pílula da dock com física spring** — o indicador dourado desliza
+  suavemente entre itens (layout animation) e os itens afundam ao toque
+  (press tátil estilo Material)
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
