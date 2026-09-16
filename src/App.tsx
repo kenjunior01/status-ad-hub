@@ -22,6 +22,7 @@ import { DeadMansSwitchProvider } from '@/hooks/useDeadMansSwitch'
 import { NightSafetyProvider } from '@/hooks/useNightSafety'
 import { TripTrackingProvider } from '@/hooks/useTripTracking'
 import { AntiCoercionProvider, useAntiCoercion } from '@/hooks/useAntiCoercion'
+import { AppLockOverlay } from '@/components/security/AppLockOverlay'
 import { FakeDashboard } from '@/components/FakeDashboard'
 import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
 import { PanicModeOverlay } from '@/components/PanicModeOverlay'
@@ -212,6 +213,8 @@ function InnerApp() {
         </Suspense>
       </ErrorBoundary>
       {/* Overlays render ABOVE the global ErrorBoundary — always accessible */}
+      {/* v3.23.0 — bloqueio de app: acima do conteúdo, abaixo dos overlays de emergência */}
+      <AppLockOverlay />
       <GlassesOverlayWrapper />
       <PanicModeOverlay />
       <DiscreetModeOverlay />

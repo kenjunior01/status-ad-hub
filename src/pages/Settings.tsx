@@ -6,7 +6,7 @@ import {
   Crosshair, Navigation, Key, MessageSquare, Wifi, AlertTriangle, CheckCircle2,
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
-  ShieldAlert, KeyRound, Palette, Mail, Vibrate, Hand,
+  ShieldAlert, KeyRound, Palette, Mail, Vibrate, Hand, Fingerprint, Timer,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { haptic, hapticsEnabled, setHapticsEnabled, swipeNavEnabled, setSwipeNavEnabled } from '@/lib/native'
@@ -34,9 +34,23 @@ import { useSmartGlasses } from '@/hooks/useSmartGlasses'
 import { useAntiCoercion } from '@/hooks/useAntiCoercion'
 import { getEmailConfig, setEmailConfig, clearEmailConfig, sendSmtpEmail } from '@/lib/email'
 import { useTheme, THEMES } from '@/hooks/useTheme'
+import {
+  appLockEvents,
+  biometricAvailable,
+  clearPin,
+  getAppLockConfig,
+  isValidPin,
+  lockNow,
+  markUnlocked,
+  saveAppLockConfig,
+  setPin,
+  enrollBiometric,
+  verifyPin,
+  type AppLockConfig,
+} from '@/lib/app-lock'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'applock' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
@@ -46,6 +60,7 @@ const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'email', title: 'Email de Emergencia (Gmail)', icon: Mail },
   { id: 'integracoes', title: 'Integracoes', icon: Key },
   { id: 'privacidade', title: 'Privacidade', icon: Lock },
+  { id: 'applock', title: 'Bloqueio de App', icon: Fingerprint },
   { id: 'plano', title: 'Plano', icon: CreditCard },
   { id: 'dispositivos', title: 'Dispositivos Pareados', icon: Bluetooth },
   { id: 'zona', title: 'Zona de Emergencia', icon: MapPin },
@@ -767,6 +782,310 @@ function ThemeSection() {
   )
 }
 
+// ============================================
+// BLOQUEIO DE APP (v3.23.0) — PIN + biometria + auto-lock
+// ============================================
+type PinStage = 'idle' | 'enter-old' | 'enter-new' | 'confirm-new' | 'remove-confirm'
+
+function AppLockSection() {
+  const [cfg, setCfg] = useState<AppLockConfig>(() => getAppLockConfig())
+  const [bioAvail, setBioAvail] = useState(false)
+  const [stage, setStage] = useState<PinStage>('idle')
+  const [firstPin, setFirstPin] = useState('')
+  const [pinValue, setPinValue] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    void biometricAvailable().then(setBioAvail)
+    return appLockEvents.on((type) => {
+      if (type === 'config' || type === 'lock' || type === 'unlock') setCfg(getAppLockConfig())
+    })
+  }, [])
+
+  const hasPin = !!cfg.pinHash
+  const patch = (p: Partial<AppLockConfig>) => {
+    saveAppLockConfig(p)
+    setCfg(getAppLockConfig())
+  }
+
+  const resetFlow = () => {
+    setStage('idle')
+    setFirstPin('')
+    setPinValue('')
+  }
+
+  const submitPin = async () => {
+    if (busy) return
+    void haptic('light')
+
+    if (stage === 'enter-old') {
+      setBusy(true)
+      const ok = await verifyPin(pinValue)
+      setBusy(false)
+      if (!ok) {
+        void haptic('heavy')
+        toast.error('PIN actual incorrecto')
+        setPinValue('')
+        return
+      }
+      setPinValue('')
+      setStage('enter-new')
+      return
+    }
+
+    if (stage === 'enter-new') {
+      if (!isValidPin(pinValue)) {
+        void haptic('heavy')
+        toast.error('O PIN deve ter 4 a 6 dígitos numéricos')
+        return
+      }
+      setFirstPin(pinValue)
+      setPinValue('')
+      setStage('confirm-new')
+      return
+    }
+
+    if (stage === 'confirm-new') {
+      if (pinValue !== firstPin) {
+        void haptic('heavy')
+        toast.error('Os PINs não coincidem — começa de novo')
+        setPinValue('')
+        setFirstPin('')
+        setStage('enter-new')
+        return
+      }
+      setBusy(true)
+      const ok = await setPin(pinValue)
+      setBusy(false)
+      if (!ok) {
+        toast.error('PIN inválido')
+        return
+      }
+      markUnlocked()
+      void haptic('medium')
+      toast.success('PIN definido — a app fica protegida')
+      resetFlow()
+    }
+  }
+
+  const onBioToggle = async (v: boolean) => {
+    void haptic('light')
+    if (v) {
+      const credId = await enrollBiometric()
+      if (credId) {
+        patch({ biometric: true, biometricCredentialId: credId })
+        toast.success('Biometria activada')
+      } else {
+        toast.error('Biometria não concluída — tenta de novo')
+      }
+    } else {
+      patch({ biometric: false, biometricCredentialId: null })
+      toast.success('Biometria desactivada')
+    }
+  }
+
+  const onRemovePin = () => {
+    if (stage !== 'remove-confirm') {
+      setStage('remove-confirm')
+      window.setTimeout(() => setStage((s) => (s === 'remove-confirm' ? 'idle' : s)), 4000)
+      return
+    }
+    clearPin()
+    resetFlow()
+    toast.success('Bloqueio removido')
+  }
+
+  const flow = stage === 'enter-old' || stage === 'enter-new' || stage === 'confirm-new'
+
+  return (
+    <div className="space-y-3">
+      {/* estado actual */}
+      <div className="flex items-start gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 border border-brand/20">
+          <Fingerprint className="h-4.5 w-4.5 text-brand" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-white/85">Bloqueio da app</p>
+          <p className="text-[11px] text-white/30 mt-0.5 leading-snug">
+            {hasPin
+              ? 'PIN activo neste dispositivo. O PIN nunca sai do telemóvel (hash local).'
+              : 'Protege a app com um PIN de 4-6 dígitos e desbloqueio biométrico.'}
+          </p>
+        </div>
+        {hasPin && (
+          <Switch
+            checked={cfg.enabled}
+            onCheckedChange={(v) => { void haptic('light'); patch({ enabled: v }) }}
+            aria-label="Bloqueio da app"
+          />
+        )}
+      </div>
+
+      {/* criar PIN */}
+      {!hasPin && stage === 'idle' && (
+        <Button
+          onClick={() => { void haptic('light'); setStage('enter-new') }}
+          className="w-full gap-2 bg-brand/15 text-brand border border-brand/25 hover:bg-brand/25 rounded-xl text-xs"
+        >
+          <Fingerprint className="h-3.5 w-3.5" /> Activar bloqueio com PIN
+        </Button>
+      )}
+
+      {/* fluxo de PIN */}
+      {flow && (
+        <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] space-y-3">
+          <p className="text-xs font-medium text-white/70">
+            {stage === 'enter-old' && 'Confirma o PIN actual'}
+            {stage === 'enter-new' && 'Escolhe um novo PIN (4-6 dígitos)'}
+            {stage === 'confirm-new' && 'Repete o PIN para confirmar'}
+          </p>
+          <Input
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            autoFocus
+            maxLength={6}
+            value={pinValue}
+            onChange={(e) => setPinValue(e.target.value.replace(/[^0-9]/g, ''))}
+            onKeyDown={(e) => { if (e.key === 'Enter') void submitPin() }}
+            placeholder="••••"
+            className="text-center tracking-[0.5em] text-lg bg-white/[0.04] border-white/10"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={() => { void haptic('light'); resetFlow() }}
+              variant="ghost"
+              className="flex-1 text-white/50 rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => void submitPin()}
+              disabled={busy || pinValue.length < 4}
+              className="flex-1 gap-1.5 bg-brand/15 text-brand border border-brand/25 hover:bg-brand/25 rounded-xl text-xs"
+            >
+              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {hasPin && (
+        <>
+          {/* biometria */}
+          <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                <Fingerprint className={cn('h-4.5 w-4.5', bioAvail ? 'text-white/70' : 'text-white/20')} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white/85">Desbloqueio biométrico</p>
+                <p className="text-[11px] text-white/30 mt-0.5 leading-snug">
+                  {bioAvail
+                    ? 'Usa a impressão digital / face do dispositivo.'
+                    : 'Não disponível neste dispositivo ou contexto.'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={cfg.biometric && !!cfg.biometricCredentialId}
+              disabled={!bioAvail}
+              onCheckedChange={(v) => void onBioToggle(v)}
+              aria-label="Desbloqueio biométrico"
+            />
+          </div>
+
+          {/* auto-lock ao sair da app */}
+          <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                <Lock className="h-4.5 w-4.5 text-white/60" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white/85">Bloquear ao sair da app</p>
+                <p className="text-[11px] text-white/30 mt-0.5 leading-snug">
+                  Pede o PIN quando voltas de outro aplicativo.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={cfg.lockOnBackground}
+              onCheckedChange={(v) => { void haptic('light'); patch({ lockOnBackground: v }) }}
+              aria-label="Bloquear ao sair da app"
+            />
+          </div>
+
+          {/* tempo de auto-lock */}
+          {cfg.lockOnBackground && (
+            <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <Timer className="h-3.5 w-3.5 text-white/30" />
+                <span className="text-xs font-medium text-white/50">Pede PIN após estar em segundo plano</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([0, 1, 5] as const).map((m) => {
+                  const active = cfg.autoLockMinutes === m
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => { void haptic('light'); patch({ autoLockMinutes: m }) }}
+                      className={cn(
+                        'py-2.5 rounded-xl border text-xs font-medium transition-all active:scale-95',
+                        active
+                          ? 'bg-brand/15 border-brand/30 text-brand'
+                          : 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/60',
+                      )}
+                    >
+                      {m === 0 ? 'Imediato' : `${m} min`}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-[10px] text-white/20 mt-2.5 leading-snug">
+                Em «Imediato» o ecrã de bloqueio aparece já no seletor de apps.
+              </p>
+            </div>
+          )}
+
+          {/* acções */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button
+              onClick={() => { void haptic('medium'); lockNow() }}
+              className="gap-2 bg-white/[0.03] text-white/70 border border-white/[0.08] hover:bg-white/[0.06] rounded-xl text-xs"
+            >
+              <Lock className="h-3.5 w-3.5" /> Bloquear agora
+            </Button>
+            <Button
+              onClick={() => { void haptic('light'); setPinValue(''); setStage('enter-old') }}
+              className="gap-2 bg-white/[0.03] text-white/70 border border-white/[0.08] hover:bg-white/[0.06] rounded-xl text-xs"
+            >
+              <KeyRound className="h-3.5 w-3.5" /> Alterar PIN
+            </Button>
+          </div>
+          <Button
+            onClick={onRemovePin}
+            className={cn(
+              'w-full gap-2 rounded-xl text-xs border',
+              stage === 'remove-confirm'
+                ? 'bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/25'
+                : 'bg-transparent text-red-400/60 border-red-500/15 hover:bg-red-500/10 hover:text-red-300',
+            )}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {stage === 'remove-confirm' ? 'Toca de novo para confirmar' : 'Remover PIN e bloqueio'}
+          </Button>
+
+          <p className="text-[11px] text-white/20 flex items-start gap-1.5 leading-snug">
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-px" />
+            Se tens Senha Anti-Coerção, introduzi-la aqui desbloqueia em modo fantasma — sem levantar suspeitas.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
 /** Secção Interacção Tátil (v3.21.0) — háptica e swipe, por dispositivo */
 function InteractionSection() {
   const [hap, setHap] = useState(hapticsEnabled())
@@ -1484,6 +1803,7 @@ export default function Settings() {
                             </Button>
                           </div>
                         </div>}
+                        {section.id === 'applock' && <AppLockSection />}
                         {section.id === 'dispositivos' && (
                           <div className="space-y-2">
                             {pairedDevices.length === 0 ? (

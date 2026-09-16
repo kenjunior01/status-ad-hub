@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.22.0
+# 🛡️ StatusAds Connect v3.23.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -93,6 +93,23 @@ gateways de pagamento ou SMS.
   MAC, partilhar detalhes e esquecer dispositivo
   · **copyText() robusto** — clipboard assíncrono com fallback clássico
   (funciona na WebView da APK e em browsers restritos)
+- **Bloqueio de App (v3.23.0)** — a app fecha-se a chave, à maneira nativa:
+  · **PIN 4-6 dígitos com hash local** — SHA-256 + salt aleatório por
+  dispositivo; o PIN nunca sai do telemóvel (nada vai para a nuvem)
+  · **Biometria WebAuthn** — desbloqueio por impressão digital / face:
+  na APK usa o sensor do próprio Android (platform authenticator); na
+  web usa Touch ID / Face ID / Windows Hello quando disponível
+  · **Auto-lock ao sair da app** — bloqueia ao voltar de outro aplicativo
+  (imediato, 1 min ou 5 min); em «Imediato» o ecrã de bloqueio aparece já
+  no seletor de apps recentes, a cobrir o conteúdo
+  · **Teclado nativo** — keycaps com ink ripple, háptica em camadas,
+  pontos animados com spring, shake + registo de tentativas, e pausa
+  anti-força-bruta de 15s após 5 erros
+  · **Duress integrado** — o PIN anti-coerção desbloqueia em silêncio e
+  entra em modo fantasma (painel falso), sem levantar suspeitas
+  · **Emergência sempre acessível** — botão 112 no próprio ecrã de
+  bloqueio; os overlays Guardião, Chamada Falsa, Pânico e Discreto
+  continuam por cima do bloqueio, nunca presos atrás dele
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
