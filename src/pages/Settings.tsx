@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Bell, Lock, CreditCard, Bluetooth, MapPin, Info, ChevronDown, ChevronUp,
@@ -7,6 +7,7 @@ import {
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
   ShieldAlert, KeyRound, Palette, Mail, Vibrate, Hand, Fingerprint, Timer,
+  DatabaseBackup, FileJson, Upload,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { haptic, hapticsEnabled, setHapticsEnabled, swipeNavEnabled, setSwipeNavEnabled } from '@/lib/native'
@@ -48,9 +49,18 @@ import {
   verifyPin,
   type AppLockConfig,
 } from '@/lib/app-lock'
+import {
+  applyBackup,
+  exportProfile,
+  parseBackupFile,
+  summarizeBackup,
+  unlockBackup,
+  type BackupGroup,
+  type ParsedBackup,
+} from '@/lib/profile-backup'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'applock' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'applock' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'backup' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
@@ -69,6 +79,7 @@ const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'erros', title: 'Erros e Diagnostico', icon: Bug },
   { id: 'oculos', title: 'Oculos Inteligentes', icon: Glasses },
   { id: 'anti-coercao', title: 'Senha Anti-Coercao', icon: ShieldAlert },
+  { id: 'backup', title: 'Backup & Restauro', icon: DatabaseBackup },
   { id: 'sobre', title: 'Sobre', icon: Info },
 ]
 
@@ -1144,6 +1155,297 @@ function InteractionSection() {
       <p className="text-[11px] text-white/20 flex items-center gap-1.5 px-1 pt-1">
         <Vibrate className="h-3 w-3" />
         As preferências ficam guardadas neste dispositivo.
+      </p>
+    </div>
+  )
+}
+
+// ── Backup & Restauro do Perfil Local (v3.26.0) ─────────────────────────────
+
+function BackupSection() {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [encOn, setEncOn] = useState(true)
+  const [pass, setPass] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [busy, setBusy] = useState<'export' | 'parse' | 'unlock' | 'apply' | null>(null)
+
+  const [parsed, setParsed] = useState<ParsedBackup | null>(null)
+  const [data, setData] = useState<Record<string, string> | null>(null)
+  const [importPass, setImportPass] = useState('')
+  const [importErr, setImportErr] = useState<string | null>(null)
+
+  const groups: BackupGroup[] = useMemo(() => (data ? summarizeBackup(data) : []), [data])
+
+  const resetImport = () => {
+    setParsed(null)
+    setData(null)
+    setImportPass('')
+    setImportErr(null)
+  }
+
+  const handleExport = async () => {
+    setBusy('export')
+    try {
+      const res = await exportProfile(encOn ? pass : '')
+      toast.success(`Perfil exportado (${res.items} itens) — ${res.file}`)
+      if (encOn) setPass('')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Falha ao exportar o perfil.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handlePick = async (f: File | null) => {
+    if (!f) return
+    setBusy('parse')
+    setImportErr(null)
+    try {
+      const p = await parseBackupFile(f)
+      setParsed(p)
+      if (p.encrypted) {
+        setData(null)
+        setImportPass('')
+      } else {
+        setData(p.data)
+      }
+    } catch (e) {
+      resetImport()
+      toast.error(e instanceof Error ? e.message : 'Ficheiro de backup inválido.')
+    } finally {
+      setBusy(null)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const handleUnlock = async () => {
+    if (!parsed) return
+    setBusy('unlock')
+    setImportErr(null)
+    try {
+      setData(await unlockBackup(parsed, importPass))
+    } catch (e) {
+      setImportErr(e instanceof Error ? e.message : 'Palavra-passe incorrecta.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleRestore = () => {
+    if (!data) return
+    setBusy('apply')
+    try {
+      const res = applyBackup(data)
+      toast.success(`Perfil restaurado (${res.applied} itens). A reiniciar…`)
+      setTimeout(() => location.reload(), 900)
+    } catch {
+      setBusy(null)
+      toast.error('Falha ao restaurar o perfil.')
+    }
+  }
+
+  const fmtDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })
+    } catch {
+      return iso
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* ── Exportar ── */}
+      <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 border border-brand/20">
+            <DatabaseBackup className="h-4.5 w-4.5 text-brand" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/85">Exportar Perfil Local</p>
+            <p className="text-[11px] text-white/30 mt-0.5 leading-relaxed">
+              Guarda num ficheiro as definições de segurança deste aparelho: Guardião, Bloqueio de App,
+              Anti-Coerção, PIN de desactivação do pânico, Chamada Falsa, Perfil Médico, tema e mais.
+              Contactos da conta, plano e sessões ficam no servidor — não saem daqui.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-white/75">Proteger com palavra-passe</p>
+            <p className="text-[11px] text-white/25 mt-0.5">
+              Recomendado — o ficheiro contém hashes de PINs e caches de contactos.
+            </p>
+          </div>
+          <Switch checked={encOn} onCheckedChange={setEncOn} aria-label="Cifrar backup" />
+        </div>
+
+        {encOn && (
+          <div className="relative">
+            <Input
+              type={showPass ? 'text' : 'password'}
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              placeholder="Palavra-passe do backup (mín. 4)"
+              className="pr-10 bg-white/[0.03] border-white/[0.08] text-sm"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+              aria-label={showPass ? 'Esconder palavra-passe' : 'Mostrar palavra-passe'}
+            >
+              {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        )}
+
+        <Button
+          onClick={handleExport}
+          disabled={busy === 'export' || (encOn && pass.trim().length < 4)}
+          className="w-full bg-brand hover:bg-brand-dark text-white rounded-xl gap-2 h-11 font-semibold text-sm"
+        >
+          {busy === 'export'
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> A exportar…</>
+            : <><Download className="h-4 w-4" /> Exportar Perfil</>}
+        </Button>
+      </div>
+
+      {/* ── Importar ── */}
+      <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            <FileJson className="h-4.5 w-4.5 text-white/60" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/85">Restaurar de Ficheiro</p>
+            <p className="text-[11px] text-white/30 mt-0.5 leading-relaxed">
+              Trocou de telemóvel ou limpou os dados? Importe o backup e recupere tudo numa passagem.
+            </p>
+          </div>
+        </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={(e) => void handlePick(e.target.files?.[0] ?? null)}
+        />
+
+        {!parsed && (
+          <Button
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy === 'parse'}
+            className="w-full gap-2 border-white/[0.08] bg-white/[0.03] text-white/60 hover:text-white/85 hover:bg-white/[0.06] rounded-xl h-11 text-sm"
+          >
+            {busy === 'parse'
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> A ler ficheiro…</>
+              : <><Upload className="h-4 w-4" /> Escolher ficheiro .json</>}
+          </Button>
+        )}
+
+        {parsed && parsed.encrypted && !data && (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2 text-[11px] text-amber-300/80">
+              <KeyRound className="h-3.5 w-3.5 shrink-0" />
+              Ficheiro cifrado — introduza a palavra-passe do backup.
+            </div>
+            <Input
+              type="password"
+              value={importPass}
+              onChange={(e) => { setImportPass(e.target.value); setImportErr(null) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && importPass.length > 0) void handleUnlock() }}
+              placeholder="Palavra-passe do backup"
+              className="bg-white/[0.03] border-white/[0.08] text-sm"
+              autoComplete="off"
+            />
+            {importErr && (
+              <p className="text-[11px] text-red-300/90 flex items-center gap-1.5">
+                <AlertTriangle className="h-3 w-3 shrink-0" /> {importErr}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUnlock}
+                disabled={busy === 'unlock' || importPass.length === 0}
+                className="flex-1 bg-brand hover:bg-brand-dark text-white rounded-xl gap-2 h-10 text-sm font-semibold"
+              >
+                {busy === 'unlock'
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> A descifrar…</>
+                  : <><KeyRound className="h-4 w-4" /> Descifrar</>}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={resetImport}
+                className="border-white/[0.08] bg-transparent text-white/40 hover:text-white/70 rounded-xl h-10 text-sm"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {parsed && data && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/35">
+              <span>Exportado em {fmtDate(parsed.meta.exportedAt)}</span>
+              <span className="text-white/15">·</span>
+              <span>app v{parsed.meta.appVersion}</span>
+              <span className="text-white/15">·</span>
+              {parsed.encrypted
+                ? <span className="flex items-center gap-1 text-emerald-300/80"><Lock className="h-3 w-3" /> cifrado OK</span>
+                : <span className="flex items-center gap-1 text-amber-300/80"><AlertTriangle className="h-3 w-3" /> sem cifra</span>}
+            </div>
+
+            <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] divide-y divide-white/[0.04] max-h-56 overflow-y-auto">
+              {groups.map((g) => (
+                <div key={g.label} className="flex items-center justify-between px-3 py-2">
+                  <span className="text-[12px] text-white/65">{g.label}</span>
+                  <span className="text-[10px] text-white/25 tabular-nums">{g.count} {g.count === 1 ? 'item' : 'itens'}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-amber-400/[0.06] border border-amber-400/15">
+              <p className="text-[11px] text-amber-200/70 leading-relaxed flex gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Restaurar <b className="text-amber-200/90">substitui</b> as definições actuais deste aparelho — os
+                  PINs e segredos do ficheiro passam a valer aqui. A app reinicia no fim.
+                </span>
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleRestore}
+                disabled={busy === 'apply'}
+                className="flex-1 bg-red-500/90 hover:bg-red-500 text-white rounded-xl gap-2 h-10 text-sm font-semibold"
+              >
+                {busy === 'apply'
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> A restaurar…</>
+                  : <><DatabaseBackup className="h-4 w-4" /> Restaurar e Reiniciar</>}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={resetImport}
+                disabled={busy === 'apply'}
+                className="border-white/[0.08] bg-transparent text-white/40 hover:text-white/70 rounded-xl h-10 text-sm"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-[11px] text-white/20 flex items-start gap-1.5 px-1">
+        <ShieldAlert className="h-3 w-3 shrink-0 mt-0.5" />
+        Guarde o ficheiro num sítio seguro — quem tiver o ficheiro (e a palavra-passe, se cifrado)
+        consegue replicar as suas definições noutro aparelho.
       </p>
     </div>
   )
@@ -2241,6 +2543,7 @@ export default function Settings() {
                         {section.id === 'anti-coercao' && (
                           <AntiCoercionSettings />
                         )}
+                        {section.id === 'backup' && <BackupSection />}
                         {section.id === 'sobre' && (
                           <div className="space-y-3">
                             {[{ l: 'Versao', r: '3.15.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (

@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.25.0
+# 🛡️ StatusAds Connect v3.26.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -132,6 +132,20 @@ gateways de pagamento ou SMS.
   (onUpdate), em sintonia com a auto-cura da sentinela
   · **Dica de descoberta no card do Guardião** (só APK) — explica como
   adicionar o widget ao ecrã inicial
+- **Backup & Restauro do Perfil (v3.26.0)** — trocar de telemóvel deixou
+  de significar reconfigurar tudo:
+  · **Exportação num ficheiro .json** — Guardião, Bloqueio de App (PIN/
+  biometria/auto-lock), Anti-Coerção, PIN de desactivação do pânico,
+  Chamada Falsa, Perfil Médico, tema, háptica e mais, num só toque
+  · **Cifra opcional AES-GCM 256 + PBKDF2 (150k iterações)** — ligada por
+  omissão: o ficheiro contém hashes de PINs e caches de contactos SOS,
+  por isso via protegida por palavra-passe
+  · **Importação com pré-visualização** — o ficheiro é validado (app/
+  formato), descifrado e resumido por grupos legíveis antes de restaurar;
+  só substitui depois de confirmação e a app reinicia para reler tudo
+  · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
+  de autenticação, logs e caches de radar ficam de fora; contactos,
+  plano e sessões vivem no servidor
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
