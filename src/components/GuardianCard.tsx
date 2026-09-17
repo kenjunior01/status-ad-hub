@@ -431,7 +431,7 @@ function GuardianDetails({ config, update }: {
       desc: 'Se o seu auscultador/relógio desligar de repente, SOS automático',
       action: toggleBtTether,
     }] : []),
-    { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: 'Áudio + fotos disfarçadas ao disparar', action: undefined as (() => void) | undefined },
+    { key: 'autoRecord' as const, icon: Mic, label: 'Gravação automática', desc: isAndroid ? 'REC nativo + fotos ao disparar — sobrevive ao fecho da app' : 'Áudio + fotos disfarçadas ao disparar', action: undefined as (() => void) | undefined },
     { key: 'silent' as const, icon: VolumeX, label: 'Modo silencioso', desc: 'Sem sirene — o ladrão não percebe', action: undefined as (() => void) | undefined },
   ]
   const triggers = [

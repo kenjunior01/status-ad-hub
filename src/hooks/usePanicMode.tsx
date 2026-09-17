@@ -19,7 +19,10 @@ import * as api from '@/lib/api'
 import { saveAudioEvidence } from '@/lib/api'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { setSilentPanic } from '@/lib/guardian'
+import { setSilentPanic, loadGuardian } from '@/lib/guardian'
+import {
+  startNativeEvidence, stopNativeEvidence, nativeEvidenceAvailable, nativeEvidenceStatus,
+} from '@/lib/native-evidence'
 import type { PanicModeState } from '@/lib/types'
 
 /** Opções de activação — source identifica o gatilho (Guardião, botão, etc.) */
@@ -77,6 +80,10 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
   const videoStreamRef = useRef<MediaStream | null>(null)
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const photoCountRef = useRef(0)
+  // v3.28.0: a gravação do pânico correu no EvidenceService NATIVO?
+  // (o MediaRecorder do WebView morre quando a app é despachada — o nativo
+  // continua e o ficheiro .m4a fica no aparelho, Cofre › «No aparelho»)
+  const nativeRecRef = useRef(false)
   const MAX_PHOTOS = 20  // Prevent memory exhaustion
 
   const [state, setState] = useState<PanicModeState>(initialState)
@@ -168,8 +175,38 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
     // Guardião: informar a cadeia de emergência para não tocar a sirene
     setSilentPanic(silent)
 
-    // Start audio recording
-    audioRecorder.startRecording()
+    // Start audio recording — v3.28.0: respeitar o interruptor «Gravação
+    // automática» do Guardião e, quando ligado, no Android preferir o
+    // EvidenceService NATIVO (sobrevive ao fecho da app). O gravador do
+    // WebView fica como fallback (web/PWA ou nativo indisponível). Nunca os
+    // dois em paralelo — dois MediaRecorders disputariam o microfone.
+    // Com o interruptor desligado: sem áudio automático — as fotos de pânico
+    // continuam (identificação do agressor).
+    if (loadGuardian().autoRecord) {
+      if (nativeEvidenceAvailable()) {
+        void (async () => {
+          try {
+            const st = await nativeEvidenceStatus()
+            if (st.running) {
+              // REC já activo (widget/cartão) — continuar a mesma gravação
+              nativeRecRef.current = true
+              return
+            }
+            const res = await startNativeEvidence()
+            if (res.ok) {
+              nativeRecRef.current = true
+              if (user) {
+                api.logEvent(user.id, 'panic_mode', 'REC nativo: evidência de pânico sobrevive ao fecho da app').catch(() => {})
+              }
+              return
+            }
+          } catch { /* cai para o gravador do WebView */ }
+          audioRecorder.startRecording()
+        })()
+      } else {
+        audioRecorder.startRecording()
+      }
+    }
 
     // Trigger emergency with GPS
     navigator.geolocation?.getCurrentPosition(
@@ -237,8 +274,18 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
     }
     panicChainActive = false
 
-    // Stop audio recording and save evidence
-    if (audioRecorder.isRecording) {
+    // Stop audio recording and save evidence — v3.28.0: se a gravação correu
+    // no serviço nativo, pará-la aqui (o ficheiro .m4a fica no Cofre do
+    // aparelho). Caso contrário, guardar o blob do WebView como antes.
+    if (nativeRecRef.current) {
+      nativeRecRef.current = false
+      stopNativeEvidence().then((r) => {
+        if (user && r.ok) {
+          const mins = Math.round((r.durationMs || 0) / 60000)
+          api.logEvent(user.id, 'panic_mode', `Evidência nativa guardada no aparelho (${mins || 1} min de áudio)`).catch(() => {})
+        }
+      }).catch(() => {})
+    } else if (audioRecorder.isRecording) {
       audioRecorder.stopRecording()
       if (user && audioRecorder.blob) {
         const reader = new FileReader()

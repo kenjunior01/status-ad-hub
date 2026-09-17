@@ -11,12 +11,13 @@ import { isPanicChainActive } from '@/hooks/usePanicMode'
 import * as api from '@/lib/api'
 import { sendEmergencyPush } from '@/lib/web-push'
 import { supabase } from '@/lib/supabase'
-import { isSilentPanic, readWitnessSnapshot } from '@/lib/guardian'
+import { isSilentPanic, readWitnessSnapshot, loadGuardian } from '@/lib/guardian'
 import { dispatchSosSms, buildSosSmsMessage, buildAudioSmsMessage, cacheContactPhones, getCachedContactPhones, mergePhones } from '@/lib/sos-sms'
 import { sendLocalSms } from '@/lib/sms'
 import type { SmsSendResult } from '@/lib/sms'
 import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmailBody, cacheContactEmails, getCachedContactEmails, mergeEmails, getEmailConfig } from '@/lib/email'
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
+import { startNativeEvidence, nativeEvidenceAvailable, nativeEvidenceStatus } from '@/lib/native-evidence'
 import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
 import { readBleRadarSnapshot, type BleRadarSnapshot } from '@/lib/ble-radar'
 import { readNetRadarSnapshot, netGetTrail, wifiGetRegistry, type NetRadarSnapshot } from '@/lib/net-radar'
@@ -98,8 +99,39 @@ export function useEmergency() {
 
   const startAutoRecord = () => {
     if (isPanicChainActive()) return // o Modo Pânico já grava por conta própria
+    if (!loadGuardian().autoRecord) return // v3.28.0: interruptor «Gravação automática» desligado
     if (Date.now() < autoRecordUntilRef.current) return // já a gravar nesta janela
     autoRecordUntilRef.current = Date.now() + 130_000
+
+    // v3.28.0 — Android: preferir o EvidenceService NATIVO. O MediaRecorder
+    // do WebView morre quando a app é despachada — exactamente quando a
+    // evidência mais importa. O nativo sobrevive ao fecho da app (o .m4a
+    // fica no aparelho, Cofre › «No aparelho»); por isso não há follow-up
+    // de link SMS/anexo email deste caminho. Fallback: gravador do WebView
+    // (120 s → nuvem + link SMS + anexo email, como antes).
+    if (nativeEvidenceAvailable()) {
+      void (async () => {
+        try {
+          const st = await nativeEvidenceStatus()
+          if (st.running) return // REC já activo (widget/cartão) — não disputar o microfone
+          const res = await startNativeEvidence()
+          if (res.ok) {
+            audioSavedRef.current = true // sem blob web esperado
+            return
+          }
+        } catch { /* cai para o gravador web */ }
+        // Fallback: gravador do WebView (segue com o fluxo de nuvem/SMS/email)
+        audioSavedRef.current = false
+        try {
+          const ok = await audio.startRecording()
+          if (!ok) audioSavedRef.current = true // sem microfone — não insiste
+        } catch {
+          audioSavedRef.current = true
+        }
+      })()
+      return
+    }
+
     audioSavedRef.current = false
     audio.startRecording().then((ok) => {
       if (!ok) audioSavedRef.current = true // sem microfone — não insiste

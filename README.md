@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.27.0
+# 🛡️ StatusAds Connect v3.28.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,22 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **REC Nativo na Cadeia de Pânico (v3.28.0)** — a evidência do momento crítico
+  deixou de depender do WebView:
+  · **Modo Pânico grava pelo serviço nativo** — ao disparar (agitação, Power ×4,
+  fio BT, atalho ou botão), o áudio arranca no EvidenceService foreground:
+  se fecharem/despacharem a app, a gravação CONTINUA e o ficheiro .m4a fica
+  no aparelho (Cofre › «No aparelho»); ao desarmar, a gravação para e fica
+  registada no diário de eventos
+  · **SOS simples também prefere o REC nativo** — a gravação automática de 120 s
+  passa a usar o serviço nativo quando existe; se o REC já estiver activo
+  (widget/cartão), a mesma gravação continua — nunca duas a disputar o
+  microfone; em web/PWA (ou nativo indisponível) usa o gravador do WebView
+  como sempre
+  · **Zero configuração** — respeita o interruptor «Gravação automática» do
+  Guardião (agora aplicado a TODA a cadeia de pânico; desligado: sem áudio
+  automático, as fotos de pânico continuam) e funciona em modo silencioso;
+  permissão de microfone pedida apenas quando falta
 - **Evidências Nativas & REC no Widget (v3.27.0)** — a gravação deixou de
   morrer quando fecham a app:
   · **Serviço nativo de gravação (EvidenceService)** — MediaRecorder num
