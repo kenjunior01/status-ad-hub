@@ -24,6 +24,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePanicMode } from '@/hooks/usePanicMode'
 import { useAntiCoercion } from '@/hooks/useAntiCoercion'
 import { startShakeListener } from '@/lib/shake'
+import { toggleNativeEvidence } from '@/lib/native-evidence'
+import { haptic } from '@/lib/native'
+import { toast } from 'sonner'
 import {
   requestPanicCountdown, setPanicExecutor, isGuardianArmed, loadGuardian,
   PanicSource,
@@ -81,6 +84,31 @@ export function GuardianWatcher() {
         // Notificação "Protecção activa" → só abrir a app, sem contagem
         if (u.includes('://guardiao')) {
           navigate('/dashboard')
+          return
+        }
+        // Botão REC do widget (v3.27.0) → liga/desliga a gravação nativa de
+        // evidências. NÃO depende do Guardião armado (evidência é autónoma)
+        if (u.includes('://evidence')) {
+          void (async () => {
+            const res = await toggleNativeEvidence()
+            if (res === 'started') {
+              void haptic('medium')
+              toast.success('REC — gravação de evidências iniciada', {
+                description: 'O áudio continua no aparelho mesmo que fechem a app. Para no widget, na notificação ou aqui.',
+                duration: 6000,
+              })
+            } else if (res === 'stopped') {
+              void haptic('light')
+              toast.success('Gravação parada', {
+                description: 'O ficheiro está no Cofre de Evidências — secção «No aparelho».',
+              })
+            } else {
+              toast.info('Conceda o microfone e toque no REC outra vez', {
+                description: 'A gravação nativa precisa da permissão de microfone do sistema.',
+                duration: 7000,
+              })
+            }
+          })()
           return
         }
         if (u.includes('://sos') || u.endsWith('://sos/') || u.includes('#/sos')) {

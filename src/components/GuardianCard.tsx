@@ -26,11 +26,22 @@ import {
   getBondedDevices, TrustedDeviceOption,
 } from '@/lib/guardian'
 import { hasSmsPermission, requestSmsPermission } from '@/lib/sms'
+import {
+  nativeEvidenceAvailable, nativeEvidenceStatus, startNativeEvidence,
+  stopNativeEvidence, toggleNativeEvidence,
+} from '@/lib/native-evidence'
 import { haptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const DISARM_HOLD_MS = 1500
+
+/** mm:ss para o timer do REC nativo. */
+function fmtElapsed(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000))
+  const m = Math.floor(s / 60)
+  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
 
 function useDisarmHold(onComplete: () => void) {
   const [progress, setProgress] = useState(0)
@@ -320,6 +331,61 @@ function GuardianDetails({ config, update }: {
     }
   }, [])
 
+  // ── Evidências nativas — REC (v3.27.0) ──────────────────────────────────
+  const [rec, setRec] = useState<{ running: boolean; elapsedMs: number }>({ running: false, elapsedMs: 0 })
+
+  const refreshRec = useCallback(async () => {
+    if (!nativeEvidenceAvailable()) return
+    setRec(await nativeEvidenceStatus())
+  }, [])
+
+  useEffect(() => {
+    if (!isAndroid) return
+    void refreshRec()
+    const onChange = () => { void refreshRec() }
+    window.addEventListener('native-evidence-change', onChange)
+    return () => window.removeEventListener('native-evidence-change', onChange)
+  }, [isAndroid, refreshRec])
+
+  // timer de 1s só enquanto grava (economia de bateria)
+  useEffect(() => {
+    if (!rec.running) return
+    const t = setInterval(() => { void refreshRec() }, 1000)
+    return () => clearInterval(t)
+  }, [rec.running, refreshRec])
+
+  const toggleRec = useCallback(async () => {
+    const status = await nativeEvidenceStatus()
+    if (status.running) {
+      const res = await stopNativeEvidence()
+      void refreshRec()
+      if (res.ok) {
+        void haptic('light')
+        toast.success('Gravação parada', {
+          description: 'O ficheiro está no Cofre de Evidências — secção «No aparelho».',
+        })
+      } else {
+        toast.error('Não foi possível parar a gravação')
+      }
+      return
+    }
+    const res = await startNativeEvidence()
+    void refreshRec()
+    if (res.ok) {
+      void haptic('medium')
+      toast.success('REC — gravação de evidências iniciada', {
+        description: 'O áudio continua no aparelho mesmo que fechem a app.',
+      })
+    } else if (res.reason === 'permission') {
+      toast.info('Conceda o microfone e toque no REC outra vez', {
+        description: 'A gravação nativa precisa da permissão de microfone do sistema.',
+        duration: 7000,
+      })
+    } else {
+      toast.error('Gravação indisponível neste dispositivo')
+    }
+  }, [refreshRec])
+
   // ── Fio de segurança Bluetooth ──────────────────────────────────────────────
   const openPicker = useCallback(async () => {
     const list = await getBondedDevices()
@@ -402,9 +468,30 @@ function GuardianDetails({ config, update }: {
               <p className="text-[10px] text-white/50 leading-relaxed">
                 <b className="text-white/70">Widget «Aegis SOS»</b>: adiciona-o ao ecrã inicial
                 (long-press no fundo → Widgets) — mostra o estado do Guardião em tempo
-                real e dispara o SOS num toque.
+                real e dispara o SOS e a gravação REC num toque.
               </p>
             </div>
+            {/* Evidências nativas (v3.27.0): REC que sobrevive ao fecho da app */}
+            <button
+              onClick={() => void toggleRec()}
+              className={cn(
+                'w-full flex items-center gap-2.5 p-2 rounded-xl border text-left active:scale-[0.99] transition-transform',
+                rec.running ? 'border-red-400/30 bg-red-500/[0.07]' : 'border-white/[0.06] bg-white/[0.02]'
+              )}
+            >
+              <span className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                {rec.running && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60" />}
+                <Mic className={cn('h-3.5 w-3.5', rec.running ? 'text-red-400' : 'text-brand/80')} />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className={cn('block text-[11px] font-semibold', rec.running ? 'text-red-300' : 'text-white/70')}>
+                  {rec.running ? `REC ${fmtElapsed(rec.elapsedMs)} — a gravar evidência` : 'Gravar evidência (REC)'}
+                </span>
+                <span className="block text-[9px] text-white/40">
+                  {rec.running ? 'Toca para parar — o ficheiro fica no aparelho' : 'Áudio nativo que continua mesmo se fecharem a app'}
+                </span>
+              </span>
+            </button>
             {batteryExempt === false && (
               <button
                 onClick={requestExemption}

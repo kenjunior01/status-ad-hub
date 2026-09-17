@@ -45,8 +45,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/widget_sos_bg"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
         android:paddingTop="9dp"
         android:paddingBottom="9dp"
         android:text="@string/widget_sos"
@@ -54,4 +54,22 @@
         android:textSize="15sp"
         android:textStyle="bold"
         android:letterSpacing="0.12" />
+
+    <!-- Botão REC (v3.27.0): gravação de evidências nativa — texto/estado
+         dinâmicos definidos no AegisWidgetProvider.buildViews -->
+    <TextView
+        android:id="@+id/widget_rec_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/widget_rec_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:text="REC"
+        android:textColor="#D4AF37"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.10" />
 </LinearLayout>

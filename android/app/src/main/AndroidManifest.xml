@@ -143,6 +143,14 @@
                 android:value="Sentinela de pânico: detecta gatilhos de emergência (padrão do botão power, agitação forte) para avisar contactos de emergência em caso de roubo ou sequestro" />
         </service>
 
+        <!-- Evidências nativas (v3.27.0): gravação de áudio foreground que
+             sobrevive ao fecho da app — o MediaRecorder do WebView morre
+             exactamente quando a evidência mais importa -->
+        <service
+            android:name=".EvidenceService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
         <!-- Modo Guardião: religa a sentinela após reinício/actualização da app -->
         <receiver
             android:name=".BootReceiver"
@@ -220,6 +228,8 @@
     <!-- Modo Guardião: sentinela 24/7 (serviço foreground + sobrevive a reinícios) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Evidências nativas (v3.27.0): serviço foreground de microfone (Android 14+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- SOS com o ecrã apagado: abrir por cima do ecrã de bloqueio (padrão alarme) -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />

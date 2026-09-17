@@ -17,6 +17,10 @@ import android.widget.RemoteViews;
  * · Toque no botão SOS → com.statusads.connect://sos → a mesma cadeia de
  *   pânico do Modo Guardião (contagem decrescente → contactos + SMS + GPS),
  *   exactamente como o tile dos atalhos rápidos e o atalho do ícone.
+ * · Toque no botão REC (v3.27.0) → com.statusads.connect://evidence → liga/
+ *   desliga a gravação NATIVA de evidências (EvidenceService) — o áudio
+ *   continua mesmo que fechem a app. O botão muda REC⇄PARAR conforme o
+ *   estado vivo do serviço (updateAll chamado no início/fim da gravação).
  * · Toque no resto do widget → abre a app (funciona mesmo disfarçada,
  *   porque o launch intent resolve o alias activo).
  * · DINÂMICO (v3.25.0): o estado reflecte o Modo Guardião em tempo real —
@@ -27,9 +31,11 @@ import android.widget.RemoteViews;
 public class AegisWidgetProvider extends AppWidgetProvider {
 
     private static final String SOS_URL = "com.statusads.connect://sos";
+    private static final String EVIDENCE_URL = "com.statusads.connect://evidence";
     private static final String GUARDIAN_PREFS = "guardian_prefs";
     private static final int REQ_SOS = 4021;
     private static final int REQ_OPEN = 4022;
+    private static final int REQ_REC = 4023;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -79,6 +85,17 @@ public class AegisWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_status_sub, "Activa o Modo Guardião");
         }
 
+        // Gravação de evidências (v3.27.0): botão REC⇄PARAR dinâmico
+        boolean rec = EvidenceService.isRunning();
+        if (rec) {
+            // enquanto grava, o sub dá prioridade ao REC (visível de relance)
+            views.setTextViewText(R.id.widget_status_sub, "REC — a gravar evidência");
+        }
+        views.setTextViewText(R.id.widget_rec_btn, rec ? "PARAR" : "REC");
+        views.setTextColor(R.id.widget_rec_btn, rec ? 0xFFFCA5A5 : 0xFFD4AF37);
+        views.setInt(R.id.widget_rec_btn, "setBackgroundResource",
+                rec ? R.drawable.widget_rec_stop_bg : R.drawable.widget_rec_bg);
+
         // 1. Botão SOS → deep link do Guardião (MainActivity singleTask →
         //    onNewIntent → appUrlOpen → contagem decrescente)
         Intent sos = new Intent(Intent.ACTION_VIEW);
@@ -90,7 +107,17 @@ public class AegisWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         views.setOnClickPendingIntent(R.id.widget_sos_btn, sosPi);
 
-        // 2. Corpo do widget → abrir a app (respeita a camuflagem activa)
+        // 2. Botão REC → deep link de evidências (toggle nativo start/stop)
+        Intent recI = new Intent(Intent.ACTION_VIEW);
+        recI.setData(Uri.parse(EVIDENCE_URL));
+        recI.setComponent(new ComponentName(context, MainActivity.class));
+        recI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent recPi = PendingIntent.getActivity(
+                context, REQ_REC, recI,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        views.setOnClickPendingIntent(R.id.widget_rec_btn, recPi);
+
+        // 3. Corpo do widget → abrir a app (respeita a camuflagem activa)
         Intent open = context.getPackageManager().getLaunchIntentForPackage(
                 context.getPackageName());
         if (open == null) {

@@ -20,6 +20,10 @@ import {
   shareEvidenceRecording, deleteLocalEvidence, getLocalEvidence,
   type EvidenceRecord,
 } from '@/lib/evidence'
+import {
+  nativeEvidenceAvailable, getNativeRecordings, shareNativeRecording,
+  type NativeEvidenceRecording,
+} from '@/lib/native-evidence'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -39,6 +43,10 @@ export default function EvidenceVault() {
   const [playUrl, setPlayUrl] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
+
+  // ── Gravações nativas no aparelho (v3.27.0) ──
+  const [nativeRecs, setNativeRecs] = useState<NativeEvidenceRecording[]>([])
+  const [sharingNative, setSharingNative] = useState<string | null>(null)
 
   // ── Gravação directa no cofre ──
   const recorder = useAudioRecorder(300)
@@ -86,6 +94,12 @@ export default function EvidenceVault() {
   }, [user])
 
   useEffect(() => { void load() }, [load])
+
+  const loadNative = useCallback(async () => {
+    if (!nativeEvidenceAvailable()) { setNativeRecs([]); return }
+    try { setNativeRecs(await getNativeRecordings()) } catch { /* segue sem nativas */ }
+  }, [])
+  useEffect(() => { if (!loading) void loadNative() }, [loading, loadNative])
 
   // ── Sincronização automática: gravações offline → nuvem ──
   const runSync = useCallback(async (silent: boolean) => {
@@ -203,6 +217,18 @@ export default function EvidenceVault() {
       toast.error('Não foi possível partilhar — tente descarregar primeiro')
     } finally {
       setSharingId(null)
+    }
+  }
+
+  async function handleShareNative(r: NativeEvidenceRecording) {
+    setSharingNative(r.path)
+    try {
+      const ok = await shareNativeRecording(r.path)
+      if (ok) toast.success('Partilha aberta — escolha para quem enviar')
+    } catch {
+      toast.error('Não foi possível partilhar o ficheiro')
+    } finally {
+      setSharingNative(null)
     }
   }
 
@@ -420,6 +446,41 @@ export default function EvidenceVault() {
             </div>
           )}
         </div>
+
+        {/* Gravações nativas no aparelho (v3.27.0) — REC do widget/Guardião */}
+        {!loading && nativeRecs.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pt-2">
+              <Mic className="h-3.5 w-3.5 text-brand" />
+              <p className="text-xs font-semibold text-white/70">No aparelho — REC nativo</p>
+              <Badge variant="outline" className="text-[10px] text-white/35 border-white/10">{nativeRecs.length}</Badge>
+            </div>
+            <p className="text-[11px] text-white/30 leading-relaxed">
+              Gravações do botão REC (widget / cartão do Guardião): ficam no armazenamento
+              do telemóvel (pasta Evidências), sobrevivem ao fecho da app e não sobem para a nuvem.
+            </p>
+            {nativeRecs.map((r) => (
+              <div key={r.path} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border bg-white/[0.03] border-white/[0.08]">
+                    <Mic className="h-4.5 w-4.5 text-white/50" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white">
+                      REC de {new Date(r.startedAt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                    <p className="text-[11px] text-white/30 font-mono mt-0.5">
+                      {Math.floor(r.durationMs / 60000)}:{String(Math.floor((r.durationMs % 60000) / 1000)).padStart(2, '0')} · {r.sizeBytes >= 1048576 ? `${(r.sizeBytes / 1048576).toFixed(1)} MB` : `${Math.round(r.sizeBytes / 1024)} KB`} · m4a
+                    </p>
+                  </div>
+                  <button onClick={() => void handleShareNative(r)} disabled={sharingNative === r.path} className="p-2 rounded-lg hover:bg-brand/[0.08] transition disabled:opacity-50" title="Partilhar (WhatsApp, SMS…)">
+                    {sharingNative === r.path ? <Loader2 className="h-4 w-4 text-brand animate-spin" /> : <Share2 className="h-4 w-4 text-white/40 hover:text-brand" />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <p className="text-center text-[10px] text-white/20 pt-2">
           As gravações são privadas — só a sua conta acede. Active a partilha apenas com pessoas de confiança.

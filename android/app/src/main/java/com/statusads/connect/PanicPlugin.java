@@ -276,4 +276,101 @@ public class PanicPlugin extends Plugin {
             call.reject("Falha ao ler dispositivo confiado: " + e.getMessage());
         }
     }
+
+    // ── Evidências nativas (v3.27.0) — gravação que sobrevive ao fecho da app ─
+
+    /**
+     * Arranca a gravação de áudio pelo lado nativo. Sem permissão RECORD_AUDIO
+     * em runtime, pede-a ao sistema e devolve {started:false, reason:'permission'}
+     * — a web informa o utilizador para repetir depois de conceder.
+     */
+    @PluginMethod
+    public void startEvidence(PluginCall call) {
+        android.content.Context ctx = getContext();
+        if (ctx.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            android.app.Activity activity = getActivity();
+            if (activity != null) {
+                androidx.core.app.ActivityCompat.requestPermissions(activity,
+                        new String[]{android.Manifest.permission.RECORD_AUDIO}, 4104);
+            }
+            JSObject r = new JSObject();
+            r.put("started", false);
+            r.put("reason", "permission");
+            call.resolve(r);
+            return;
+        }
+        try {
+            EvidenceService.start(ctx);
+            JSObject r = new JSObject();
+            r.put("started", true);
+            call.resolve(r);
+        } catch (Exception e) {
+            JSObject r = new JSObject();
+            r.put("started", false);
+            r.put("reason", "error");
+            call.resolve(r);
+        }
+    }
+
+    /** Para a gravação. Devolve o path do ficheiro (null se nada foi gravado). */
+    @PluginMethod
+    public void stopEvidence(PluginCall call) {
+        try {
+            String path = EvidenceService.stop(getContext());
+            JSObject r = new JSObject();
+            r.put("stopped", true);
+            r.put("path", path);
+            r.put("durationMs", EvidenceService.lastStoppedDurationMs());
+            call.resolve(r);
+        } catch (Exception e) {
+            call.reject("Falha ao parar gravação: " + e.getMessage());
+        }
+    }
+
+    /** Estado vivo da gravação (para o botão REC da app / widget). */
+    @PluginMethod
+    public void evidenceStatus(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("running", EvidenceService.isRunning());
+        r.put("elapsedMs", EvidenceService.elapsedMs());
+        call.resolve(r);
+    }
+
+    /** Metadados das gravações nativas (ficheiros em Evidence/ no aparelho). */
+    @PluginMethod
+    public void getNativeEvidence(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("recordings", EvidenceService.recordings(getContext()));
+        call.resolve(r);
+    }
+
+    /** Partilha um ficheiro de evidência via FileProvider (WhatsApp, Telegram, e-mail…). */
+    @PluginMethod
+    public void shareNativeEvidence(PluginCall call) {
+        String path = call.getString("path");
+        if (path == null || path.isEmpty()) {
+            call.reject("path é obrigatório");
+            return;
+        }
+        try {
+            java.io.File f = new java.io.File(path);
+            if (!f.exists()) {
+                call.reject("Ficheiro não encontrado");
+                return;
+            }
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(getContext(),
+                    getContext().getPackageName() + ".fileprovider", f);
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("audio/mp4");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            Intent chooser = Intent.createChooser(send, "Partilhar evidência");
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(chooser);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Falha ao partilhar: " + e.getMessage());
+        }
+    }
 }

@@ -207,6 +207,12 @@ interface PanicNativeInterface {
   setTrustedDevice(cfg: { address: string | null; name: string | null; enabled: boolean }): Promise<void>
   /** Dispositivo confiado actual (restaurar a UI). */
   getTrustedDevice(): Promise<TrustedDeviceState>
+  /** Evidências nativas (v3.27.0): gravação que sobrevive ao fecho da app. */
+  startEvidence(): Promise<{ started: boolean; reason?: string }>
+  stopEvidence(): Promise<{ stopped: boolean; path?: string | null; durationMs?: number }>
+  evidenceStatus(): Promise<{ running: boolean; elapsedMs?: number }>
+  getNativeEvidence(): Promise<{ recordings: NativeEvidenceRecording[] }>
+  shareNativeEvidence(cfg: { path: string }): Promise<void>
 }
 
 export interface WitnessEntry {
@@ -235,6 +241,14 @@ export interface TrustedDeviceState {
   address: string | null
   name: string | null
   enabled: boolean
+}
+
+/** Gravação de evidência nativa (ficheiro .m4a no aparelho — v3.27.0). */
+export interface NativeEvidenceRecording {
+  path: string
+  sizeBytes: number
+  startedAt: number
+  durationMs: number
 }
 
 let nativePanic: PanicNativeInterface | null = null

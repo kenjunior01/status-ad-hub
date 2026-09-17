@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.26.0
+# 🛡️ StatusAds Connect v3.27.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,23 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Evidências Nativas & REC no Widget (v3.27.0)** — a gravação deixou de
+  morrer quando fecham a app:
+  · **Serviço nativo de gravação (EvidenceService)** — MediaRecorder num
+  serviço foreground com tipo «microfone»: o áudio CONTINUA com o ecrã
+  apagado e a app despachada — exactamente o momento em que a evidência
+  mais importa; auto-stop aos 15 min, notificação discreta com acção
+  «Parar», mono AAC (~11 MB por 15 min)
+  · **Botão REC no widget** — junto ao SOS: um toque liga a gravação, o
+  botão passa a PARAR vermelho e o sub-título mostra «REC — a gravar
+  evidência»; gravações futuras actualizam o widget em tempo real
+  · **Botão REC no cartão do Guardião** — com timer mm:ss ao vivo e
+  pulsação vermelha enquanto grava
+  · **Secção «No aparelho» no Cofre de Evidências** — lista dos .m4a
+  nativos (data, duração, tamanho) com partilha directa via FileProvider
+  (WhatsApp, Telegram, SMS, e-mail); ficam só no telemóvel, sem nuvem
+  · **Deep link com.statusads.connect://evidence** — autónomo do Guardião
+  (grava sem estar armado) e ignorado em modo de coerção por segurança
 - **Central de Segurança (v3.17.0)** — score de segurança 0-100, ameaças do
   ambiente, rastreadores detectados, checklist de prontidão e **diário de
   eventos de segurança** (ameaças, rastreadores, SOS, sistema) com sync na
