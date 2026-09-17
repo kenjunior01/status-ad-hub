@@ -27,12 +27,20 @@ import android.widget.RemoteViews;
  *   lê "armed" das guardian_prefs (escritas pelo PanicPlugin.setGuardian,
  *   que chama updateAll() a cada alteração). Sem actualizações periódicas:
  *   só muda quando o estado muda → zero bateria.
+ * · BATERIA (v3.29.0): o estado mostra o nível da bateria ("· 78%") e, se
+ *   baixa (≤20%), avisa em âmbar — a sentinela e o SOS dependem de bateria.
+ *   Mantida a quente pelo AegisBatteryReceiver (ACTION_BATTERY_CHANGED),
+ *   sem polling nem updatePeriodMs → continua a gastar zero bateria.
  */
 public class AegisWidgetProvider extends AppWidgetProvider {
 
     private static final String SOS_URL = "com.statusads.connect://sos";
     private static final String EVIDENCE_URL = "com.statusads.connect://evidence";
-    private static final String GUARDIAN_PREFS = "guardian_prefs";
+    // package-visible: o AegisBatteryReceiver guarda a assinatura de bateria
+    // nas mesmas prefs para não repintar o widget sem razão visível
+    static final String GUARDIAN_PREFS = "guardian_prefs";
+    /** Baixo limite de bateria para o aviso âmbar (igual ao alerta web, 20%). */
+    static final int BATTERY_LOW_PCT = 20;
     private static final int REQ_SOS = 4021;
     private static final int REQ_OPEN = 4022;
     private static final int REQ_REC = 4023;
@@ -85,11 +93,28 @@ public class AegisWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_status_sub, "Activa o Modo Guardião");
         }
 
+        // Bateria da sentinela (v3.29.0): nível a quente do BatteryManager.
+        // Só com o Guardião armado (é a bateria da SENTINELA que importa);
+        // baixa → estado âmbar + sub com o aviso (a sentinela e o SOS falham
+        // se o telemóvel morrer — o widget avisa antes disso acontecer).
+        int pct = readBatteryPct(context);
+        if (armed && pct >= 0) {
+            boolean low = pct <= BATTERY_LOW_PCT;
+            views.setTextViewText(R.id.widget_status, "GUARDIÃO ACTIVO · " + pct + "%");
+            views.setTextColor(R.id.widget_status, low ? 0xFFF59E0B : 0xFFD4AF37);
+            if (low) {
+                views.setTextViewText(R.id.widget_status_sub, "Bateria baixa — carregue o telemóvel");
+                views.setTextColor(R.id.widget_status_sub, 0xFFFBBF24);
+            }
+        }
+
         // Gravação de evidências (v3.27.0): botão REC⇄PARAR dinâmico
         boolean rec = EvidenceService.isRunning();
         if (rec) {
-            // enquanto grava, o sub dá prioridade ao REC (visível de relance)
+            // enquanto grava, o sub dá prioridade ao REC (visível de relance);
+            // cor restaurada ao cinza — o aviso de bateria fica no estado
             views.setTextViewText(R.id.widget_status_sub, "REC — a gravar evidência");
+            views.setTextColor(R.id.widget_status_sub, 0xFF9CA3AF);
         }
         views.setTextViewText(R.id.widget_rec_btn, rec ? "PARAR" : "REC");
         views.setTextColor(R.id.widget_rec_btn, rec ? 0xFFFCA5A5 : 0xFFD4AF37);
@@ -133,5 +158,23 @@ public class AegisWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_root, openPi);
 
         return views;
+    }
+
+    /**
+     * Nível de bateria actual (0–100) lido a quente do BatteryManager.
+     * Devolve −1 se indisponível (o widget mantém o texto sem o nível).
+     */
+    private static int readBatteryPct(Context context) {
+        try {
+            android.os.BatteryManager bm =
+                    (android.os.BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            if (bm != null) {
+                int v = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                if (v > 0 && v <= 100) return v;
+            }
+        } catch (Exception ignored) {
+            // OEM sem a propriedade — widget mostra o estado sem nível
+        }
+        return -1;
     }
 }

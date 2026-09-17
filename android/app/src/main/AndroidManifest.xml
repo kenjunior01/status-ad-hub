@@ -186,6 +186,17 @@
                 android:resource="@xml/aegis_widget_info" />
         </receiver>
 
+        <!-- Widget "Aegis SOS": bateria da sentinela (v3.29.0) — sticky
+             broadcast protegido do sistema, isento da proibição de
+             broadcasts implícitos; mantém o nível fresco sem polling -->
+        <receiver
+            android:name=".AegisBatteryReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BATTERY_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

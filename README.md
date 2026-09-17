@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.28.0
+# 🛡️ StatusAds Connect v3.29.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,19 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Bateria da Sentinela no Widget (v3.29.0)** — o widget «Aegis SOS» passa a
+  vigiar a bateria que sustenta a protecção:
+  · **Nível a quente no estado** — com o Guardião armado, o widget mostra
+  «GUARDIÃO ACTIVO · 78%»; lido directamente do BatteryManager a cada
+  actualização (sem armazenar nada)
+  · **Aviso âmbar de bateria baixa** — a ≤20% (o mesmo limite do alerta
+  interno da app), o estado fica âmbar e o sub-título passa a «Bateria
+  baixa — carregue o telemóvel»: a sentinela e o SOS morrem com o
+  telemóvel, o widget avisa antes
+  · **Zero polling** — o nível é mantido fresco pelo novo
+  AegisBatteryReceiver, que escuta o sticky broadcast protegido
+  ACTION_BATTERY_CHANGED (isento da proibição de broadcasts em segundo
+  plano); assinatura anti-churn evita repintar quando nada visível mudou
 - **REC Nativo na Cadeia de Pânico (v3.28.0)** — a evidência do momento crítico
   deixou de depender do WebView:
   · **Modo Pânico grava pelo serviço nativo** — ao disparar (agitação, Power ×4,

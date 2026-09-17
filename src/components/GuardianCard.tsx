@@ -467,8 +467,9 @@ function GuardianDetails({ config, update }: {
               <LayoutGrid className="h-3.5 w-3.5 text-brand/80 shrink-0 mt-0.5" />
               <p className="text-[10px] text-white/50 leading-relaxed">
                 <b className="text-white/70">Widget «Aegis SOS»</b>: adiciona-o ao ecrã inicial
-                (long-press no fundo → Widgets) — mostra o estado do Guardião em tempo
-                real e dispara o SOS e a gravação REC num toque.
+                (long-press no fundo → Widgets) — mostra o estado do Guardião e a
+                bateria em tempo real (avisa em âmbar se estiver baixa) e dispara
+                o SOS e a gravação REC num toque.
               </p>
             </div>
             {/* Evidências nativas (v3.27.0): REC que sobrevive ao fecho da app */}
