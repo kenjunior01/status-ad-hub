@@ -7,7 +7,7 @@ import {
   XCircle, Copy, Eye, EyeOff, RefreshCw, Globe, Server, Send, Radio, ClipboardList,
   Bug, Download, ChevronRight, BatteryLow, BatteryWarning, Zap, Monitor, Glasses,
   ShieldAlert, KeyRound, Palette, Mail, Vibrate, Hand, Fingerprint, Timer,
-  DatabaseBackup, FileJson, Upload,
+  DatabaseBackup, FileJson, Upload, Eraser,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { haptic, hapticsEnabled, setHapticsEnabled, swipeNavEnabled, setSwipeNavEnabled } from '@/lib/native'
@@ -58,9 +58,13 @@ import {
   type BackupGroup,
   type ParsedBackup,
 } from '@/lib/profile-backup'
+import {
+  scanCleanupGroups, applyCleanup, fmtCleanupBytes,
+  type ScannedCleanupGroup,
+} from '@/lib/profile-cleanup'
 import { useNavigate } from 'react-router-dom'
 
-type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'applock' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'backup' | 'sobre'
+type SectionId = 'perfil' | 'aparencia' | 'interacao' | 'notificacoes' | 'email' | 'integracoes' | 'privacidade' | 'applock' | 'plano' | 'dispositivos' | 'zona' | 'sessoes' | 'offline' | 'erros' | 'oculos' | 'anti-coercao' | 'backup' | 'limpeza' | 'sobre'
 
 const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'perfil', title: 'Perfil', icon: User },
@@ -80,6 +84,7 @@ const sections: { id: SectionId; title: string; icon: React.ElementType }[] = [
   { id: 'oculos', title: 'Oculos Inteligentes', icon: Glasses },
   { id: 'anti-coercao', title: 'Senha Anti-Coercao', icon: ShieldAlert },
   { id: 'backup', title: 'Backup & Restauro', icon: DatabaseBackup },
+  { id: 'limpeza', title: 'Limpeza de Dados', icon: Eraser },
   { id: 'sobre', title: 'Sobre', icon: Info },
 ]
 
@@ -1451,6 +1456,174 @@ function BackupSection() {
   )
 }
 
+// ============================================
+// LIMPEZA SELETIVA DE DADOS (v3.30.0)
+// ============================================
+function DataCleanupSection() {
+  const [groups, setGroups] = useState<ScannedCleanupGroup[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [confirming, setConfirming] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  // Mede os grupos com o estado actual do storage (1.ª abertura da secção)
+  useEffect(() => {
+    const scanned = scanCleanupGroups()
+    setGroups(scanned)
+    // Pré-selecção: tudo o que tem dados — excepto "Outros" (chaves
+    // desconhecidas, o utilizador decide) e grupos vazios
+    setSelected(new Set(
+      scanned.filter((g) => g.count > 0 && g.id !== 'outros').map((g) => g.id),
+    ))
+  }, [])
+
+  const toggleGroup = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+    setConfirming(false)
+  }
+
+  const totalItems = groups
+    .filter((g) => selected.has(g.id))
+    .reduce((n, g) => n + g.count, 0)
+
+  const handleClean = async () => {
+    if (busy) return
+    // Duas etapas: 1.º toque arma a confirmação (4s), 2.º toque apaga
+    if (!confirming) {
+      setConfirming(true)
+      setTimeout(() => setConfirming(false), 4000)
+      return
+    }
+    setBusy(true)
+    try {
+      const res = await applyCleanup(Array.from(selected))
+      toast.success(`Limpeza concluída — ${res.removed} item(ns) apagado(s)`, {
+        description: 'A app vai reiniciar para todos os módulos relerem o storage…',
+        duration: 6000,
+      })
+      setTimeout(() => location.reload(), 900)
+    } catch {
+      toast.error('Não foi possível concluir a limpeza.')
+      setBusy(false)
+      setConfirming(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* ── O que faz ── */}
+      <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 border border-brand/20">
+            <Eraser className="h-4.5 w-4.5 text-brand" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/85">Limpeza Seletiva de Dados</p>
+            <p className="text-[11px] text-white/30 mt-0.5 leading-relaxed">
+              Apaga só os vestígios que escolher: diário de segurança, relatórios de SOS,
+              testemunhas, radares de ambiente, caches e registos técnicos. A acção é
+              irreversível e a app reinicia no fim.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2.5 p-2 rounded-xl border border-amber-400/[0.15] bg-amber-400/[0.04]">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-400/80 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-white/50 leading-relaxed">
+            <b className="text-white/70">Nunca são tocados:</b> definições de segurança (Guardião,
+            Bloqueio de App, PINs), a sessão de coerção activa, a fila offline de emergências
+            pendentes e os dados da sua conta (contactos, plano, sessões — vivem no servidor).
+          </p>
+        </div>
+      </div>
+
+      {/* ── Grupos ── */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.04]">
+        {groups.map((g) => {
+          const on = selected.has(g.id)
+          return (
+            <button
+              key={g.id}
+              onClick={() => toggleGroup(g.id)}
+              className={cn(
+                'w-full text-left p-3 flex items-start gap-3 transition-colors',
+                on ? 'bg-white/[0.03]' : 'bg-transparent',
+              )}
+            >
+              <span
+                className={cn(
+                  'mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition-colors',
+                  on ? 'bg-brand border-brand' : 'border-white/20 bg-transparent',
+                )}
+              >
+                {on && <CheckCircle2 className="h-3.5 w-3.5 text-black" strokeWidth={2.5} />}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-2 flex-wrap">
+                  <span className={cn('text-[13px] font-medium', on ? 'text-white/85' : 'text-white/55')}>
+                    {g.label}
+                  </span>
+                  {g.count > 0 ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/40">
+                      {g.count} · {fmtCleanupBytes(g.bytes)}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.03] text-white/25">
+                      vazio
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[10px] text-white/30 mt-0.5 leading-relaxed">{g.desc}</span>
+                {g.nativeWitness && (
+                  <span className="block text-[9px] text-white/25 mt-0.5">
+                    No Android apaga também o registo nativo 24/7 (memória + armazenamento).
+                  </span>
+                )}
+                {g.risk === 'evidence' && g.count > 0 && (
+                  <span className="flex items-start gap-1.5 text-[9px] text-amber-400/80 mt-1">
+                    <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+                    Pode ser precisa como prova de um incidente — só apague se tiver a certeza.
+                  </span>
+                )}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ── Acção ── */}
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={() => void handleClean()}
+          disabled={totalItems === 0 || busy}
+          className={cn(
+            'flex-1 rounded-xl h-10 text-sm font-semibold border-0',
+            confirming
+              ? 'bg-red-500 hover:bg-red-500 text-white animate-pulse'
+              : 'bg-red-500/90 hover:bg-red-500 text-white',
+          )}
+        >
+          {busy
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> A limpar…</>
+            : confirming
+              ? <><AlertTriangle className="h-4 w-4" /> Confirmar limpeza</>
+              : <><Trash2 className="h-4 w-4" /> Limpar {totalItems} item(ns)</>}
+        </Button>
+      </div>
+
+      <p className="text-[11px] text-white/20 flex items-start gap-1.5 px-1">
+        <ShieldAlert className="h-3 w-3 shrink-0 mt-0.5" />
+        Dica: antes de limpar o diário ou as evidências, exporte o que interessa —
+        o diário de segurança tem exportação na Central de Segurança e as evidências
+        podem ser partilhadas a partir do Cofre.
+      </p>
+    </div>
+  )
+}
+
 export default function Settings() {
   const { user, signOut } = useAuth()
   const { profile, loading: profileLoading, updateProfile, isUpdating } = useProfile()
@@ -2544,6 +2717,7 @@ export default function Settings() {
                           <AntiCoercionSettings />
                         )}
                         {section.id === 'backup' && <BackupSection />}
+                        {section.id === 'limpeza' && <DataCleanupSection />}
                         {section.id === 'sobre' && (
                           <div className="space-y-3">
                             {[{ l: 'Versao', r: '3.15.0', link: false }, { l: 'Termos de Servico', link: true }, { l: 'Politica de Privacidade', link: true }, { l: 'Licenca', r: 'MIT', link: false }].map(item => (

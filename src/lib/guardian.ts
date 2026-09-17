@@ -199,6 +199,8 @@ interface PanicNativeInterface {
   requestWitnessPermissions(): Promise<void>
   /** Log vivo de dispositivos/redes vistos nas últimas 3h. */
   getWitnessLog(): Promise<{ devices: WitnessEntry[] }>
+  /** Limpa o registo de testemunhas nativo (memória + prefs) — v3.30.0. */
+  clearWitnessLog(): Promise<void>
   /** Snapshot congelado no momento do disparo (vem com o SOS). */
   getWitnessSnapshot(): Promise<{ snapshot: WitnessSnapshot | null }>
   /** Dispositivos já emparelhados (selector do fio de segurança BT). */

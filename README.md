@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.29.0
+# 🛡️ StatusAds Connect v3.30.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,19 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Limpeza Seletiva de Dados (v3.30.0)** — apagar vestígios módulo a módulo,
+  sem tocar nas definições:
+  · **Nova secção «Limpeza de Dados» nas Configurações** — grupos medidos ao
+  vivo (itens + espaço): Diário de Segurança, Relatórios de SOS, Testemunhas,
+  Radares de Ambiente (BLE/Wi-Fi/locais), Caches de Contactos SOS, Evidências
+  Locais, Bellvion, Registos Técnicos e Onboarding — cada um com caixa própria
+  · **Testemunhas limpas a fundo no Android** — a limpeza apaga o registo
+  nativo 24/7 (memória da sentinela viva + armazenamento + snapshot) via
+  novo PanicPlugin.clearWitnessLog → GuardianService.clearWitnessData
+  · **Nada essencial sai daqui** — definições de segurança (Guardião,
+  Bloqueio de App, PINs), sessão de coerção activa, fila offline de
+  emergências e dados da conta ficam intocados; confirmação em duas etapas
+  e reinício automático para todos os módulos relerem o storage
 - **Bateria da Sentinela no Widget (v3.29.0)** — o widget «Aegis SOS» passa a
   vigiar a bateria que sustenta a protecção:
   · **Nível a quente no estado** — com o Guardião armado, o widget mostra

@@ -107,6 +107,8 @@ public class GuardianService extends Service implements SensorEventListener {
     private static final long BT_DROP_GRACE_MS = 15_000;
 
     private SharedPreferences prefs;
+    /** Instância viva (Limpeza Seletiva v3.30.0: limpar memória das testemunhas). */
+    private static GuardianService sInstance;
     private BroadcastReceiver powerReceiver;
     private SensorManager sensorManager;
     private boolean sensorActive = false;
@@ -159,6 +161,7 @@ public class GuardianService extends Service implements SensorEventListener {
     @Override
     public void onCreate() {
         super.onCreate();
+        sInstance = this;
         prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         createChannels();
         startForegroundCompat();
@@ -168,6 +171,33 @@ public class GuardianService extends Service implements SensorEventListener {
         loadWitnessLog();
         witnessHandler = new Handler(Looper.getMainLooper());
         witnessHandler.postDelayed(witnessScanRunnable, 5_000);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (sInstance == this) sInstance = null;
+        super.onDestroy();
+    }
+
+    /**
+     * Limpa o registo de testemunhas (memória viva + prefs) — v3.30.0,
+     * chamado pelo PanicPlugin.clearWitnessLog (Limpeza Seletiva de Dados).
+     * Se a sentinela estiver viva, o HashMap em memória também é esvaziado —
+     * caso contrário o próximo persistWitnessLog() ressuscitaria os dados.
+     * Novos dispositivos voltam a acumular do zero nos scans seguintes.
+     */
+    static void clearWitnessData(Context ctx) {
+        GuardianService svc = sInstance;
+        if (svc != null) {
+            svc.witnessLog.clear();
+        }
+        try {
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                    .remove("witness_log")
+                    .remove("witness_snapshot")
+                    .apply();
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

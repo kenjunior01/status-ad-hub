@@ -194,6 +194,18 @@ public class PanicPlugin extends Plugin {
         }
     }
 
+    /** Limpa o registo de testemunhas (memória do serviço + prefs) —
+     *  Limpeza Seletiva de Dados v3.30.0. */
+    @PluginMethod
+    public void clearWitnessLog(PluginCall call) {
+        try {
+            GuardianService.clearWitnessData(getContext());
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Falha ao limpar testemunhas: " + e.getMessage());
+        }
+    }
+
     // ── Fio de segurança Bluetooth (dispositivo confiado) ─────────────────────
 
     /** Dispositivos já emparelhados no telemóvel (para o selector da app). */
