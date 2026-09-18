@@ -19,11 +19,10 @@ import { getNativePanic, type NativeEvidenceRecording } from '@/lib/guardian'
 
 export type { NativeEvidenceRecording }
 
-export interface EvidenceToggleResult {
-  ok: boolean
-  /** 'permission' = falta RECORD_AUDIO (o diálogo do sistema foi pedido) */
-  reason?: 'permission' | 'error' | 'unavailable'
-}
+export type EvidenceToggleResultReason = 'permission' | 'error' | 'unavailable'
+
+/** Origem da gravação nativa (v3.31.0) — vai nos metadados do Cofre. */
+export type NativeEvidenceTag = 'panic' | 'sos' | 'manual'
 
 export function nativeEvidenceAvailable(): boolean {
   return getNativePanic() != null
@@ -38,19 +37,10 @@ export function notifyEvidenceChange(): void {
   }
 }
 
-export async function startNativeEvidence(): Promise<EvidenceToggleResult> {
-  const panic = getNativePanic()
-  if (!panic) return { ok: false, reason: 'unavailable' }
-  try {
-    const res = await panic.startEvidence()
-    if (res.started) {
-      notifyEvidenceChange()
-      return { ok: true }
-    }
-    return { ok: false, reason: (res.reason as EvidenceToggleResult['reason']) || 'error' }
-  } catch {
-    return { ok: false, reason: 'error' }
-  }
+export interface EvidenceToggleResult {
+  ok: boolean
+  /** 'permission' = falta RECORD_AUDIO (o diálogo do sistema foi pedido) */
+  reason?: EvidenceToggleResultReason
 }
 
 export async function stopNativeEvidence(): Promise<
@@ -79,6 +69,20 @@ export async function nativeEvidenceStatus(): Promise<{ running: boolean; elapse
   }
 }
 
+/**
+ * Liga/desliga a gravação — usado pelo deep link do widget e pelos botões
+ * na app. Dispara 'native-evidence-change' em qualquer transição.
+ */
+export async function toggleNativeEvidence(tag: NativeEvidenceTag = 'manual'): Promise<'started' | 'stopped' | 'unavailable'> {
+  const status = await nativeEvidenceStatus()
+  if (status.running) {
+    await stopNativeEvidence()
+    return 'stopped'
+  }
+  const res = await startNativeEvidence(tag)
+  return res.ok ? 'started' : 'unavailable'
+}
+
 /** Metadados das gravações nativas (mais recente primeiro). */
 export async function getNativeRecordings(): Promise<NativeEvidenceRecording[]> {
   const panic = getNativePanic()
@@ -104,15 +108,20 @@ export async function shareNativeRecording(path: string): Promise<boolean> {
 }
 
 /**
- * Liga/desliga a gravação — usado pelo deep link do widget e pelos botões
- * na app. Dispara 'native-evidence-change' em qualquer transição.
+ * Arranca a gravação nativa. v3.31.0: a origem (panic/sos/manual) fica nos
+ * metadados do Cofre (badge PÂNICO/SOS) e no título da notificação REC.
  */
-export async function toggleNativeEvidence(): Promise<'started' | 'stopped' | 'unavailable'> {
-  const status = await nativeEvidenceStatus()
-  if (status.running) {
-    await stopNativeEvidence()
-    return 'stopped'
+export async function startNativeEvidence(tag: NativeEvidenceTag = 'manual'): Promise<EvidenceToggleResult> {
+  const panic = getNativePanic()
+  if (!panic) return { ok: false, reason: 'unavailable' }
+  try {
+    const res = await panic.startEvidence({ tag })
+    if (res.started) {
+      notifyEvidenceChange()
+      return { ok: true }
+    }
+    return { ok: false, reason: (res.reason as EvidenceToggleResult['reason']) || 'error' }
+  } catch {
+    return { ok: false, reason: 'error' }
   }
-  const res = await startNativeEvidence()
-  return res.ok ? 'started' : 'unavailable'
 }

@@ -114,7 +114,7 @@ export function useEmergency() {
         try {
           const st = await nativeEvidenceStatus()
           if (st.running) return // REC já activo (widget/cartão) — não disputar o microfone
-          const res = await startNativeEvidence()
+          const res = await startNativeEvidence('sos') // v3.31.0 — origem nos metadados do Cofre
           if (res.ok) {
             audioSavedRef.current = true // sem blob web esperado
             return

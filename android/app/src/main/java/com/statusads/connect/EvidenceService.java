@@ -28,10 +28,11 @@ import java.io.File;
  * o agressor fecha ou desliza a app embora). Este serviço foreground grava
  * pelo lado Android e CONTINUA com o ecrã apagado e a app fechada.
  *
- * · start(ctx) — arranca em foreground com notificação discreta (canal LOW,
- *   sem som, sem badge) e acção "Parar" na própria notificação
- * · stop(ctx) — para, guarda metadados (path/tamanho/duração) nas prefs
- *   evidence_prefs e actualiza o widget (REC → PARAR)
+ * · start(ctx, tag) — arranca em foreground com notificação discreta (canal
+ *   LOW, sem som, sem badge) e acção "Parar" na própria notificação; a tag
+ *   de origem (v3.31.0: panic/sos/manual) vai nos metadados e no título
+ * · stop(ctx) — para, guarda metadados (path/tamanho/duração/origem) nas
+ *   prefs evidence_prefs e actualiza o widget (REC → PARAR)
  * · Auto-stop aos 15 min (protecção de bateria/tamanho; um ficheiro m4a
  *   mono de 15 min fica perto de ~11 MB)
  * · Ficheiros em Android/data/com.statusads.connect/files/Evidence/ —
@@ -53,12 +54,22 @@ public class EvidenceService extends Service {
     private static final long MAX_DURATION_MS = 15 * 60_000L;
     static final String ACTION_STOP = "com.statusads.connect.evidence.STOP";
 
+    // Origem da gravação (v3.31.0) — vai nos metadados para o Cofre marcar
+    // o contexto forense: PÂNICO (Modo Pânico), SOS (cadeia de SOS simples)
+    // ou REC manual (widget / cartão do Guardião). Gravações antigas, sem
+    // tag, são lidas como "manual" pelo lado web.
+    static final String TAG_MANUAL = "manual";
+    static final String TAG_PANIC = "panic";
+    static final String TAG_SOS = "sos";
+    private static final String EXTRA_TAG = "tag";
+
     private static volatile boolean sRunning = false;
     private static volatile long sStartElapsed = 0L; // SystemClock.elapsedRealtime()
     private static volatile long sStartWall = 0L;    // epoch ms
     private static MediaRecorder sRecorder = null;
     private static String sFilePath = null;
     private static EvidenceService sInstance = null;
+    private static volatile String sTag = TAG_MANUAL;
     private static String sLastStoppedPath = null;
     private static long sLastStoppedDurationMs = 0L;
 
@@ -84,7 +95,13 @@ public class EvidenceService extends Service {
 
     /** Arranca o serviço — RECORD_AUDIO já tem de estar concedida. */
     static void start(Context ctx) {
+        start(ctx, TAG_MANUAL);
+    }
+
+    /** Arranca com a origem (panic/sos/manual) — vai nos metadados do Cofre. */
+    static void start(Context ctx, String tag) {
         Intent i = new Intent(ctx, EvidenceService.class);
+        i.putExtra(EXTRA_TAG, tag != null ? tag : TAG_MANUAL);
         try {
             if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i);
             else ctx.startService(i);
@@ -130,9 +147,15 @@ public class EvidenceService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
+        // Origem desta gravação — só actualizar quando ainda não está a
+        // gravar (chamadas duplicadas mantêm a tag da gravação em curso)
+        if (!sRunning) {
+            String tag = intent != null ? intent.getStringExtra(EXTRA_TAG) : null;
+            sTag = (tag == null || tag.isEmpty()) ? TAG_MANUAL : tag;
+        }
         if (sRunning) return START_STICKY; // chamada duplicada — já a gravar
 
-        startForegroundCompat();
+        startForegroundCompat(sTag);
 
         if (!beginRecording()) {
             stopSelf();
@@ -157,6 +180,7 @@ public class EvidenceService extends Service {
             File dir = new File(getExternalFilesDir(null), "Evidence");
             if (!dir.exists()) dir.mkdirs();
             File out = new File(dir, "aegis-evid-" + System.currentTimeMillis() + ".m4a");
+            // (a tag de origem sTag é fixada em onStartCommand antes de aqui chegar)
 
             MediaRecorder rec;
             if (Build.VERSION.SDK_INT >= 31) rec = new MediaRecorder(getApplicationContext());
@@ -205,11 +229,14 @@ public class EvidenceService extends Service {
             sRunning = false;
             sFilePath = null;
 
+            String tag = (sTag == null || sTag.isEmpty()) ? TAG_MANUAL : sTag;
+            sTag = TAG_MANUAL; // reset — a próxima gravação traz a tag dela
+
             if (path != null) {
                 File f = new File(path);
                 long size = ok ? (f.exists() ? f.length() : 0L) : 0L;
                 if (ok && size > 0L) {
-                    saveMetadata(path, size, startedAt, duration);
+                    saveMetadata(path, size, startedAt, duration, tag);
                     sLastStoppedPath = path;
                     sLastStoppedDurationMs = duration;
                 } else {
@@ -236,7 +263,7 @@ public class EvidenceService extends Service {
 
     // ── Metadados (prefs — o WebView lê via PanicPlugin.getNativeEvidence) ───
 
-    private void saveMetadata(String path, long sizeBytes, long startedAt, long durationMs) {
+    private void saveMetadata(String path, long sizeBytes, long startedAt, long durationMs, String tag) {
         try {
             SharedPreferences p = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             JSONArray prev = new JSONArray(p.getString(KEY_LIST, "[]"));
@@ -245,6 +272,7 @@ public class EvidenceService extends Service {
             o.put("sizeBytes", sizeBytes);
             o.put("startedAt", startedAt);
             o.put("durationMs", durationMs);
+            o.put("tag", tag); // v3.31.0 — origem: panic/sos/manual
             JSONArray out = new JSONArray();
             out.put(o);
             for (int i = 0; i < prev.length() && out.length() < 12; i++) out.put(prev.get(i));
@@ -254,7 +282,7 @@ public class EvidenceService extends Service {
 
     // ── Notificação discreta ─────────────────────────────────────────────────
 
-    private void startForegroundCompat() {
+    private void startForegroundCompat(String tag) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26 && nm != null
                 && nm.getNotificationChannel(CHANNEL_ID) == null) {
@@ -279,8 +307,14 @@ public class EvidenceService extends Service {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(this, CHANNEL_ID)
                 : new Notification.Builder(this);
+        // Título contextual — quem vê a barra sabe o contexto da gravação
+        String title;
+        if (TAG_PANIC.equals(tag)) title = "REC — evidência de pânico a gravar";
+        else if (TAG_SOS.equals(tag)) title = "REC — evidência de SOS a gravar";
+        else title = "REC — evidência a gravar";
+
         b.setSmallIcon(R.drawable.ic_sos_shortcut)
-                .setContentTitle("REC — evidência a gravar")
+                .setContentTitle(title)
                 .setContentText("Áudio de segurança guardado no aparelho")
                 .setOngoing(true)
                 .setOnlyAlertOnce(true);

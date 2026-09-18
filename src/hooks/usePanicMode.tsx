@@ -192,7 +192,7 @@ export function PanicModeProvider({ children }: { children: React.ReactNode }) {
               nativeRecRef.current = true
               return
             }
-            const res = await startNativeEvidence()
+            const res = await startNativeEvidence('panic') // v3.31.0 — origem nos metadados do Cofre
             if (res.ok) {
               nativeRecRef.current = true
               if (user) {

@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.30.0
+# 🛡️ StatusAds Connect v3.31.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,16 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Marca de Origem nas Evidências Nativas (v3.31.0)** — cada gravação REC
+  sabe onde nasceu:
+  · **PÂNICO / SOS / REC** — badge de origem no Cofre › «No aparelho»:
+  gravações do Modo Pânico ficam marcadas a vermelho, as da cadeia de SOS
+  a âmbar e as manuais (widget / cartão do Guardião) em cinza — contexto
+  forense de um olhar
+  · **Notificação contextual** — a barra mostra "REC — evidência de pânico a
+  gravar" (ou de SOS) durante a gravação, útil para quem apanha o telemóvel
+  · **À prova de manipulação** — a tag é fixada no lado nativo (whitelist no
+  PanicPlugin) e gravações antigas, sem tag, ficam como REC manual
 - **Limpeza Seletiva de Dados (v3.30.0)** — apagar vestígios módulo a módulo,
   sem tocar nas definições:
   · **Nova secção «Limpeza de Dados» nas Configurações** — grupos medidos ao

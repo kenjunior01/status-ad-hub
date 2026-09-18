@@ -295,6 +295,10 @@ public class PanicPlugin extends Plugin {
      * Arranca a gravação de áudio pelo lado nativo. Sem permissão RECORD_AUDIO
      * em runtime, pede-a ao sistema e devolve {started:false, reason:'permission'}
      * — a web informa o utilizador para repetir depois de conceder.
+     *
+     * v3.31.0: aceita {tag} — origem da gravação (panic/sos/manual) que fica
+     * nos metadados do Cofre e no título da notificação. Fora da whitelist
+     * (ou ausente) cai em "manual" — o widget e o cartão do Guardião.
      */
     @PluginMethod
     public void startEvidence(PluginCall call) {
@@ -312,8 +316,12 @@ public class PanicPlugin extends Plugin {
             call.resolve(r);
             return;
         }
+        String tag = call.getString("tag");
+        if (EvidenceService.TAG_PANIC.equals(tag)) tag = EvidenceService.TAG_PANIC;
+        else if (EvidenceService.TAG_SOS.equals(tag)) tag = EvidenceService.TAG_SOS;
+        else tag = EvidenceService.TAG_MANUAL;
         try {
-            EvidenceService.start(ctx);
+            EvidenceService.start(ctx, tag);
             JSObject r = new JSObject();
             r.put("started", true);
             call.resolve(r);

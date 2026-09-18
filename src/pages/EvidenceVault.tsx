@@ -31,6 +31,13 @@ type Evidence = EvidenceRecord
 
 const FREE_LIMIT = 3
 
+/** Origem da gravação nativa (v3.31.0) → [etiqueta, classes de cor]. */
+function nativeTagBadge(tag?: string): { label: string; cls: string } {
+  if (tag === 'panic') return { label: 'PÂNICO', cls: 'text-red-300 border-red-500/40 bg-red-500/10' }
+  if (tag === 'sos') return { label: 'SOS', cls: 'text-amber-300 border-amber-500/40 bg-amber-500/10' }
+  return { label: 'REC', cls: 'text-white/35 border-white/10' } // ausente = gravações antigas
+}
+
 export default function EvidenceVault() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -456,8 +463,9 @@ export default function EvidenceVault() {
               <Badge variant="outline" className="text-[10px] text-white/35 border-white/10">{nativeRecs.length}</Badge>
             </div>
             <p className="text-[11px] text-white/30 leading-relaxed">
-              Gravações do botão REC (widget / cartão do Guardião): ficam no armazenamento
-              do telemóvel (pasta Evidências), sobrevivem ao fecho da app e não sobem para a nuvem.
+              Gravações do REC (widget / cartão do Guardião) e das cadeias de Pânico e SOS:
+              ficam no armazenamento do telemóvel (pasta Evidências), sobrevivem ao fecho da app
+              e não sobem para a nuvem. A marca PÂNICO/SOS indica a origem da gravação.
             </p>
             {nativeRecs.map((r) => (
               <div key={r.path} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -466,9 +474,18 @@ export default function EvidenceVault() {
                     <Mic className="h-4.5 w-4.5 text-white/50" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white">
-                      REC de {new Date(r.startedAt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[13px] font-semibold text-white">
+                        REC de {new Date(r.startedAt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={cn('text-[9px] px-1.5 py-0 font-bold tracking-wider', nativeTagBadge(r.tag).cls)}
+                        title={r.tag === 'panic' ? 'Gravada pelo Modo Pânico' : r.tag === 'sos' ? 'Gravada pela cadeia de SOS' : 'REC manual (widget / cartão)'}
+                      >
+                        {nativeTagBadge(r.tag).label}
+                      </Badge>
+                    </div>
                     <p className="text-[11px] text-white/30 font-mono mt-0.5">
                       {Math.floor(r.durationMs / 60000)}:{String(Math.floor((r.durationMs % 60000) / 1000)).padStart(2, '0')} · {r.sizeBytes >= 1048576 ? `${(r.sizeBytes / 1048576).toFixed(1)} MB` : `${Math.round(r.sizeBytes / 1024)} KB`} · m4a
                     </p>

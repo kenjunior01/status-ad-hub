@@ -209,8 +209,9 @@ interface PanicNativeInterface {
   setTrustedDevice(cfg: { address: string | null; name: string | null; enabled: boolean }): Promise<void>
   /** Dispositivo confiado actual (restaurar a UI). */
   getTrustedDevice(): Promise<TrustedDeviceState>
-  /** Evidências nativas (v3.27.0): gravação que sobrevive ao fecho da app. */
-  startEvidence(): Promise<{ started: boolean; reason?: string }>
+  /** Evidências nativas (v3.27.0): gravação que sobrevive ao fecho da app.
+   *  v3.31.0: {tag} marca a origem (panic/sos/manual) nos metadados do Cofre. */
+  startEvidence(cfg?: { tag?: string }): Promise<{ started: boolean; reason?: string }>
   stopEvidence(): Promise<{ stopped: boolean; path?: string | null; durationMs?: number }>
   evidenceStatus(): Promise<{ running: boolean; elapsedMs?: number }>
   getNativeEvidence(): Promise<{ recordings: NativeEvidenceRecording[] }>
@@ -251,6 +252,8 @@ export interface NativeEvidenceRecording {
   sizeBytes: number
   startedAt: number
   durationMs: number
+  /** Origem (v3.31.0): 'panic' | 'sos' | 'manual' — ausente = gravações antigas (→ manual). */
+  tag?: string
 }
 
 let nativePanic: PanicNativeInterface | null = null
