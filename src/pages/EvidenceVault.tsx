@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Archive, Play, Pause, Download, Trash2, Mic, ArrowLeft,
   Shield, Lock, Loader2, Sparkles, Square,
-  Share2, RefreshCw, CloudUpload, Info,
+  Share2, RefreshCw, CloudUpload, Info, Radar, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +24,7 @@ import {
   nativeEvidenceAvailable, getNativeRecordings, shareNativeRecording,
   type NativeEvidenceRecording,
 } from '@/lib/native-evidence'
+import { parseRadarSnapshot, radarSnapshotSummary, type RadarSnapshot } from '@/lib/radar-snapshot'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +37,16 @@ function nativeTagBadge(tag?: string): { label: string; cls: string } {
   if (tag === 'panic') return { label: 'PÂNICO', cls: 'text-red-300 border-red-500/40 bg-red-500/10' }
   if (tag === 'sos') return { label: 'SOS', cls: 'text-amber-300 border-amber-500/40 bg-amber-500/10' }
   return { label: 'REC', cls: 'text-white/35 border-white/10' } // ausente = gravações antigas
+}
+
+/** Linha compacta de dispositivo do contexto do REC (v3.36.0). */
+function radarDeviceLine(d: RadarSnapshot['wifi'][number]): string {
+  const bits: string[] = []
+  const label = d.n || d.id
+  if (label) bits.push(label)
+  if (d.o) bits.push(`(${d.o})`)
+  if (typeof d.r === 'number') bits.push(`${d.r} dBm`)
+  return bits.join(' ') || d.id
 }
 
 export default function EvidenceVault() {
@@ -54,6 +65,8 @@ export default function EvidenceVault() {
   // ── Gravações nativas no aparelho (v3.27.0) ──
   const [nativeRecs, setNativeRecs] = useState<NativeEvidenceRecording[]>([])
   const [sharingNative, setSharingNative] = useState<string | null>(null)
+  /** contexto forense expandido (path da gravação) — v3.36.0 */
+  const [radarOpen, setRadarOpen] = useState<string | null>(null)
 
   // ── Gravação directa no cofre ──
   const recorder = useAudioRecorder(300)
@@ -494,6 +507,72 @@ export default function EvidenceVault() {
                     {sharingNative === r.path ? <Loader2 className="h-4 w-4 text-brand animate-spin" /> : <Share2 className="h-4 w-4 text-white/40 hover:text-brand" />}
                   </button>
                 </div>
+                {(() => {
+                  const snap = parseRadarSnapshot(r.radar)
+                  if (!snap) return null
+                  const open = radarOpen === r.path
+                  return (
+                    <div className="mt-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <button
+                        onClick={() => setRadarOpen(open ? null : r.path)}
+                        className="w-full flex items-center gap-1.5 text-left"
+                        title="Quem/estava à volta quando a gravação começou"
+                      >
+                        <Radar className="h-3.5 w-3.5 text-brand/70 shrink-0" />
+                        <span className="text-[11px] text-white/45 flex-1 truncate">
+                          Contexto do REC — {radarSnapshotSummary(snap)}
+                        </span>
+                        <ChevronDown className={cn('h-3.5 w-3.5 text-white/25 transition-transform', open && 'rotate-180')} />
+                      </button>
+                      {open && (
+                        <div className="mt-2 space-y-2.5">
+                          {(snap.place || snap.pos) && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="rounded-lg bg-white/[0.03] border border-white/[0.05] px-2 py-1.5">
+                                <p className="text-[9px] uppercase tracking-wider text-white/25">Local</p>
+                                <p className="text-[11px] text-white/60 font-medium truncate">{snap.place || 'desconhecido'}</p>
+                              </div>
+                              <div className="rounded-lg bg-white/[0.03] border border-white/[0.05] px-2 py-1.5">
+                                <p className="text-[9px] uppercase tracking-wider text-white/25">Posição</p>
+                                <p className="text-[11px] text-white/60 font-medium truncate">
+                                  {snap.pos ? `${snap.pos.lat.toFixed(4)}, ${snap.pos.lng.toFixed(4)} · ±${snap.pos.acc} m` : 'sem fix'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {snap.wifi.length > 0 && (
+                            <div>
+                              <p className="text-[9px] uppercase tracking-wider text-white/25 mb-1">Redes Wi-Fi à volta ({snap.wifi.length})</p>
+                              <div className="space-y-0.5">
+                                {snap.wifi.slice(0, 6).map((d) => (
+                                  <p key={d.id} className="text-[10.5px] text-white/45 font-mono truncate">· {radarDeviceLine(d)}</p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {snap.ble.length > 0 && (
+                            <div>
+                              <p className="text-[9px] uppercase tracking-wider text-white/25 mb-1">Dispositivos BLE à volta ({snap.ble.length})</p>
+                              <div className="space-y-0.5">
+                                {snap.ble.slice(0, 6).map((d) => (
+                                  <p key={d.id} className="text-[10.5px] text-white/45 font-mono truncate">· {radarDeviceLine(d)}</p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {snap.around > snap.wifi.length + snap.ble.length && (
+                            <p className="text-[9.5px] text-white/25">
+                              E mais {snap.around - snap.wifi.length - snap.ble.length} dispositivos na janela de 15 min
+                            </p>
+                          )}
+                          <p className="text-[9px] text-white/20 leading-relaxed">
+                            Congelado em {new Date(snap.capturedAt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })} — o contexto vive só nos metadados da gravação, no aparelho.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             ))}
           </div>

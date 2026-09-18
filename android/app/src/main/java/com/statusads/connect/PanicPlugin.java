@@ -299,6 +299,12 @@ public class PanicPlugin extends Plugin {
      * v3.31.0: aceita {tag} — origem da gravação (panic/sos/manual) que fica
      * nos metadados do Cofre e no título da notificação. Fora da whitelist
      * (ou ausente) cai em "manual" — o widget e o cartão do Guardião.
+     *
+     * v3.36.0: aceita {radar} — contexto forense congelado no instante do REC
+     * (Wi-Fi/BLE à volta, local, posição e risco; JSON do radar-snapshot.ts).
+     * Vai para os metadados da gravação (evidence_prefs) e volta no
+     * getNativeEvidence. Nada é interpretado no lado nativo: só se valida
+     * que é JSON e se respeita o tecto de tamanho.
      */
     @PluginMethod
     public void startEvidence(PluginCall call) {
@@ -320,8 +326,9 @@ public class PanicPlugin extends Plugin {
         if (EvidenceService.TAG_PANIC.equals(tag)) tag = EvidenceService.TAG_PANIC;
         else if (EvidenceService.TAG_SOS.equals(tag)) tag = EvidenceService.TAG_SOS;
         else tag = EvidenceService.TAG_MANUAL;
+        String radar = call.getString("radar");
         try {
-            EvidenceService.start(ctx, tag);
+            EvidenceService.start(ctx, tag, radar);
             JSObject r = new JSObject();
             r.put("started", true);
             call.resolve(r);

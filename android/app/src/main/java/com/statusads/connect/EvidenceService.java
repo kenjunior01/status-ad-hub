@@ -31,8 +31,11 @@ import java.io.File;
  * · start(ctx, tag) — arranca em foreground com notificação discreta (canal
  *   LOW, sem som, sem badge) e acção "Parar" na própria notificação; a tag
  *   de origem (v3.31.0: panic/sos/manual) vai nos metadados e no título
- * · stop(ctx) — para, guarda metadados (path/tamanho/duração/origem) nas
- *   prefs evidence_prefs e actualiza o widget (REC → PARAR)
+ * · start(ctx, tag, radar) — v3.36.0: o JS congela o CONTEXTO FORENSE no
+ *   instante do REC (Wi-Fi/BLE à volta, local, posição e risco) e envia-o
+ *   no extra 'radar'; é validado como JSON e guardado nos metadados
+ * · stop(ctx) — para, guarda metadados (path/tamanho/duração/origem/radar)
+ *   nas prefs evidence_prefs e actualiza o widget (REC → PARAR)
  * · Auto-stop aos 15 min (protecção de bateria/tamanho; um ficheiro m4a
  *   mono de 15 min fica perto de ~11 MB)
  * · Ficheiros em Android/data/com.statusads.connect/files/Evidence/ —
@@ -62,6 +65,10 @@ public class EvidenceService extends Service {
     static final String TAG_PANIC = "panic";
     static final String TAG_SOS = "sos";
     private static final String EXTRA_TAG = "tag";
+    /** Contexto forense do REC (v3.36.0) — JSON do radar-snapshot.ts. */
+    private static final String EXTRA_RADAR = "radar";
+    /** Tecto defensivo do JSON aceite (chars) — acima disso descarta. */
+    private static final int MAX_RADAR_CHARS = 16_384;
 
     private static volatile boolean sRunning = false;
     private static volatile long sStartElapsed = 0L; // SystemClock.elapsedRealtime()
@@ -70,6 +77,7 @@ public class EvidenceService extends Service {
     private static String sFilePath = null;
     private static EvidenceService sInstance = null;
     private static volatile String sTag = TAG_MANUAL;
+    private static volatile String sRadar = null;
     private static String sLastStoppedPath = null;
     private static long sLastStoppedDurationMs = 0L;
 
@@ -95,13 +103,27 @@ public class EvidenceService extends Service {
 
     /** Arranca o serviço — RECORD_AUDIO já tem de estar concedida. */
     static void start(Context ctx) {
-        start(ctx, TAG_MANUAL);
+        start(ctx, TAG_MANUAL, null);
     }
 
     /** Arranca com a origem (panic/sos/manual) — vai nos metadados do Cofre. */
     static void start(Context ctx, String tag) {
+        start(ctx, tag, null);
+    }
+
+    /**
+     * Arranca com a origem e o CONTEXTO FORENSE (v3.36.0) — o snapshot de
+     * radar (JSON) é levado no intent e congelado nos metadados da
+     * gravação. Null/invazio/inválido = gravação sem contexto (igual às
+     * antigas).
+     */
+    static void start(Context ctx, String tag, String radarJson) {
         Intent i = new Intent(ctx, EvidenceService.class);
         i.putExtra(EXTRA_TAG, tag != null ? tag : TAG_MANUAL);
+        if (radarJson != null && radarJson.length() > 0
+                && radarJson.length() <= MAX_RADAR_CHARS) {
+            i.putExtra(EXTRA_RADAR, radarJson);
+        }
         try {
             if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i);
             else ctx.startService(i);
@@ -152,6 +174,9 @@ public class EvidenceService extends Service {
         if (!sRunning) {
             String tag = intent != null ? intent.getStringExtra(EXTRA_TAG) : null;
             sTag = (tag == null || tag.isEmpty()) ? TAG_MANUAL : tag;
+            String radar = intent != null ? intent.getStringExtra(EXTRA_RADAR) : null;
+            sRadar = (radar != null && radar.length() > 0 && radar.length() <= MAX_RADAR_CHARS)
+                    ? radar : null;
         }
         if (sRunning) return START_STICKY; // chamada duplicada — já a gravar
 
@@ -231,12 +256,14 @@ public class EvidenceService extends Service {
 
             String tag = (sTag == null || sTag.isEmpty()) ? TAG_MANUAL : sTag;
             sTag = TAG_MANUAL; // reset — a próxima gravação traz a tag dela
+            String radar = sRadar; // contexto congelado no instante do REC
+            sRadar = null;         // reset — a próxima gravação traz o dela
 
             if (path != null) {
                 File f = new File(path);
                 long size = ok ? (f.exists() ? f.length() : 0L) : 0L;
                 if (ok && size > 0L) {
-                    saveMetadata(path, size, startedAt, duration, tag);
+                    saveMetadata(path, size, startedAt, duration, tag, radar);
                     sLastStoppedPath = path;
                     sLastStoppedDurationMs = duration;
                 } else {
@@ -263,7 +290,8 @@ public class EvidenceService extends Service {
 
     // ── Metadados (prefs — o WebView lê via PanicPlugin.getNativeEvidence) ───
 
-    private void saveMetadata(String path, long sizeBytes, long startedAt, long durationMs, String tag) {
+    private void saveMetadata(String path, long sizeBytes, long startedAt, long durationMs,
+                              String tag, String radarJson) {
         try {
             SharedPreferences p = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             JSONArray prev = new JSONArray(p.getString(KEY_LIST, "[]"));
@@ -273,6 +301,13 @@ public class EvidenceService extends Service {
             o.put("startedAt", startedAt);
             o.put("durationMs", durationMs);
             o.put("tag", tag); // v3.31.0 — origem: panic/sos/manual
+            // v3.36.0 — contexto forense: só entra se for JSON válido (a
+            // WebView lê com parse defensivo; gravações antigas não têm o campo)
+            if (radarJson != null && radarJson.length() > 0) {
+                try {
+                    o.put("radar", new JSONObject(radarJson).toString());
+                } catch (Exception ignored) { }
+            }
             JSONArray out = new JSONArray();
             out.put(o);
             for (int i = 0; i < prev.length() && out.length() < 12; i++) out.put(prev.get(i));

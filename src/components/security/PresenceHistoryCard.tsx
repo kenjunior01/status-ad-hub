@@ -19,6 +19,7 @@ import {
   findPathCompanions, presenceNowContext, suggestOwner,
   type PresenceEntry,
 } from '@/lib/presence-history'
+import { exportPresenceHistory } from '@/lib/export-data'
 import { ProximityRadar, type ProximityBlip } from '@/components/security/ProximityRadar'
 
 // Paleta expressiva (suave por natureza — nada de tons duros)
@@ -133,6 +134,9 @@ export function PresenceHistoryCard() {
     setFreshIds({})
     refresh()
   }
+
+  // v3.36.0 — presenças exportáveis (CSV/JSON): prova fora do aparelho
+  const exportAll = () => { void exportPresenceHistory(getPresenceDevices()) }
 
   const stats = [
     { icon: Users, label: 'À volta agora', value: ctx.total.length, color: AX.sky },
@@ -301,6 +305,18 @@ export function PresenceHistoryCard() {
           Histórico de presenças mantido por 30 dias · tudo fica no aparelho
           {devices.length > 0 && ` · ${devices.length} dispositivos registados`}
         </p>
+        {devices.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportAll}
+            className="ax-press h-7 rounded-lg text-[10px] border-white/10 bg-white/[0.03] text-white/35 shrink-0"
+            title="Exportar o histórico de presenças (CSV)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 mr-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            Exportar
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"

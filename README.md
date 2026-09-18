@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.35.0
+# 🛡️ StatusAds Connect v3.36.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -171,6 +171,37 @@ gateways de pagamento ou SMS.
   callback → colar no Supabase (Authentication → Providers → Google) →
   adicionar com.statusads.connect://login-callback às Redirect URLs →
   npm run cap:sync para incluir o plugin no nativo
+- **Contexto Forense do REC + Presenças Exportáveis (v3.36.0)** — a prova de
+  áudio deixa de responder só "o que se ouviu" e passa a responder também
+  "QUEM estava à volta quando isto foi gravado":
+  · **Snapshot de radar nas evidências nativas** — no instante em que o REC
+  nativo começa (Modo Pânico, SOS, widget ou cartão do Guardião), a app
+  congela o CONTEXTO: dispositivos à volta nos últimos 15 min (histórico de
+  presenças: Wi-Fi e BLE com sinal e dono atribuído), local actual
+  (impressão digital de BSSIDs), posição aproximada (fix do motor de rádio:
+  lat/lng/precisão/rumo/velocidade) e risco do ambiente — tudo lido de
+  forma síncrona do localStorage (o caminho do pânico não espera por
+  scans) e enviado pela ponte nativa (PanicPlugin.startEvidence aceita
+  {radar}; EvidenceService valida como JSON e guarda nos metadados)
+  · **"Contexto do REC" no Cofre** — cada gravação nativa mostra o resumo
+  numa linha ("4 Wi-Fi · 2 BLE · Local 1 · ±14 m · risco 35") e expande
+  para a lista completa: redes e dispositivos com sinal, donos entre
+  parênteses, local e coordenadas com precisão — o contexto vive só nos
+  metadados da gravação, no aparelho (gravações antigas ficam sem o campo)
+  · **Presenças exportáveis** — novo botão "Exportar" no cartão Companhias
+  de Caminho: CSV com nome, dono, tipo, sinais, locais ("Local 1×12"),
+  pontos de caminho, vezes em movimento e última posição (JSON também
+  disponível via exportPresenceHistory) — a lista de presenças 30 dias
+  sai do aparelho quando for preciso (advogado, polícia, seguro)
+  · **Aviso de isenção de bateria no widget** — com o Guardião armado e a
+  app SEM isenção das optimizações de bateria, o widget "Aegis SOS" mostra
+  sub laranja "Isente a app da bateria — a sentinela morre adormecida"
+  (o Android/OEM mata a sentinela quando o ecrã apaga — crítico em
+  Xiaomi/Samsung); prioridade da linha: REC a gravar > bateria baixa >
+  isenção em falta; versão nativa: versionCode 48, versionName 3.36.0
+  · **RECOMPILAR APK OBRIGATÓRIO** (Java alterado): npm run cap:sync +
+  Android Studio — o contexto forense é nativo (a web/PWA mantém o botão
+  Exportar e tudo o resto)
 - **AEGIS Expressive — Design e Tecnologias de Nova Geração (v3.34.0)** — os
   módulos de radar/posição/companhias ganham uma linguagem visual expressiva
   (inspirada no Material You do Flutter moderno, adaptada ao nicho Guardião:

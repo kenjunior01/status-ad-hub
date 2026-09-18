@@ -16,6 +16,7 @@ import type { WifiRegistryEntry } from '@/lib/net-radar'
 import type { BleRegistryEntry } from '@/lib/radar-registry'
 import type { SecurityEvent } from '@/lib/security-events'
 import type { PlaceFingerprint } from '@/lib/net-intel'
+import type { PresenceEntry } from '@/lib/presence-history'
 
 // ── Serialização ──────────────────────────────────────────────────────────
 
@@ -142,6 +143,26 @@ export function securityEventsToCsv(events: SecurityEvent[]): string {
   )
 }
 
+// ── Presenças / Companhias de Caminho (v3.36.0) ──────────────────────────
+
+export function presenceToCsv(entries: PresenceEntry[]): string {
+  return toCsv(
+    ['nome', 'dono', 'tipo', 'id', 'melhor_sinal_dbm', 'ultimo_sinal_dbm', 'primeira_vez', 'ultima_vez', 'n_vezes', 'locais', 'pontos_caminho', 'vezes_em_movimento', 'lat', 'lng'],
+    entries.map((e) => [
+      e.name || '', e.owner || '', e.kind, e.id,
+      e.bestRssi ?? '', e.lastRssi ?? '',
+      fmtDate(e.firstSeen), fmtDate(e.lastSeen), e.seen ?? '',
+      Object.entries(e.places || {}).map(([l, c]) => `${l}×${c}`).join(' | '),
+      e.pathPoints ?? 0, e.movingSeen ?? 0,
+      e.lastPos?.lat ?? '', e.lastPos?.lng ?? '',
+    ]),
+  )
+}
+
+export function presenceToJson(entries: PresenceEntry[]): string {
+  return JSON.stringify({ exportedAt: new Date().toISOString(), type: 'presence-history', count: entries.length, entries }, null, 2)
+}
+
 // ── Atalhos de alto nível (um clique nas páginas) ─────────────────────────
 
 function stamp(): string {
@@ -190,5 +211,16 @@ export async function exportPlaces(places: PlaceFingerprint[], format: 'csv' | '
   const content = format === 'csv' ? placesToCsv(places) : placesToJson(places)
   const ok = await deliverFile(`statusads-locais-${stamp()}.${format}`, content, format === 'csv' ? 'text/csv' : 'application/json')
   if (ok) toast.success(`Locais exportados (${places.length})`)
+  return ok
+}
+
+export async function exportPresenceHistory(entries: PresenceEntry[], format: 'csv' | 'json' = 'csv'): Promise<boolean> {
+  if (!entries.length) {
+    toast.info('Histórico de presenças vazio — nada para exportar')
+    return false
+  }
+  const content = format === 'csv' ? presenceToCsv(entries) : presenceToJson(entries)
+  const ok = await deliverFile(`statusads-presencas-${stamp()}.${format}`, content, format === 'csv' ? 'text/csv' : 'application/json')
+  if (ok) toast.success(`Presenças exportadas (${entries.length} dispositivos)`)
   return ok
 }

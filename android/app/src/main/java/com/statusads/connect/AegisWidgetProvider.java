@@ -31,6 +31,10 @@ import android.widget.RemoteViews;
  *   baixa (≤20%), avisa em âmbar — a sentinela e o SOS dependem de bateria.
  *   Mantida a quente pelo AegisBatteryReceiver (ACTION_BATTERY_CHANGED),
  *   sem polling nem updatePeriodMs → continua a gastar zero bateria.
+ * · ISENÇÃO DE BATERIA (v3.36.0): armado + sem isenção de optimização →
+ *   sub laranja "Isente a app da bateria" — sem ela, o Android/OEM mata a
+ *   sentinela quando o ecrã apaga (Xiaomi/Samsung comuns em Moçambique).
+ *   Prioridade da linha: REC a gravar > bateria baixa > isenção em falta.
  */
 public class AegisWidgetProvider extends AppWidgetProvider {
 
@@ -98,14 +102,26 @@ public class AegisWidgetProvider extends AppWidgetProvider {
         // baixa → estado âmbar + sub com o aviso (a sentinela e o SOS falham
         // se o telemóvel morrer — o widget avisa antes disso acontecer).
         int pct = readBatteryPct(context);
+        boolean batteryLow = false;
         if (armed && pct >= 0) {
-            boolean low = pct <= BATTERY_LOW_PCT;
+            batteryLow = pct <= BATTERY_LOW_PCT;
             views.setTextViewText(R.id.widget_status, "GUARDIÃO ACTIVO · " + pct + "%");
-            views.setTextColor(R.id.widget_status, low ? 0xFFF59E0B : 0xFFD4AF37);
-            if (low) {
+            views.setTextColor(R.id.widget_status, batteryLow ? 0xFFF59E0B : 0xFFD4AF37);
+            if (batteryLow) {
                 views.setTextViewText(R.id.widget_status_sub, "Bateria baixa — carregue o telemóvel");
                 views.setTextColor(R.id.widget_status_sub, 0xFFFBBF24);
             }
+        }
+
+        // ISENÇÃO DE BATERIA (v3.36.0): armado + sem isenção das optimizações
+        // → a sentinela corre o risco de ser morta pelo sistema/OEM quando o
+        // ecrã apaga. Aviso laranja (bateria baixa tem prioridade — a sub é
+        // uma linha só; tocar no widget abre a app, onde a Central do
+        // Guardião pede a isenção com um toque).
+        if (armed && !batteryLow && !isBatteryExempt(context)) {
+            views.setTextViewText(R.id.widget_status_sub,
+                    "Isente a app da bateria — a sentinela morre adormecida");
+            views.setTextColor(R.id.widget_status_sub, 0xFFFB923C);
         }
 
         // Gravação de evidências (v3.27.0): botão REC⇄PARAR dinâmico
@@ -176,5 +192,20 @@ public class AegisWidgetProvider extends AppWidgetProvider {
             // OEM sem a propriedade — widget mostra o estado sem nível
         }
         return -1;
+    }
+
+    /**
+     * True quando a app está isenta das optimizações de bateria (o mesmo
+     * critério do PanicPlugin.batteryStatus — o utilizador concedeu via
+     * REQUEST_IGNORE_BATTERY_OPTIMIZATIONS na Central do Guardião).
+     */
+    private static boolean isBatteryExempt(Context context) {
+        try {
+            android.os.PowerManager pm =
+                    (android.os.PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(context.getPackageName());
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 }

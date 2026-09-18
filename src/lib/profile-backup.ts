@@ -21,7 +21,7 @@
  * Contactos e plano vivem no servidor — ficam de fora por natureza.
  */
 
-export const APP_VERSION = '3.35.0'
+export const APP_VERSION = '3.36.0'
 
 // ── Regras de inclusão ───────────────────────────────────────────────────────
 

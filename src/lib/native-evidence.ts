@@ -16,6 +16,7 @@
  */
 
 import { getNativePanic, type NativeEvidenceRecording } from '@/lib/guardian'
+import { captureRadarSnapshot, serializeRadarSnapshot } from '@/lib/radar-snapshot'
 
 export type { NativeEvidenceRecording }
 
@@ -110,12 +111,19 @@ export async function shareNativeRecording(path: string): Promise<boolean> {
 /**
  * Arranca a gravação nativa. v3.31.0: a origem (panic/sos/manual) fica nos
  * metadados do Cofre (badge PÂNICO/SOS) e no título da notificação REC.
+ * v3.36.0: o CONTEXTO FORENSE (Wi-Fi/BLE à volta, local, posição e risco)
+ * é congelado no mesmo instante e viaja nos metadados — o Cofre mostra
+ * "quem estava à volta quando isto foi gravado".
  */
 export async function startNativeEvidence(tag: NativeEvidenceTag = 'manual'): Promise<EvidenceToggleResult> {
   const panic = getNativePanic()
   if (!panic) return { ok: false, reason: 'unavailable' }
   try {
-    const res = await panic.startEvidence({ tag })
+    // contexto forense — síncrono (localStorage), melhor esforço: nunca
+    // trava nem falha o arranque da gravação
+    let radar: string | undefined
+    try { radar = serializeRadarSnapshot(captureRadarSnapshot()) || undefined } catch { /* segue */ }
+    const res = await panic.startEvidence({ tag, radar })
     if (res.started) {
       notifyEvidenceChange()
       return { ok: true }

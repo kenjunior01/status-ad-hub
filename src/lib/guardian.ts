@@ -210,8 +210,10 @@ interface PanicNativeInterface {
   /** Dispositivo confiado actual (restaurar a UI). */
   getTrustedDevice(): Promise<TrustedDeviceState>
   /** Evidências nativas (v3.27.0): gravação que sobrevive ao fecho da app.
-   *  v3.31.0: {tag} marca a origem (panic/sos/manual) nos metadados do Cofre. */
-  startEvidence(cfg?: { tag?: string }): Promise<{ started: boolean; reason?: string }>
+   *  v3.31.0: {tag} marca a origem (panic/sos/manual) nos metadados do Cofre.
+   *  v3.36.0: {radar} congela o contexto forense (Wi-Fi/BLE/local/posição)
+   *  nos metadados — JSON produzido pelo radar-snapshot.ts. */
+  startEvidence(cfg?: { tag?: string; radar?: string }): Promise<{ started: boolean; reason?: string }>
   stopEvidence(): Promise<{ stopped: boolean; path?: string | null; durationMs?: number }>
   evidenceStatus(): Promise<{ running: boolean; elapsedMs?: number }>
   getNativeEvidence(): Promise<{ recordings: NativeEvidenceRecording[] }>
@@ -254,6 +256,9 @@ export interface NativeEvidenceRecording {
   durationMs: number
   /** Origem (v3.31.0): 'panic' | 'sos' | 'manual' — ausente = gravações antigas (→ manual). */
   tag?: string
+  /** Contexto forense do instante do REC (v3.36.0) — JSON do radar-snapshot.
+   *  Ausente = gravações antigas (antes da v3.36) sem contexto congelado. */
+  radar?: string
 }
 
 let nativePanic: PanicNativeInterface | null = null
