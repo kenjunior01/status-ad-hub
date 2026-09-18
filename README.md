@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.34.0
+# 🛡️ StatusAds Connect v3.35.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,31 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Sincronização Total Web ↔ APK + Login Google Nativo (v3.35.0)** — a APK
+  deixa de ter qualquer compartimento separado da versão web: MESMA conta,
+  MESMOS dados, MESMO login social:
+  · **Login Google na APK** — o botão Google passa a funcionar dentro da app
+  nativa: abre o browser do sistema (@capacitor/browser oficial), o Supabase
+  devolve por deep link (com.statusads.connect://login-callback — o scheme
+  já partilhado com o SOS) e a sessão termina dentro da WebView via PKCE
+  (exchangeCodeForSession) — resultado: a MESMA conta da web, com os MESMOS
+  contactos, eventos, dispositivos e planos; na web o fluxo clássico mantém-se
+  · **Botão Google também no Registo** — paridade total: "Google — mesma conta
+  da web" no Login e no Registo (Apple mantém o mesmo fluxo adaptativo)
+  · **Sincronização explícita** — novo cartão "Sincronização Web ↔ APK" na
+  Central (web) e painel "SINCRONIZACAO · WEB ↔ APK" no HUD táctico (APK):
+  mostra a conta activa e o provider (Email/Google), contagens de paridade
+  (contactos/dispositivos/eventos na nuvem) e um botão "Sincronizar tudo"
+  que empurra eventos de segurança pendentes, locais conhecidos (impressões
+  Wi-Fi) e o registo de redes vistas; o registo BLE e o histórico de
+  presenças ficam NO APARELHO por desenho de privacidade
+  · **Versão nativa actualizada** — versionName 3.15.0 → 3.35.0 e versionCode
+  47 no build.gradle: a APK volta a acompanhar a versão da app
+  · **Configuração (uma vez)** — Google Cloud Console: credencial OAuth
+  "Aplicação Web" com redirect https://<projecto>.supabase.co/auth/v1/
+  callback → colar no Supabase (Authentication → Providers → Google) →
+  adicionar com.statusads.connect://login-callback às Redirect URLs →
+  npm run cap:sync para incluir o plugin no nativo
 - **AEGIS Expressive — Design e Tecnologias de Nova Geração (v3.34.0)** — os
   módulos de radar/posição/companhias ganham uma linguagem visual expressiva
   (inspirada no Material You do Flutter moderno, adaptada ao nicho Guardião:

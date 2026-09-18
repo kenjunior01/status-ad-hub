@@ -43,6 +43,7 @@ import {
   getPresenceDevices, findPathCompanions, presenceNowContext,
   type PresenceEntry,
 } from '@/lib/presence-history'
+import { runFullSync, type FullSyncResult } from '@/lib/full-sync'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -276,6 +277,78 @@ function PresenceTacPanel() {
   )
 }
 
+/** SINCRONIZACAO WEB ↔ APK (v3.35.0) — mesma conta (email/Google), tudo na nuvem. */
+function SyncTacPanel() {
+  const [syncing, setSyncing] = useState(false)
+  const [r, setR] = useState<FullSyncResult | null>(null)
+
+  const syncNow = async () => {
+    setSyncing(true)
+    try {
+      const res = await runFullSync()
+      setR(res)
+      if (res.account == null) toast.error('SEM SESSAO — ENTRE NA CONTA')
+      else if (res.erros.length > 0) toast.error(`FALHAS: ${res.erros.length}`)
+      else toast.success('TUDO NA NUVEM')
+    } catch {
+      toast.error('FALHA AO SINCRONIZAR')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const providerLabel = r?.account ? (r.account.provider === 'email' ? 'EMAIL' : r.account.provider.toUpperCase()) : null
+
+  return (
+    <div className="tac-panel p-4 space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="tac-label">SINCRONIZACAO · WEB ↔ APK · MESMA CONTA</p>
+        {providerLabel && (
+          <span className="tac-badge" style={{ background: 'transparent', color: 'var(--tac-green)', border: '1px solid rgba(52,211,153,0.35)' }}>{providerLabel}</span>
+        )}
+      </div>
+      {r?.account ? (
+        <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] truncate">{r.account.email}</p>
+      ) : (
+        <p className="text-[10px] font-mono text-[rgba(52,211,153,0.45)]">&gt; SINCRONIZE PARA VER A CONTA (A MESMA DA VERSAO WEB)</p>
+      )}
+      <div className="grid grid-cols-4 gap-2">
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">EVENTOS</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{r ? `${r.pushed.eventos}` : '—'}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">ENVIADOS AGORA</p>
+        </div>
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">LOCAIS</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{r ? `${r.pushed.locais}` : '—'}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">IMPRESSOES WI-FI</p>
+        </div>
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">WI-FI</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{r ? `${r.pushed.wifi}` : '—'}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">REDES NA NUVEM</p>
+        </div>
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">BLE</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{r ? `${r.local.ble}` : '—'}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">PRIVADO NO APARELHO</p>
+        </div>
+      </div>
+      {r && r.cloud.contactos + r.cloud.dispositivos > 0 && (
+        <p className="text-[9px] font-mono text-[rgba(52,211,153,0.45)]">
+          &gt; NUVEM: {r.cloud.contactos} CONTACTOS · {r.cloud.dispositivos} DISPOSITIVOS · {r.cloud.eventos} EVENTOS (IGUAL NA WEB)
+        </p>
+      )}
+      <div className="flex items-center gap-2 pt-1">
+        <button onClick={syncNow} disabled={syncing} className="tac-btn tac-btn-ghost text-[10px]">
+          {syncing ? 'A SINCRONIZAR...' : 'SINCRONIZAR TUDO'}
+        </button>
+        <p className="tac-label flex-1 text-right">EVENTOS · LOCAIS · REGISTO WI-FI</p>
+      </div>
+    </div>
+  )
+}
+
 export default function TacticalSecurityCenter() {
   const { user } = useAuth()
   const net = useNetRadar()
@@ -381,7 +454,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.34 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.35 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -456,6 +529,9 @@ export default function TacticalSecurityCenter() {
 
         {/* COMPANHIAS DE CAMINHO (v3.33.0) — presenças 30 dias */}
         <PresenceTacPanel />
+
+        {/* SINCRONIZACAO WEB ↔ APK (v3.35.0) — mesma conta, login Google */}
+        <SyncTacPanel />
 
         {/* CONSULTOR AEGIS · IA (v3.19.0) — consola exclusiva da APK */}
         <TacticalAiCopilot securityScore={securityScore} />

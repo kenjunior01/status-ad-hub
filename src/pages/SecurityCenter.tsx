@@ -38,6 +38,7 @@ import { useBleRadar } from '@/hooks/useBleRadar'
 import { useRadarWatch } from '@/hooks/useRadarWatch'
 import { RadioPositionCard } from '@/components/security/RadioPositionCard'
 import { PresenceHistoryCard } from '@/components/security/PresenceHistoryCard'
+import { SyncStatusCard } from '@/components/security/SyncStatusCard'
 import { useContacts } from '@/hooks/useContacts'
 import { useCheckIn } from '@/hooks/useCheckIn'
 import {
@@ -248,7 +249,7 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.34
+          v3.35
         </span>
       </div>
 
@@ -325,6 +326,9 @@ function SecurityCenterWeb() {
 
       {/* Companhias de Caminho (v3.33.0) — quem esteve no percurso, 30 dias */}
       <PresenceHistoryCard />
+
+      {/* Sincronização Web ↔ APK (v3.35.0) — mesma conta, login Google */}
+      <SyncStatusCard />
 
       {/* Ameaças activas */}
       {topThreats.length > 0 && (

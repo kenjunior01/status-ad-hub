@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, MailWarning } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { signInWithOAuthAdaptive } from "@/lib/native-auth";
 import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton } from "@/components/effects";
 import { useDuressLogin } from "@/components/DuressPinLogin";
 import { useAntiCoercion } from "@/hooks/useAntiCoercion";
@@ -31,21 +32,21 @@ export default function Login() {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'apple' | null>(null);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
-  // OAuth social (Google / Apple) — requer provider activado no Supabase
+  // OAuth social (Google / Apple) — v3.35.0: adaptativo — na WEB usa o
+  // redirect clássico; na APK abre o browser do sistema e volta por deep
+  // link (com.statusads.connect://login-callback) para a MESMA conta da web
   const handleOAuth = useCallback(async (provider: 'google' | 'apple') => {
     setOauthLoading(provider);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin + '/dashboard' },
-    });
+    const r = await signInWithOAuthAdaptive(provider);
     setOauthLoading(null);
-    if (error) {
+    if (!r.ok) {
       toast.error(`Login com ${provider === 'google' ? 'Google' : 'Apple'} indisponível`, {
-        description: 'O administrador precisa activar este provider no Supabase (Authentication → Providers).',
-        duration: 6000,
+        description: r.message,
+        duration: 7000,
       });
     }
-    // Sucesso: o Supabase redireciona para /dashboard automaticamente
+    // Sucesso: web → redirect do Supabase; APK → browser do sistema e
+    // regresso por deep link (tratado em native-auth.ts)
   }, []);
 
   // Duress login mechanism

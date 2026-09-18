@@ -27,6 +27,7 @@ import { FakeDashboard } from '@/components/FakeDashboard'
 import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
 import { PanicModeOverlay } from '@/components/PanicModeOverlay'
 import { GuardianWatcher } from '@/components/GuardianWatcher'
+import { initAuthDeepLinks } from '@/lib/native-auth'
 import { GuardianSOSOverlay } from '@/components/GuardianSOSOverlay'
 import { resumeWatchIfEnabled } from '@/hooks/useRadarWatch'
 
@@ -204,6 +205,8 @@ function InnerApp() {
   useGlobalErrorHandlers()
   // v3.17.0 — retoma a vigilância contínua se estava activa antes de fechar
   useEffect(() => { resumeWatchIfEnabled() }, [])
+  // v3.35.0 — deep link do login social (com.statusads.connect://login-callback)
+  useEffect(() => { initAuthDeepLinks() }, [])
 
   return (
     <BrowserRouter>
