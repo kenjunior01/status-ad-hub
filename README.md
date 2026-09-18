@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.33.0
+# 🛡️ StatusAds Connect v3.34.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,30 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **AEGIS Expressive — Design e Tecnologias de Nova Geração (v3.34.0)** — os
+  módulos de radar/posição/companhias ganham uma linguagem visual expressiva
+  (inspirada no Material You do Flutter moderno, adaptada ao nicho Guardião:
+  calma por defeito, vida só onde importa):
+  · **Radar de Proximidade real** — novo componente circular com sweep a
+  rodar (conic-gradient puro, zero JS) e blips; no cartão "Posição por
+  Rádio" cada âncora fica na DIRECÇÃO e DISTÂNCIA reais do fix actual
+  (ângulo = bearing, raio = haversine, escala adaptativa até 200 m) e no
+  cartão "Companhias" quem está à volta fica no anel da força do sinal
+  (perto/médio/longe) com ângulo estável por identidade
+  · **Auroras tonais + vidro fosco + grão de filme** — os herós do "Contexto
+  Actual" derivam massas de cor suaves (lavanda/céu/sálvia) só por
+  transformações GPU, sob superfícies de vidro com blur/saturação e textura
+  orgânica; tudo a respeitar prefers-reduced-motion
+  · **Física de mola e cascata** — botões com press de overshoot (cubic-
+  bezier elástico) e listas que nascem em cascata (entrada escalonada 60 ms)
+  · **"NOVO NO CAMINHO" com haptics** — quando um dispositivo entra no seu
+  caminho pela primeira vez, a app vibra ([18,70,18]) e brilha uma pílula
+  de mel durante 90 s — na Central web e no HUD táctico da APK
+  · **Tons por dono** — cada dono/nome ganha um tom estável da paleta
+  (hash da identidade): avatares e blips tornam-se reconhecíveis à vista
+  · **HUD táctico actualizado** — painel de Posição com radar táctico de
+  âncoras ("COLOCACAO REAL · MAIS PROXIMA A N M") e painel de Companhias
+  com flash NOVO; 'MODULO TATICO v3.34'
 - **Companhias de Caminho — Histórico de 30 Dias (v3.33.0)** — o histórico de
   presenças passa a responder às perguntas que importam: quem está à volta,
   há quanto tempo, de quem são os dispositivos e quem esteve NO CAMINHO:

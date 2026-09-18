@@ -174,6 +174,20 @@ export function getRadioPositionState(): RadioPositionState {
   return state
 }
 
+/**
+ * Âncoras calibradas (v3.34.0 — leitura directa para visuais de radar:
+ * cada âncora tem lat/lng, permitindo colocação EXACTA por ângulo+distância
+ * a partir do fix actual). Sem tocar no estado singleton.
+ */
+export function getRadioAnchors(): RadioAnchor[] {
+  try {
+    const a = JSON.parse(localStorage.getItem(ANCHORS_KEY) || '[]')
+    return Array.isArray(a) ? (a as RadioAnchor[]) : []
+  } catch {
+    return []
+  }
+}
+
 export function resetRadioPosition(): void {
   try {
     localStorage.removeItem(ANCHORS_KEY)

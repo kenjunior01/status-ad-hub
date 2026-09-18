@@ -1215,3 +1215,198 @@ select:focus {
 @media (prefers-reduced-motion: reduce) {
   .aegis-ripple-ink { animation: none; opacity: 0; }
 }
+
+/* ============================================================
+   AEGIS EXPRESSIVE (v3.34.0) — linguagem de design de nova
+   geração para os módulos de radar/posição/companhias.
+   Auroras tonais suaves, vidro fosco com grão, sweep de radar
+   em conic-gradient, física de mola nos toques e entrada
+   escalonada — calma por defeito, vida só onde importa.
+   ============================================================ */
+:root {
+  --ax-lavender: #b8a9f5;
+  --ax-sky: #8ed1f2;
+  --ax-sage: #9fe8c0;
+  --ax-sand: #f2ddb0;
+  --ax-honey: #e8c9a0;
+  --ax-blush: #e8b4b8;
+}
+
+/* superfície de aurora: duas massas tonais a derivar (só transform → GPU) */
+.ax-aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.ax-aurora::before,
+.ax-aurora::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  will-change: transform;
+}
+.ax-aurora::before {
+  width: 72%;
+  aspect-ratio: 1;
+  left: -18%;
+  top: -34%;
+  background: radial-gradient(closest-side, rgba(184, 169, 245, 0.16), transparent 72%);
+  animation: ax-drift-a 26s ease-in-out infinite;
+}
+.ax-aurora::after {
+  width: 64%;
+  aspect-ratio: 1;
+  right: -16%;
+  bottom: -30%;
+  background: radial-gradient(closest-side, rgba(142, 209, 242, 0.13), transparent 72%);
+  animation: ax-drift-b 34s ease-in-out infinite;
+}
+@keyframes ax-drift-a {
+  0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1); }
+  50% { transform: translate3d(5%, 6%, 0) scale(1.14); }
+}
+@keyframes ax-drift-b {
+  0%, 100% { transform: translate3d(6%, 4%, 0) scale(1.06); }
+  50% { transform: translate3d(-5%, -6%, 0) scale(0.94); }
+}
+
+/* grão de filme (data-URI, ~0 custo) — textura orgânica sobre a aurora */
+.ax-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* vidro fosco tonal — superfície premium dos heros */
+.ax-glass {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015) 60%);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 22px 44px -28px rgba(0, 0, 0, 0.65);
+}
+
+/* sweep de radar — cunha luminosa a rodar (conic-gradient, 0 JS) */
+.ax-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--ax-sweep-color, rgba(184, 169, 245, 0.34)) 26deg,
+    transparent 96deg
+  );
+  animation: ax-spin 4.6s linear infinite;
+  will-change: transform;
+}
+@keyframes ax-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* blip de alvo + anel de eco a pulsar */
+.ax-blip {
+  position: absolute;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px -1px currentColor;
+  z-index: 1;
+}
+.ax-blip::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1px solid currentColor;
+  animation: ax-blip-pulse 2.6s ease-out infinite;
+}
+@keyframes ax-blip-pulse {
+  0% { transform: scale(0.55); opacity: 0.55; }
+  70%, 100% { transform: scale(2.1); opacity: 0; }
+}
+
+/* o "você" no centro do radar */
+.ax-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.09),
+    0 0 16px rgba(255, 255, 255, 0.28);
+  z-index: 1;
+}
+
+/* entrada escalonada — listas que nascem em cascata */
+.ax-rise {
+  opacity: 0;
+  animation: ax-rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--ax-i, 0) * 60ms);
+}
+@keyframes ax-rise-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* física de mola nos toques (overshoot suave ao soltar) */
+.ax-press {
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.ax-press:active { transform: scale(0.96); }
+
+/* pílula expressiva */
+.ax-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* número-herói fluido (escala com o ecrã, nunca rebenta) */
+.ax-hero-num {
+  font-size: clamp(22px, 6.2vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* brilho de "acabou de acontecer" (NOVO no caminho) */
+.ax-new {
+  animation: ax-new-glow 1.5s ease-in-out 6;
+}
+@keyframes ax-new-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 201, 160, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(232, 201, 160, 0.16); }
+}
+
+/* respeito por quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  .ax-aurora::before,
+  .ax-aurora::after,
+  .ax-sweep,
+  .ax-blip::after,
+  .ax-new { animation: none; }
+  .ax-rise { opacity: 1; animation: none; }
+  .ax-press,
+  .ax-press:active { transition: none; transform: none; }
+}

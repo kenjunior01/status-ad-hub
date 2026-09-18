@@ -13,7 +13,7 @@
  * ocupação do espectro da sentinela.
  */
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ShieldCheck, Siren, Download, Trash2, CloudUpload, RefreshCw, Wifi, Bluetooth,
@@ -37,7 +37,8 @@ import { getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, 
 import TacticalAiCopilot from '@/components/tactical/TacticalAiCopilot'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { useRadioPosition } from '@/hooks/useRadioPosition'
-import { compassLabel } from '@/lib/radio-position'
+import { bearingDeg, compassLabel, getRadioAnchors, haversineM } from '@/lib/radio-position'
+import { ProximityRadar, type ProximityBlip } from '@/components/security/ProximityRadar'
 import {
   getPresenceDevices, findPathCompanions, presenceNowContext,
   type PresenceEntry,
@@ -79,9 +80,30 @@ function TacSpark({ history }: { history: Array<{ t: number; r: number }> }) {
   )
 }
 
-/** POSICAO POR RADIO (v3.32.0) — HUD táctico do motor de localização. */
+/** POSICAO POR RADIO (v3.32.0 · radar expressivo v3.34.0) — HUD táctico. */
 function RadioPositionTacPanel() {
   const rp = useRadioPosition()
+
+  // v3.34.0 — radar táctico: âncoras à volta com COLOCAÇÃO REAL (ângulo+dist)
+  const anchorBlips = useMemo<ProximityBlip[]>(() => {
+    if (!rp.fix) return []
+    const fix = rp.fix
+    return getRadioAnchors()
+      .map((a) => ({ a, d: haversineM(fix.lat, fix.lng, a.lat, a.lng) }))
+      .sort((x, z) => x.d - z.d)
+      .slice(0, 8)
+      .map(({ a, d }) => ({
+        id: a.id,
+        label: `${Math.round(d)} m`,
+        angleDeg: bearingDeg(fix.lat, fix.lng, a.lat, a.lng),
+        distM: d,
+        precise: a.n >= 3 && a.spreadM >= 40,
+        tone: a.kind === 'wifi' ? '#8ED1F2' : '#E8C9A0',
+      }))
+  }, [rp.fix, rp.lastAt])
+  const nearestM = anchorBlips.length > 0 ? Math.round(anchorBlips[0].distM as number) : null
+  const radarMaxM = Math.min(200, Math.max(60, ...anchorBlips.map((b) => (b.distM as number) || 0)))
+
   const modeLabel = rp.fix
     ? rp.fix.mode === 'radio' ? 'RADIO (SEM GPS)' : rp.fix.mode === 'hybrid' ? 'HIBRIDO' : 'GPS'
     : null
@@ -94,6 +116,24 @@ function RadioPositionTacPanel() {
           <span className="tac-badge" style={{ background: 'transparent', color: modeColor, border: `1px solid ${modeColor}55` }}>{modeLabel}</span>
         )}
       </div>
+      {/* RADAR TÁCTICO (v3.34.0) — âncoras à volta, onde estão de facto */}
+      {rp.fix && anchorBlips.length > 0 && (
+        <div className="flex items-center gap-3 border border-[rgba(52,211,153,0.15)] p-2.5">
+          <ProximityRadar
+            blips={anchorBlips}
+            size={64}
+            maxDistM={radarMaxM}
+            sweepColor="rgba(52,211,153,0.30)"
+            showNorth
+          />
+          <div className="flex-1 min-w-0">
+            <p className="tac-label">ANCORAS A VOLTA · COLOCACAO REAL</p>
+            <p className="text-[10px] font-mono text-[rgba(209,250,229,0.55)] mt-0.5">
+              {anchorBlips.length} EM ALCANCE{nearestM != null ? ` · MAIS PROXIMA A ${nearestM} M` : ''}
+            </p>
+          </div>
+        </div>
+      )}
       {rp.fix ? (
         <>
           <div className="grid grid-cols-3 gap-2">
@@ -142,9 +182,11 @@ function RadioPositionTacPanel() {
   )
 }
 
-/** COMPANHIAS DE CAMINHO (v3.33.0) — presenças de 30 dias, donos, contexto. */
+/** COMPANHIAS DE CAMINHO (v3.33.0 · flash NOVO v3.34.0) — presenças 30 dias. */
 function PresenceTacPanel() {
   const [devices, setDevices] = useState<PresenceEntry[]>([])
+  const [freshIds, setFreshIds] = useState<Record<string, number>>({})
+  const knownIds = useRef<Set<string> | null>(null)
   useEffect(() => {
     const tick = () => setDevices(getPresenceDevices())
     tick()
@@ -153,6 +195,25 @@ function PresenceTacPanel() {
   }, [])
   const companions = findPathCompanions(devices).slice(0, 4)
   const ctx = presenceNowContext(devices)
+
+  // v3.34.0 — alguém NOVO entrou no caminho: flash de mel no HUD (90 s)
+  const companionKey = companions.map((d) => d.id.toLowerCase()).sort().join(',')
+  useEffect(() => {
+    if (!companionKey) return
+    const ids = companionKey.split(',')
+    if (knownIds.current === null) { knownIds.current = new Set(ids); return }
+    const novos: Record<string, number> = {}
+    for (const id of ids) if (!knownIds.current.has(id)) novos[id] = Date.now()
+    if (Object.keys(novos).length > 0) {
+      knownIds.current = new Set([...knownIds.current, ...ids])
+      setFreshIds((f) => ({ ...f, ...novos }))
+      try { navigator.vibrate?.([18, 70, 18]) } catch { /* segue */ }
+    }
+  }, [companionKey])
+  const isFresh = (id: string): boolean => {
+    const t = freshIds[id.toLowerCase()]
+    return !!t && Date.now() - t < 90_000
+  }
   const agoLabel = (ts: number): string => {
     const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
     if (s < 90) return 'AGORA'
@@ -190,6 +251,14 @@ function PresenceTacPanel() {
               <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] truncate flex-1">
                 {d.owner ? `${d.owner} · ` : ''}{d.name || d.id}
               </p>
+              {isFresh(d.id) && (
+                <span
+                  className="ax-chip ax-new shrink-0"
+                  style={{ color: '#E8C9A0', background: 'rgba(232,201,160,0.10)' }}
+                >
+                  NOVO
+                </span>
+              )}
               <span className="text-[9px] font-mono text-[var(--tac-green)] shrink-0">CAMINHO ×{d.pathPoints}</span>
               <span className="text-[9px] font-mono text-[rgba(209,250,229,0.4)] shrink-0">{agoLabel(d.lastSeen)}</span>
             </div>
@@ -312,7 +381,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.33 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.34 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
