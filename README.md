@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.32.0
+# 🛡️ StatusAds Connect v3.33.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,25 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Companhias de Caminho — Histórico de 30 Dias (v3.33.0)** — o histórico de
+  presenças passa a responder às perguntas que importam: quem está à volta,
+  há quanto tempo, de quem são os dispositivos e quem esteve NO CAMINHO:
+  · **Cada ciclo da sentinela grava presenças com contexto** — Wi-Fi e BLE
+  vistos, sinal, local conhecido ("Local 1"…), posição aproximada e se o
+  utilizador estava em movimento — retidos durante 30 dias (purga automática)
+  · **Companhias de caminho** — dispositivos vistos em ≥2 pontos distintos do
+  percurso (≥40 m entre pontos) marcados como "no caminho ×N": padrão de quem
+  se desloca junto, não de quem apenas estava no mesmo sítio
+  · **"De quem é?"** — atribua donos ("Maria", "carro do vizinho") num toque;
+  o motor sugere pela correlação de local ("visto 18× em Casa — provavelmente
+  alguém de lá"); donos aparecem no HUD táctico da APK
+  · **Contexto actual** — quantos dispositivos à volta agora (janela 10 min),
+  quantas companhias presentes, quantos já conhecidos
+  · **Paleta suave** — os cartões de Posição por Rádio e Companhias trocam os
+  tons duros por lavanda, céu, sálvia e areia (gradientes suaves, sem alarme
+  visual desnecessário)
+  · **Tudo LOCAL** — chave aegis-presence-devices, incluída na Limpeza de
+  Dados › Radares; nada sobe para a nuvem
 - **Posição por Rádio — Localização sem GPS (v3.32.0)** — o Guardião passa a
   prever a localização, o rumo e a direcção do aparelho pelas redes Wi-Fi e
   Bluetooth à volta, sem emparelhar, sem ligar-se a nada e sem tocar:

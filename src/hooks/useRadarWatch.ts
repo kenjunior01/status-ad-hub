@@ -24,8 +24,10 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { wifiScanNow, wifiGetRegistry, analyzeNetworkThreats, environmentRiskScore, isWifiRadarAvailable, getWifiRadarPlugin } from '@/lib/net-radar'
 import {
   updateRadioPosition, applyRttDistances, setRttSupported,
+  getRadioPositionState,
   type RadioObs,
 } from '@/lib/radio-position'
+import { recordPresenceCycle } from '@/lib/presence-history'
 import { bleScanNowSafe } from '@/components/net/net-shared'
 import { isBleRadarAvailable } from '@/lib/ble-radar'
 import { bleRecordMany, detectTrackers, type TrackerAlert } from '@/lib/radar-registry'
@@ -134,7 +136,7 @@ async function runCycle(): Promise<void> {
 
     // 1. Wi-Fi (APK: scan real; web: sem scan — usa cache/ambiente)
     let radioNets: Awaited<ReturnType<typeof wifiScanNow>> = []
-    let radioBle: Array<{ mac: string; r: number; tx?: number }> = []
+    let radioBle: Array<{ mac: string; r: number; tx?: number; n?: string | null }> = []
     if (isWifiRadarAvailable()) {
       try {
         const nets = await wifiScanNow()
@@ -170,7 +172,7 @@ async function runCycle(): Promise<void> {
     if (isBleRadarAvailable()) {
       try {
         const devs = await bleScanNowSafe(3000)
-        radioBle = devs.map((d) => ({ mac: d.mac, r: d.r, tx: d.tx }))
+        radioBle = devs.map((d) => ({ mac: d.mac, r: d.r, tx: d.tx, n: d.n }))
         if (devs.length > 0) {
           const pos = await geoGetCurrent(8_000).catch(() => null)
           bleRecordMany(devs, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
@@ -220,6 +222,25 @@ async function runCycle(): Promise<void> {
         rpos ? { lat: rpos.latitude, lng: rpos.longitude, acc: rpos.accuracy } : null,
       )
     } catch { /* motor é melhor esforço */ }
+
+    // 2.7 v3.33.0 — HISTÓRICO DE PRESENÇAS (30 dias): quem está à volta,
+    // de quem é e quem esteve no caminho — cada ciclo guarda dispositivos
+    // com sinal, local conhecido, posição e se estava em movimento.
+    // Melhor esforço — nunca trava a sentinela.
+    try {
+      const rposFix = getRadioPositionState().fix
+      recordPresenceCycle(
+        [
+          ...radioNets.map((n) => ({ id: n.bssid, kind: 'wifi' as const, name: n.ssid, meta: `${n.sec} · ${n.band}`, rssi: n.rssi })),
+          ...radioBle.map((d) => ({ id: d.mac, kind: 'ble' as const, name: d.n || null, meta: null, rssi: d.r })),
+        ],
+        {
+          pos: rposFix ? { lat: rposFix.lat, lng: rposFix.lng } : null,
+          placeLabel: place.current?.label ?? null,
+          moving: (rposFix?.speedMs ?? 0) > 1.2,
+        },
+      )
+    } catch { /* histórico é melhor esforço */ }
 
     // 3. Web: risco baseado na ligação (offline = risco de comunicação)
     if (typeof navigator !== 'undefined' && !navigator.onLine) {

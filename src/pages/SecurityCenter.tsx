@@ -37,6 +37,7 @@ import { useNetRadar } from '@/hooks/useNetRadar'
 import { useBleRadar } from '@/hooks/useBleRadar'
 import { useRadarWatch } from '@/hooks/useRadarWatch'
 import { RadioPositionCard } from '@/components/security/RadioPositionCard'
+import { PresenceHistoryCard } from '@/components/security/PresenceHistoryCard'
 import { useContacts } from '@/hooks/useContacts'
 import { useCheckIn } from '@/hooks/useCheckIn'
 import {
@@ -247,7 +248,7 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.32
+          v3.33
         </span>
       </div>
 
@@ -321,6 +322,9 @@ function SecurityCenterWeb() {
 
       {/* Posição por Rádio (v3.32.0) — localização sem GPS por Wi-Fi/BLE */}
       <RadioPositionCard />
+
+      {/* Companhias de Caminho (v3.33.0) — quem esteve no percurso, 30 dias */}
+      <PresenceHistoryCard />
 
       {/* Ameaças activas */}
       {topThreats.length > 0 && (

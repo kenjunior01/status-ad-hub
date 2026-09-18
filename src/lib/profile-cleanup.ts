@@ -134,6 +134,7 @@ export const CLEANUP_GROUPS: CleanupGroup[] = [
       'statusads-intel-place-state',
       'aegis-radio-anchors',
       'aegis-radio-fixes',
+      'aegis-presence-devices',
     ],
   },
   {

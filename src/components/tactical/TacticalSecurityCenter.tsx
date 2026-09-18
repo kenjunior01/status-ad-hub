@@ -13,7 +13,7 @@
  * ocupação do espectro da sentinela.
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ShieldCheck, Siren, Download, Trash2, CloudUpload, RefreshCw, Wifi, Bluetooth,
@@ -38,6 +38,10 @@ import TacticalAiCopilot from '@/components/tactical/TacticalAiCopilot'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
 import { useRadioPosition } from '@/hooks/useRadioPosition'
 import { compassLabel } from '@/lib/radio-position'
+import {
+  getPresenceDevices, findPathCompanions, presenceNowContext,
+  type PresenceEntry,
+} from '@/lib/presence-history'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -132,6 +136,71 @@ function RadioPositionTacPanel() {
       ) : (
         <p className="text-[10px] text-[rgba(52,211,153,0.45)] py-1">
           &gt; SEM FIX — ARME A SENTINELA E CAMINHE COM GPS: O MOTOR CALIBRA AS ANCORAS (ROUTERS/BLE) E DEPOIS NAVEGA SO POR RADIO, MESMO COM O GPS MORTO
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** COMPANHIAS DE CAMINHO (v3.33.0) — presenças de 30 dias, donos, contexto. */
+function PresenceTacPanel() {
+  const [devices, setDevices] = useState<PresenceEntry[]>([])
+  useEffect(() => {
+    const tick = () => setDevices(getPresenceDevices())
+    tick()
+    const t = setInterval(tick, 30_000)
+    return () => clearInterval(t)
+  }, [])
+  const companions = findPathCompanions(devices).slice(0, 4)
+  const ctx = presenceNowContext(devices)
+  const agoLabel = (ts: number): string => {
+    const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+    if (s < 90) return 'AGORA'
+    if (s < 3600) return `HA ${Math.round(s / 60)}MIN`
+    if (s < 86400) return `HA ${Math.round(s / 3600)}H`
+    return `HA ${Math.round(s / 86400)}D`
+  }
+  return (
+    <div className="tac-panel p-4 space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="tac-label">COMPANHIAS DE CAMINHO · PRESENCAS 30 DIAS</p>
+        <span className="tac-badge" style={{ background: 'transparent', color: 'var(--tac-green)', border: '1px solid rgba(52,211,153,0.35)' }}>30D</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">A VOLTA</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{ctx.total.length}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">AGORA (10 MIN)</p>
+        </div>
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">NO CAMINHO</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{ctx.companions.length}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">COMPANHIAS PRESENTES</p>
+        </div>
+        <div className="border border-[rgba(52,211,153,0.15)] p-2">
+          <p className="tac-label">REGISTO</p>
+          <p className="text-[15px] font-mono text-[rgba(209,250,229,0.95)] mt-1">{devices.length}</p>
+          <p className="text-[9px] text-[rgba(209,250,229,0.4)]">DISPOSITIVOS · 30 DIAS</p>
+        </div>
+      </div>
+      {companions.length > 0 ? (
+        <div className="space-y-1.5 pt-1">
+          {companions.map((d) => (
+            <div key={d.id} className="flex items-center gap-2 border-t border-dashed border-[rgba(52,211,153,0.15)] pt-1.5">
+              <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] truncate flex-1">
+                {d.owner ? `${d.owner} · ` : ''}{d.name || d.id}
+              </p>
+              <span className="text-[9px] font-mono text-[var(--tac-green)] shrink-0">CAMINHO ×{d.pathPoints}</span>
+              <span className="text-[9px] font-mono text-[rgba(209,250,229,0.4)] shrink-0">{agoLabel(d.lastSeen)}</span>
+            </div>
+          ))}
+          <p className="text-[9px] font-mono text-[rgba(52,211,153,0.45)] pt-1">
+            &gt; DONOS E SUGESTOES EDITAVEIS NA CENTRAL (WEB) · VISTOS EM &gt;=2 PONTOS DO PERCURSO
+          </p>
+        </div>
+      ) : (
+        <p className="text-[10px] text-[rgba(52,211,153,0.45)] py-1">
+          &gt; SEM COMPANHIAS AINDA — DESLOQUE-SE COM A SENTINELA ACTIVA: QUEM ACOMPANHAR O SEU PERCURSO (&gt;=2 PONTOS) APARECE AQUI
         </p>
       )}
     </div>
@@ -243,7 +312,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.32 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.33 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -315,6 +384,9 @@ export default function TacticalSecurityCenter() {
 
         {/* POSICAO POR RADIO (v3.32.0) — localização sem GPS por Wi-Fi/BLE */}
         <RadioPositionTacPanel />
+
+        {/* COMPANHIAS DE CAMINHO (v3.33.0) — presenças 30 dias */}
+        <PresenceTacPanel />
 
         {/* CONSULTOR AEGIS · IA (v3.19.0) — consola exclusiva da APK */}
         <TacticalAiCopilot securityScore={securityScore} />

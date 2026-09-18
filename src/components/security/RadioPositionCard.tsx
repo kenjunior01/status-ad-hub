@@ -15,9 +15,9 @@ import { compassLabel } from '@/lib/radio-position'
 import { useRadioPosition } from '@/hooks/useRadioPosition'
 
 const MODE_LABEL: Record<string, { text: string; cls: string }> = {
-  gps: { text: 'GPS', cls: 'text-white/60 border-white/10' },
-  radio: { text: 'RÁDIO (sem GPS)', cls: 'text-brand border-brand/40 bg-brand/10' },
-  hybrid: { text: 'HÍBRIDO', cls: 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10' },
+  gps: { text: 'GPS', cls: 'text-white/55 border-white/10' },
+  radio: { text: 'RÁDIO (sem GPS)', cls: 'border-[#B8A9F5]/35 bg-[#B8A9F5]/10 text-[#C9BDF8]' },
+  hybrid: { text: 'HÍBRIDO', cls: 'border-[#9FE8C0]/35 bg-[#9FE8C0]/10 text-[#9FE8C0]' },
 }
 
 export function RadioPositionCard() {
@@ -25,9 +25,12 @@ export function RadioPositionCard() {
   const mode = rp.fix ? MODE_LABEL[rp.fix.mode] ?? MODE_LABEL.gps : null
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
+    <div
+      className="rounded-2xl p-5 space-y-4"
+      style={{ background: 'linear-gradient(150deg, rgba(184,169,245,0.05), rgba(142,209,242,0.035) 60%)', border: '1px solid rgba(184,169,245,0.14)' }}
+    >
       <div className="flex items-center gap-3 flex-wrap">
-        <Waypoints className="h-4.5 w-4.5 text-brand shrink-0" />
+        <Waypoints className="h-4.5 w-4.5 text-[#B8A9F5] shrink-0" />
         <div className="flex-1 min-w-[180px]">
           <p className="font-display font-semibold text-sm text-white">Posição por Rádio</p>
           <p className="text-[11px] text-white/30">
@@ -58,7 +61,7 @@ export function RadioPositionCard() {
               <p className="text-[15px] font-bold text-white mt-1">
                 {rp.fix.heading != null ? (
                   <span className="inline-flex items-center gap-1">
-                    <Compass className="h-4 w-4 text-brand" style={{ transform: `rotate(${rp.fix.heading}deg)` }} />
+                    <Compass className="h-4 w-4 text-[#B8A9F5]" style={{ transform: `rotate(${rp.fix.heading}deg)` }} />
                     {compassLabel(rp.fix.heading)}
                   </span>
                 ) : '—'}
@@ -82,8 +85,8 @@ export function RadioPositionCard() {
           </div>
 
           {rp.prediction && (
-            <div className="rounded-xl border border-brand/20 bg-brand/[0.05] px-4 py-3 flex items-center gap-3">
-              <Compass className="h-4 w-4 text-brand shrink-0" style={{ transform: rp.prediction.heading != null ? `rotate(${rp.prediction.heading}deg)` : undefined }} />
+            <div className="rounded-xl border border-[#B8A9F5]/20 bg-[#B8A9F5]/[0.06] px-4 py-3 flex items-center gap-3">
+              <Compass className="h-4 w-4 text-[#B8A9F5] shrink-0" style={{ transform: rp.prediction.heading != null ? `rotate(${rp.prediction.heading}deg)` : undefined }} />
               <p className="text-[12px] text-white/80 leading-snug">{rp.prediction.text}</p>
             </div>
           )}
