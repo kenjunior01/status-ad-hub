@@ -570,6 +570,12 @@ public class BleRadarPlugin extends Plugin {
             if (tx != 127 && tx != 0) o.put("tx", tx);
         }
 
+        // v3.32.0 — dados máximos para o motor de posição por rádio
+        if (Build.VERSION.SDK_INT >= 26 && result.getScanRecord() != null) {
+            try { o.put("conn", result.getScanRecord().isConnectable()); } catch (Exception ignored) { }
+            try { int fl = result.getScanRecord().getAdvertiseFlags(); if (fl > 0) o.put("fl", fl); } catch (Exception ignored) { }
+        }
+
         o.put("k", classifyDevice(name, mfrId));
         return o;
     }

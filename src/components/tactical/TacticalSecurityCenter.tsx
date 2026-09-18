@@ -36,6 +36,8 @@ import { saveSecurityEvents, savePlaceFingerprints } from '@/lib/api'
 import { getKnownPlaces, clearKnownPlaces, getPlaceState, correlateEnvironment, ambientLevelColor } from '@/lib/net-intel'
 import TacticalAiCopilot from '@/components/tactical/TacticalAiCopilot'
 import { PullToRefresh } from '@/components/native/PullToRefresh'
+import { useRadioPosition } from '@/hooks/useRadioPosition'
+import { compassLabel } from '@/lib/radio-position'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -69,6 +71,69 @@ function TacSpark({ history }: { history: Array<{ t: number; r: number }> }) {
         const color = p.r >= 75 ? 'var(--tac-red)' : p.r >= 50 ? '#fb923c' : p.r >= 25 ? 'var(--tac-amber)' : 'var(--tac-green)'
         return <div key={i} className="flex-1 rounded-sm" style={{ height: h, background: color, opacity: 0.85 }} />
       })}
+    </div>
+  )
+}
+
+/** POSICAO POR RADIO (v3.32.0) — HUD táctico do motor de localização. */
+function RadioPositionTacPanel() {
+  const rp = useRadioPosition()
+  const modeLabel = rp.fix
+    ? rp.fix.mode === 'radio' ? 'RADIO (SEM GPS)' : rp.fix.mode === 'hybrid' ? 'HIBRIDO' : 'GPS'
+    : null
+  const modeColor = !rp.fix ? 'var(--tac-green)' : rp.fix.mode === 'radio' ? 'var(--tac-green)' : rp.fix.mode === 'hybrid' ? 'var(--tac-amber)' : 'rgba(209,250,229,0.6)'
+  return (
+    <div className="tac-panel p-4 space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="tac-label">POSICAO POR RADIO · WI-FI/BLE → COORDENADAS</p>
+        {modeLabel && (
+          <span className="tac-badge" style={{ background: 'transparent', color: modeColor, border: `1px solid ${modeColor}55` }}>{modeLabel}</span>
+        )}
+      </div>
+      {rp.fix ? (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="border border-[rgba(52,211,153,0.15)] p-2">
+              <p className="tac-label">COORDENADAS</p>
+              <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] mt-1">{rp.fix.lat.toFixed(5)},{rp.fix.lng.toFixed(5)}</p>
+              <p className="text-[10px] text-[rgba(209,250,229,0.4)]">±{Math.round(rp.fix.acc)} M</p>
+            </div>
+            <div className="border border-[rgba(52,211,153,0.15)] p-2">
+              <p className="tac-label">RUMO</p>
+              <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] mt-1">
+                {rp.fix.heading != null ? `${compassLabel(rp.fix.heading)} ${Math.round(rp.fix.heading)}°` : '—'}
+              </p>
+              <p className="text-[10px] text-[rgba(209,250,229,0.4)]">{rp.fix.speedMs != null ? `${(rp.fix.speedMs * 3.6).toFixed(1)} KM/H` : 'ESTATICO'}</p>
+            </div>
+            <div className="border border-[rgba(52,211,153,0.15)] p-2">
+              <p className="tac-label">ANCORAS</p>
+              <p className="text-[11px] font-mono text-[rgba(209,250,229,0.9)] mt-1">{rp.navAnchorsCount}/{rp.anchorsCount}</p>
+              <p className="text-[10px] text-[rgba(209,250,229,0.4)]">NAVEG/CALIB</p>
+            </div>
+          </div>
+          {rp.prediction && (
+            <p className="text-[10px] font-mono text-[var(--tac-green)] leading-snug border-t border-dashed border-[rgba(52,211,153,0.2)] pt-2">
+              &gt; PREDICAO: {rp.prediction.text.toUpperCase()}
+            </p>
+          )}
+          <div className="flex items-center gap-2 pt-1">
+            <p className="tac-label flex-1">
+              RTT 802.11MC: {rp.rttSupported == null ? 'A TESTAR' : rp.rttSupported ? 'ON — DISTANCIA REAL' : 'SEM HW — MODELO RSSI'}
+            </p>
+            <button onClick={rp.refresh} className="tac-btn tac-btn-ghost text-[10px]">ACTUALIZAR</button>
+            <button
+              onClick={() => { rp.reset(); toast.success('CALIBRACAO REPOSTA') }}
+              className="tac-btn tac-btn-ghost text-[10px]"
+            >
+              REPOR
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="text-[10px] text-[rgba(52,211,153,0.45)] py-1">
+          &gt; SEM FIX — ARME A SENTINELA E CAMINHE COM GPS: O MOTOR CALIBRA AS ANCORAS (ROUTERS/BLE) E DEPOIS NAVEGA SO POR RADIO, MESMO COM O GPS MORTO
+        </p>
+      )}
     </div>
   )
 }
@@ -178,7 +243,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.31 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.32 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">
@@ -247,6 +312,9 @@ export default function TacticalSecurityCenter() {
             <p className="tac-label mt-2">OCUPACAO DO ESPECTRO: {watch.congestion.congestionPct}%{watch.congestion.best2g != null ? ` · MELHOR CH ${watch.congestion.best2g}` : ''}</p>
           )}
         </div>
+
+        {/* POSICAO POR RADIO (v3.32.0) — localização sem GPS por Wi-Fi/BLE */}
+        <RadioPositionTacPanel />
 
         {/* CONSULTOR AEGIS · IA (v3.19.0) — consola exclusiva da APK */}
         <TacticalAiCopilot securityScore={securityScore} />

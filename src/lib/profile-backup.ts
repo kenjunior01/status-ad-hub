@@ -21,7 +21,7 @@
  * Contactos e plano vivem no servidor — ficam de fora por natureza.
  */
 
-export const APP_VERSION = '3.31.0'
+export const APP_VERSION = '3.32.0'
 
 // ── Regras de inclusão ───────────────────────────────────────────────────────
 
@@ -186,12 +186,13 @@ export interface BackupMeta {
   iterations?: number
   salt?: string
   iv?: string
-  ciphertext?: string
 }
 
 interface BackupFile {
   meta: BackupMeta
   data?: Record<string, string>
+  /** payload cifrado (base64) — presente quando meta.encrypted */
+  ciphertext?: string
 }
 
 export interface ParsedBackup {
@@ -286,7 +287,8 @@ export async function parseBackupFile(file: File): Promise<ParsedBackup> {
   const meta = validateMeta(raw.meta)
 
   if (meta.encrypted) {
-    if (!raw.ciphertext || !raw.salt || !raw.iv) throw new BackupError('Backup cifrado incompleto.')
+    // salt/iv vivem dentro do meta (v. exportProfile); ciphertext ao nível de topo
+    if (!raw.ciphertext || !meta.salt || !meta.iv) throw new BackupError('Backup cifrado incompleto.')
     return { meta, encrypted: true, data: null, raw }
   }
   if (!raw.data || typeof raw.data !== 'object') throw new BackupError('Backup sem dados de perfil.')
@@ -304,7 +306,8 @@ export async function unlockBackup(parsed: ParsedBackup, passphrase: string): Pr
   try {
     const salt = b64decode(meta.salt as string)
     const iv = b64decode(meta.iv as string)
-    const cipher = b64decode(meta.ciphertext as string)
+    // o ciphertext exportado vive ao nível de topo do ficheiro (raw), não no meta
+    const cipher = b64decode(parsed.raw.ciphertext as string)
     const key = await deriveKey(passphrase, salt, meta.iterations || PBKDF2_ITERATIONS)
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, cipher as BufferSource)
     const data = JSON.parse(new TextDecoder().decode(plain))

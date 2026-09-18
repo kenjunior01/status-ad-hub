@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.31.0
+# 🛡️ StatusAds Connect v3.32.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -146,6 +146,27 @@ gateways de pagamento ou SMS.
   · **Nada sensível de mais sai daqui** — sessão de coerção activa, tokens
   de autenticação, logs e caches de radar ficam de fora; contactos,
   plano e sessões vivem no servidor
+- **Posição por Rádio — Localização sem GPS (v3.32.0)** — o Guardião passa a
+  prever a localização, o rumo e a direcção do aparelho pelas redes Wi-Fi e
+  Bluetooth à volta, sem emparelhar, sem ligar-se a nada e sem tocar:
+  · **Motor de posição por rádio** — cada ciclo da sentinela alimenta o motor
+  com os BSSID/MAC + RSSI já vistos pelos radares; routers e dispositivos BLE
+  tornam-se âncoras calibradas por GPS (centróide ponderado pelo sinal) e,
+  com ≥3 âncoras navegáveis, a posição calcula-se SÓ pelo rádio
+  (multilateração 1/d²) — funciona no interior de edifícios, onde o GPS morre
+  · **RTT 802.11mc (Wi-Fi Round-Trip-Time)** — nos aparelhos com hardware
+  compatível, a distância aos routers é MEDIDA em metros (tempo de voo do
+  sinal), não estimada por sinal; sem hardware, o motor usa o modelo
+  log-distância de RSSI automaticamente
+  · **Predição textual de caminho** — "A seguir para NE · 9 km/h · ~90 m à
+  frente · A aproximar-se de Casa (≈180 m)": rumo, velocidade e o local
+  conhecido mais próximo, cruzado com os locais aprendidos pelo net-intel
+  · **Dados máximos das redes** — cada scan Wi-Fi guarda agora também
+  802.11mc/Passpoint/nome do recinto/operador, largura de canal, frequência
+  central e idade da amostra; cada anúncio BLE guarda connectable e flags
+  · **Web + APK** — cartão "Posição por Rádio" na Central de Segurança (web)
+  e painel HUD táctico na APK, com actualizar/repor manuais; tudo LOCAL
+  (chaves aegis-radio-*, incluídas na Limpeza de Dados — grupo Radares)
 - **Marca de Origem nas Evidências Nativas (v3.31.0)** — cada gravação REC
   sabe onde nasceu:
   · **PÂNICO / SOS / REC** — badge de origem no Cofre › «No aparelho»:

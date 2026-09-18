@@ -50,6 +50,23 @@ export interface WifiRadarNetwork {
   /** capacidades extra (WPS, 802.11mc, largura de canal) */
   caps?: string
   ts?: number
+  // ── v3.32.0 — dados máximos para o motor de posição por rádio ──
+  /** responde a ranging 802.11mc (distância real por RTT possível) */
+  mc?: boolean
+  /** rede Passpoint/Hotspot 2.0 */
+  passpoint?: boolean
+  /** nome do recinto anunciado (venue) */
+  venue?: string
+  /** nome do operador anunciado (Passpoint) */
+  operator?: string
+  /** largura de canal em MHz (20/40/80/160) */
+  widthMhz?: number
+  /** frequência central do canal primário agregado */
+  cf0?: number
+  /** idade da amostra no firmware (µs) */
+  ageUs?: number
+  /** distância REAL por RTT em metros (só quando wifiRttRange correu) */
+  distM?: number
 }
 
 /** Entrada do registo — uma rede já vista alguma vez. */
@@ -103,6 +120,8 @@ interface WifiRadarPluginInterface {
   clearTrail(): Promise<void>
   getWifiInfo(): Promise<WifiCurrentInfo>
   getCellInfo(): Promise<{ operator?: string | null; mcc?: string; mnc?: string; towers: CellTower[] }>
+  /** v3.32.0 — distância real por RTT (802.11mc) aos routers compatíveis */
+  wifiRttRange(): Promise<{ supported: boolean; reason?: string; ranged: Array<{ bssid: string; status: number; distMm?: number; distSdMm?: number; rssi?: number }> }>
   hasPermissions(): Promise<{ granted: boolean; wifiEnabled: boolean; locationOn: boolean }>
   requestPermissions(): Promise<void>
   addListener(eventName: 'wifiNetwork', cb: (ev: { network: WifiRadarNetwork }) => void): Promise<PluginListenerHandleLike>
@@ -138,6 +157,11 @@ if (isAndroid) {
 /** true quando o radar Wi-Fi nativo está disponível (só no APK Android). */
 export function isWifiRadarAvailable(): boolean {
   return !!plugin
+}
+
+/** Plugin bruto (v3.32.0 — RTT 802.11mc e métodos avançados). */
+export function getWifiRadarPlugin(): WifiRadarPluginInterface | null {
+  return plugin
 }
 
 // ══════════════════════════════════════════════════════════════════════════

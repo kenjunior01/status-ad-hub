@@ -21,7 +21,11 @@
  */
 
 import { useCallback, useSyncExternalStore } from 'react'
-import { wifiScanNow, wifiGetRegistry, analyzeNetworkThreats, environmentRiskScore, isWifiRadarAvailable } from '@/lib/net-radar'
+import { wifiScanNow, wifiGetRegistry, analyzeNetworkThreats, environmentRiskScore, isWifiRadarAvailable, getWifiRadarPlugin } from '@/lib/net-radar'
+import {
+  updateRadioPosition, applyRttDistances, setRttSupported,
+  type RadioObs,
+} from '@/lib/radio-position'
 import { bleScanNowSafe } from '@/components/net/net-shared'
 import { isBleRadarAvailable } from '@/lib/ble-radar'
 import { bleRecordMany, detectTrackers, type TrackerAlert } from '@/lib/radar-registry'
@@ -129,9 +133,12 @@ async function runCycle(): Promise<void> {
     let placeAnomaly = false
 
     // 1. Wi-Fi (APK: scan real; web: sem scan — usa cache/ambiente)
+    let radioNets: Awaited<ReturnType<typeof wifiScanNow>> = []
+    let radioBle: Array<{ mac: string; r: number; tx?: number }> = []
     if (isWifiRadarAvailable()) {
       try {
         const nets = await wifiScanNow()
+        radioNets = nets
         if (nets.length > 0) {
           const reg = await wifiGetRegistry()
           threats = analyzeNetworkThreats(nets, reg)
@@ -163,6 +170,7 @@ async function runCycle(): Promise<void> {
     if (isBleRadarAvailable()) {
       try {
         const devs = await bleScanNowSafe(3000)
+        radioBle = devs.map((d) => ({ mac: d.mac, r: d.r, tx: d.tx }))
         if (devs.length > 0) {
           const pos = await geoGetCurrent(8_000).catch(() => null)
           bleRecordMany(devs, pos ? { lat: pos.latitude, lng: pos.longitude } : undefined)
@@ -189,6 +197,29 @@ async function runCycle(): Promise<void> {
         err = err ? `${err} · BLE` : 'Falha no scan BLE'
       }
     }
+
+    // 2.5 v3.32.0 — MOTOR DE POSIÇÃO POR RÁDIO: com GPS bom calibra as
+    // âncoras (routers/BLE com posição estimada); sem GPS navega por elas
+    // (multilateração). RTT 802.11mc dá distância real quando o hardware
+    // suporta; senão modelo log-distância de RSSI. Melhor esforço — nunca
+    // trava a sentinela.
+    try {
+      let obsNets: RadioObs[] = radioNets.map((n) => ({ id: n.bssid, rssi: n.rssi, kind: 'wifi' as const, band: n.band }))
+      if (obsNets.length > 0 && radioRttSupported !== false) {
+        const rtt = await getWifiRadarPlugin()?.wifiRttRange().catch(() => null)
+        if (rtt) {
+          radioRttSupported = !!rtt.supported
+          setRttSupported(radioRttSupported)
+          if (rtt.supported && rtt.ranged?.length > 0) obsNets = applyRttDistances(obsNets, rtt.ranged)
+        }
+      }
+      const rpos = await geoGetCurrent(10_000).catch(() => null)
+      updateRadioPosition(
+        obsNets,
+        radioBle.map((d) => ({ id: d.mac, rssi: d.r, kind: 'ble' as const, tx: d.tx })),
+        rpos ? { lat: rpos.latitude, lng: rpos.longitude, acc: rpos.accuracy } : null,
+      )
+    } catch { /* motor é melhor esforço */ }
 
     // 3. Web: risco baseado na ligação (offline = risco de comunicação)
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -224,6 +255,8 @@ async function runCycle(): Promise<void> {
 const alertedWatchTrackers = new Set<string>()
 /** último háptico de deslocamento abrupto (evita repetição a cada ciclo) */
 let lastAnomalyHaptic = 0
+/** RTT 802.11mc deste aparelho (null = ainda não testado) — 1 só teste */
+let radioRttSupported: boolean | null = null
 
 function startWatch(): void {
   if (timer) return

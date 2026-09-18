@@ -843,7 +843,116 @@ public class WifiRadarPlugin extends Plugin {
         }
         if (extra.length() > 0) o.put("caps", extra.toString().trim());
 
+        // v3.32.0 — dados máximos para o motor de posição por rádio
+        if (Build.VERSION.SDK_INT >= 23) {
+            try { if (r.is80211mcResponder()) o.put("mc", true); } catch (Exception ignored) { }
+            try { if (r.isPasspointNetwork()) o.put("passpoint", true); } catch (Exception ignored) { }
+            try { String v = r.getVenueName(); if (v != null && !v.isEmpty()) o.put("venue", v); } catch (Exception ignored) { }
+            try { String op = r.getOperatorName(); if (op != null && !op.isEmpty()) o.put("operator", op); } catch (Exception ignored) { }
+        }
+        if (Build.VERSION.SDK_INT >= 31 && r.channelWidth > 0) {
+            o.put("widthMhz", r.channelWidth == ScanResult.CHANNEL_WIDTH_20MHZ ? 20
+                    : r.channelWidth == ScanResult.CHANNEL_WIDTH_40MHZ ? 40
+                    : r.channelWidth == ScanResult.CHANNEL_WIDTH_80MHZ ? 80
+                    : r.channelWidth == ScanResult.CHANNEL_WIDTH_160MHZ ? 160 : 0);
+            try { if (r.centerFreq0 > 0) o.put("cf0", r.centerFreq0); } catch (Exception ignored) { }
+        }
+        try { if (r.timestamp > 0) o.put("ageUs", Math.max(0, now * 1000 - r.timestamp)); } catch (Exception ignored) { }
+
         return o;
+    }
+
+    /**
+     * wifiRttRange (v3.32.0) — MEDIDA DE DISTÂNCIA REAL (802.11mc FTM/RTT)
+     * aos routers que respondem a ranging. É o único caminho para distância
+     * exacta sem GPS: o tempo de voo do sinal dá metros, não RSSI estimado.
+     * Melhor esforço: precisa de hardware FEATURE_WIFI_RTT (Pixels, alguns
+     * Xiaomi/Google TV boxes); sem isso devolve {supported:false} e o motor
+     * de posição cai para o modelo de RSSI. Sem emparelhamento nem ligação.
+     */
+    @SuppressLint("MissingPermission")
+    @PluginMethod
+    public void wifiRttRange(PluginCall call) {
+        JSObject res = new JSObject();
+        try {
+            if (Build.VERSION.SDK_INT < 28
+                    || !getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_RTT)) {
+                res.put("supported", false);
+                res.put("reason", "sem-hardware");
+                call.resolve(res);
+                return;
+            }
+            if (getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                res.put("supported", false);
+                res.put("reason", "permissao");
+                call.resolve(res);
+                return;
+            }
+            android.net.wifi.rtt.WifiRttManager rtt = (android.net.wifi.rtt.WifiRttManager)
+                    getContext().getSystemService(Context.WIFI_RTT_RANGING_SERVICE);
+            if (rtt == null || !rtt.isAvailable()) {
+                res.put("supported", false);
+                res.put("reason", "rtt-indisponivel");
+                call.resolve(res);
+                return;
+            }
+            List<ScanResult> candidates = new ArrayList<>();
+            for (ScanResult r : safeScanResults()) {
+                try { if (r.is80211mcResponder()) candidates.add(r); } catch (Exception ignored) { }
+                if (candidates.size() >= 6) break; // RTT custa bateria — cap baixo
+            }
+            if (candidates.isEmpty()) {
+                res.put("supported", true);
+                res.put("ranged", new ArrayList<>());
+                call.resolve(res);
+                return;
+            }
+            android.net.wifi.rtt.RangingRequest req = new android.net.wifi.rtt.RangingRequest.Builder()
+                    .addAccessPoints(candidates).build();
+            final List<android.net.wifi.rtt.RangingResult> sink =
+                    Collections.synchronizedList(new ArrayList<android.net.wifi.rtt.RangingResult>());
+            final Object done = new Object();
+            final boolean[] finished = {false};
+            rtt.startRanging(req, getContext().getMainExecutor(),
+                    new android.net.wifi.rtt.RangingResultCallback() {
+                        @Override public void onRangingResults(List<android.net.wifi.rtt.RangingResult> results) {
+                            sink.addAll(results);
+                            synchronized (done) { finished[0] = true; done.notifyAll(); }
+                        }
+                        @Override public void onRangingFailure(int code) {
+                            synchronized (done) { finished[0] = true; done.notifyAll(); }
+                        }
+                    });
+            // espera curta — RTT costuma responder em <2 s
+            long deadline = System.currentTimeMillis() + 6000;
+            synchronized (done) {
+                while (!finished[0] && System.currentTimeMillis() < deadline) {
+                    try { done.wait(1000); } catch (InterruptedException ignored) { }
+                }
+            }
+            JSONArray out = new JSONArray();
+            for (android.net.wifi.rtt.RangingResult rr : sink) {
+                JSONObject e = new JSONObject();
+                e.put("bssid", rr.getMacAddress() != null ? rr.getMacAddress().toString() : "");
+                e.put("status", rr.getStatusCode());
+                if (rr.getStatusCode() == android.net.wifi.rtt.RangingResult.STATUS_SUCCESS) {
+                    e.put("distMm", rr.getDistanceMm());
+                    e.put("distSdMm", rr.getDistanceStdDevMm());
+                    e.put("rssi", rr.getRssi());
+                    e.put("rtsRetries", rr.getRangingAttemptCount());
+                }
+                out.put(e);
+            }
+            res.put("supported", true);
+            res.put("ranged", out);
+            call.resolve(res);
+        } catch (Exception e) {
+            res.put("supported", false);
+            res.put("reason", "erro");
+            res.put("message", e.getMessage());
+            call.resolve(res);
+        }
     }
 
     /** SSID seguro (null/hidden → etiqueta explícita, sem crash). */
