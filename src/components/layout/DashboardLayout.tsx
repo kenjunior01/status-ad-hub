@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Bell, Menu, ChevronRight, ShieldAlert,
   WifiOff, RefreshCw, Database,
-  Phone, Volume2, VolumeX, Share2, Radar, ShieldCheck, ArrowUpRight,
+  Phone, Volume2, VolumeX, Share2, Radar, ShieldCheck, ArrowUpRight, EyeOff,
 } from 'lucide-react'
+import { App as CapApp } from '@capacitor/app'
+import type { PluginListenerHandle } from '@capacitor/core'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { NoiseTexture } from '@/components/effects'
@@ -21,6 +23,7 @@ import { geoGetCurrent, haptic, initNativeChrome, isNative } from '@/lib/native'
 import { FakeCallOverlay } from '@/hooks/useFakeCall'
 import { FeatureTour } from '@/components/FeatureTour'
 import { useRadarWatch } from '@/hooks/useRadarWatch'
+import { useDiscreetMode } from '@/hooks/useDiscreetMode'
 import { useRipple } from '@/components/native/native-gestures'
 import { shareLocation } from '@/lib/share'
 import { startEmergencyAlarm, stopEmergencyAlarm, isAlarmPlaying } from '@/lib/emergency-alarm'
@@ -81,6 +84,7 @@ export default function DashboardLayout() {
   const suppressNextClick = useRef(false)
   const radarWatch = useRadarWatch()
   const [alarmOn, setAlarmOn] = useState(false)
+  const { activate: activateDiscreet, isActive: discreetActive } = useDiscreetMode()
   // v3.22.0 — ink ripple táctil (Material) nos alvos principais
   const dockRipple = useRipple<HTMLAnchorElement>('gold')
   const sheetRipple = useRipple<HTMLButtonElement>('gold')
@@ -173,6 +177,17 @@ export default function DashboardLayout() {
     window.location.href = 'tel:112'
   }
 
+  /** v3.39.0 — camuflar directamente da folha de acções (app nativa) */
+  const camouflageNow = () => {
+    void haptic('medium')
+    closeSheet()
+    activateDiscreet()
+    toast.success('Camuflagem activa — a app agora parece outra coisa', {
+      description: 'Fica activa mesmo se fechar a app. Long-press 2s no canto superior esquerdo + PIN para voltar',
+      duration: 5000,
+    })
+  }
+
   // ── v3.21.0 — TRANSIÇÃO DIRECCIONAL: avançar desliza da direita, recuar da esquerda ──
   const navFlatOrder = useRef<string[]>(
     sidebarSections.flatMap((s) => s.items.map((i) => i.to))
@@ -253,6 +268,36 @@ export default function DashboardLayout() {
     if (isNative()) {
       document.addEventListener('deviceready', () => void initNativeChrome(), { once: true })
     }
+  }, [])
+
+  // ── v3.39.0 — BOTÃO VOLTAR NATIVO (APK) ──
+  // Comporta-se como um app de verdade: fecha o que estiver aberto (folha de
+  // acções, menu lateral), depois recua um ecrã e, no Painel, sai da app —
+  // nunca fica preso nem fecha à cara do utilizador no meio de nada.
+  // COM A CAMUFLAGEM ACTIVA o back é CONSUMIDO (o useDiscreetMode também o
+  // registra): sair da app com o disfarce no ecrã é exactamente o que um
+  // agressor tentaria forçar — aqui não faz nada.
+  const backStateRef = useRef({ sheet: null as typeof sheet, sidebarOpen, pathname: location.pathname, locationKey: location.key, discreetActive })
+  backStateRef.current = { sheet, sidebarOpen, pathname: location.pathname, locationKey: location.key, discreetActive }
+  useEffect(() => {
+    if (!isNative()) return
+    let handle: PluginListenerHandle | null = null
+    CapApp.addListener('backButton', () => {
+      const s = backStateRef.current
+      if (s.discreetActive) return // disfarce no ecrã — back consumido
+      if (s.sheet) { setSheet(null); return }
+      if (s.sidebarOpen) { setSidebarOpen(false); return }
+      if (s.pathname !== '/dashboard') {
+        if (s.locationKey !== 'default') window.history.back()
+        else navigate('/dashboard', { replace: true })
+        return
+      }
+      void CapApp.exitApp()
+    })
+      .then((h) => { handle = h })
+      .catch(() => { /* web — sem botão nativo */ })
+    return () => { void handle?.remove() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // v3.19.0 — háptica leve sempre que muda de ecrã (só nativo; web usa vibrate)
@@ -553,6 +598,16 @@ export default function DashboardLayout() {
                     </span>
                     <ChevronRight className="h-4 w-4 text-white/20" />
                   </button>
+                  <button type="button" className="aegis-sheet-row" onPointerDown={sheetRipple} onClick={camouflageNow}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-purple-400/25 bg-purple-500/10">
+                      <EyeOff className="h-4.5 w-4.5 text-purple-300" />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block text-[13px] font-semibold text-white">Camuflar agora</span>
+                      <span className="block text-[10.5px] text-white/40">Disfarça a app no disfarce escolhido</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-white/20" />
+                  </button>
                 </>
               )}
             </motion.div>
@@ -561,8 +616,10 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       <OnboardingWizard />
-      <FeatureTour />
-      <PWAInstallPrompt />
+      {/* v3.39.0 — FeatureTour e PWAInstallPrompt são conceitos WEB: na APK
+          nada de "tour" nem de "instalar a PWA" — a app já é a app. */}
+      {!isNative() && <FeatureTour />}
+      {!isNative() && <PWAInstallPrompt />}
       <FallDetectionOverlay />
       <FakeCallOverlay />
     </div>

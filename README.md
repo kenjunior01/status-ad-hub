@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.38.0
+# 🛡️ StatusAds Connect v3.39.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -202,6 +202,33 @@ gateways de pagamento ou SMS.
   · **RECOMPILAR APK OBRIGATÓRIO** (Java alterado): npm run cap:sync +
   Android Studio — o merge do backup, o contexto no SOS/email e o chip
   "Ambiente" funcionam já na web/PWA
+- **Nativo Primeiro — A APK deixa de ser uma "web em app" (v3.39.0)** — a
+  queixa era directa e justa: abrir a APK e encontrar uma página inicial com
+  textos de marketing é coisa de site, não de app. A partir desta versão a
+  APK comporta-se como app desde o primeiro segundo:
+  · **Arranque directo à acção** — na APK a rota `/` NUNCA mostra a Landing
+  de marketing: com sessão activa entra logo no Painel (o ecrã funcional com
+  mapa, radar e SOS); sem sessão vai directo ao Login. A Landing continua a
+  existir apenas na web, onde faz sentido como apresentação do produto
+  · **Camuflagem logo apta no início** — chip "Camuflar" na faixa de estado
+  do Painel (o primeiro ecrã da APK): um toque disfarça a app inteira no
+  disfarce escolhido, com háptica e aviso de como voltar (long-press 2 s no
+  canto superior esquerdo + PIN); quando a camuflagem já está activa, o chip
+  passa a "Activa" e abre a gestão; "Camuflar agora" também entrou na folha
+  de acções do long-press da dock
+  · **Botão voltar do Android com comportamento de app** — fecha primeiro o
+  que estiver aberto (folha de acções, menu lateral), depois recua um ecrã e,
+  no Painel, sai da app; nunca fica preso dentro de overlays nem interrompe
+  o utilizador no meio de nada
+  · **Sem conceitos web na APK** — o "tour de funcionalidades" e o banner
+  "instalar a PWA" deixaram de aparecer na app nativa (não faz sentido
+  instalar uma PWA dentro de uma app já instalada); o Onboarding de
+  emergência mantém-se porque configura contactos reais
+  · **Login de app, não de site** — na APK o ecrã de entrada fica compacto
+  (sem respiros de página web, respeitando a safe-area da status bar) e leva
+  directo ao formulário e ao Google
+  · **Versão nativa actualizada** — versionCode 51, versionName 3.39.0 no
+  build.gradle; APK release assinada recompilada com o novo arranque
 - **SMS "Com quem" + Sincronização que se Faz Sozinha (v3.38.0)** — a
   sincronização web ↔ APK deixa de depender da memória do utilizador e o
   canal mais fiável da app (o SMS que sai pelo SIM) passa a levar a resposta

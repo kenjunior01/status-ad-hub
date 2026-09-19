@@ -7,7 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, MailWarning } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { signInWithOAuthAdaptive } from "@/lib/native-auth";
+import { signInWithOAuthAdaptive, isNativeApp } from "@/lib/native-auth";
 import { AnimatedGrid, NoiseTexture, FloatingOrbs, MorphingBlob, RippleButton, MagneticButton } from "@/components/effects";
 import { useDuressLogin } from "@/components/DuressPinLogin";
 import { useAntiCoercion } from "@/hooks/useAntiCoercion";
@@ -125,6 +125,10 @@ export default function Login() {
   const inputCls = (hasError: boolean) =>
     `h-11 w-full rounded-xl border ${hasError ? 'border-red-500/40 focus-visible:ring-red-500/30' : 'border-white/[0.08] focus-visible:ring-brand/30 focus-visible:border-brand/30'} bg-white/[0.03] pl-10 pr-4 text-white placeholder:text-white/20 text-sm outline-none focus-visible:ring-2 transition-all duration-200 backdrop-blur-sm`
 
+  // v3.39.0 — NATIVO PRIMEIRO: na APK o login é um ecrã de app, compacto e
+  // directo ao formulário — sem respiros de página web.
+  const native = isNativeApp();
+
   return (
     <div className="dark flex min-h-screen bg-background">
       {/* LEFT SIDE */}
@@ -162,17 +166,17 @@ export default function Login() {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex flex-1 items-center justify-center px-4 py-12 relative">
+      <div className={`flex flex-1 items-center justify-center px-4 relative ${native ? 'py-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-10' : 'py-12'}`}>
         <NoiseTexture opacity={0.015} />
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }} className="relative z-10 w-full max-w-md">
-          <motion.div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
+          <motion.div className={`flex items-center justify-center gap-2.5 lg:hidden ${native ? 'mb-5' : 'mb-8'}`}>
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none ${tapFlash ? 'bg-brand/20 border-brand/40' : 'bg-brand/10 border-brand/20'}`} onClick={handleShieldTap} role="button" tabIndex={-1} aria-hidden="true">
               <Shield className="h-5 w-5 text-brand" />
             </div>
             <span className="font-display text-xl font-bold text-white">Status<span className="text-brand">Ads</span></span>
           </motion.div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-2xl shadow-2xl shadow-black/20">
+          <div className={`rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/20 ${native ? 'p-6' : 'p-8'}`}>
             <h1 className="font-display text-2xl font-bold text-white">Entrar na Conta</h1>
             <p className="mt-2 text-sm text-white/35">Insira as suas credenciais para continuar.</p>
             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-5">

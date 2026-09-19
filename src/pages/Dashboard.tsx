@@ -15,7 +15,7 @@ import {
   MapPin, Phone, Share2, X, Battery, Crosshair, Zap, Wifi, BluetoothConnected,
   MessageSquare, Volume2, Radio, CheckCircle2, AlertCircle, Navigation,
   Mic, Skull, Radar, Timer, Activity, Lightbulb, ArrowRight, Menu,
-  ShieldCheck, ChevronRight,
+  ShieldCheck, ChevronRight, EyeOff,
 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar'
@@ -45,6 +45,7 @@ import { useDeadMansSwitch } from '@/hooks/useDeadMansSwitch'
 import { useThreatDetection } from '@/hooks/useThreatDetection'
 import { useCommunityRadar } from '@/hooks/useCommunityRadar'
 import { shareLocation } from '@/lib/share'
+import { haptic } from '@/lib/native'
 import { getDailyTip, TIP_CATEGORIES } from '@/lib/safety-tips'
 import { SpotlightCard, CounterAnimated, Shimmer, BeamBorder } from '@/components/effects'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -147,7 +148,7 @@ export default function Dashboard() {
   // New feature hooks — keep them alive on dashboard
   const { isListening: voiceListening, isSupported: voiceSupported } = useVoiceSOS()
   const { state: panicState } = usePanicMode()
-  const { isActive: discreetActive } = useDiscreetMode()
+  const { isActive: discreetActive, activate: activateDiscreet } = useDiscreetMode()
   const { isEnabled: dmsEnabled, currentLevel: dmsLevel, secondsRemaining: dmsRemaining } = useDeadMansSwitch()
   const { assessment, isMonitoring: threatMonitoring } = useThreatDetection()
   const { dangerZoneCount } = useCommunityRadar()
@@ -606,6 +607,33 @@ export default function Dashboard() {
             <MapPin className={cn('h-3.5 w-3.5', userPos ? 'text-brand' : 'text-white/25')} />
             <span className="text-[11px] font-medium text-white/60">{userPos ? 'GPS activo' : 'Sem GPS'}</span>
           </div>
+          {/* Camuflagem — um toque disfarça a app inteira (v3.39.0, logo no início) */}
+          <button
+            onClick={() => {
+              if (discreetActive) {
+                navigate('/dashboard/discreto')
+                return
+              }
+              void haptic('medium')
+              activateDiscreet()
+              toast.success('Camuflagem activa — a app agora parece outra coisa', {
+                description: 'Fica activa mesmo se fechar a app. Long-press 2s no canto superior esquerdo + PIN para voltar',
+                duration: 5000,
+              })
+            }}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border shrink-0 active:scale-95 transition-transform',
+              discreetActive
+                ? 'bg-purple-500/20 border-purple-400/40'
+                : 'bg-background/70 border-purple-400/25'
+            )}
+            aria-label={discreetActive ? 'Camuflagem activa — gerir' : 'Camuflar a app agora'}
+          >
+            <EyeOff className={cn('h-3.5 w-3.5', discreetActive ? 'text-purple-300' : 'text-purple-400')} />
+            <span className={cn('text-[11px] font-semibold', discreetActive ? 'text-purple-200' : 'text-purple-300/90')}>
+              {discreetActive ? 'Activa' : 'Camuflar'}
+            </span>
+          </button>
           {/* Alertas */}
           {alertCount > 0 && (
             <button onClick={() => navigate('/dashboard/emergency')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 backdrop-blur-xl border border-red-500/30 shrink-0">

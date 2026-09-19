@@ -461,7 +461,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.38 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.39 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">

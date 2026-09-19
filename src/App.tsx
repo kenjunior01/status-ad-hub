@@ -31,6 +31,7 @@ import { initAuthDeepLinks } from '@/lib/native-auth'
 import { maybeAutoSync } from '@/lib/full-sync'
 import { GuardianSOSOverlay } from '@/components/GuardianSOSOverlay'
 import { resumeWatchIfEnabled } from '@/hooks/useRadarWatch'
+import { isNative } from '@/lib/native'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
@@ -102,10 +103,26 @@ function CoercionShield({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+/**
+ * RootRoute (v3.39.0 — NATIVO PRIMEIRO) — a rota `/` decide pela plataforma:
+ *  · APK (nativo): NUNCA mostra a Landing de marketing — entra directo na
+ *    acção: sessão activa → Painel; sem sessão → Login. Um app de segurança
+ *    abre no que importa, não numa página de textos.
+ *  · WEB: mantém a Landing (página de apresentação do produto).
+ */
+function RootRoute() {
+  const { user, loading } = useAuth()
+  if (!isNative()) {
+    return <WithErrorBoundary context="landing"><Landing /></WithErrorBoundary>
+  }
+  if (loading) return <LoadingScreen />
+  return <Navigate to={user ? '/dashboard' : '/login'} replace />
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<WithErrorBoundary context="landing"><Landing /></WithErrorBoundary>} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<PublicRoute><WithErrorBoundary context="login"><Login /></WithErrorBoundary></PublicRoute>} />
       <Route path="/ativar" element={<PublicRoute><WithErrorBoundary context="activate"><ActivateDevice /></WithErrorBoundary></PublicRoute>} />
       <Route path="/track/:token" element={<WithErrorBoundary context="tracking"><TrackEmergency /></WithErrorBoundary>} />
