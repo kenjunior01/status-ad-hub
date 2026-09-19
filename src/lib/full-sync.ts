@@ -26,6 +26,32 @@ import { wifiGetRegistry } from '@/lib/net-radar'
 import { bleGetRegistry } from '@/lib/radar-registry'
 import { getAccountInfo } from '@/lib/native-auth'
 
+/** marca da última sincronização BEM-SUCEDIDA (epoch ms, v3.38.0) */
+const LAST_SYNC_KEY = 'statusads-last-full-sync'
+/** auto-sync corre UMA vez por sessão da app */
+let autoSyncStarted = false
+
+export function getLastFullSyncAt(): number | null {
+  try {
+    const v = Number(localStorage.getItem(LAST_SYNC_KEY) || 0)
+    return v > 0 ? v : null
+  } catch { return null }
+}
+
+/** "há 3 min" / "há 2 h" / "há 5 dias" — null quando nunca sincronizou. */
+export function formatLastSync(at: number | null): string | null {
+  if (!at) return null
+  const s = Math.floor((Date.now() - at) / 1000)
+  if (s < 60) return 'há menos de um minuto'
+  if (s < 3600) return `há ${Math.floor(s / 60)} min`
+  if (s < 86_400) {
+    const h = Math.floor(s / 3600)
+    return `há ${h} h`
+  }
+  const d = Math.floor(s / 86_400)
+  return `há ${d} ${d === 1 ? 'dia' : 'dias'}`
+}
+
 export interface FullSyncResult {
   ok: boolean
   account: { email: string; provider: string } | null
@@ -112,5 +138,27 @@ export async function runFullSync(): Promise<FullSyncResult> {
   } catch { /* segue */ }
 
   res.ok = res.erros.length === 0
+  if (res.ok) {
+    try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())) } catch { /* quota */ }
+  }
   return res
+}
+
+/**
+ * v3.38.0 — SINCRONIZAÇÃO AUTOMÁTICA NA ABERTURA: a app arranjar sessão
+ * activa empurra sozinha o que ficou pendente (eventos, locais, Wi-Fi) —
+ * o utilizador deixa de ter de lembrar-se do botão. Corre UMA vez por
+ * sessão, é silenciosa (sem toasts) e nunca bloqueia o arranque.
+ */
+export async function maybeAutoSync(): Promise<FullSyncResult | null> {
+  if (autoSyncStarted) return null
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return null
+  autoSyncStarted = true
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return null // sem conta — o botão é o caminho
+    return await runFullSync()
+  } catch {
+    return null // auto-sync é melhor esforço
+  }
 }

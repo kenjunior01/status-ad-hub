@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.37.0
+# 🛡️ StatusAds Connect v3.38.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -202,6 +202,29 @@ gateways de pagamento ou SMS.
   · **RECOMPILAR APK OBRIGATÓRIO** (Java alterado): npm run cap:sync +
   Android Studio — o merge do backup, o contexto no SOS/email e o chip
   "Ambiente" funcionam já na web/PWA
+- **SMS "Com quem" + Sincronização que se Faz Sozinha (v3.38.0)** — a
+  sincronização web ↔ APK deixa de depender da memória do utilizador e o
+  canal mais fiável da app (o SMS que sai pelo SIM) passa a levar a resposta
+  humana que as testemunhas ao vivo não têm:
+  · **"Quem estava à volta" no SMS de emergência** — o histórico de presenças
+  com donos atribuídos entra agora no SMS do SOS ("Com quem: Maria (BT),
+  Pedro (WiFi); +5 sem dono."), em ambos os caminhos (online e offline);
+  composição ASCII puro para o charset GSM 7-bit (nomes sanitizados, tecto
+  de 3 donos ordenados por sinal mais forte, um dono por entrada), sem
+  duplicar o "Ambiente" das redes nem o "Rastro BLE" — só entra quando há
+  pelo menos um dono atribuído
+  · **Sincronização automática na abertura** — havendo sessão activa, a app
+  empurra sozinha o que ficou pendente (eventos, locais conhecidos, registo
+  Wi-Fi) uma vez por sessão, silenciosa e sem bloquear o arranque; sem
+  sessão, o botão "Sincronizar tudo" continua a ser o caminho
+  · **"Última sincronização" sempre visível** — a marca da última corrida
+  bem-sucedida fica persistida e aparece no cartão Sincronização (web) e no
+  painel táctico da APK ("há 3 min" / "há 2 h" / "há 5 dias"), actualizada a
+  cada 30 s e logo após cada sincronização manual
+  · **APK compilada e entregue** — esta versão sai com a APK release assinada
+  (versionCode 50, versionName 3.38.0) compilada pelo Gradle com o SDK 36,
+  já com o plugin @capacitor/browser no nativo (o cap:sync em falta desde a
+  v3.35.0 foi executado) — o login Google da APK funciona de verdade
 - **Contexto Forense do REC + Presenças Exportáveis (v3.36.0)** — a prova de
   áudio deixa de responder só "o que se ouviu" e passa a responder também
   "QUEM estava à volta quando isto foi gravado":

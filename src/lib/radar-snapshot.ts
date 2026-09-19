@@ -186,3 +186,49 @@ export function radarSnapshotContextLine(s: RadarSnapshot): string | null {
 export function radarSnapshotSummary(s: RadarSnapshot): string {
   return radarSnapshotContextLine(s) ?? 'ambiente vazio'
 }
+
+/**
+ * v3.38.0 — "QUEM ESTAVA À VOLTA" para o SMS de emergência (ASCII puro,
+ * GSM 7-bit). O canal mais fiável da app (sai pelo SIM mesmo sem internet)
+ * passa a levar os DONOS atribuídos no histórico de presenças — a resposta
+ * humana que as testemunhas ao vivo não têm.
+ *
+ * Regras de composição (espaço de SMS é caro):
+ *  · só entra quando há PELO MENOS UM dono — sem donos, a linha não existe
+ *  · um dono por entrada (o dispositivo com sinal mais forte ganha)
+ *  · ordenado por sinal (mais perto primeiro), tecto de 3 nomes
+ *  · dispositivos sem dono viram "+N sem dono" (contagem do snapshot)
+ * Ex.: " Com quem: Maria (BLE), Pedro (WiFi); +5 sem dono."
+ */
+export function peopleSmsSummary(s: RadarSnapshot | null): string {
+  if (!s) return ''
+  const owned = new Map<string, { owner: string; kind: string; rssi: number }>()
+  try {
+    for (const d of [...(s.wifi || []), ...(s.ble || [])]) {
+      const owner = (d.o || '').trim()
+      if (!owner) continue
+      const prev = owned.get(owner)
+      const rssi = typeof d.r === 'number' ? d.r : -999
+      if (!prev || rssi > prev.rssi) owned.set(owner, { owner, kind: d.k, rssi })
+    }
+  } catch { return '' }
+  if (owned.size === 0) return ''
+  const named = [...owned.values()]
+    .sort((a, b) => b.rssi - a.rssi)
+    .slice(0, 3)
+    .map((o) => `${sanitizeSmsName(o.owner)} (${o.kind === 'wifi' ? 'WiFi' : 'BT'})`)
+  const unnamed = Math.max(0, (s.around || 0) - owned.size)
+  const tail = unnamed > 0 ? `; +${unnamed} sem dono` : ''
+  return ` Com quem: ${named.join(', ')}${tail}.`
+}
+
+/** Nome para SMS: ASCII puro (GSM 7-bit), sem acentos, espaços colapsados. */
+function sanitizeSmsName(raw: string): string {
+  return raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7E]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24)
+}

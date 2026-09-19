@@ -28,6 +28,7 @@ import { DiscreetModeOverlay } from '@/components/DiscreetModeOverlay'
 import { PanicModeOverlay } from '@/components/PanicModeOverlay'
 import { GuardianWatcher } from '@/components/GuardianWatcher'
 import { initAuthDeepLinks } from '@/lib/native-auth'
+import { maybeAutoSync } from '@/lib/full-sync'
 import { GuardianSOSOverlay } from '@/components/GuardianSOSOverlay'
 import { resumeWatchIfEnabled } from '@/hooks/useRadarWatch'
 
@@ -207,6 +208,8 @@ function InnerApp() {
   useEffect(() => { resumeWatchIfEnabled() }, [])
   // v3.35.0 — deep link do login social (com.statusads.connect://login-callback)
   useEffect(() => { initAuthDeepLinks() }, [])
+  // v3.38.0 — sincronização automática na abertura (eventos/locais/Wi-Fi pendentes)
+  useEffect(() => { void maybeAutoSync() }, [])
 
   return (
     <BrowserRouter>

@@ -10,7 +10,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { CloudUpload, Loader2, Mail, ShieldCheck, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { runFullSync, type FullSyncResult } from '@/lib/full-sync'
+import { runFullSync, getLastFullSyncAt, formatLastSync, type FullSyncResult } from '@/lib/full-sync'
 import { getSecurityEvents } from '@/lib/security-events'
 import { toast } from 'sonner'
 
@@ -24,6 +24,7 @@ export function SyncStatusCard() {
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<FullSyncResult | null>(null)
   const [pendentes, setPendentes] = useState(0)
+  const [lastSync, setLastSync] = useState<string | null>(() => formatLastSync(getLastFullSyncAt()))
 
   const refreshPending = useCallback(() => {
     setPendentes(getSecurityEvents().filter((e) => !e.synced).length)
@@ -31,7 +32,10 @@ export function SyncStatusCard() {
 
   useEffect(() => {
     refreshPending()
-    const t = setInterval(refreshPending, 30_000)
+    const t = setInterval(() => {
+      refreshPending()
+      setLastSync(formatLastSync(getLastFullSyncAt()))
+    }, 30_000)
     return () => clearInterval(t)
   }, [refreshPending])
 
@@ -41,6 +45,7 @@ export function SyncStatusCard() {
       const r = await runFullSync()
       setResult(r)
       refreshPending()
+      setLastSync(formatLastSync(getLastFullSyncAt()))
       if (r.account == null) {
         toast.error('Sem sessão — entre na conta para sincronizar')
       } else if (r.erros.length > 0) {
@@ -73,6 +78,12 @@ export function SyncStatusCard() {
           </span>
         )}
       </div>
+
+      {lastSync && (
+        <p className="text-[10.5px] text-white/45 -mt-2">
+          Última sincronização: <span className="text-brand/80 font-medium">{lastSync}</span>
+        </p>
+      )}
 
       {result?.account && (
         <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5">

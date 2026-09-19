@@ -43,7 +43,7 @@ import {
   getPresenceDevices, findPathCompanions, presenceNowContext,
   type PresenceEntry,
 } from '@/lib/presence-history'
-import { runFullSync, type FullSyncResult } from '@/lib/full-sync'
+import { runFullSync, getLastFullSyncAt, formatLastSync, type FullSyncResult } from '@/lib/full-sync'
 import { toast } from 'sonner'
 
 function TacScore({ score }: { score: number }) {
@@ -281,12 +281,14 @@ function PresenceTacPanel() {
 function SyncTacPanel() {
   const [syncing, setSyncing] = useState(false)
   const [r, setR] = useState<FullSyncResult | null>(null)
+  const [lastSync, setLastSync] = useState<string | null>(() => formatLastSync(getLastFullSyncAt()))
 
   const syncNow = async () => {
     setSyncing(true)
     try {
       const res = await runFullSync()
       setR(res)
+      setLastSync(formatLastSync(getLastFullSyncAt()))
       if (res.account == null) toast.error('SEM SESSAO — ENTRE NA CONTA')
       else if (res.erros.length > 0) toast.error(`FALHAS: ${res.erros.length}`)
       else toast.success('TUDO NA NUVEM')
@@ -345,6 +347,11 @@ function SyncTacPanel() {
         </button>
         <p className="tac-label flex-1 text-right">EVENTOS · LOCAIS · REGISTO WI-FI</p>
       </div>
+      {lastSync && (
+        <p className="text-[9px] font-mono text-[rgba(52,211,153,0.45)] pt-1">
+          &gt; ULTIMA SINCRONIZACAO: {lastSync.toUpperCase()}
+        </p>
+      )}
     </div>
   )
 }
@@ -454,7 +461,7 @@ export default function TacticalSecurityCenter() {
             <ShieldCheck className="h-5 w-5 text-[var(--tac-green)]" />
             <div>
               <h1 className="tac-value text-lg tracking-wider">CENTRAL DE SEGURANCA</h1>
-              <p className="tac-label">MODULO TATICO v3.37 · SO NA APK</p>
+              <p className="tac-label">MODULO TATICO v3.38 · SO NA APK</p>
             </div>
           </div>
           <div className="tac-status-bar">

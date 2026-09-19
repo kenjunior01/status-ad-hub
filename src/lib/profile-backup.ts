@@ -30,7 +30,7 @@
 
 import { PRESENCE_KEY, mergePresenceBackup } from '@/lib/presence-history'
 
-export const APP_VERSION = '3.37.0'
+export const APP_VERSION = '3.38.0'
 
 // ── Regras de inclusão ───────────────────────────────────────────────────────
 

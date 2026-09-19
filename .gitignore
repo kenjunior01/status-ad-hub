@@ -29,3 +29,9 @@ dist-ssr
 *.sw?
 
 *.tsbuildinfo
+
+# Assinatura de release (credenciais locais — NUNCA commitar)
+android/keystore.properties
+android/*.jks
+android/*.keystore
+*.jks

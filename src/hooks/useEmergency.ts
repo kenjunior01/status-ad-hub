@@ -286,6 +286,7 @@ export function useEmergency() {
           witness: snap,
           bleRadar: ble,
           netRadar: net,
+          radar: radarSnap, // v3.38.0 — donos no SMS ("Com quem: …")
           recording: true,
         })
         localSms = await dispatchSosSms(phones, sosMsg)
@@ -506,6 +507,7 @@ export function useEmergency() {
               witness: snap,
               bleRadar: ble,
               netRadar: net,
+              radar: radarSnap, // v3.38.0 — donos no SMS também offline
               recording: true,
             }))
             patchSosReport({ channels: { smsLocal: { ...res, at: new Date().toISOString() } } })

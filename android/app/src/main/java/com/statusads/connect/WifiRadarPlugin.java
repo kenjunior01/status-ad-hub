@@ -24,6 +24,8 @@ import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellIdentityNr;
+import android.telephony.CellSignalStrength;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
@@ -649,12 +651,16 @@ public class WifiRadarPlugin extends Plugin {
                 } else if (ci instanceof CellInfoNr && Build.VERSION.SDK_INT >= 29) {
                     CellInfoNr nr = (CellInfoNr) ci;
                     o.put("type", "5G");
-                    if (nr.getCellIdentity() != null) {
-                        o.put("nci", nr.getCellIdentity().getNci());
-                        o.put("tac", nr.getCellIdentity().getTac());
-                    }
-                    CellSignalStrengthNr s = nr.getCellSignalStrength();
-                    if (s != null) o.put("dbm", s.getDbm());
+                    // v3.38.0 — API real: CellInfoNr devolve os tipos BASE; cast a Nr
+                    try {
+                        CellIdentityNr cid = (CellIdentityNr) nr.getCellIdentity();
+                        if (cid != null) {
+                            o.put("nci", cid.getNci());
+                            o.put("tac", cid.getTac());
+                        }
+                    } catch (ClassCastException ignored) { }
+                    CellSignalStrength nrs = nr.getCellSignalStrength();
+                    if (nrs instanceof CellSignalStrengthNr) o.put("dbm", ((CellSignalStrengthNr) nrs).getDbm());
                 } else if (ci instanceof CellInfoCdma) {
                     CellInfoCdma cdma = (CellInfoCdma) ci;
                     o.put("type", "CDMA");
@@ -847,8 +853,9 @@ public class WifiRadarPlugin extends Plugin {
         if (Build.VERSION.SDK_INT >= 23) {
             try { if (r.is80211mcResponder()) o.put("mc", true); } catch (Exception ignored) { }
             try { if (r.isPasspointNetwork()) o.put("passpoint", true); } catch (Exception ignored) { }
-            try { String v = r.getVenueName(); if (v != null && !v.isEmpty()) o.put("venue", v); } catch (Exception ignored) { }
-            try { String op = r.getOperatorName(); if (op != null && !op.isEmpty()) o.put("operator", op); } catch (Exception ignored) { }
+            // v3.38.0 — API real: venueName/operatorFriendlyName são CAMPOS públicos
+            try { CharSequence v = r.venueName; if (v != null && v.length() > 0) o.put("venue", v.toString()); } catch (Exception ignored) { }
+            try { CharSequence op = r.operatorFriendlyName; if (op != null && op.length() > 0) o.put("operator", op.toString()); } catch (Exception ignored) { }
         }
         if (Build.VERSION.SDK_INT >= 31 && r.channelWidth > 0) {
             o.put("widthMhz", r.channelWidth == ScanResult.CHANNEL_WIDTH_20MHZ ? 20
@@ -935,12 +942,12 @@ public class WifiRadarPlugin extends Plugin {
             for (android.net.wifi.rtt.RangingResult rr : sink) {
                 JSONObject e = new JSONObject();
                 e.put("bssid", rr.getMacAddress() != null ? rr.getMacAddress().toString() : "");
-                e.put("status", rr.getStatusCode());
-                if (rr.getStatusCode() == android.net.wifi.rtt.RangingResult.STATUS_SUCCESS) {
+                e.put("status", rr.getStatus()); // v3.38.0 — API real (era getStatusCode)
+                if (rr.getStatus() == android.net.wifi.rtt.RangingResult.STATUS_SUCCESS) {
                     e.put("distMm", rr.getDistanceMm());
                     e.put("distSdMm", rr.getDistanceStdDevMm());
                     e.put("rssi", rr.getRssi());
-                    e.put("rtsRetries", rr.getRangingAttemptCount());
+                    e.put("rtsRetries", rr.getNumAttemptedMeasurements()); // v3.38.0 — API real (era getRangingAttemptCount)
                 }
                 out.put(e);
             }

@@ -571,8 +571,9 @@ public class BleRadarPlugin extends Plugin {
         }
 
         // v3.32.0 — dados máximos para o motor de posição por rádio
+        // v3.38.0 — isConnectable() não existe na API pública do SDK 36; o campo
+        // "conn" (não consumido no JS) foi removido, "fl" (flags) mantém-se
         if (Build.VERSION.SDK_INT >= 26 && result.getScanRecord() != null) {
-            try { o.put("conn", result.getScanRecord().isConnectable()); } catch (Exception ignored) { }
             try { int fl = result.getScanRecord().getAdvertiseFlags(); if (fl > 0) o.put("fl", fl); } catch (Exception ignored) { }
         }
 

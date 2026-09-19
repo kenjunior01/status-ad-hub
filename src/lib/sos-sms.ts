@@ -16,6 +16,8 @@ import type { BleRadarSnapshot } from '@/lib/ble-radar'
 import { bleRadarSmsSummary } from '@/lib/ble-radar'
 import type { NetRadarSnapshot } from '@/lib/net-radar'
 import { netRadarSmsSummary } from '@/lib/net-radar'
+import type { RadarSnapshot } from '@/lib/radar-snapshot'
+import { peopleSmsSummary } from '@/lib/radar-snapshot'
 
 /** Cache dos telefones dos contactos (para o caminho offline) */
 const CONTACTS_CACHE_KEY = 'statusads-last-contacts'
@@ -74,6 +76,8 @@ export interface SosSmsOptions {
   bleRadar?: BleRadarSnapshot | null
   /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — redes + operadora no SMS */
   netRadar?: NetRadarSnapshot | null
+  /** Contexto congelado do histórico de presenças (v3.38.0) — DONOS no SMS */
+  radar?: RadarSnapshot | null
   /** Indica que a gravação de áudio foi activada */
   recording?: boolean
 }
@@ -99,6 +103,7 @@ export function buildSosSmsMessage(opts: SosSmsOptions): string {
   msg += witnessSummary(opts.witness)
   msg += bleRadarSmsSummary(opts.bleRadar)
   msg += netRadarSmsSummary(opts.netRadar)
+  msg += peopleSmsSummary(opts.radar) // v3.38.0 — quem estava à volta (donos)
   if (opts.recording) msg += ' Audio a gravar.'
   return msg.trim()
 }

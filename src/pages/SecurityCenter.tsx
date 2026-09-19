@@ -249,7 +249,7 @@ function SecurityCenterWeb() {
           </p>
         </div>
         <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-white/[0.03] text-white/40 border-white/[0.08]">
-          v3.37
+          v3.38
         </span>
       </div>
 

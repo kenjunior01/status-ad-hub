@@ -173,12 +173,6 @@ public class GuardianService extends Service implements SensorEventListener {
         witnessHandler.postDelayed(witnessScanRunnable, 5_000);
     }
 
-    @Override
-    public void onDestroy() {
-        if (sInstance == this) sInstance = null;
-        super.onDestroy();
-    }
-
     /**
      * Limpa o registo de testemunhas (memória viva + prefs) — v3.30.0,
      * chamado pelo PanicPlugin.clearWitnessLog (Limpeza Seletiva de Dados).
@@ -217,6 +211,7 @@ public class GuardianService extends Service implements SensorEventListener {
 
     @Override
     public void onDestroy() {
+        if (sInstance == this) sInstance = null;
         if (powerReceiver != null) {
             try {
                 unregisterReceiver(powerReceiver);
