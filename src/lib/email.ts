@@ -25,6 +25,7 @@ import type { WitnessSnapshot } from '@/lib/guardian'
 import type { BleRadarSnapshot, BleTrailPoint } from '@/lib/ble-radar'
 import { formatBleDeviceLine } from '@/lib/ble-radar'
 import type { NetRadarSnapshot } from '@/lib/net-radar'
+import type { RadarSnapshot } from '@/lib/radar-snapshot'
 
 export interface EmailAttachment {
   filename: string
@@ -281,6 +282,11 @@ export interface SosEmailOptions {
   bleRadar?: BleRadarSnapshot | null
   /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — secção completa no email */
   netRadar?: NetRadarSnapshot | null
+  /** Snapshot de radar congelado no instante do alerta (v3.37.0) — presenças
+   *  com DONOS, local e risco; é o contexto que falta às testemunhas ao vivo */
+  radar?: RadarSnapshot | null
+  /** linha de contexto pt-PT (radarSnapshotContextLine) — cabeçalho da secção */
+  radarSummary?: string | null
   recording?: boolean
   /** hora local do disparo (legível) */
   at?: Date
@@ -290,6 +296,32 @@ export interface SosEmailOptions {
 export function buildSosEmailSubject(opts: { name?: string | null }): string {
   const who = (opts.name || '').trim()
   return who ? `SOS StatusAds: ${who} precisa de ajuda AGORA` : 'SOS StatusAds: pedido de socorro'
+}
+
+/**
+ * Secção AMBIENTE do email (v3.37.0) — o snapshot de radar no instante do
+ * alerta: presenças da janela recente COM DONOS ("Maria estava à volta" —
+ * informação que as testemunhas ao vivo não têm), local, precisão e risco.
+ */
+function radarEmailDetail(s?: RadarSnapshot | null, summary?: string | null): string {
+  if (!s || (s.wifi.length === 0 && s.ble.length === 0 && !s.place)) {
+    return 'AMBIENTE (últimos 15 min): sem dados de radar — a Vigilância não estava activa neste aparelho.'
+  }
+  const lines: string[] = ['AMBIENTE NO INSTANTE DO ALERTA (dispositivos vistos nos últimos 15 min):']
+  if (summary) lines.push(`  ${summary}`)
+  const owned = [...s.wifi, ...s.ble].filter((d) => d.o).slice(0, 6)
+  if (owned.length > 0) {
+    lines.push('  Dispositivos identificados pelo utilizador:')
+    for (const d of owned) {
+      const nome = d.n ? ` (${d.n})` : ''
+      const sinal = typeof d.r === 'number' ? `, sinal ${d.r}dBm` : ''
+      lines.push(`    * ${d.o} — ${d.k === 'wifi' ? 'WiFi' : 'Bluetooth'}${nome}${sinal}`)
+    }
+  }
+  if (s.around > s.wifi.length + s.ble.length) {
+    lines.push(`  ... e mais ${s.around - s.wifi.length - s.ble.length} dispositivo(s) na janela (sem dono).`)
+  }
+  return lines.join('\n')
 }
 
 /** Corpo detalhado do email SOS (texto puro, PT). */
@@ -311,6 +343,8 @@ export function buildSosEmailBody(opts: SosEmailOptions): string {
     bleRadarDetail(opts.bleRadar),
     ``,
     netRadarDetail(opts.netRadar),
+    ``,
+    radarEmailDetail(opts.radar, opts.radarSummary),
     ``,
     opts.recording
       ? `GRAVAÇÃO DE ÁUDIO: activada — segue em anexo assim que estiver disponível (ou disponível no cofre de evidências).`

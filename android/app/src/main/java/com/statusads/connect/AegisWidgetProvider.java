@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.provider.Settings;
 import android.widget.RemoteViews;
 
 /**
@@ -35,6 +36,11 @@ import android.widget.RemoteViews;
  *   sub laranja "Isente a app da bateria" — sem ela, o Android/OEM mata a
  *   sentinela quando o ecrã apaga (Xiaomi/Samsung comuns em Moçambique).
  *   Prioridade da linha: REC a gravar > bateria baixa > isenção em falta.
+ * · ISENÇÃO NUM TOQUE (v3.37.0): o aviso de isenção deixou de ser só texto —
+ *   tocar nele abre o diálogo do sistema ACTION_REQUEST_IGNORE_BATTERY_
+ *   OPTIMIZATIONS (o mesmo do PanicPlugin.requestBatteryExemption, mas SEM
+ *   abrir a app): o utilizador resolve o problema ali mesmo, no ecrã
+ *   inicial. Noutras alturas, tocar na sub abre a app (como o root).
  */
 public class AegisWidgetProvider extends AppWidgetProvider {
 
@@ -48,6 +54,10 @@ public class AegisWidgetProvider extends AppWidgetProvider {
     private static final int REQ_SOS = 4021;
     private static final int REQ_OPEN = 4022;
     private static final int REQ_REC = 4023;
+    /** pedido de isenção de bateria a partir do aviso do widget (v3.37.0) */
+    private static final int REQ_BATT = 4024;
+    /** abrir a app a partir da sub (fora do aviso de isenção) — v3.37.0 */
+    private static final int REQ_OPEN_SUB = 4025;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -116,12 +126,14 @@ public class AegisWidgetProvider extends AppWidgetProvider {
         // ISENÇÃO DE BATERIA (v3.36.0): armado + sem isenção das optimizações
         // → a sentinela corre o risco de ser morta pelo sistema/OEM quando o
         // ecrã apaga. Aviso laranja (bateria baixa tem prioridade — a sub é
-        // uma linha só; tocar no widget abre a app, onde a Central do
-        // Guardião pede a isenção com um toque).
+        // uma linha só). v3.37.0: o aviso é um BOTÃO — tocar nele pede a
+        // isenção directamente (diálogo do sistema, sem abrir a app).
+        boolean subOpensBatteryFix = false;
         if (armed && !batteryLow && !isBatteryExempt(context)) {
             views.setTextViewText(R.id.widget_status_sub,
-                    "Isente a app da bateria — a sentinela morre adormecida");
+                    "Isente a app da bateria — toque aqui para resolver");
             views.setTextColor(R.id.widget_status_sub, 0xFFFB923C);
+            subOpensBatteryFix = true;
         }
 
         // Gravação de evidências (v3.27.0): botão REC⇄PARAR dinâmico
@@ -131,6 +143,7 @@ public class AegisWidgetProvider extends AppWidgetProvider {
             // cor restaurada ao cinza — o aviso de bateria fica no estado
             views.setTextViewText(R.id.widget_status_sub, "REC — a gravar evidência");
             views.setTextColor(R.id.widget_status_sub, 0xFF9CA3AF);
+            subOpensBatteryFix = false;
         }
         views.setTextViewText(R.id.widget_rec_btn, rec ? "PARAR" : "REC");
         views.setTextColor(R.id.widget_rec_btn, rec ? 0xFFFCA5A5 : 0xFFD4AF37);
@@ -173,6 +186,20 @@ public class AegisWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         views.setOnClickPendingIntent(R.id.widget_root, openPi);
 
+        // 4. SUB (v3.37.0): no aviso de isenção → pedir a isença ali mesmo;
+        //    noutros estados → abrir a app (mesma acção do root, PI distinto
+        //    para não reescrever o PendingIntent do corpo).
+        if (subOpensBatteryFix) {
+            views.setOnClickPendingIntent(R.id.widget_status_sub,
+                    batteryFixPendingIntent(context));
+        } else {
+            Intent openSub = new Intent(open);
+            PendingIntent openSubPi = PendingIntent.getActivity(
+                    context, REQ_OPEN_SUB, openSub,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            views.setOnClickPendingIntent(R.id.widget_status_sub, openSubPi);
+        }
+
         return views;
     }
 
@@ -207,5 +234,49 @@ public class AegisWidgetProvider extends AppWidgetProvider {
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    /**
+     * v3.37.0 — PendingIntent do aviso de isenção: abre o diálogo do sistema
+     * ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (o mesmo intent do
+     * PanicPlugin.requestBatteryExemption, que a Central do Guardião já usa;
+     * a permissão REQUEST_IGNORE_BATTERY_OPTIMIZATIONS já está no manifest).
+     * Se um OEM exótico não tiver a activity, cai para a lista geral de
+     * optimização de bateria — e se essa também falhar, o intent de
+     * “abrir a app” é usado em fallback (o utilizador nunca fica sem resposta).
+     */
+    private static PendingIntent batteryFixPendingIntent(Context context) {
+        try {
+            Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:" + context.getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (i.resolveActivity(context.getPackageManager()) != null) {
+                return PendingIntent.getActivity(context, REQ_BATT, i,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+        } catch (Exception ignored) {
+            // segue para o fallback abaixo
+        }
+        try {
+            Intent list = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+            list.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (list.resolveActivity(context.getPackageManager()) != null) {
+                return PendingIntent.getActivity(context, REQ_BATT, list,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+        } catch (Exception ignored) {
+            // segue para o último recurso
+        }
+        // último recurso: abrir a app (a Central do Guardião pede a isenção)
+        Intent open = context.getPackageManager().getLaunchIntentForPackage(
+                context.getPackageName());
+        if (open == null) {
+            open = new Intent(Intent.ACTION_VIEW);
+            open.setData(Uri.parse(SOS_URL));
+            open.setComponent(new ComponentName(context, MainActivity.class));
+        }
+        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(context, REQ_BATT, open,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }

@@ -1241,7 +1241,9 @@ function BackupSection() {
     setBusy('apply')
     try {
       const res = applyBackup(data)
-      toast.success(`Perfil restaurado (${res.applied} itens). A reiniciar…`)
+      // v3.37.0: o histórico de presenças faz merge — o toast mostra o que veio no backup
+      const extras = res.mergedDevices != null ? ` · ${res.mergedDevices} dispositivo(s) de presenças fundidos` : ''
+      toast.success(`Perfil restaurado (${res.applied} itens${extras}). A reiniciar…`)
       setTimeout(() => location.reload(), 900)
     } catch {
       setBusy(null)
@@ -1409,7 +1411,9 @@ function BackupSection() {
               {groups.map((g) => (
                 <div key={g.label} className="flex items-center justify-between px-3 py-2">
                   <span className="text-[12px] text-white/65">{g.label}</span>
-                  <span className="text-[10px] text-white/25 tabular-nums">{g.count} {g.count === 1 ? 'item' : 'itens'}</span>
+                  <span className="text-[10px] text-white/25 tabular-nums">
+                    {g.detail ? `${g.detail} · ` : ''}{g.count} {g.count === 1 ? 'item' : 'itens'}
+                  </span>
                 </div>
               ))}
             </div>

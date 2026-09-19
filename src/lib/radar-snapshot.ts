@@ -167,13 +167,22 @@ export function parseRadarSnapshot(raw?: string | null): RadarSnapshot | null {
   }
 }
 
-/** Resumo pt-PT de uma linha: "4 Wi-Fi · 2 BLE · Local 1 · ±14 m · risco 35". */
-export function radarSnapshotSummary(s: RadarSnapshot): string {
+/**
+ * Linha de contexto pt-PT do snapshot — null quando não há nada relevante
+ * (o SMS/email nunca levam "ambiente vazio"). Ex.:
+ * "4 Wi-Fi · 2 BLE · Local 1 · ±14 m · risco 35".
+ */
+export function radarSnapshotContextLine(s: RadarSnapshot): string | null {
   const parts: string[] = []
   if (s.wifi.length > 0) parts.push(`${s.wifi.length} Wi-Fi`)
   if (s.ble.length > 0) parts.push(`${s.ble.length} BLE`)
   if (s.place) parts.push(s.place)
   if (s.pos && typeof s.pos.acc === 'number') parts.push(`±${s.pos.acc} m`)
   if (typeof s.risk === 'number' && s.risk > 0) parts.push(`risco ${s.risk}`)
-  return parts.length > 0 ? parts.join(' · ') : 'ambiente vazio'
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
+/** Resumo pt-PT de uma linha: "4 Wi-Fi · 2 BLE · Local 1 · ±14 m · risco 35". */
+export function radarSnapshotSummary(s: RadarSnapshot): string {
+  return radarSnapshotContextLine(s) ?? 'ambiente vazio'
 }

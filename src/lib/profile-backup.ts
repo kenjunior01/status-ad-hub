@@ -16,12 +16,21 @@
  *  · Restaura por cima das definições actuais — a app reinicia para todos
  *    os subsistemas relerem o storage.
  *
+ * v3.37.0 — o HISTÓRICO DE PRESENÇAS (30 dias, com os donos ensinados)
+ * faz agora parte da vida do perfil: aparece no resumo com a contagem de
+ * dispositivos, e o restauro faz MERGE consciente (adiciona entradas novas,
+ * mantém as só locais, funde as comuns com o melhor de cada) em vez do
+ * overwrite cego — trocar de telemóvel deixa de perder a memória de quem
+ * acompanha o utilizador.
+ *
  * O que NUNCA entra no backup: sessão de coerção activa, tokens de auth
  * (sb-*), estado transitório de UI, caches grandes de radar/intel e logs.
  * Contactos e plano vivem no servidor — ficam de fora por natureza.
  */
 
-export const APP_VERSION = '3.36.0'
+import { PRESENCE_KEY, mergePresenceBackup } from '@/lib/presence-history'
+
+export const APP_VERSION = '3.37.0'
 
 // ── Regras de inclusão ───────────────────────────────────────────────────────
 
@@ -108,6 +117,7 @@ const LABELS: Array<{ keys: string[]; label: string }> = [
   { keys: ['statusads-fakecall-config', 'statusads-fakecall-schedule'], label: 'Chamada Falsa' },
   { keys: ['statusads-fall-config'], label: 'Deteção de Quedas' },
   { keys: ['statusads-radar-watch'], label: 'Vigia do Radar' },
+  { keys: ['aegis-presence-devices'], label: 'Histórico de presenças (30 dias)' },
   { keys: ['statusads-last-contacts', 'statusads-last-contact-emails'], label: 'Cache offline de contactos SOS' },
   { keys: ['statusads-theme'], label: 'Tema visual' },
   { keys: ['aegis_haptics', 'aegis_swipe_nav'], label: 'Interação tátil (háptica, swipe)' },
@@ -117,6 +127,8 @@ const LABELS: Array<{ keys: string[]; label: string }> = [
 export interface BackupGroup {
   label: string
   count: number
+  /** detalhe legível (ex.: "24 dispositivos · 3 com dono") — v3.37.0 */
+  detail?: string
 }
 
 /** Agrupa as chaves de um backup em linhas legíveis (para a pré-visualização). */
@@ -130,6 +142,20 @@ export function summarizeBackup(data: Record<string, string>): BackupGroup[] {
   }
   const rest = Object.keys(data).filter((k) => !seen.has(k))
   if (rest.length > 0) groups.push({ label: 'Outras definições', count: rest.length })
+
+  // v3.37.0 — detalhe humano do histórico de presenças (contagem + donos)
+  const pg = groups.find((g) => g.label === 'Histórico de presenças (30 dias)')
+  if (pg) {
+    try {
+      const arr = JSON.parse(data['aegis-presence-devices'] || '[]')
+      if (Array.isArray(arr) && arr.length > 0) {
+        const owners = arr.filter(
+          (e) => e && typeof e === 'object' && typeof (e as { owner?: unknown }).owner === 'string' && (e as { owner: string }).owner
+        ).length
+        pg.detail = `${arr.length} dispositivo${arr.length === 1 ? '' : 's'}${owners > 0 ? ` · ${owners} com dono` : ''}`
+      }
+    } catch { /* valor manipulado — resumo fica sem detalhe */ }
+  }
   return groups
 }
 
@@ -323,27 +349,43 @@ export async function unlockBackup(parsed: ParsedBackup, passphrase: string): Pr
 export interface ApplyResult {
   applied: number
   skipped: number
+  /** dispositivos do histórico de presenças aceite no merge — v3.37.0 */
+  mergedDevices?: number
 }
 
 /**
  * Escreve o perfil restaurado por cima das definições actuais. Só aceita
  * chaves que passam as regras do perfil (defesa contra ficheiros manipulados).
- * O chamador deve reiniciar a app para os subsistemas relerem o storage.
+ * EXCEPÇÃO (v3.37.0): o histórico de presenças não é overwritten — faz MERGE
+ * com o histórico local (adiciona novas, mantém as só locais, funde as comuns;
+ * ver mergePresenceBackup). O chamador deve reiniciar a app para os
+ * subsistemas relerem o storage.
  */
 export function applyBackup(data: Record<string, string>): ApplyResult {
   let applied = 0
   let skipped = 0
+  let mergedDevices: number | undefined
   for (const [key, value] of Object.entries(data)) {
     if (!isProfileKey(key) || typeof value !== 'string') {
       skipped++
       continue
     }
     try {
+      if (key === PRESENCE_KEY) {
+        const res = mergePresenceBackup(value)
+        if (res.json && res.accepted > 0) {
+          applied++
+          mergedDevices = (mergedDevices || 0) + res.accepted
+        } else {
+          skipped++
+        }
+        continue
+      }
       localStorage.setItem(key, value)
       applied++
     } catch {
       skipped++
     }
   }
-  return { applied, skipped }
+  return mergedDevices != null ? { applied, skipped, mergedDevices } : { applied, skipped }
 }

@@ -43,6 +43,9 @@ export interface SosDispatchReport {
   bleRadar?: { points: number; devices: number; unique: number; top?: string[] }
   /** Ambiente Wi-Fi/Redes do Radar (v3.16.0) — redes + ameaças + operadora */
   netRadar?: { visible: number; registry: number; threats: string[]; operator?: string | null; towers?: number; place?: string }
+  /** Contexto de radar congelado no instante do SOS (v3.37.0) — linha pt-PT
+   *  do snapshot de presenças/local/risco (radarSnapshotContextLine) */
+  radar?: string
   audio?: { started?: boolean; smsLink?: boolean; emailAnexo?: boolean }
   offline?: boolean
   loggedToCloud?: boolean
@@ -141,6 +144,7 @@ export function summarizeReport(r: SosDispatchReport): string {
   if (r.channels.pushOk !== undefined) parts.push(`Push ${r.channels.pushOk ? 'ok' : 'falha'}`)
   if (r.witnesses && r.witnesses.total > 0) parts.push(`Testemunhas ${r.witnesses.total}`)
   if (r.bleRadar && r.bleRadar.devices > 0) parts.push(`BLE ${r.bleRadar.devices}/${r.bleRadar.points}pt`)
+  if (r.radar) parts.push(r.radar) // v3.37.0 — contexto de radar no Evento da nuvem
   if (r.audio?.started) parts.push(`Audio${r.audio.emailAnexo ? ' anexo' : r.audio.smsLink ? ' link' : ''}`)
   if (r.offline) parts.push('OFFLINE')
   return parts.join(' · ')

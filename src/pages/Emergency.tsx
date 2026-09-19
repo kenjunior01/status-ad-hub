@@ -147,6 +147,12 @@ function SosDeliveryReportCard() {
                   {report.bleRadar.top && report.bleRadar.top.length > 0 ? ` · ${report.bleRadar.top.slice(0, 2).join(', ')}` : ''}
                 </span>
               )}
+              {/* v3.37.0: contexto de radar congelado no instante do SOS */}
+              {report.radar && (
+                <span className="text-[10px] px-2 py-1 rounded-lg bg-violet-500/[0.08] border border-violet-400/20 text-violet-300">
+                  Ambiente: {report.radar}
+                </span>
+              )}
               {report.audio?.started && (
                 <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/50">
                   Áudio {report.audio.emailAnexo ? 'enviado em anexo' : report.audio.smsLink ? 'link enviado' : 'a gravar'}

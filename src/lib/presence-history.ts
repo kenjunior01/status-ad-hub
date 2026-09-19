@@ -16,7 +16,10 @@
  *    quantos companheiros presentes, quantos já conhecidos
  *
  * Tudo LOCAL (chave aegis-presence-devices, incluída na Limpeza de
- * Dados › Radares). Nada sobe para a nuvem.
+ * Dados › Radares). Nada sobe para a nuvem — mas desde a v3.37.0 VIAJA
+ * no backup cifrado do perfil: exportar/restaurar leva o histórico
+ * (e os DONOS que o utilizador ensinou) para o aparelho novo, com
+ * MERGE consciente em vez de overwrite cego.
  */
 
 import { haversineM } from '@/lib/radio-position'
@@ -69,7 +72,10 @@ export interface PresenceContext {
 
 // ── Persistência ─────────────────────────────────────────────────────────
 
-const KEY = 'aegis-presence-devices'
+/** chave do histórico — partilhada com o backup do perfil (v3.37.0) */
+export const PRESENCE_KEY = 'aegis-presence-devices'
+
+const KEY = PRESENCE_KEY
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000 // 30 dias
 const MAX_DEVICES = 800
 /** separação mínima entre pontos de caminho distintos (m) */
@@ -218,9 +224,140 @@ export function findPathCompanions(devs?: PresenceEntry[]): PresenceEntry[] {
       (b.pathPoints * 10 + (b.movingSeen || 0)) - (a.pathPoints * 10 + (a.movingSeen || 0)))
 }
 
+// ── Backup/restauro consciente (v3.37.0) ─────────────────────────────────
+
+export interface PresenceMergeResult {
+  /** JSON final do histórico após o merge (null = nada válido a restaurar) */
+  json: string | null
+  /** entradas válidas aceite do ficheiro de backup */
+  accepted: number
+  /** entradas LOCAIS que o backup não conhecia (mantidas — nunca se perdem) */
+  kept: number
+  /** entradas onde o backup trouxe uma versão mais rica que a local */
+  updated: number
+}
+
+/**
+ * Validação defensiva de uma entrada vinda de um ficheiro de backup
+ * (ficheiros manipulados ou versões antigas não podem corromper o motor).
+ */
+function validPresenceEntry(e: unknown): e is PresenceEntry {
+  if (!e || typeof e !== 'object') return false
+  const x = e as Partial<PresenceEntry>
+  return (
+    typeof x.id === 'string' && x.id.length > 0 &&
+    (x.kind === 'wifi' || x.kind === 'ble') &&
+    typeof x.firstSeen === 'number' && Number.isFinite(x.firstSeen) &&
+    typeof x.lastSeen === 'number' && Number.isFinite(x.lastSeen) &&
+    typeof x.seen === 'number' && Number.isFinite(x.seen) && x.seen >= 0 &&
+    !!x.places && typeof x.places === 'object'
+  )
+}
+
+/**
+ * Fusão de duas visões do MESMO dispositivo: preserva o MELHOR de cada
+ * — dono (local tem prioridade), nome/meta preenchidos, primeira/última
+ * vista reais, contagens máximas (nunca duplicadas) e sinal mais recente.
+ */
+function mergePresenceEntry(loc: PresenceEntry, inc: PresenceEntry): PresenceEntry {
+  // base: a entrada com dono ganha; empate → a mais vista; depois a mais recente
+  const prefer =
+    loc.owner && !inc.owner ? loc :
+    inc.owner && !loc.owner ? inc :
+    (inc.seen > loc.seen ? inc : loc)
+  const other = prefer === loc ? inc : loc
+  const lastOf =
+    (loc.lastSeen || 0) >= (inc.lastSeen || 0) ? loc : inc
+
+  const places: Record<string, number> = { ...(prefer.places || {}) }
+  for (const [p, n] of Object.entries(other.places || {})) {
+    places[p] = Math.max(places[p] || 0, n)
+  }
+
+  const merged: PresenceEntry = {
+    id: prefer.id,
+    kind: prefer.kind,
+    name: prefer.name || other.name || null,
+    meta: prefer.meta || other.meta || null,
+    firstSeen: Math.min(loc.firstSeen || inc.firstSeen, inc.firstSeen || loc.firstSeen),
+    lastSeen: Math.max(loc.lastSeen || 0, inc.lastSeen || 0),
+    seen: Math.max(loc.seen || 0, inc.seen || 0),
+    bestRssi: (() => {
+      const a = loc.bestRssi, b = inc.bestRssi
+      if (a == null) return b
+      if (b == null) return a
+      return Math.max(a, b)
+    })(),
+    // sinal mais recente — conta para o radar/anel de proximidade
+    lastRssi: lastOf.lastRssi ?? prefer.lastRssi ?? other.lastRssi ?? undefined,
+    // dono: o conhecimento LOCAL tem prioridade quando os dois divergem
+    owner: loc.owner || inc.owner,
+    places,
+    pathPoints: Math.max(loc.pathPoints || 0, inc.pathPoints || 0),
+    movingSeen: Math.max(loc.movingSeen || 0, inc.movingSeen || 0),
+    lastPos: lastOf.lastPos || prefer.lastPos || other.lastPos,
+  }
+  if (merged.bestRssi == null) delete (merged as Partial<PresenceEntry>).bestRssi
+  if (merged.lastRssi == null) delete (merged as Partial<PresenceEntry>).lastRssi
+  if (!merged.owner) delete (merged as Partial<PresenceEntry>).owner
+  if (!merged.lastPos) delete (merged as Partial<PresenceEntry>).lastPos
+  return merged
+}
+
+/**
+ * Faz MERGE do histórico vindo de um ficheiro de backup com o histórico
+ * local (v3.37.0) — em vez de overwrite cego:
+ *  · entradas novas do backup → ADICIONADAS
+ *  · entradas só locais       → MANTIDAS (nunca se perdem)
+ *  · entradas nos dois        → fusão com o melhor de cada (donos, contagens,
+ *    locais, pontos de caminho)
+ * Escreve directamente no storage (passa pela retenção de 30 dias e pelo
+ * tecto de 800 dispositivos). Entradas inválidas são ignoradas.
+ */
+export function mergePresenceBackup(incomingRaw: string | null | undefined): PresenceMergeResult {
+  const res: PresenceMergeResult = { json: null, accepted: 0, kept: 0, updated: 0 }
+  try {
+    const arr = JSON.parse(incomingRaw || '')
+    if (!Array.isArray(arr)) return res
+    const incoming = (arr as unknown[]).filter(validPresenceEntry)
+    if (incoming.length === 0) return res
+    res.accepted = incoming.length
+
+    const current = readRaw()
+    const byId = new Map(current.map((e) => [e.id.toLowerCase(), e]))
+    const localOnly = new Set(current.map((e) => e.id.toLowerCase()))
+
+    for (const inc of incoming) {
+      const k = inc.id.toLowerCase()
+      const loc = byId.get(k)
+      if (!loc) {
+        byId.set(k, inc)
+        continue
+      }
+      localOnly.delete(k)
+      const merged = mergePresenceEntry(loc, inc)
+      const enriched =
+        (!!merged.owner && merged.owner !== loc.owner) ||
+        merged.seen > loc.seen ||
+        merged.pathPoints > loc.pathPoints
+      if (enriched) res.updated++
+      byId.set(k, merged)
+    }
+    res.kept = localOnly.size
+
+    const mergedList = Array.from(byId.values())
+    writeRaw(mergedList)
+    res.json = JSON.stringify(readRaw())
+    return res
+  } catch {
+    return res
+  }
+}
+
 // ── Contexto actual ──────────────────────────────────────────────────────
 
-/** Quem está à volta agora (últimos 10 min), com companheiros e donos. */
+/** Quem está à volta agora (últimos 10 min), com companheiros e donos.
+ *  (v3.37.0 — secção de backup/restauro acima; contexto vivo abaixo.) */
 export function presenceNowContext(devs?: PresenceEntry[]): PresenceContext {
   const list = devs || readRaw()
   const cutoff = Date.now() - NOW_WINDOW_MS

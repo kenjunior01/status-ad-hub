@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.36.0
+# 🛡️ StatusAds Connect v3.37.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -171,6 +171,37 @@ gateways de pagamento ou SMS.
   callback → colar no Supabase (Authentication → Providers → Google) →
   adicionar com.statusads.connect://login-callback às Redirect URLs →
   npm run cap:sync para incluir o plugin no nativo
+- **Memória de Presenças + Contexto no SOS + Widget que Resolve (v3.37.0)** —
+  a app agora LEMBRA-SE de tudo, CONTA tudo a quem socorre e RESOLVE o maior
+  risco da sentinela com um toque no ecrã inicial:
+  · **Histórico de presenças no perfil cifrado** — o backup do perfil passa a
+  mostrar o Histórico de Presenças (30 dias) com a contagem humana
+  ("24 dispositivos · 3 com dono") e o restauro faz MERGE consciente em vez
+  de overwrite cego: entradas novas do backup são adicionadas, entradas só
+  locais são mantidas (nunca se perdem) e entradas comuns são fundidas com o
+  melhor de cada (dono com prioridade local, contagens máximas sem duplicar,
+  primeira/última vista reais, sinal mais recente) — trocar de telemóvel
+  deixa de perder a memória de quem acompanha o utilizador; entradas
+  manipuladas são filtradas por validação defensiva (id/kind/timestamps)
+  · **Contexto de radar no SOS (relatório + email)** — no instante do SOS a
+  app congela o snapshot de radar (leitura síncrona do storage) e envia-o
+  para o relatório de entrega (linha "Ambiente" no Evento da nuvem — o Painel
+  Admin vê o contexto de cada disparo) e para o EMAIL dos contactos com uma
+  secção nova "AMBIENTE NO INSTANTE DO ALERTA": presenças dos últimos 15 min
+  com os DONOS atribuídos ("Maria — Bluetooth (Galaxy A54, sinal -64dBm)"),
+  local, precisão e risco — informação que as testemunhas ao vivo não têm;
+  ambos os caminhos (online e offline) alimentam o relatório
+  · **Isenção de bateria num toque no widget** — o aviso laranja
+  "Isente a app da bateria" do widget passou de texto para BOTÃO: tocar nele
+  abre o diálogo do sistema ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (o
+  mesmo da Central do Guardião, sem abrir a app); com fallback em cascata
+  (lista de optimização de bateria → abrir a app) para OEMs exóticos; noutras
+  alturas tocar na sub abre a app como o resto do widget; REC a gravar
+  continua a ter prioridade sobre o aviso; versão nativa: versionCode 49,
+  versionName 3.37.0
+  · **RECOMPILAR APK OBRIGATÓRIO** (Java alterado): npm run cap:sync +
+  Android Studio — o merge do backup, o contexto no SOS/email e o chip
+  "Ambiente" funcionam já na web/PWA
 - **Contexto Forense do REC + Presenças Exportáveis (v3.36.0)** — a prova de
   áudio deixa de responder só "o que se ouviu" e passa a responder também
   "QUEM estava à volta quando isto foi gravado":

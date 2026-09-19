@@ -19,6 +19,7 @@ import { sendSmtpEmail, buildSosEmailSubject, buildSosEmailBody, buildAudioEmail
 import { saveEvidenceRecording, resolveEvidenceSource } from '@/lib/evidence'
 import { startNativeEvidence, nativeEvidenceAvailable, nativeEvidenceStatus } from '@/lib/native-evidence'
 import { startSosReport, patchSosReport, summarizeReport } from '@/lib/sos-report'
+import { captureRadarSnapshot, radarSnapshotContextLine } from '@/lib/radar-snapshot'
 import { readBleRadarSnapshot, type BleRadarSnapshot } from '@/lib/ble-radar'
 import { readNetRadarSnapshot, netGetTrail, wifiGetRegistry, type NetRadarSnapshot } from '@/lib/net-radar'
 import { logSecurityEvent } from '@/lib/security-events'
@@ -209,6 +210,13 @@ export function useEmergency() {
         location: { lat: vars.latitude, lng: vars.longitude },
       })
 
+      // v3.37.0: contexto de radar congelado NO INSTANTE do SOS — leitura
+      // SÍNCRONA do storage (a cadeia de pânico não espera por scans). Vai
+      // para o relatório (Evento na nuvem) e para a secção AMBIENTE do email.
+      const radarSnap = captureRadarSnapshot()
+      const radarCtx = radarSnapshotContextLine(radarSnap)
+      if (radarCtx) patchSosReport({ radar: radarCtx })
+
       // 0b. Emails dos contactos (alert_enabled) → cache p/ follow-up do áudio
       const contactEmails = (contactsData || [])
         .filter((c) => c.alert_enabled !== false && (c.email || '').includes('@'))
@@ -318,6 +326,8 @@ export function useEmergency() {
               witness: snap,
               bleRadar: ble,
               netRadar: net,
+              radar: radarSnap,
+              radarSummary: radarCtx,
               recording: true,
               at: sosAtRef.current || undefined,
             })
@@ -454,6 +464,11 @@ export function useEmergency() {
             location: { lat: vars.latitude, lng: vars.longitude },
             offline: true,
           })
+          // v3.37.0: contexto de radar também no caminho offline (Evento na nuvem
+          // quando a ligação voltar — o email offline não existe, o SMS não espera)
+          const radarSnap = captureRadarSnapshot()
+          const radarCtx = radarSnapshotContextLine(radarSnap)
+          if (radarCtx) patchSosReport({ radar: radarCtx })
           if (offlinePhones.length > 0) {
             lastPhonesRef.current = offlinePhones
             const snap = await readWitnessSnapshot().catch(() => null)
