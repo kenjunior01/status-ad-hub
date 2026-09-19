@@ -108,7 +108,8 @@ async function consumeAuthRedirect(url: string): Promise<void> {
       duration: 5000,
     })
     if (!/\/dashboard/.test(window.location.pathname)) {
-      window.location.assign('/dashboard')
+      // v3.40.0 — na APK a sessão abre o Console Guardião (app-first)
+      window.location.assign(isNativeApp() ? '/dashboard/inicio' : '/dashboard')
     }
   } catch (e) {
     toast.error('Não foi possível terminar o login', {

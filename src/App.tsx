@@ -34,6 +34,7 @@ import { resumeWatchIfEnabled } from '@/hooks/useRadarWatch'
 import { isNative } from '@/lib/native'
 
 const Landing = lazy(() => import('@/pages/Landing'))
+const NativeHome = lazy(() => import('@/pages/NativeHome'))
 const Login = lazy(() => import('@/pages/Login'))
 const ActivateDevice = lazy(() => import('@/pages/ActivateDevice'))
 const DashboardLayout = lazy(() => import('@/components/layout/DashboardLayout'))
@@ -104,10 +105,13 @@ function CoercionShield({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * RootRoute (v3.39.0 — NATIVO PRIMEIRO) — a rota `/` decide pela plataforma:
+ * RootRoute (v3.39.0 — NATIVO PRIMEIRO / v3.40.0 — CONSOLE GUARDIÃO) — a rota
+ * `/` decide pela plataforma:
  *  · APK (nativo): NUNCA mostra a Landing de marketing — entra directo na
- *    acção: sessão activa → Painel; sem sessão → Login. Um app de segurança
- *    abre no que importa, não numa página de textos.
+ *    acção: sessão activa → Console Guardião (ecrã inicial app-first de
+ *    design próprio, com a Sentinela, a Camuflagem e as acções prontas);
+ *    sem sessão → Login. Um app de segurança abre no que importa, não numa
+ *    página de textos.
  *  · WEB: mantém a Landing (página de apresentação do produto).
  */
 function RootRoute() {
@@ -116,7 +120,17 @@ function RootRoute() {
     return <WithErrorBoundary context="landing"><Landing /></WithErrorBoundary>
   }
   if (loading) return <LoadingScreen />
-  return <Navigate to={user ? '/dashboard' : '/login'} replace />
+  return <Navigate to={user ? '/dashboard/inicio' : '/login'} replace />
+}
+
+/**
+ * v3.40.0 — CONSOLE GUARDIÃO: ecrã inicial exclusivo da app nativa. Na web,
+ * /dashboard/inicio devolve o Painel dourado normal (o console é da
+ * identidade Tactical da APK).
+ */
+function NativeHomeRoute() {
+  if (!isNative()) return <Navigate to="/dashboard" replace />
+  return <WithErrorBoundary context="native-home"><NativeHome /></WithErrorBoundary>
 }
 
 function AppRoutes() {
@@ -130,6 +144,7 @@ function AppRoutes() {
       <Route path="/planos" element={<WithErrorBoundary context="pricing"><Pricing /></WithErrorBoundary>} />
       <Route path="/dashboard" element={<ProtectedRoute><CoercionShield><DashboardLayout /></CoercionShield></ProtectedRoute>}>
         <Route index element={<WithErrorBoundary context="dashboard"><Dashboard /></WithErrorBoundary>} />
+        <Route path="inicio" element={<NativeHomeRoute />} />
         <Route path="devices" element={<WithErrorBoundary context="devices"><Devices /></WithErrorBoundary>} />
         <Route path="contacts" element={<WithErrorBoundary context="contacts"><EmergencyContacts /></WithErrorBoundary>} />
         <Route path="emergency-contacts" element={<Navigate to="/dashboard/contacts" replace />} />

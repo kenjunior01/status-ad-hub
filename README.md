@@ -1,4 +1,4 @@
-# 🛡️ StatusAds Connect v3.39.0
+# 🛡️ StatusAds Connect v3.40.0
 
 **App de segurança pessoal anti-rapto com SOS offline-first, camuflagem,
 radar Wi-Fi/BLE e monetização 100% manual (zero API).** Feito para
@@ -202,6 +202,32 @@ gateways de pagamento ou SMS.
   · **RECOMPILAR APK OBRIGATÓRIO** (Java alterado): npm run cap:sync +
   Android Studio — o merge do backup, o contexto no SOS/email e o chip
   "Ambiente" funcionam já na web/PWA
+- **Console Guardião — Ecrã Inicial de Design Próprio da APK (v3.40.0)** —
+  por cima do arranque app-first da v3.39, a APK ganha o SEU ecrã inicial
+  próprio (em vez de cair no Painel web): o Console Guardião, na identidade
+  Tactical verde-radar da app nativa (mono, scanline, varrimento de radar):
+  · **Raiz e pós-login** — "/" com sessão abre o Console Guardião
+  (/dashboard/inicio); o login por senha e por Google também aterram no
+  console; sem sessão abre o login — na web tudo continua igual
+  · **SENTINELA em destaque** — armar/desarmar num toque, "verificar
+  ambiente agora", risco ao vivo em medidor circular, local actual
+  (impressão digital Wi-Fi) e veredicto correlacionado do ambiente
+  · **CAMUFLAGEM pronta desde o arranque** — um toque activa o disfarce
+  (ACTIVA/INACTIVA ao vivo), atalho para escolher disfarce e gestão do
+  ícone do launcher; contagem À VOLTA / NO CAMINHO / COM DONO do
+  histórico de presenças em tempo real
+  · **Grelha de 12 acções rápidas** — SOS, Ligar 112, Sirene, Partilhar
+  GPS, Radar Wi-Fi, Radar BLE, Central de Segurança, Cofre de Evidências,
+  Viagens, Chamada Falsa, Check-in e Painel completo — tudo a um toque do
+  primeiro ecrã
+  · **Login nativo Tactical** — ecrã de app de verdade: compacto, Google
+  EM PRIMEIRO LUGAR ("MESMA CONTA DA WEB"), duress tap (5 toques no
+  escudo) mantido; modal de recuperação de senha partilhado entre as
+  variantes web e nativa
+  · **Dock e back** — o primeiro item da dock da APK é o Guardião (ícone
+  de radar); o botão back do Android trata o console como "ecrã inicial"
+  (sai da app lá, volta dentro dos restantes) e o back por defeito cai no
+  console; na web a dock e o Painel ficam exactamente como estavam
 - **Nativo Primeiro — A APK deixa de ser uma "web em app" (v3.39.0)** — a
   queixa era directa e justa: abrir a APK e encontrar uma página inicial com
   textos de marketing é coisa de site, não de app. A partir desta versão a

@@ -202,7 +202,15 @@ export default function DashboardLayout() {
   }
 
   // ── v3.21.0 — SWIPE HORIZONTAL entre abas da dock (gesto nativo) ──
-  const swipeOrder = useRef<string[]>(bottomNav.filter((i) => !i.isSOS).map((i) => i.to))
+  // ── v3.40.0 — na APK o primeiro item da dock é o CONSOLE GUARDIÃO
+  // (ecrã inicial app-first de design próprio); o Painel web continua
+  // acessível pelo tile "Painel completo" do console e pelo menu lateral
+  const dockNav = isNative()
+    ? bottomNav.map((i) => i.to === '/dashboard'
+      ? { ...i, to: '/dashboard/inicio', label: 'Guardião', icon: Radar }
+      : i)
+    : bottomNav
+  const swipeOrder = useRef<string[]>(dockNav.filter((i) => !i.isSOS).map((i) => i.to))
   const swipeStart = useRef<{ x: number; y: number } | null>(null)
 
   const onSwipeStart = (e: TouchEvent) => {
@@ -287,9 +295,11 @@ export default function DashboardLayout() {
       if (s.discreetActive) return // disfarce no ecrã — back consumido
       if (s.sheet) { setSheet(null); return }
       if (s.sidebarOpen) { setSidebarOpen(false); return }
-      if (s.pathname !== '/dashboard') {
+      // v3.40.0 — o Console Guardião também é "ecrã inicial": sai da app
+      const atHome = s.pathname === '/dashboard' || s.pathname === '/dashboard/inicio'
+      if (!atHome) {
         if (s.locationKey !== 'default') window.history.back()
-        else navigate('/dashboard', { replace: true })
+        else navigate('/dashboard/inicio', { replace: true })
         return
       }
       void CapApp.exitApp()
@@ -425,7 +435,7 @@ export default function DashboardLayout() {
       {location.pathname !== '/dashboard' && (
       <nav className="aegis-dock lg:hidden" aria-label="Navegação principal">
         <div className="aegis-dock-inner">
-          {bottomNav.map((item) => {
+          {dockNav.map((item) => {
             const IconComp = item.icon
             const active = isActive(item.to)
             if (item.isSOS) {
