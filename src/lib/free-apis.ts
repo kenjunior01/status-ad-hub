@@ -1,18 +1,18 @@
 // ============================================================
-// free-apis.ts — APIs 100% GRATUITAS e SEM chave de registo.
-// Todas funcionam de imediato, sem credenciais nem cartão:
+// free-apis.ts ? APIs 100% GRATUITAS e SEM chave de registo.
+// Todas funcionam de imediato, sem credenciais nem cart?o:
 //
-//  • OpenStreetMap Nominatim — geocodificação inversa (morada)
-//  • ipapi.co / ipwho.is / GeoJS — geolocalização por IP (HTTPS)
-//  • Open-Meteo — meteorologia actual (útil em modo viagem)
-//  • Battery Status API — nível/charge do dispositivo
-//  • Network Information API — tipo/velocidade de conexão
-//  • Wake Lock API — manter ecrã ligado (emergência/viagem)
-//  • wa.me — alertas WhatsApp por deep-link (sem API)
+//  ? OpenStreetMap Nominatim ? pesquisa de moradas e geocodifica??o inversa
+//  ? ipapi.co / ipwho.is / GeoJS ? geolocaliza??o por IP (HTTPS)
+//  ? Open-Meteo ? meteorologia actual (?til em modo viagem)
+//  ? Battery Status API ? n?vel/charge do dispositivo
+//  ? Network Information API ? tipo/velocidade de conex?o
+//  ? Wake Lock API ? manter ecr? ligado (emerg?ncia/viagem)
+//  ? wa.me ? alertas WhatsApp por deep-link (sem API)
 // ============================================================
 
-// ── 1. GEOCODIFICAÇÃO INVERSA (OpenStreetMap Nominatim) ─────
-// Grátis, sem chave. Polite policy: max 1 req/s → cache embutido.
+// ?? 1. GEOCODIFICA??O (OpenStreetMap Nominatim) ?????????????
+// Gr?tis, sem chave. Polite policy: max 1 req/s ? cache embutido.
 export interface GeoAddress {
   display: string
   road?: string
@@ -22,7 +22,37 @@ export interface GeoAddress {
   country?: string
 }
 
+export interface AddressSearchResult {
+  placeId: string
+  displayName: string
+  latitude: number
+  longitude: number
+}
+
+let nominatimRequestQueue = Promise.resolve()
+let lastNominatimRequestAt = 0
+
+async function fetchNominatim<T>(url: string, timeoutMs = 4500): Promise<T> {
+  const previousRequest = nominatimRequestQueue
+  let releaseQueue!: () => void
+  nominatimRequestQueue = new Promise<void>((resolve) => { releaseQueue = resolve })
+  await previousRequest
+
+  try {
+    const waitMs = Math.max(0, 1100 - (Date.now() - lastNominatimRequestAt))
+    if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs))
+    lastNominatimRequestAt = Date.now()
+
+    const response = await fetchWithTimeout(url, timeoutMs)
+    if (!response.ok) throw new Error(`OpenStreetMap Nominatim respondeu ${response.status}`)
+    return await response.json() as T
+  } finally {
+    releaseQueue()
+  }
+}
+
 const geoCache = new Map<string, GeoAddress | null>()
+const addressSearchCache = new Map<string, AddressSearchResult[]>()
 
 export async function reverseGeocode(
   lat: number,
@@ -32,18 +62,16 @@ export async function reverseGeocode(
   const key = `${lat.toFixed(4)},${lng.toFixed(4)}`
   if (geoCache.has(key)) return geoCache.get(key)!
   try {
-    const ctrl = new AbortController()
-    const t = setTimeout(() => ctrl.abort(), timeoutMs)
     const url =
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
       `&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=pt`
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } })
-    clearTimeout(t)
-    if (!res.ok) { geoCache.set(key, null); return null }
-    const data = await res.json()
-    const a = data?.address ?? {}
+    const data = await fetchNominatim<{
+      address?: Record<string, string>
+      display_name?: string
+    }>(url, timeoutMs)
+    const a = data.address ?? {}
     const out: GeoAddress = {
-      display: data?.display_name ?? '',
+      display: data.display_name ?? '',
       road: a.road ?? a.pedestrian ?? a.footway,
       suburb: a.suburb ?? a.neighbourhood ?? a.quarter,
       city: a.city ?? a.town ?? a.village ?? a.municipality,
@@ -58,13 +86,61 @@ export async function reverseGeocode(
   }
 }
 
+export async function searchAddress(query: string): Promise<AddressSearchResult[]> {
+  const normalizedQuery = query.trim().replace(/\s+/g, ' ')
+  if (normalizedQuery.length < 3) return []
+
+  const cacheKey = normalizedQuery.toLocaleLowerCase()
+  const cachedResults = addressSearchCache.get(cacheKey)
+  if (cachedResults) return cachedResults
+
+  const url =
+    `https://nominatim.openstreetmap.org/search?format=jsonv2` +
+    `&addressdetails=1&limit=5&countrycodes=mz&accept-language=pt` +
+    `&q=${encodeURIComponent(normalizedQuery)}`
+  const places = await fetchNominatim<Array<{
+    place_id: number
+    lat: string
+    lon: string
+    display_name: string
+  }>>(url)
+
+  const results = places.flatMap((place) => {
+    const latitude = Number(place.lat)
+    const longitude = Number(place.lon)
+    if (
+      !place.display_name ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) return []
+
+    return [{
+      placeId: String(place.place_id),
+      displayName: place.display_name,
+      latitude,
+      longitude,
+    }]
+  })
+
+  if (addressSearchCache.size >= 100) {
+    const oldestKey = addressSearchCache.keys().next().value
+    if (oldestKey) addressSearchCache.delete(oldestKey)
+  }
+  addressSearchCache.set(cacheKey, results)
+  return results
+}
+
 // Morada curta: "Av. Julius Nyerere, Maputo"
 export function shortAddress(a: GeoAddress | null | undefined): string {
   if (!a) return ''
   return [a.road, a.city].filter(Boolean).join(', ') || a.display
 }
 
-// ── 2. GEOLOCALIZAÇÃO POR IP (HTTPS, sem chave, com fallback) ──
+// ?? 2. GEOLOCALIZA??O POR IP (HTTPS, sem chave, com fallback) ??
 export interface IpInfo {
   ip: string
   city?: string
@@ -134,7 +210,7 @@ export async function getIpInfo(): Promise<IpInfo | null> {
   return null
 }
 
-// ── 3. METEOROLOGIA (Open-Meteo — grátis, sem chave) ────────
+// ?? 3. METEOROLOGIA (Open-Meteo ? gr?tis, sem chave) ????????
 export interface WeatherInfo {
   temperature: number
   windspeed: number
@@ -164,7 +240,7 @@ export async function getWeather(lat: number, lon: number): Promise<WeatherInfo 
 }
 
 export function weatherLabel(code: number): string {
-  if (code === 0) return 'Céu limpo'
+  if (code === 0) return 'C?u limpo'
   if (code <= 2) return 'Pouco nublado'
   if (code === 3) return 'Nublado'
   if (code === 45 || code === 48) return 'Nevoeiro'
@@ -174,13 +250,13 @@ export function weatherLabel(code: number): string {
   if (code >= 80 && code <= 82) return 'Aguaceiros'
   if (code === 85 || code === 86) return 'Aguaceiros com neve'
   if (code >= 95) return 'Trovoada'
-  return '—'
+  return '?'
 }
 
-// ── 4. BATTERY STATUS API (built-in, sem rede) ──────────────
+// ?? 4. BATTERY STATUS API (built-in, sem rede) ??????????????
 export interface BatteryInfo {
   supported: boolean
-  level?: number       // 0–1
+  level?: number       // 0?1
   charging?: boolean
   dischargingTime?: number // segundos
 }
@@ -201,7 +277,7 @@ export async function getBatteryInfo(): Promise<BatteryInfo> {
   }
 }
 
-// ── 5. NETWORK INFORMATION API (built-in) ───────────────────
+// ?? 5. NETWORK INFORMATION API (built-in) ???????????????????
 export interface ConnectionInfo {
   supported: boolean
   effectiveType?: string  // 'slow-2g' | '2g' | '3g' | '4g'
@@ -222,7 +298,7 @@ export function getConnectionInfo(): ConnectionInfo {
   }
 }
 
-// ── 6. WAKE LOCK API (built-in) — ecrã ligado em SOS/viagem ──
+// ?? 6. WAKE LOCK API (built-in) ? ecr? ligado em SOS/viagem ??
 let wakeLock: any = null
 
 export async function requestWakeLock(): Promise<() => void> {
@@ -230,13 +306,13 @@ export async function requestWakeLock(): Promise<() => void> {
     if ('wakeLock' in navigator) {
       wakeLock = await (navigator as any).wakeLock.request('screen')
       wakeLock.addEventListener?.('release', () => { wakeLock = null })
-      return () => { try { wakeLock?.release?.() } catch { /* já solto */ } }
+      return () => { try { wakeLock?.release?.() } catch { /* j? solto */ } }
     }
-  } catch { /* sem permissão */ }
+  } catch { /* sem permiss?o */ }
   return () => {}
 }
 
-// ── 7. LINKS ÚTEIS (sem API) ────────────────────────────────
+// ?? 7. LINKS ?TEIS (sem API) ????????????????????????????????
 export function osmLink(lat: number, lng: number): string {
   return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`
 }
@@ -245,7 +321,7 @@ export function googleMapsLink(lat: number, lng: number): string {
   return `https://www.google.com/maps?q=${lat},${lng}`
 }
 
-// WhatsApp deep-link — alerta sem qualquer API paga
+// WhatsApp deep-link ? alerta sem qualquer API paga
 export function whatsAppLink(phone: string, text: string): string {
   const digits = phone.replace(/\D/g, '')
   const intl = digits.startsWith('258') ? digits : `258${digits.replace(/^0+/, '')}`

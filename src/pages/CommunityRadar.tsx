@@ -1,7 +1,7 @@
 /**
- * CommunityRadar — Página do Radar de Segurança Comunitária.
+ * CommunityRadar ? P?gina do Radar de Seguran?a Comunit?ria.
  * 
- * Mapa com alertas anónimos de segurança, filtros por tipo,
+ * Mapa com alertas an?nimos de seguran?a, filtros por tipo,
  * publicar novo alerta, e detalhes de cada alerta.
  */
 
@@ -50,7 +50,7 @@ const typeConfig: Record<CommunityAlert['type'], { label: string; icon: typeof A
   danger_zone: { label: 'Zona de Perigo', icon: ShieldX, color: 'text-red-400', bgColor: 'bg-red-500/10' },
   suspicious_activity: { label: 'Actividade Suspeita', icon: Eye, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
   verified_incident: { label: 'Incidente Verificado', icon: AlertTriangle, color: 'text-red-500', bgColor: 'bg-red-500/10' },
-  safe_route_tip: { label: 'Dica de Rota Segura', icon: ShieldCheck, color: 'text-amber-300', bgColor: 'bg-amber-400/10' },
+  safe_route_tip: { label: 'Dica de percurso comunit?ria', icon: ShieldCheck, color: 'text-amber-300', bgColor: 'bg-amber-400/10' },
 }
 
 export default function CommunityRadar() {
@@ -71,7 +71,7 @@ export default function CommunityRadar() {
     { value: 'danger_zone', label: 'Zona Perigo' },
     { value: 'suspicious_activity', label: 'Suspeita' },
     { value: 'verified_incident', label: 'Verificado' },
-    { value: 'safe_route_tip', label: 'Rota Segura' },
+    { value: 'safe_route_tip', label: 'Dica de percurso' },
   ]
 
   const handlePost = async () => {
@@ -106,9 +106,9 @@ export default function CommunityRadar() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Radar className="w-6 h-6 text-teal-400" />
-            Radar Comunitário
+            Radar Comunit?rio
           </h1>
-          <p className="text-white/40 text-sm mt-1">Alertas de segurança anónimos na sua área ({radiusKm}km)</p>
+          <p className="text-white/40 text-sm mt-1">Alertas de seguran?a an?nimos na sua ?rea ({radiusKm}km)</p>
         </div>
         <Button
           onClick={() => setShowPostForm(true)}
@@ -173,7 +173,7 @@ export default function CommunityRadar() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
           <div className="text-2xl font-bold text-white">{alerts.length}</div>
-          <div className="text-white/40 text-xs mt-0.5">Alertas na área</div>
+          <div className="text-white/40 text-xs mt-0.5">Alertas na ?rea</div>
         </div>
         <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 text-center">
           <div className="text-2xl font-bold text-red-400">{dangerZoneCount}</div>
@@ -189,8 +189,8 @@ export default function CommunityRadar() {
       {alerts.length === 0 ? (
         <div className="text-center py-12 text-white/20">
           <Radar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <div>Nenhum alerta na sua área</div>
-          <div className="text-xs mt-1">A sua área está limpa de relatórios recentes</div>
+          <div>Nenhum alerta na sua ?rea</div>
+          <div className="text-xs mt-1">A sua ?rea est? limpa de relat?rios recentes</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -269,21 +269,21 @@ export default function CommunityRadar() {
                 <Input
                   value={postTitle}
                   onChange={e => setPostTitle(e.target.value)}
-                  placeholder="Título do alerta..."
+                  placeholder="T?tulo do alerta..."
                   className="bg-white/5 border-white/10 text-white"
                 />
 
                 <textarea
                   value={postDesc}
                   onChange={e => setPostDesc(e.target.value)}
-                  placeholder="Descrição (opcional)..."
+                  placeholder="Descri??o (opcional)..."
                   rows={3}
                   className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-sm resize-none focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
 
                 <div className="flex items-center gap-2 text-white/30 text-xs">
                   <Eye className="w-3 h-3" />
-                  O seu alerta será 100% anónimo
+                  O seu alerta ser? 100% an?nimo
                 </div>
 
                 <Button
@@ -292,7 +292,7 @@ export default function CommunityRadar() {
                   className="w-full bg-teal-500 hover:bg-teal-600 text-white"
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Enviar Alerta Anónimo
+                  Enviar Alerta An?nimo
                 </Button>
               </div>
             </motion.div>

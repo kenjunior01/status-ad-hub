@@ -20,7 +20,7 @@ export type DashboardNavSection = {
   items: DashboardNavItem[]
 }
 
-/* ── Sidebar Navigation (menu completo — mobile overlay e futura sidebar desktop) ── */
+/* ?? Sidebar Navigation (menu completo ? mobile overlay e futura sidebar desktop) ?? */
 export const sidebarSections: DashboardNavSection[] = [
   {
     title: 'Principal',
@@ -50,7 +50,7 @@ export const sidebarSections: DashboardNavSection[] = [
       { to: '/dashboard/radar', label: 'Radar Comunitario', icon: Radar },
       { to: '/dashboard/ble', label: 'Radar Bluetooth', icon: Bluetooth },
       { to: '/dashboard/net-radar', label: 'Radar Wi-Fi e Redes', icon: Wifi },
-      { to: '/dashboard/rota', label: 'Rota Segura', icon: Navigation },
+      { to: '/dashboard/rota', label: 'An?lise de percurso', icon: Navigation },
       { to: '/dashboard/viagens', label: 'Rastreamento de Viagem', icon: Map },
       { to: '/dashboard/dicas', label: 'Dicas de Seguranca', icon: Lightbulb },
     ],
@@ -76,7 +76,7 @@ export const sidebarSections: DashboardNavSection[] = [
   },
 ]
 
-/* ── Bottom nav: 5 items for quick access on mobile ── */
+/* ?? Bottom nav: 5 items for quick access on mobile ?? */
 export const bottomNav: DashboardNavItem[] = [
   { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
   { to: '/dashboard/devices', label: 'Dispositivos', icon: Bluetooth },

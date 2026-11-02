@@ -27,20 +27,20 @@
     --ring: 152 100% 48%;
     --radius: 0.75rem;
 
-    /* ══ MARCA (Calorist-style temas seleccionáveis) ══ */
-    /* gold por defeito — identidade StatusAds */
+    /* ?? MARCA (Calorist-style temas seleccion?veis) ?? */
+    /* gold por defeito ? identidade StatusAds */
     --brand-rgb: 212 175 55;
     --brand-dark-rgb: 168 138 40;
   }
 
-  /* ════════════════════════════════════════════════════════════
-     TEMA DARK — base neutra estilo Calorist (dark mono/dark green)
-     Superfícies neutras elevadas, sem tinte castanho.
-     ════════════════════════════════════════════════════════════ */
+  /* ????????????????????????????????????????????????????????????
+     TEMA DARK ? base neutra estilo Calorist (dark mono/dark green)
+     Superf?cies neutras elevadas, sem tinte castanho.
+     ???????????????????????????????????????????????????????????? */
   .dark {
-    --background: 240 5% 4%;      /* #09090B — quase-preto neutro */
+    --background: 240 5% 4%;      /* #09090B ? quase-preto neutro */
     --foreground: 0 0% 98%;
-    --card: 240 4% 8%;            /* #121214 — card elevado */
+    --card: 240 4% 8%;            /* #121214 ? card elevado */
     --card-foreground: 0 0% 98%;
     --popover: 240 4% 7%;
     --popover-foreground: 0 0% 98%;
@@ -54,7 +54,7 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 4% 15%;         /* #242428 — borda subtil */
+    --border: 240 4% 15%;         /* #242428 ? borda subtil */
     --input: 240 4% 15%;
     --ring: 43 65% 52%;
     --radius: 1rem;               /* cantos arredondados Calorist */
@@ -63,7 +63,7 @@
     --brand-dark-rgb: 168 138 40;
   }
 
-  /* ── TEMA: Mint (verde esmeralda — default visual do Calorist) ── */
+  /* ?? TEMA: Mint (verde esmeralda ? default visual do Calorist) ?? */
   .dark[data-theme="mint"] {
     --primary: 160 84% 39%;
     --ring: 160 84% 39%;
@@ -71,7 +71,7 @@
     --brand-dark-rgb: 5 150 105;
   }
 
-  /* ── TEMA: Lavanda (roxo vivo — 2.º preset Calorist) ── */
+  /* ?? TEMA: Lavanda (roxo vivo ? 2.? preset Calorist) ?? */
   .dark[data-theme="lavanda"] {
     --primary: 258 90% 66%;
     --ring: 258 90% 66%;
@@ -79,7 +79,7 @@
     --brand-dark-rgb: 124 58 237;
   }
 
-  /* ── TEMA: Mono (acento branco — 4.º preset Calorist) ── */
+  /* ?? TEMA: Mono (acento branco ? 4.? preset Calorist) ?? */
   .dark[data-theme="mono"] {
     --primary: 0 0% 96%;
     --ring: 0 0% 96%;
@@ -87,7 +87,7 @@
     --brand-dark-rgb: 212 212 216;
   }
 
-  /* ── TEMA: Coral (vermelho/rosa vivo — energia Calorist) ── */
+  /* ?? TEMA: Coral (vermelho/rosa vivo ? energia Calorist) ?? */
   .dark[data-theme="coral"] {
     --primary: 347 77% 60%;
     --ring: 347 77% 60%;
@@ -95,7 +95,7 @@
     --brand-dark-rgb: 225 29 72;
   }
 
-  /* ── TEMA: Gold (dourado — identidade StatusAds, default) ── */
+  /* ?? TEMA: Gold (dourado ? identidade StatusAds, default) ?? */
   .dark[data-theme="gold"] {
     --primary: 43 65% 52%;
     --ring: 43 65% 52%;
@@ -107,9 +107,9 @@
     @apply border-border;
   }
 
-  /* ── MOBILE POLISH GLOBAL ──────────────────────────────
+  /* ?? MOBILE POLISH GLOBAL ??????????????????????????????
      Sem flash cinzento no toque (Android WebView/Chrome) e
-     sem atraso de 300ms em toques rápidos. */
+     sem atraso de 300ms em toques r?pidos. */
   * {
     -webkit-tap-highlight-color: transparent;
   }
@@ -121,7 +121,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* iOS: impede zoom automático em inputs com focus */
+    /* iOS: impede zoom autom?tico em inputs com focus */
     -webkit-text-size-adjust: 100%;
   }
 
@@ -134,6 +134,11 @@
   ::selection {
     background: rgb(var(--brand-rgb) / 0.3);
     color: white;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand-rgb) / 0.85);
+    outline-offset: 3px;
   }
 }
 
@@ -173,9 +178,9 @@
   }
 }
 
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 /*  ADVANCED ANIMATIONS                                             */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 
 /* Marquee */
 @keyframes marquee {
@@ -354,7 +359,7 @@
   animation: cursor-blink 1s step-end infinite;
 }
 
-/* ── SOS PULSE — anel de emergência (bottom nav mobile) ── */
+/* ?? SOS PULSE ? anel de emerg?ncia (bottom nav mobile) ?? */
 @keyframes sos-ring {
   0% { transform: scale(1); opacity: 0.55; }
   100% { transform: scale(1.55); opacity: 0; }
@@ -374,13 +379,13 @@
   animation: gold-drop 2.4s ease-in-out infinite;
 }
 
-/* Esconde scrollbar em carrosséis horizontais (faixa de estado mobile, tabs) */
+/* Esconde scrollbar em carross?is horizontais (faixa de estado mobile, tabs) */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 /*  UTILITY CLASSES                                                 */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 
 /* Edge mask for marquee fade */
 .mask-edges {
@@ -463,9 +468,9 @@ select:focus {
 .stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
 .stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
 
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 /*  LEAFLET DARK THEME                                              */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 
 .dark .leaflet-tile-pane {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
@@ -475,9 +480,9 @@ select:focus {
   background-color: hsl(224 71% 4%);
 }
 
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 /*  CUSTOM SCROLLBAR                                                */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -501,12 +506,12 @@ select:focus {
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  TEMA TÁTICO HUD — design EXCLUSIVO da versão APK (v3.16.0)     */
-/*  Estética militar/sonar: verde-radar + ciano sobre carvão,      */
+/* ?????????????????????????????????????????????????????????????? */
+/*  TEMA T?TICO HUD ? design EXCLUSIVO da vers?o APK (v3.16.0)     */
+/*  Est?tica militar/sonar: verde-radar + ciano sobre carv?o,      */
 /*  tipografia mono, brackets de canto, varrimento de radar.       */
 /*  Aplicado APENAS quando a app corre nativa (Capacitor Android). */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
 
 .tactical {
   --tac-bg: #070c0a;
@@ -586,7 +591,7 @@ select:focus {
   to { transform: rotate(360deg); }
 }
 
-/* anéis de ping do radar */
+/* an?is de ping do radar */
 .tac-ping {
   position: absolute;
   inset: 0;
@@ -651,7 +656,7 @@ select:focus {
   50% { opacity: 0.25; }
 }
 
-/* botão tático */
+/* bot?o t?tico */
 .tac-btn {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px;
@@ -677,7 +682,7 @@ select:focus {
   clip-path: none;
 }
 
-/* linha de rede tática */
+/* linha de rede t?tica */
 .tac-row {
   display: flex;
   align-items: center;
@@ -689,7 +694,7 @@ select:focus {
 
 .tac-row:hover { background: rgba(52, 211, 153, 0.04); }
 
-/* badge de segurança tático */
+/* badge de seguran?a t?tico */
 .tac-badge {
   font-size: 8.5px;
   font-weight: 700;
@@ -718,11 +723,11 @@ select:focus {
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.4s ease;
 }
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  v3.19.0 — AEGIS · COPILOTO IA + APK NATIVA PREMIUM            */
-/* ══════════════════════════════════════════════════════════════ */
+/* ?????????????????????????????????????????????????????????????? */
+/*  v3.19.0 ? AEGIS ? COPILOTO IA + APK NATIVA PREMIUM            */
+/* ?????????????????????????????????????????????????????????????? */
 
-/* ── Consola de chat tática (APK exclusivo) ─────────────────── */
+/* ?? Consola de chat t?tica (APK exclusivo) ??????????????????? */
 
 .tac-chat-log {
   scrollbar-width: thin;
@@ -731,7 +736,7 @@ select:focus {
 .tac-chat-log::-webkit-scrollbar { width: 4px; }
 .tac-chat-log::-webkit-scrollbar-thumb { background: rgba(52, 211, 153, 0.25); border-radius: 2px; }
 
-/* bolha da IA — consola */
+/* bolha da IA ? consola */
 .tac-msg-ai {
   background: rgba(52, 211, 153, 0.06);
   border: 1px solid rgba(52, 211, 153, 0.2);
@@ -740,7 +745,7 @@ select:focus {
   white-space: pre-wrap;
 }
 
-/* bolha do utilizador — consola */
+/* bolha do utilizador ? consola */
 .tac-msg-user {
   background: rgba(34, 211, 238, 0.07);
   border: 1px solid rgba(34, 211, 238, 0.25);
@@ -750,13 +755,13 @@ select:focus {
 
 /* cursor de escrita */
 .tac-caret::after {
-  content: '▋';
+  content: '?';
   margin-left: 2px;
   color: var(--tac-green);
   animation: tac-blink 0.8s steps(1) infinite;
 }
 
-/* comando rápido tático */
+/* comando r?pido t?tico */
 .tac-cmd {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 9.5px;
@@ -785,7 +790,7 @@ select:focus {
 .tac-input::placeholder { color: rgba(52, 211, 153, 0.3); letter-spacing: 0.1em; }
 .tac-input:focus { outline: none; border-color: rgba(52, 211, 153, 0.45); }
 
-/* ── Chat do copiloto web (dourado) ─────────────────────────── */
+/* ?? Chat do copiloto web (dourado) ??????????????????????????? */
 
 .aegis-chat-log {
   scrollbar-width: thin;
@@ -827,7 +832,7 @@ select:focus {
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ── Dock flutuante nativo (APK + mobile web) ────────────────── */
+/* ?? Dock flutuante nativo (APK + mobile web) ?????????????????? */
 
 .aegis-dock {
   position: fixed;
@@ -868,8 +873,8 @@ select:focus {
 }
 .aegis-dock-item:active { background: rgba(255, 255, 255, 0.06); }
 
-/* pílula activa do dock — centrada sem transform (o framer-motion anima
-   a posição com layoutId e precisa de controlar o transform) */
+/* p?lula activa do dock ? centrada sem transform (o framer-motion anima
+   a posi??o com layoutId e precisa de controlar o transform) */
 .aegis-dock-pill {
   position: absolute;
   top: 2px;
@@ -881,7 +886,7 @@ select:focus {
   box-shadow: 0 0 12px rgba(212, 175, 55, 0.7);
 }
 
-/* botão SOS central elevado */
+/* bot?o SOS central elevado */
 .aegis-dock-sos {
   position: relative;
   display: flex;
@@ -908,7 +913,7 @@ select:focus {
 }
 .aegis-dock-sos-btn:active { transform: scale(0.92); }
 
-/* ── Splash nativa animada (apenas APK) ──────────────────────── */
+/* ?? Splash nativa animada (apenas APK) ???????????????????????? */
 
 .aegis-splash {
   position: fixed;
@@ -976,13 +981,13 @@ select:focus {
   to { width: 100%; }
 }
 
-/* ── Transição de ecrã nativa ────────────────────────────────── */
+/* ?? Transi??o de ecr? nativa ?????????????????????????????????? */
 
 .screen-enter {
   animation: screen-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* v3.21.0 — transição direcional: avançar entra da direita,
+/* v3.21.0 ? transi??o direcional: avan?ar entra da direita,
    recuar entra da esquerda (push/pop estilo app nativa) */
 .screen-fwd {
   animation: screen-fwd 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1004,7 +1009,7 @@ select:focus {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Pull-to-refresh (v3.20.0) ───────────────────────────────── */
+/* ?? Pull-to-refresh (v3.20.0) ????????????????????????????????? */
 
 .ptr-ring {
   display: flex;
@@ -1035,7 +1040,7 @@ select:focus {
   50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.55); }
 }
 
-/* ── Skeleton de radar (v3.20.0) ─────────────────────────────── */
+/* ?? Skeleton de radar (v3.20.0) ??????????????????????????????? */
 
 .skel-wrap { padding: 4px 0; }
 .skel-row {
@@ -1107,14 +1112,14 @@ select:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Press tátil estilo Material nos itens da dock (v3.20.0) ─── */
+/* ?? Press t?til estilo Material nos itens da dock (v3.20.0) ??? */
 
 .aegis-dock-item {
   transition: background 0.18s ease, transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .aegis-dock-item:active { transform: scale(0.9); }
 
-/* ── Bottom-sheet de ações rápidas da dock (v3.20.0) ─────────── */
+/* ?? Bottom-sheet de a??es r?pidas da dock (v3.20.0) ??????????? */
 
 .aegis-sheet-backdrop {
   position: fixed;
@@ -1159,8 +1164,21 @@ select:focus {
 }
 .aegis-sheet-row + .aegis-sheet-row { margin-top: 2px; }
 
-/* respeita preferência por menos movimento */
+/* respeita prefer?ncia por menos movimento */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
   .screen-enter,
   .screen-fwd,
   .screen-bwd,
@@ -1176,7 +1194,7 @@ select:focus {
   }
 }
 
-/* ── Ink ripple táctil (v3.22.0) — onda estilo Material no ponto de toque ── */
+/* ?? Ink ripple t?ctil (v3.22.0) ? onda estilo Material no ponto de toque ?? */
 
 .aegis-ripple-ink {
   position: absolute;
@@ -1217,11 +1235,11 @@ select:focus {
 }
 
 /* ============================================================
-   AEGIS EXPRESSIVE (v3.34.0) — linguagem de design de nova
-   geração para os módulos de radar/posição/companhias.
-   Auroras tonais suaves, vidro fosco com grão, sweep de radar
-   em conic-gradient, física de mola nos toques e entrada
-   escalonada — calma por defeito, vida só onde importa.
+   AEGIS EXPRESSIVE (v3.34.0) ? linguagem de design de nova
+   gera??o para os m?dulos de radar/posi??o/companhias.
+   Auroras tonais suaves, vidro fosco com gr?o, sweep de radar
+   em conic-gradient, f?sica de mola nos toques e entrada
+   escalonada ? calma por defeito, vida s? onde importa.
    ============================================================ */
 :root {
   --ax-lavender: #b8a9f5;
@@ -1232,7 +1250,7 @@ select:focus {
   --ax-blush: #e8b4b8;
 }
 
-/* superfície de aurora: duas massas tonais a derivar (só transform → GPU) */
+/* superf?cie de aurora: duas massas tonais a derivar (s? transform ? GPU) */
 .ax-aurora {
   position: relative;
   isolation: isolate;
@@ -1272,7 +1290,7 @@ select:focus {
   50% { transform: translate3d(-5%, -6%, 0) scale(0.94); }
 }
 
-/* grão de filme (data-URI, ~0 custo) — textura orgânica sobre a aurora */
+/* gr?o de filme (data-URI, ~0 custo) ? textura org?nica sobre a aurora */
 .ax-grain {
   position: absolute;
   inset: 0;
@@ -1283,7 +1301,7 @@ select:focus {
   background-size: 160px 160px;
 }
 
-/* vidro fosco tonal — superfície premium dos heros */
+/* vidro fosco tonal ? superf?cie premium dos heros */
 .ax-glass {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015) 60%);
   backdrop-filter: blur(14px) saturate(1.15);
@@ -1294,7 +1312,7 @@ select:focus {
     0 22px 44px -28px rgba(0, 0, 0, 0.65);
 }
 
-/* sweep de radar — cunha luminosa a rodar (conic-gradient, 0 JS) */
+/* sweep de radar ? cunha luminosa a rodar (conic-gradient, 0 JS) */
 .ax-sweep {
   position: absolute;
   inset: 0;
@@ -1334,7 +1352,7 @@ select:focus {
   70%, 100% { transform: scale(2.1); opacity: 0; }
 }
 
-/* o "você" no centro do radar */
+/* o "voc?" no centro do radar */
 .ax-center {
   position: absolute;
   left: 50%;
@@ -1350,7 +1368,7 @@ select:focus {
   z-index: 1;
 }
 
-/* entrada escalonada — listas que nascem em cascata */
+/* entrada escalonada ? listas que nascem em cascata */
 .ax-rise {
   opacity: 0;
   animation: ax-rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -1361,14 +1379,14 @@ select:focus {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* física de mola nos toques (overshoot suave ao soltar) */
+/* f?sica de mola nos toques (overshoot suave ao soltar) */
 .ax-press {
   transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
   -webkit-tap-highlight-color: transparent;
 }
 .ax-press:active { transform: scale(0.96); }
 
-/* pílula expressiva */
+/* p?lula expressiva */
 .ax-chip {
   display: inline-flex;
   align-items: center;
@@ -1382,7 +1400,7 @@ select:focus {
   white-space: nowrap;
 }
 
-/* número-herói fluido (escala com o ecrã, nunca rebenta) */
+/* n?mero-her?i fluido (escala com o ecr?, nunca rebenta) */
 .ax-hero-num {
   font-size: clamp(22px, 6.2vw, 30px);
   font-weight: 800;

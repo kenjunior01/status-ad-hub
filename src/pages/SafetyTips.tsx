@@ -1,9 +1,9 @@
 /**
- * SafetyTips — Centro de dicas de segurança pessoal.
+ * SafetyTips ? Centro de dicas de seguran?a pessoal.
  *
- * "Dica do dia" em destaque (rotação diária automática) + exploração
- * por 9 categorias com 45+ dicas práticas localizadas para Moçambique.
- * Acesso directo às funcionalidades do app citadas nas dicas.
+ * "Dica do dia" em destaque (rota??o di?ria autom?tica) + explora??o
+ * por 9 categorias com 45+ dicas pr?ticas localizadas para Mo?ambique.
+ * Acesso directo ?s funcionalidades do app citadas nas dicas.
  */
 
 import { useState, useMemo } from 'react'
@@ -19,15 +19,15 @@ import {
 import { SpotlightCard } from '@/components/effects'
 
 const TIP_ACTION_MAP: Record<string, { label: string; to: string }> = {
-  'app-1': { label: 'Abrir Contactos de Emergência', to: '/dashboard/contacts' },
+  'app-1': { label: 'Abrir Contactos de Emerg?ncia', to: '/dashboard/contacts' },
   'app-2': { label: 'Testar SOS por Voz', to: '/dashboard/accoes' },
   'app-3': { label: 'Abrir Chamada Falsa', to: '/dashboard/chamada-falsa' },
   'app-4': { label: 'Activar Dead Man\'s Switch', to: '/dashboard/accoes' },
   'app-5': { label: 'Ver formas de instalar', to: '/instalar' },
-  'app-6': { label: 'Abrir Cofre de Evidências', to: '/dashboard/evidencias' },
-  'fam-4': { label: 'Preencher Ficha Médica', to: '/dashboard/ficha-medica' },
+  'app-6': { label: 'Abrir Cofre de Evid?ncias', to: '/dashboard/evidencias' },
+  'fam-4': { label: 'Preencher Ficha M?dica', to: '/dashboard/ficha-medica' },
   'viag-1': { label: 'Activar Rastreamento de Viagem', to: '/dashboard/viagens' },
-  'rua-3': { label: 'Calcular Rota Segura', to: '/dashboard/rota' },
+  'rua-3': { label: 'Ver alertas no percurso', to: '/dashboard/rota' },
   'rua-6': { label: 'Enviar Alerta por WhatsApp', to: '/dashboard/accoes' },
 }
 
@@ -57,10 +57,10 @@ export default function SafetyTips() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <Lightbulb className="w-6 h-6 text-brand" />
-          Dicas de Segurança
+          Dicas de Seguran?a
         </h1>
         <p className="text-white/40 text-sm mt-1">
-          {SAFETY_TIPS.length} dicas práticas para viveres com mais segurança — em casa, na rua e online
+          {SAFETY_TIPS.length} dicas pr?ticas para viveres com mais seguran?a ? em casa, na rua e online
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default function SafetyTips() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Procurar dica (ex: táxi, WhatsApp, crianças…)"
+          placeholder="Procurar dica (ex: t?xi, WhatsApp, crian?as?)"
           className="w-full h-12 pl-10 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-brand/40"
         />
       </div>
@@ -207,14 +207,14 @@ export default function SafetyTips() {
         </div>
       )}
 
-      {/* Rodapé de contexto */}
+      {/* Rodap? de contexto */}
       <div className="flex items-start gap-2.5 px-1 text-xs text-white/30 leading-relaxed">
         <Lightbulb className="h-4 w-4 shrink-0 mt-0.5 text-brand/50" />
         <p>
-          As dicas marcadas com <Star className="h-3 w-3 inline text-brand fill-brand" /> são as
-          essenciais que recomendamos partilhar com toda a família. A dica em destaque muda todos os dias —
-          volta amanhã para aprenderes algo novo. Conteúdo educativo de prevenção: não substitui orientação
-          das autoridades em situações reais.
+          As dicas marcadas com <Star className="h-3 w-3 inline text-brand fill-brand" /> s?o as
+          essenciais que recomendamos partilhar com toda a fam?lia. A dica em destaque muda todos os dias ?
+          volta amanh? para aprenderes algo novo. Conte?do educativo de preven??o: n?o substitui orienta??o
+          das autoridades em situa??es reais.
         </p>
       </div>
     </div>

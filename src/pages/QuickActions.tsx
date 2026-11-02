@@ -1,19 +1,19 @@
 /**
- * QuickActions — Painel de Acções Rápidas de Segurança.
+ * QuickActions ? Painel de Ac??es R?pidas de Seguran?a.
  * 
- * Acesso instantâneo a TODAS as funcionalidades de segurança:
- * - SOS de emergência
- * - Modo Pânico (bloqueio + gravação)
+ * Acesso instant?neo a TODAS as funcionalidades de seguran?a:
+ * - SOS de emerg?ncia
+ * - Modo P?nico (bloqueio + grava??o)
  * - Modo Discreto (camuflagem)
  * - SOS por Voz
  * - Dead Man's Switch
- * - Detecção de Ameaças
- * - Radar Comunitário
- * - Rota Segura
- * - Óculos Inteligentes
- * - Check-in Rápido
+ * - Detec??o de Amea?as
+ * - Radar Comunit?rio
+ * - An?lise de percurso
+ * - ?culos Inteligentes
+ * - Check-in R?pido
  * 
- * Tudo num único ecrã com acesso imediato.
+ * Tudo num ?nico ecr? com acesso imediato.
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -86,7 +86,7 @@ export default function QuickActions() {
   const [showPanicConfirm, setShowPanicConfirm] = useState(false)
   const tipCount = SAFETY_TIPS.length
 
-  // ── Gravação Rápida (evidências) ──
+  // ?? Grava??o R?pida (evid?ncias) ??
   const recorder = useAudioRecorder(300)
   const [recSeconds, setRecSeconds] = useState(0)
   const [recSaving, setRecSaving] = useState(false)
@@ -102,23 +102,23 @@ export default function QuickActions() {
   const handleQuickRecord = useCallback(async () => {
     if (recorder.isRecording) {
       recorder.stopRecording()
-      setPendingSave(true) // o blob chega async → guardamos no effect abaixo
+      setPendingSave(true) // o blob chega async ? guardamos no effect abaixo
       return
     }
     try {
       const ok = await recorder.startRecording()
       if (!ok) {
-        toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+        toast.error('N?o foi poss?vel aceder ao microfone ? verifique as permiss?es')
         return
       }
       void haptic('light')
-      toast.info('A gravar — toque de novo para parar e guardar', { duration: 3500 })
+      toast.info('A gravar ? toque de novo para parar e guardar', { duration: 3500 })
     } catch {
-      toast.error('Não foi possível aceder ao microfone — verifique as permissões')
+      toast.error('N?o foi poss?vel aceder ao microfone ? verifique as permiss?es')
     }
   }, [recorder])
 
-  // Guarda no cofre quando o blob da gravação parada fica disponível
+  // Guarda no cofre quando o blob da grava??o parada fica dispon?vel
   useEffect(() => {
     if (!pendingSave || !recorder.blob) return
     let cancelled = false
@@ -130,16 +130,16 @@ export default function QuickActions() {
         if (b64 && !cancelled) {
           const res = await saveEvidenceRecording(b64, recSeconds, 'audio/webm')
           if (res.saved) {
-            toast.success(`Gravação guardada no Cofre (${recSeconds}s)`, {
+            toast.success(`Grava??o guardada no Cofre (${recSeconds}s)`, {
               description: res.location === 'local' ? 'Guardada neste dispositivo' : 'Sincronizada na sua conta',
               action: { label: 'Abrir Cofre', onClick: () => navigate('/dashboard/evidencias') },
             })
           } else {
-            toast.error(res.error ?? 'Não foi possível guardar a gravação')
+            toast.error(res.error ?? 'N?o foi poss?vel guardar a grava??o')
           }
         }
       } catch {
-        if (!cancelled) toast.error('Erro ao guardar a gravação')
+        if (!cancelled) toast.error('Erro ao guardar a grava??o')
       } finally {
         if (!cancelled) {
           setRecSaving(false)
@@ -174,7 +174,7 @@ export default function QuickActions() {
     // CRITICAL ACTIONS
     {
       id: 'emergency-sos',
-      title: 'SOS de Emergência',
+      title: 'SOS de Emerg?ncia',
       description: 'Alertar todos os contactos + SMS + GPS',
       icon: ShieldAlert,
       color: 'text-red-400',
@@ -182,12 +182,12 @@ export default function QuickActions() {
       borderColor: 'border-red-500/20',
       action: () => setShowEmergencyConfirm(true),
       danger: true,
-      badge: 'CRÍTICO',
+      badge: 'CR?TICO',
     },
     {
       id: 'panic-mode',
-      title: 'Modo Pânico',
-      description: 'Bloqueio + gravação áudio + fotos + SOS',
+      title: 'Modo P?nico',
+      description: 'Bloqueio + grava??o ?udio + fotos + SOS',
       icon: Skull,
       color: 'text-red-500',
       bgColor: 'bg-red-500/10',
@@ -218,8 +218,8 @@ export default function QuickActions() {
       description: voiceSupported
         ? (voiceListening
           ? (isConfirmationPending ? 'Diga "confirmar" para activar' : 'A ouvir... diga "socorro" ou "ajuda"')
-          : 'Activar detecção de voz mãos-livres')
-        : 'Não suportado neste navegador',
+          : 'Activar detec??o de voz m?os-livres')
+        : 'N?o suportado neste navegador',
       icon: Mic,
       color: voiceListening ? 'text-amber-300' : 'text-blue-300',
       bgColor: voiceListening ? 'bg-amber-400/10' : 'bg-blue-500/10',
@@ -227,14 +227,14 @@ export default function QuickActions() {
       action: voiceListening ? stopListening : startListening,
       isActive: voiceListening,
       activeLabel: voiceListening ? 'A OUVIR' : undefined,
-      badge: voiceSupported ? 'MÃOS-LIVRES' : 'N/A',
+      badge: voiceSupported ? 'M?OS-LIVRES' : 'N/A',
     },
     {
       id: 'threat-detection',
-      title: 'Detecção de Ameaças',
+      title: 'Detec??o de Amea?as',
       description: threatMonitoring
-        ? `Score: ${assessment.score}/100 — ${assessment.level}`
-        : 'Monitorizar sensores para padrões anómalos',
+        ? `Score: ${assessment.score}/100 ? ${assessment.level}`
+        : 'Monitorizar sensores para padr?es an?malos',
       icon: Activity,
       color: assessment.level === 'critical' ? 'text-red-400' : assessment.level === 'high' ? 'text-amber-400' : assessment.level === 'elevated' ? 'text-yellow-400' : 'text-cyan-300',
       bgColor: assessment.level === 'critical' ? 'bg-red-500/10' : 'bg-cyan-500/10',
@@ -250,11 +250,11 @@ export default function QuickActions() {
       title: 'Dead Man\'s Switch',
       description: dmsEnabled
         ? (dmsLevel === 'idle'
-          ? `Timer: ${formatDMSTimer(dmsRemaining)} — activo`
+          ? `Timer: ${formatDMSTimer(dmsRemaining)} ? activo`
           : dmsLevel === 'warning'
             ? `AVISO! Responda em ${formatDMSTimer(dmsRemaining)}`
-            : `ESCALONADO! Nível: ${dmsLevel}`)
-        : 'Emergência automática se não responder',
+            : `ESCALONADO! N?vel: ${dmsLevel}`)
+        : 'Emerg?ncia autom?tica se n?o responder',
       icon: Timer,
       color: dmsLevel === 'emergency' ? 'text-red-400' : dmsLevel === 'warning' ? 'text-amber-400' : dmsEnabled ? 'text-orange-300' : 'text-orange-200',
       bgColor: dmsEnabled ? 'bg-orange-500/10' : 'bg-orange-500/5',
@@ -262,16 +262,16 @@ export default function QuickActions() {
       action: dmsEnabled ? dmsDisable : () => dmsEnable(30),
       isActive: dmsEnabled,
       activeLabel: dmsEnabled ? (dmsLevel === 'idle' ? 'ACTIVO' : dmsLevel.toUpperCase()) : undefined,
-      badge: 'AUTOMÁTICO',
+      badge: 'AUTOM?TICO',
     },
 
     // INTELLIGENCE
     {
       id: 'community-radar',
-      title: 'Radar Comunitário',
+      title: 'Radar Comunit?rio',
       description: dangerZoneCount > 0
-        ? `${dangerZoneCount} alerta(s) de segurança na área`
-        : 'Ver alertas de segurança de outros utilizadores',
+        ? `${dangerZoneCount} alerta(s) de seguran?a na ?rea`
+        : 'Ver alertas de seguran?a de outros utilizadores',
       icon: Radar,
       color: dangerZoneCount > 0 ? 'text-amber-400' : 'text-teal-300',
       bgColor: 'bg-teal-500/10',
@@ -281,8 +281,8 @@ export default function QuickActions() {
     },
     {
       id: 'safe-route',
-      title: 'Rota Segura',
-      description: 'Calcular rota mais segura até ao destino',
+      title: 'An?lise de percurso',
+      description: 'Consultar alertas comunit?rios numa linha directa at? ao destino',
       icon: Navigation,
       color: 'text-amber-200',
       bgColor: 'bg-amber-400/10',
@@ -293,10 +293,10 @@ export default function QuickActions() {
     // WEARABLE
     {
       id: 'smart-glasses',
-      title: 'Óculos Inteligentes',
+      title: '?culos Inteligentes',
       description: Object.keys(connections).length > 0
         ? `${Object.keys(connections).length} dispositivo(s) conectado(s)`
-        : 'Configurar SG15/SG16 para segurança',
+        : 'Configurar SG15/SG16 para seguran?a',
       icon: Glasses,
       color: 'text-pink-300',
       bgColor: 'bg-pink-500/10',
@@ -308,7 +308,7 @@ export default function QuickActions() {
     {
       id: 'checkin',
       title: 'Check-in Seguro',
-      description: 'Verificação de segurança com prova de vida',
+      description: 'Verifica??o de seguran?a com prova de vida',
       icon: ShieldCheck,
       color: 'text-amber-200',
       bgColor: 'bg-amber-400/10',
@@ -319,7 +319,7 @@ export default function QuickActions() {
     {
       id: 'fall-detection',
       title: 'Deteccao de Queda',
-      description: 'SOS automático se detectar queda violenta sem resposta',
+      description: 'SOS autom?tico se detectar queda violenta sem resposta',
       icon: PersonStanding,
       color: 'text-lime-300',
       bgColor: 'bg-lime-500/10',
@@ -327,7 +327,7 @@ export default function QuickActions() {
       action: () => navigate('/dashboard/queda'),
       badge: 'AUTO-SOS',
     },
-    // DISGUISE CONFIGURATION — redirect to visual picker
+    // DISGUISE CONFIGURATION ? redirect to visual picker
     {
       id: 'disguise-config',
       title: 'Escolher Camuflagem',
@@ -339,11 +339,11 @@ export default function QuickActions() {
       action: () => navigate('/dashboard/camuflar'),
       badge: '11 DISFARCES',
     },
-    // FAKE CALL — escapatório realista, zero API
+    // FAKE CALL ? escapat?rio realista, zero API
     {
       id: 'fake-call',
       title: 'Chamada Falsa',
-      description: 'Recebe um telefonema realista para sair com elegância',
+      description: 'Recebe um telefonema realista para sair com eleg?ncia',
       icon: PhoneIncoming,
       color: 'text-violet-300',
       bgColor: 'bg-violet-500/10',
@@ -355,19 +355,19 @@ export default function QuickActions() {
     {
       id: 'night-safety',
       title: 'Modo Nocturno',
-      description: 'Segurança aumentada automaticamente à noite',
+      description: 'Seguran?a aumentada automaticamente ? noite',
       icon: Moon,
       color: 'text-indigo-300',
       bgColor: 'bg-indigo-500/10',
       borderColor: 'border-indigo-500/20',
-      action: () => toast.info('Configure nas Configurações o horário de activação'),
+      action: () => toast.info('Configure nas Configura??es o hor?rio de activa??o'),
       badge: 'AUTO',
     },
     // TRIP TRACKING
     {
       id: 'trip-tracking',
       title: 'Rastrear Viagem',
-      description: 'Partilhar localização em tempo real durante viagens',
+      description: 'Partilhar localiza??o em tempo real durante viagens',
       icon: Map,
       color: 'text-cyan-300',
       bgColor: 'bg-cyan-500/10',
@@ -380,18 +380,18 @@ export default function QuickActions() {
     {
       id: 'incident-timeline',
       title: 'Timeline de Incidentes',
-      description: 'Reconstrução completa de emergências passadas',
+      description: 'Reconstru??o completa de emerg?ncias passadas',
       icon: Clock,
       color: 'text-amber-300',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/20',
       action: () => navigate('/dashboard/timeline'),
     },
-    // WHATSAPP ALERT — sem API, deep-link wa.me
+    // WHATSAPP ALERT ? sem API, deep-link wa.me
     {
       id: 'whatsapp-alert',
       title: 'Alerta por WhatsApp',
-      description: 'Enviar localização e pedido de ajuda pelo WhatsApp — funciona sem SMS',
+      description: 'Enviar localiza??o e pedido de ajuda pelo WhatsApp ? funciona sem SMS',
       icon: MessageCircle,
       color: 'text-emerald-300',
       bgColor: 'bg-emerald-500/10',
@@ -402,65 +402,65 @@ export default function QuickActions() {
         const maps = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : ''
         const msg =
           `ALERTA - StatusAds Connect\n` +
-          `Estou a usar o botão de alerta e partilho a minha localização.\n` +
-          (maps ? `Localização: ${maps}\n` : '') +
+          `Estou a usar o bot?o de alerta e partilho a minha localiza??o.\n` +
+          (maps ? `Localiza??o: ${maps}\n` : '') +
           `Por favor verifique se estou bem.`
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
       },
       badge: 'SEM API',
     },
-    // COFRE DE EVIDÊNCIAS
+    // COFRE DE EVID?NCIAS
     {
       id: 'evidence-vault',
-      title: 'Cofre de Evidências',
-      description: 'Gravações de áudio guardadas como prova segura',
+      title: 'Cofre de Evid?ncias',
+      description: 'Grava??es de ?udio guardadas como prova segura',
       icon: Archive,
       color: 'text-brand',
       bgColor: 'bg-brand/10',
       borderColor: 'border-brand/20',
       action: () => navigate('/dashboard/evidencias'),
     },
-    // GRAVAÇÃO RÁPIDA — grava ao vivo e guarda no cofre (o elo que faltava)
+    // GRAVA??O R?PIDA ? grava ao vivo e guarda no cofre (o elo que faltava)
     {
       id: 'quick-record',
-      title: 'Gravação Rápida',
-      description: 'Gravar áudio agora e guardar no Cofre de Evidências com 1 toque',
+      title: 'Grava??o R?pida',
+      description: 'Gravar ?udio agora e guardar no Cofre de Evid?ncias com 1 toque',
       icon: Mic,
       color: recorder.isRecording ? 'text-red-400' : 'text-rose-300',
       bgColor: recorder.isRecording ? 'bg-red-500/15' : 'bg-rose-500/10',
       borderColor: recorder.isRecording ? 'border-red-500/40' : 'border-rose-500/20',
       action: () => void handleQuickRecord(),
-      badge: recorder.isRecording ? `A GRAVAR ${recSeconds}s` : recSaving ? 'A GUARDAR…' : undefined,
+      badge: recorder.isRecording ? `A GRAVAR ${recSeconds}s` : recSaving ? 'A GUARDAR?' : undefined,
       isActive: recorder.isRecording,
     },
-    // FICHA MÉDICA
+    // FICHA M?DICA
     {
       id: 'medical-profile',
-      title: 'Ficha Médica',
-      description: 'Tipo sanguíneo, alergias e medicação para socorristas',
+      title: 'Ficha M?dica',
+      description: 'Tipo sangu?neo, alergias e medica??o para socorristas',
       icon: HeartPulse,
       color: 'text-red-300',
       bgColor: 'bg-red-500/[0.07]',
       borderColor: 'border-red-500/15',
       action: () => navigate('/dashboard/ficha-medica'),
     },
-    // DICAS DE SEGURANÇA
+    // DICAS DE SEGURAN?A
     {
       id: 'safety-tips',
-      title: 'Dicas de Segurança',
-      description: `${tipCount} dicas práticas — casa, rua, táxis, online e mais`,
+      title: 'Dicas de Seguran?a',
+      description: `${tipCount} dicas pr?ticas ? casa, rua, t?xis, online e mais`,
       icon: Lightbulb,
       color: 'text-brand',
       bgColor: 'bg-brand/[0.08]',
       borderColor: 'border-brand/20',
       action: () => navigate('/dashboard/dicas'),
-      badge: 'DICA DIÁRIA',
+      badge: 'DICA DI?RIA',
     },
-    // TUTORIAL DO APP — rever o tutorial de boas-vindas quando quiser
+    // TUTORIAL DO APP ? rever o tutorial de boas-vindas quando quiser
     {
       id: 'app-tour',
       title: 'Tutorial do App',
-      description: 'Rever o guia rápido de como usar todas as funcionalidades',
+      description: 'Rever o guia r?pido de como usar todas as funcionalidades',
       icon: GraduationCap,
       color: 'text-sky-300',
       bgColor: 'bg-sky-500/10',
@@ -474,9 +474,9 @@ export default function QuickActions() {
   const systemStatus = [
     { label: 'GPS', active: !!position, icon: MapPin },
     { label: 'BLE', active: Object.keys(connections).length > 0, icon: Radio },
-    { label: 'Ameaças', active: threatMonitoring, icon: AlertTriangle },
+    { label: 'Amea?as', active: threatMonitoring, icon: AlertTriangle },
     { label: 'Voz', active: voiceListening, icon: Volume2 },
-    { label: 'Pânico', active: panicState.isActive, icon: Lock },
+    { label: 'P?nico', active: panicState.isActive, icon: Lock },
     { label: 'Comunidade', active: dangerZoneCount > 0, icon: Users },
   ]
 
@@ -487,9 +487,9 @@ export default function QuickActions() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-brand" />
-            Acções Rápidas
+            Ac??es R?pidas
           </h1>
-          <p className="text-white/40 text-sm mt-1">Acesso instantâneo a todas as funcionalidades de segurança</p>
+          <p className="text-white/40 text-sm mt-1">Acesso instant?neo a todas as funcionalidades de seguran?a</p>
         </div>
       </div>
 
@@ -542,13 +542,13 @@ export default function QuickActions() {
         <LocationShareLink />
       </div>
 
-      {/* Quick Disguise Selector Selector — inline */}
+      {/* Quick Disguise Selector Selector ? inline */}
       <div>
-        <h2 className='text-white/60 text-sm font-medium mb-2 uppercase tracking-wider'>Camuflagem Rápida</h2>
+        <h2 className='text-white/60 text-sm font-medium mb-2 uppercase tracking-wider'>Camuflagem R?pida</h2>
         <QuickDisguiseSelector />
       </div>
 
-      {/* Critical Actions — Emergency & Panic */}
+      {/* Critical Actions ? Emergency & Panic */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <motion.button
           whileTap={{ scale: 0.97 }}
@@ -557,7 +557,7 @@ export default function QuickActions() {
         >
           <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">SOS</div>
           <ShieldAlert className="w-10 h-10 text-red-400 mb-3" />
-          <div className="text-white font-semibold text-lg">Emergência SOS</div>
+          <div className="text-white font-semibold text-lg">Emerg?ncia SOS</div>
           <div className="text-white/40 text-sm mt-1">Alerta imediato a todos os contactos, SMS, GPS, sirene</div>
           {isTriggering && (
             <div className="mt-2 flex items-center gap-2 text-red-300 text-sm">
@@ -585,18 +585,18 @@ export default function QuickActions() {
             </div>
           )}
           <Skull className={cn('w-10 h-10 mb-3', panicState.isActive ? 'text-red-400' : 'text-orange-400')} />
-          <div className="text-white font-semibold text-lg">Modo Pânico</div>
+          <div className="text-white font-semibold text-lg">Modo P?nico</div>
           <div className="text-white/40 text-sm mt-1">
             {panicState.isActive
-              ? `A gravar: ${panicState.photosCaptured.length} foto(s), áudio activo`
-              : 'Bloqueio de ecrã + gravação áudio + fotos automáticas'}
+              ? `A gravar: ${panicState.photosCaptured.length} foto(s), ?udio activo`
+              : 'Bloqueio de ecr? + grava??o ?udio + fotos autom?ticas'}
           </div>
         </motion.button>
       </div>
 
       {/* All Quick Actions Grid */}
       <div>
-        <h2 className="text-white/60 text-sm font-medium mb-3 uppercase tracking-wider">Todas as Acções</h2>
+        <h2 className="text-white/60 text-sm font-medium mb-3 uppercase tracking-wider">Todas as Ac??es</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {actions.filter(a => !['emergency-sos', 'panic-mode'].includes(a.id)).map(action => (
             <SpotlightCard key={action.id} spotlightColor={action.color.replace('text-', '')} className="rounded-2xl">
@@ -661,9 +661,9 @@ export default function QuickActions() {
                   <ShieldAlert className="w-8 h-8 text-red-400" />
                 </div>
               </div>
-              <h3 className="text-white text-center text-lg font-semibold mb-2">Confirmar Emergência?</h3>
+              <h3 className="text-white text-center text-lg font-semibold mb-2">Confirmar Emerg?ncia?</h3>
               <p className="text-white/50 text-center text-sm mb-6">
-                Isto vai alertar todos os seus contactos de emergência via SMS e notificação push com a sua localização GPS actual.
+                Isto vai alertar todos os seus contactos de emerg?ncia via SMS e notifica??o push com a sua localiza??o GPS actual.
               </p>
               <div className="flex gap-3">
                 <button
@@ -707,9 +707,9 @@ export default function QuickActions() {
                   <Skull className="w-8 h-8 text-orange-400" />
                 </div>
               </div>
-              <h3 className="text-white text-center text-lg font-semibold mb-2">Activar Modo Pânico?</h3>
+              <h3 className="text-white text-center text-lg font-semibold mb-2">Activar Modo P?nico?</h3>
               <p className="text-white/50 text-center text-sm mb-6">
-                O ecrã será bloqueado, gravação de áudio e fotos automáticas iniciarão, e uma emergência será disparada com a sua localização GPS.
+                O ecr? ser? bloqueado, grava??o de ?udio e fotos autom?ticas iniciar?o, e uma emerg?ncia ser? disparada com a sua localiza??o GPS.
               </p>
               <div className="flex gap-3">
                 <button
@@ -722,7 +722,7 @@ export default function QuickActions() {
                   onClick={() => { activatePanic(); setShowPanicConfirm(false) }}
                   className="flex-1 py-3 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition"
                 >
-                  ACTIVAR PÂNICO
+                  ACTIVAR P?NICO
                 </button>
               </div>
             </motion.div>
